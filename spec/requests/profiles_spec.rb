@@ -75,6 +75,9 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     expect(response).to redirect_to(profile_path)
     follow_redirect!
     expect(response.body).to include('Profile saved.', 'Alex Artist', '@alex.artist', 'Off: Instagram stays private')
+    link = response.parsed_body.at_css('a[href="https://www.instagram.com/alex.artist/"]')
+    expect(link['target']).to eq('_blank')
+    expect(link['rel'].split).to include('noopener', 'noreferrer')
     expect(user.reload).to have_attributes(display_name: 'Alex Artist',
                                            instagram_handle: 'alex.artist')
     expect(User.collection.find(_id: user.id).first).not_to have_key('instagram_url')

@@ -7,7 +7,7 @@
     <dt>Gender (private)</dt><dd><%= @user.gender&.capitalize || "Not selected" %></dd>
     <dt>Public Identity</dt><dd><%= @user.public_profile_private? ? "Private: To be announced on public calendars" : "Public" %></dd>
     <dt>Public Display Name</dt><dd><%= @user.public_name %><%= " (using your name)" if !@user.public_profile_private? && @user.display_name.blank? %></dd>
-    <dt>Instagram Handle</dt><dd><% if (url = InstagramProfile.url(@user.instagram_handle)) %><%= link_to "@#{@user.instagram_handle}", url, rel: "noopener noreferrer" %><% else %>Not provided<% end %></dd>
+    <dt>Instagram Handle</dt><dd><% if (url = InstagramProfile.url(@user.instagram_handle)) %><%= link_to "@#{@user.instagram_handle}", url, target: "_blank", rel: "noopener noreferrer" %><% else %>Not provided<% end %></dd>
     <dt>Instagram Tagging</dt><dd><% if @user.public_profile_private? %>Hidden while your information is private<% else %><%= @user.instagram_tagging_allowed? ? "Enabled: handle appears in announcements and venue calendars" : "Off: Instagram stays private" %><% end %></dd>
   </dl>
   <% if @user.pending_email.present? %>

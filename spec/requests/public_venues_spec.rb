@@ -40,6 +40,8 @@ RSpec.describe 'Public venue calendars', :aggregate_failures, :database, type: :
       expect(response.body).not_to include(hidden.name, hidden.email, hidden.phone, hidden.id.to_s, 'private_model')
       link = response.parsed_body.at_css('a[href="https://www.instagram.com/public_model/"]')
       expect(link.text).to eq('@public_model')
+      expect(link['target']).to eq('_blank')
+      expect(link['rel'].split).to include('noopener', 'noreferrer')
       expect_public_only
     end
   end

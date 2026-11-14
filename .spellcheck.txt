@@ -76,6 +76,8 @@ ne
 nav
 lte
 non
+noopener
+noreferrer
 NONINFRINGEMENT
 npm
 opt
