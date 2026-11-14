@@ -5,13 +5,16 @@ require 'rails_helper'
 RSpec.describe ProgramCalendar, :aggregate_failures do
   include ActiveSupport::Testing::TimeHelpers
 
-  let(:program) { Program.new(name: "Enoch's", venue: Venue.new(name: "Enoch's", address: 'New York')) }
+  let(:program) do
+    Program.new(name: 'Community Program', time_zone: 'America/New_York', start_time: '18:30',
+                venue: Venue.new(name: 'Community Venue', address: 'Example venue address'))
+  end
 
   it 'uses the session-local date rather than the server date' do
     travel_to Time.utc(2026, 11, 17, 1) do
       calendar = described_class.new(program)
       expect(calendar.today).to eq(Date.new(2026, 11, 16))
-      expect(calendar.blocked_reason(calendar.today)).to eq('Session has already started.')
+      expect(calendar.blocked_reason(calendar.today)).to eq('Program has already started.')
       expect(calendar.blocked_reason(calendar.today + 1)).to eq('Not a scheduled day')
     end
   end

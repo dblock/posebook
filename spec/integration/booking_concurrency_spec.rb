@@ -73,10 +73,10 @@ RSpec.describe Booking, :aggregate_failures, :database do
     expect(BookingClaim.where(booking_id: booking.id).count).to eq(booking.status == 'confirmed' ? 1 : 0)
   end
 
-  it 'invalidates an old participant snapshot when an organizer changes the drawing time' do
+  it 'invalidates an old participant snapshot when an organizer changes the booking time' do
     snapshot = described_class.find(booking.id)
     track_record(ProgramScheduleMutation.new(program: program, user: organizer).call(
-                   date: booking.date.iso8601, mode: 'open', start_time: '20:00', reason: 'Later drawing.'
+                   date: booking.date.iso8601, mode: 'open', start_time: '20:00', reason: 'Later booking.'
                  ))
     expect do
       BookingMutation.new(program: program, user: participant).change(booking: snapshot, date: '2026-11-30',

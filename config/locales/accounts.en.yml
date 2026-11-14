@@ -18,7 +18,7 @@ en:
     organizer_created: Booking created by an organizer.
     organizer_saved: Booking saved. Previous bookings and attendance changes remain in the history.
     participant_required: Accept a %{participant_label} invitation for this %{program_label} before booking.
-    gender_required: Select a gender in the %{participant_label}'s profile before booking.
+    gender_required: Select a gender in the %{participant_label}'s profile to book with this %{program_label}'s gender rules.
     gender_restricted: Unavailable under this %{program_label}'s consecutive-gender rule.
     gender_needed: Select gender
     gender_rule: Gender rule

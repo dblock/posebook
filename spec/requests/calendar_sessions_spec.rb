@@ -7,7 +7,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
 
   around { |example| travel_to(Time.utc(2026, 11, 13, 15)) { example.run } }
 
-  let(:program) { create_program }
+  let(:program) { create_program(time_zone: 'America/New_York', start_time: '18:30') }
 
   def day(date)
     response.parsed_body.at_css("[data-date=\"#{date}\"]")
@@ -53,7 +53,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     expect(response.parsed_body.css('.status-label').map(&:text)).to all(match(/\A[[:alpha:]]+\z/))
     expect(day('2026-11-17').text).not_to include('Blocked', 'Not a scheduled day')
     expect(day('2026-11-10').children).to be_empty
-    expect(day('2026-11-09').text).to include('6:30 PM', 'Past Session')
+    expect(day('2026-11-09').text).to include('6:30 PM', 'Past Program')
     expect(day('2026-11-09').css('form, button')).to be_empty
   end
 
@@ -62,26 +62,26 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     exception('2026-11-10', 'open', start_time: '21:15')
     get program_path(program)
     expect(day('2026-11-09').children).to be_empty
-    expect(day('2026-11-10').text).to include('9:15 PM', 'Past Session')
+    expect(day('2026-11-10').text).to include('9:15 PM', 'Past Program')
     expect(response.body).not_to include('Private historical explanation.')
   end
 
   it 'keeps a completed session and saved time visible even after its regular weekday changes' do
-    booking = historical_booking('2026-11-09', display_name: 'Past Public Artist')
+    booking = historical_booking('2026-11-09', display_name: 'Past Public Participant')
     program.update!(available_weekdays: ['2'])
     get program_path(program)
-    expect(day('2026-11-09').text).to include('Completed', '8:45 PM', 'Past Public Artist')
+    expect(day('2026-11-09').text).to include('Completed', '8:45 PM', 'Past Public Participant')
     expect(day('2026-11-09').css('form, button')).to be_empty
     expect(response.body).not_to include(booking.user.email, 'Your Upcoming Booking')
   end
 
   it 'applies current public-profile privacy and Instagram preferences to past sessions' do
-    public_booking = historical_booking('2026-11-02', display_name: 'Past Public Artist',
+    public_booking = historical_booking('2026-11-02', display_name: 'Past Public Participant',
                                                       instagram_handle: 'past_artist', instagram_tagging_allowed: true)
-    hidden = historical_booking('2026-11-09', name: 'Private Past Artist', public_profile_private: true,
+    hidden = historical_booking('2026-11-09', name: 'Private Past Participant', public_profile_private: true,
                                               instagram_handle: 'hidden_past_artist', instagram_tagging_allowed: true)
     get program_path(program)
-    expect(day('2026-11-02').text).to include('Past Public Artist', '@past_artist')
+    expect(day('2026-11-02').text).to include('Past Public Participant', '@past_artist')
     expect(day('2026-11-09').text).to include('To be announced')
     expect(response.body).not_to include(hidden.user.name, 'hidden_past_artist', hidden.user.email)
     public_booking.user.update!(instagram_tagging_allowed: false)
@@ -90,19 +90,20 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
   end
 
   it 'does not publish canceled or foreign-session history when showing past sessions' do
-    historical_booking('2026-11-02', status: 'canceled', display_name: 'Canceled Past Artist')
-    historical_booking('2026-11-09', at: create_program, display_name: 'Foreign Past Artist')
+    historical_booking('2026-11-02', status: 'canceled', display_name: 'Canceled Past Participant')
+    historical_booking('2026-11-09', at: create_program, display_name: 'Foreign Past Participant')
     get program_path(program)
-    expect(day('2026-11-02').text).to include('Past Session')
-    expect(response.body).not_to include('Canceled Past Artist', 'Foreign Past Artist', 'Private cancellation.')
+    expect(day('2026-11-02').text).to include('Past Program')
+    expect(response.body).not_to include('Canceled Past Participant', 'Foreign Past Participant',
+                                         'Private cancellation.')
   end
 
   it 'shows past sessions in leading neighboring-month cells without granting past management controls' do
-    historical_booking('2026-11-30', display_name: 'Previous Month Artist')
+    historical_booking('2026-11-30', display_name: 'Previous Month Participant')
     travel_to Time.utc(2026, 12, 4, 15)
     sign_in(organizer_for)
     get program_path(program)
-    expect(day('2026-11-30').text).to include('Completed', 'Previous Month Artist')
+    expect(day('2026-11-30').text).to include('Completed', 'Previous Month Participant')
     expect(day('2026-11-30').css('a, form, button')).to be_empty
     expect(day('2026-11-29').children).to be_empty
     expect(day('2026-12-01').children).to be_empty
@@ -139,7 +140,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     expect(day('2026-12-28').text).to include('Unconfirmed', '6:30 PM', booking.user.public_name)
     expect(day('2026-12-28').at_css('a')['href']).to eq(edit_program_organizer_booking_path(program,
                                                                                             booking))
-    expect(day('2027-02-01').text).to include('Available', '6:30 PM', 'Schedule Model', 'Edit Day')
+    expect(day('2027-02-01').text).to include('Available', '6:30 PM', 'Schedule Participant', 'Edit Day')
     path = day('2027-02-01').at_css('a')['href']
     expect(path).to eq(new_program_organizer_booking_path(program, date: '2027-02-01'))
     get path

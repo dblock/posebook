@@ -2,12 +2,12 @@
   <h1><%= @venue.name %></h1>
   <%= simple_format(@venue.address) %>
   <% if @venue.public_instagram_url %><p><%= link_to "@#{@venue.public_instagram_handle}", @venue.public_instagram_url, target: "_blank", rel: "noopener noreferrer" %></p><% end %>
-  <h2>Sessions</h2>
+  <h2>Programs</h2>
   <% @venue.programs.order_by(name: :asc).each do |program| %>
     <p><%= link_to program.name, program %><br><%= program_schedule_summary(program) %></p>
   <% end %>
   <% if @venue.coordinated_by?(current_user) %>
-    <p><%= link_to "Edit Venue", edit_venue_path(@venue) %> | <%= link_to "Create Session", new_venue_program_path(@venue) %></p>
+    <p><%= link_to "Edit Venue", edit_venue_path(@venue) %> | <%= link_to "Create Program", new_venue_program_path(@venue) %></p>
   <% end %>
   <% if current_user&.system_admin? %><p><%= link_to "Venue Coordinators", venue_coordinators_path(@venue) %></p><% end %>
   <%= render "photos", venue: @venue, editable: @venue.coordinated_by?(current_user) %>

@@ -21,13 +21,13 @@ Rails.application.configure do
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.smtp_settings = {
     address: ENV.fetch('SMTP_ADDRESS', nil), port: ENV.fetch('SMTP_PORT', 587).to_i,
-    domain: ENV.fetch('APP_HOST', 'enochs.dblock.org'),
+    domain: ENV.fetch('APP_HOST', 'localhost'),
     user_name: ENV.fetch('SMTP_USERNAME', nil), password: ENV.fetch('SMTP_PASSWORD', nil),
     authentication: ENV['SMTP_USERNAME'].present? ? :plain : nil, enable_starttls_auto: true,
     open_timeout: 5, read_timeout: 5
   }
-  config.action_mailer.default_url_options = { host: ENV.fetch('APP_HOST', 'enochs.dblock.org'), protocol: 'https' }
+  config.action_mailer.default_url_options = { host: ENV.fetch('APP_HOST', 'localhost'), protocol: 'https' }
   config.i18n.fallbacks = true
-  config.hosts = ENV.fetch('APP_HOST', 'enochs.dblock.org').split(',')
+  config.hosts = ENV.fetch('APP_HOST', 'localhost').split(',')
   config.host_authorization = { exclude: ->(request) { request.path == '/up' } }
 end

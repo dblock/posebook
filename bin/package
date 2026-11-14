@@ -16,7 +16,7 @@ end
 
 def request(port, path)
   Net::HTTP.start('127.0.0.1', port, open_timeout: 2, read_timeout: 2) do |http|
-    http.get(path, { 'Host' => 'enochs.dblock.org', 'X-Forwarded-Proto' => 'https' })
+    http.get(path, { 'Host' => 'localhost', 'X-Forwarded-Proto' => 'https' })
   end
 end
 
@@ -77,7 +77,7 @@ def create_current_records(container)
                  password: "a sufficiently long package password", gender: "other",
                  instagram_handle: "package.participant", instagram_tagging_allowed: true, public_profile_private: true)
     venue = Venue.create!(name: "Package Venue", address: "Test")
-    Program.create!(name: "Package Session", venue: venue, pay: 150,
+    Program.create!(name: "Package Program", venue: venue, pay: 150,
                     program_label: "Workshop", participant_label: "Instructor", instructions: "Package instructions")
     Program.transaction { Program.create!(name: "Package Transaction", venue: venue); raise Mongoid::Errors::Rollback }
     raise "Rollback failed" if Program.where(name: "Package Transaction").exists?
@@ -91,7 +91,7 @@ def check_existing_records(container)
     raise "Profile preferences changed" unless user.instagram_handle == "package.participant" &&
       user.instagram_tagging_allowed? && user.public_profile_private?
     venue = Venue.find("package-venue")
-    program = Program.find("package-session")
+    program = Program.find("package-program")
     raise "Program settings changed" unless program.venue_id == venue.id && program.pay == 150 &&
       program.program_label == "Workshop" && program.participant_label == "Instructor" &&
       program.instructions == "Package instructions"
@@ -181,7 +181,7 @@ begin
 
   create_current_records(container)
   check_existing_records(container)
-  response = request(port, '/sessions/package-session')
+  response = request(port, '/sessions/package-program')
   unless response.code == '200' && response.body.include?('Workshop Calendar')
     raise 'The current program did not render through its generated slug'
   end

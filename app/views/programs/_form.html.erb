@@ -1,8 +1,8 @@
 <%= render "shared/errors", record: program %>
 <%= form_with model: program.persisted? ? program : [program.venue, program] do |form| %>
   <p><%= form.label :name %><br><%= form.text_field :name, required: true, maxlength: 100 %></p>
-  <p><%= form.label :program_label, "Program label" %><br><%= form.text_field :program_label, required: true, maxlength: 40 %><br><small>Singular label, such as Session or Workshop.</small></p>
-  <p><%= form.label :participant_label, "Participant label" %><br><%= form.text_field :participant_label, required: true, maxlength: 40 %><br><small>Singular label for the person booked, such as Model or Instructor. This changes terminology, not booking rules.</small></p>
+  <p><%= form.label :program_label, "Program label" %><br><%= form.text_field :program_label, required: true, maxlength: 40 %><br><small>Singular label, such as Program or Workshop.</small></p>
+  <p><%= form.label :participant_label, "Participant label" %><br><%= form.text_field :participant_label, required: true, maxlength: 40 %><br><small>Singular label for the person booked, such as Participant or Instructor. This changes terminology, not booking rules.</small></p>
   <p><%= form.label :custom_slug, "Slug" %><br><%= form.text_field :custom_slug, maxlength: 100, placeholder: program.name.to_s.to_url %><br>
     <small>Leave blank to generate from the <%= @program.program_label.downcase %> name. Previous links keep working when the slug changes. <% if program.persisted? %>Current link: <%= link_to program_url(program), program_path(program) %>.<% end %></small>
   </p>
@@ -22,7 +22,7 @@
   </fieldset>
   <fieldset>
     <legend>Prevent Consecutive <%= @program.participant_label.pluralize.titleize %> by Gender</legend>
-    <p>Each selected gender cannot repeat in immediately adjacent scheduled <%= @program.program_label.pluralize.downcase %>. Unselected genders may repeat. An unbooked <%= @program.program_label.downcase %> breaks the sequence; closed dates are skipped.</p>
+    <p>Optional. Leave all unchecked to allow bookings without a gender selection. When enabled, each selected gender cannot repeat in immediately adjacent scheduled <%= @program.program_label.pluralize.downcase %>. Unselected genders may repeat. An unbooked <%= @program.program_label.downcase %> breaks the sequence; closed dates are skipped.</p>
     <%= hidden_field_tag "program[no_consecutive_genders][]", "" %>
     <% User::GENDERS.each do |gender| %>
       <label><%= check_box_tag "program[no_consecutive_genders][]", gender, program.no_consecutive_genders.include?(gender), id: "no-consecutive-#{gender}" %> <%= gender.capitalize %></label>

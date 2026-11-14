@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe 'Model invitations', :aggregate_failures, :database, type: :request do
+RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: :request do
   def invitation_token
     URI.decode_www_form(URI(response.parsed_body.at_css('#invitation_link')['value']).query).to_h.fetch('token')
   end
@@ -12,7 +12,7 @@ RSpec.describe 'Model invitations', :aggregate_failures, :database, type: :reque
     organizer = create_user
     grant_coordinator_access(program, organizer)
     sign_in(organizer)
-    post program_participant_invitations_path(program), params: { participant_invitation: { name: 'Demo Model' } }
+    post program_participant_invitations_path(program), params: { participant_invitation: { name: 'Demo Participant' } }
     invitation = track_record(program.participant_invitations.first)
     follow_redirect!
     expect(response.parsed_body.at_css('.status-label-warning').text).to eq('Pending')
@@ -85,7 +85,7 @@ RSpec.describe 'Model invitations', :aggregate_failures, :database, type: :reque
     invitation = create_participant_invitation(create_program, admin)
     get invitation_path(token: invitation.token)
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include('Monday at 6:30 PM (America/New_York)')
+    expect(response.body).to include('Monday at 9:00 AM (UTC)')
     expect(invitation.reload.used_at).to be_nil
     [{ revoked_at: Time.current }, { expires_at: 1.minute.ago }, { used_at: Time.current }].each do |attributes|
       invalid = create_participant_invitation(invitation.program, admin, **attributes)
@@ -98,19 +98,19 @@ RSpec.describe 'Model invitations', :aggregate_failures, :database, type: :reque
 
   it 'registers an invited user with participant access only at the inviting program' do
     invitation = create_participant_invitation(create_program, create_user(roles: ['system_admin']))
-    attributes = user_attributes(roles: ['system_admin'], display_name: 'Artist Model',
-                                 instagram_handle: '@Artist.Model',
+    attributes = user_attributes(roles: ['system_admin'], display_name: 'Public Participant',
+                                 instagram_handle: '@Public.Participant',
                                  instagram_tagging_allowed: '1')
     post invited_registration_path, params: { token: invitation.token, user: attributes }
     user = track_record(User.find_by(email: attributes[:email]))
     membership = track_participant_membership(invitation.program, user)
     expect(response).to redirect_to(program_path(invitation.program))
-    expect(user).to have_attributes(roles: [], display_name: 'Artist Model', instagram_tagging_allowed: true,
-                                    instagram_handle: 'artist.model')
+    expect(user).to have_attributes(roles: [], display_name: 'Public Participant', instagram_tagging_allowed: true,
+                                    instagram_handle: 'public.participant')
     expect(membership.roles).to eq(['participant'])
     expect(invitation.reload.used_by_id).to eq(user.id)
     get program_path(invitation.program)
-    expect(response.body).not_to include('Invite a Model', 'Existing user', 'Edit Session')
+    expect(response.body).not_to include('Invite a Participant', 'Existing user', 'Edit Program')
     get program_path(create_program)
     expect(response).to have_http_status(:ok)
     expect(response.body).not_to include('Instructions', 'Pay', 'Manage Schedule')
@@ -171,7 +171,7 @@ RSpec.describe 'Model invitations', :aggregate_failures, :database, type: :reque
     create_participant_invitation(program, admin, expires_at: 1.minute.ago)
     sign_in(admin)
     get program_path(program)
-    invitations = response.parsed_body.at_xpath("//section[h2='Model Invitations']")
+    invitations = response.parsed_body.at_xpath("//section[h2='Participant Invitations']")
     expect(invitations.at_css('.status-label-success').text).to eq('Accepted')
     expect(invitations.at_css('.status-label-neutral').text).to eq('Expired')
     expect(invitations.css('form')).to be_empty

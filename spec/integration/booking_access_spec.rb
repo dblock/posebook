@@ -76,7 +76,7 @@ RSpec.describe BookingAccess, :aggregate_failures, :database do
     expect(membership.reload.history_tracks.last).to have_attributes(modifier_id: admin.id)
   end
 
-  it 'resumes without creating another entitlement after a completed drawing' do
+  it 'resumes without creating another entitlement after a completed booking' do
     booking
     access_mutation.pause(membership.id, 'Pause until ready.')
     travel_to Time.utc(2026, 11, 17, 15)
@@ -125,7 +125,7 @@ RSpec.describe BookingAccess, :aggregate_failures, :database do
     other_membership = grant_participant_access(other, participant)
     travel_to Time.utc(2026, 11, 17, 15)
     ParticipantAccessMutation.new(program: other, user: admin).invite(other_membership.id)
-    access_mutation.pause(membership.id, 'Session-local pause.')
+    access_mutation.pause(membership.id, 'Program-local pause.')
     expect(described_class.new(membership.reload).allowed?).to be(false)
     expect(described_class.new(other_membership.reload).allowed?).to be(true)
   end

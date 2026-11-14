@@ -2,12 +2,12 @@
 
 require 'rails_helper'
 
-RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request do
+RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :request do
   include ActiveSupport::Testing::TimeHelpers
 
   around { |example| travel_to(Time.utc(2026, 11, 13, 15)) { example.run } }
 
-  let(:program) { create_program }
+  let(:program) { create_program(time_zone: 'America/New_York', start_time: '18:30') }
   let(:participant) { create_user }
 
   def prepare_participant
@@ -43,7 +43,7 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
     prepare_participant
     program.update!(start_time: '19:15')
     track_record(ProgramScheduleException.create!(program: program, date: Date.new(2026, 11, 16),
-                                                  mode: 'open', start_time: '20:00', reason: 'Later drawing.'))
+                                                  mode: 'open', start_time: '20:00', reason: 'Later booking.'))
     original = book
     get cancellation_program_booking_path(program, original)
     expect(response.body).to include('Monday at 7:15 PM (America/New_York)', '8:00 PM EST')
@@ -106,7 +106,7 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
     expect(program.bookings.count).to eq(1)
   end
 
-  it 'rejects malformed, past, non-posing, and out-of-horizon dates on the server' do
+  it 'rejects malformed, past, non-participating, and out-of-horizon dates on the server' do
     prepare_participant
     ['invalid', '2026-11-09', '2026-11-17', '2027-05-17', nil].each do |date|
       post program_bookings_path(program), params: { date: date }
@@ -215,7 +215,7 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
   it 'never exposes another participant history or permits changing another user or session booking' do
     prepare_participant
     original = book
-    other = create_user(name: 'Another Model')
+    other = create_user(name: 'Another Participant')
     grant_participant_access(program, other)
     sign_in(other)
     get program_path(program)
@@ -232,15 +232,15 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
   it 'lets scoped organizers see session history without granting participant booking privileges' do
     prepare_participant
     original = book
-    organizer = create_user(name: 'Session Organizer')
+    organizer = create_user(name: 'Program Organizer')
     grant_coordinator_access(program, organizer)
     sign_in(organizer)
     get program_path(program)
-    expect(response.body).to include('Session Booking History', participant.name, original.date.iso8601)
+    expect(response.body).to include('Program Booking History', participant.name, original.date.iso8601)
     expect(response.parsed_body.css('.calendar form')).to be_empty
     get program_path(create_program)
     expect(response).to have_http_status(:ok)
-    expect(response.body).not_to include('Session Booking History', 'Manage Schedule')
+    expect(response.body).not_to include('Program Booking History', 'Manage Schedule')
   end
 
   it 'honors existing reservations after session weekdays or horizon settings change' do
@@ -258,7 +258,7 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
 
   context 'with a short-notice booking' do
     let(:original) { book }
-    let(:organizer) { create_user(name: 'Drawing Organizer', phone: '+12125551234') }
+    let(:organizer) { create_user(name: 'Booking Organizer', phone: '+12125551234') }
 
     before do
       prepare_participant

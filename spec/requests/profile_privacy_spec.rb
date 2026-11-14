@@ -4,7 +4,8 @@ require 'rails_helper'
 
 RSpec.describe 'Public identity privacy', :aggregate_failures, :database, type: :request do
   let(:user) do
-    create_user(display_name: 'Saved Public Name', instagram_handle: '@Artist.Model', instagram_tagging_allowed: true)
+    create_user(display_name: 'Saved Public Name', instagram_handle: '@Public.Participant',
+                instagram_tagging_allowed: true)
   end
 
   def update_privacy(value)
@@ -44,7 +45,7 @@ RSpec.describe 'Public identity privacy', :aggregate_failures, :database, type: 
     update_privacy('0')
     expect(response).to redirect_to(profile_path)
     expect(user.reload.public_name).to eq('Saved Public Name')
-    expect(user.public_instagram_url).to eq('https://www.instagram.com/artist.model/')
+    expect(user.public_instagram_url).to eq('https://www.instagram.com/public.participant/')
     get edit_profile_path
     expect(response.parsed_body.at_css('[data-public-profile-fields]').key?('disabled')).to be(false)
   end
@@ -62,7 +63,7 @@ RSpec.describe 'Public identity privacy', :aggregate_failures, :database, type: 
   it 'accepts privacy during invited registration even alongside public sharing fields' do
     invitation = create_participant_invitation(create_program, create_user(roles: ['system_admin']))
     attributes = user_attributes(public_profile_private: '1', display_name: 'Hidden Public Name',
-                                 instagram_handle: '@Artist.Model', instagram_tagging_allowed: '1')
+                                 instagram_handle: '@Public.Participant', instagram_tagging_allowed: '1')
     post invited_registration_path, params: { token: invitation.token, user: attributes }
     registered = track_record(User.find_by(email: attributes[:email]))
     track_participant_membership(invitation.program, registered)
@@ -82,7 +83,7 @@ RSpec.describe 'Public identity privacy', :aggregate_failures, :database, type: 
     expect(response).to redirect_to(admin_users_path)
     expect(user.reload).to have_attributes(name: 'Updated Account Name', public_profile_private: false,
                                            public_name: 'Saved Public Name',
-                                           public_instagram_handle: 'artist.model')
+                                           public_instagram_handle: 'public.participant')
     expect(user.history_tracks.last.modified).to include('public_profile_private' => false)
   end
 end

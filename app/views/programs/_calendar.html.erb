@@ -8,8 +8,8 @@
   <% if !public_view && calendar.program.no_consecutive_genders.any? %>
     <p>Gender rules prevent repeats for each selected gender: <%= calendar.program.no_consecutive_genders.map(&:capitalize).to_sentence %>. Only immediately adjacent scheduled <%= @program.program_label.pluralize.downcase %> count. An unbooked <%= @program.program_label.downcase %> breaks the sequence; closed dates are skipped.</p>
   <% end %>
-  <% if @booking_access&.participant? && current_user.gender.blank? %>
-    <p role="status">Choose male, female, or other in <%= link_to "Edit Profile", edit_profile_path %> before your next booking. Existing reservations are unchanged.</p>
+  <% if @booking_access&.participant? && calendar.program.no_consecutive_genders.any? && current_user.gender.blank? %>
+    <p role="status">This <%= @program.program_label.downcase %> has gender rules enabled. Choose a gender in <%= link_to "Edit Profile", edit_profile_path %> before your next booking. Existing reservations are unchanged.</p>
   <% end %>
   <nav aria-label="Calendar months">
     <% if calendar.month > calendar.today.beginning_of_month %>
