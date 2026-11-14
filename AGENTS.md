@@ -50,20 +50,4 @@ Prefer focused behavior tests while developing, followed by final validation bef
 
 Keep `Test`, `Lint`, and `Package` workflows separate. Use only `matrix.entry` lists of compact inline objects, with no `include`, `exclude`, or separate Cartesian axes. Maintain Coveralls reporting and Ruby Danger checks. Danger runs in PR CI, not as a routine local command; inspect its actual PR result. Its changelog check currently reminds contributors about updates, not format validation.
 
-Maintain README links to every project Markdown document. Keep DESIGN focused on current behavior, the agreed design, and still-relevant rationale, not an implementation diary. Features, improvements, and fixes require attributed changelog entries with actual PR numbers, appended above the placeholder; initial scaffolding and typo-only changes do not. Predict the number before opening a PR and verify it afterward. Add and link UPGRADING when changing released behavior incompatibly, including within `0.x`.
-
-## Git and Release Safety
-
-Start topic branches from `master` with `git switch -c dblock/<topic> master`, using the actual contributor login in place of `dblock`. Use the existing checkout unless parallel tasks require separate worktrees. Preserve unrelated tracked and untracked changes; inspect status and worktrees before switching. Never develop directly on or force-push `master`.
-
-Keep related dependent work in stacked PRs rather than restarting each feature from `master`. Build layers sequentially: validate and push the lower layer before branching from its pushed tip, target that branch, and register bottom-to-top native GitHub stack membership. When a lower layer merges, preserve the existing stack and its complete membership while you rebase the remaining layers. Do not mix independent changes into a stack or recreate partially merged stack metadata.
-
-Prefer one coherent commit per PR; independently reviewable commits are acceptable. Task-owned PR commits may be amended or squashed without another approval: verify ownership, record the remote tip, reconcile remote changes, validate, and push only with `--force-with-lease` against the recorded SHA. Never rewrite another contributor's work. Squash-merge PRs; merge commits are prohibited.
-
-Include `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>` in AI-assisted commits. AI-authored PRs and comments must disclose AI authorship on behalf of `@dblock`. Use closing issue references in implementation PRs; leave issues open until merge.
-
-After an authorized merge, fetch with pruning, verify GitHub's merged state, inspect dirty checkouts and dependent PRs, switch safely to `master`, and remove only clean, unnecessary task-owned worktrees and topic branches. Squash/rebase merges may require `git branch -D`, but only after verifying no unmerged work or dependencies would be lost. Never delete dirty worktrees or active PR branches.
-
-No merge, deployment, registry credentials, publication, tags, or releases without authorization. Posebook is an application, not a registry package; follow [RELEASING.md](RELEASING.md) for provisional deployment guidance. Never overwrite published versions or release tags.
-
-Before any version bump, establish whether the current version was released; ask if that cannot be determined. Keep unreleased `0.1.0` unchanged. After release, feature or breaking changes in `0.x` increment minor and reset patch; features in `1.x` increment minor while preserving patch. Ask before a major bump for breaking changes in `1.x`. Keep `VERSION` and the Next changelog heading synchronized; update any future version declarations and lockfiles together.
+Keep README brief: link to the hosted instance and individual user guides, and include only [Contributing](CONTRIBUTING.md) in its project-documentation section. Link operational and design details from the relevant guides. Keep DESIGN focused on current behavior, the agreed design, and still-relevant rationale, not an implementation diary. Features, improvements, and fixes require attributed changelog entries with actual PR numbers, appended above the placeholder; initial scaffolding and typo-only changes do not. Predict the number before opening a PR and verify it afterward. Add and link UPGRADING when changing released behavior incompatibly, including within `0.x`.

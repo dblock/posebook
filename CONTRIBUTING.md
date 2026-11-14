@@ -1,5 +1,7 @@
 # Contributing
 
+See [Operating Posebook](docs/operating.md) for application setup, configuration, and production operations.
+
 ## Setup and Validation
 
 Install Ruby 4.0.9, Bundler, MongoDB 8.0, Docker, and libvips. Use only MongoDB 8.0 for tests to match the deployment target. No production service credentials are required. Install libvips with `brew install vips` on macOS or `sudo apt-get install libvips42t64` on Ubuntu 24.04/Debian 13; production Docker stages install it automatically.
@@ -77,6 +79,6 @@ Amending or squashing task-owned PR commits needs no further approval. Verify br
 
 After an authorized merge, fetch with pruning and verify the PR's merged state on GitHub. Inspect dirty checkouts and dependent stacked PRs before switching to `master` and removing clean, unnecessary task-owned worktrees and local branches. Use `git branch -D` only after confirming the merge and that no unmerged work or dependencies would be lost. Report blocked cleanup; never discard work.
 
-Update affected documentation and keep DESIGN current rather than retaining obsolete decisions. Add features, improvements, and fixes to [CHANGELOG.md](CHANGELOG.md) using `- [#123](https://github.com/dblock/posebook/pull/123): Description - [@dblock](https://github.com/dblock).` with the actual PR and contributor. Append entries chronologically immediately above the placeholder. Predict the next PR number before opening, then verify and correct it. Initial scaffolding and typo-only changes need no entry. Link and document migrations in UPGRADING for incompatible changes to released behavior, including `0.x`.
+Update affected documentation and keep DESIGN current rather than retaining obsolete decisions. Add features, improvements, and fixes to [CHANGELOG.md](CHANGELOG.md) using `- [#123](https://github.com/dblock/posebook/pull/123): Description - [@dblock](https://github.com/dblock).` with the actual PR and contributor. Append entries chronologically immediately above the placeholder. Predict the next PR number before opening, then verify and correct it. Initial scaffolding and typo-only changes need no entry. Document required manual data migrations in the affected technical documentation.
 
-Follow the version policy in AGENTS: verify release status before bumping, keep unreleased versions unchanged, and synchronize `VERSION` and the Next changelog heading. Use closing references for issues rather than closing them manually. Do not merge, deploy, publish, tag, or configure credentials without explicit authorization. See [RELEASING.md](RELEASING.md).
+Use closing references for issues rather than closing them manually. Production is continuously updated; there are no per-release version bumps, tags, or package publications. Do not merge or manually deploy without explicit authorization. See [Operating Posebook](docs/operating.md).
