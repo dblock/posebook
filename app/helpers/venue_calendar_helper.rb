@@ -18,11 +18,31 @@ module VenueCalendarHelper
       "#{current_user.gender}"
   end
 
-  def calendar_day_reason(calendar, date, public_view:)
-    reason = date.beginning_of_month == calendar.month ? calendar.blocked_reason(date) : 'Outside displayed month'
+  def calendar_day_empty?(calendar, date)
+    date < calendar.today && !calendar.displayed_bookings[date] && !calendar.session_on?(date)
+  end
+
+  def calendar_day_reason(calendar, date, public_view:, manager: false)
+    return 'Past Session' if date < calendar.today
+    return 'Future' if calendar_future_placeholder?(calendar, date, manager: manager)
+
+    reason = calendar.blocked_reason(date)
+    return 'No Session' if reason == 'Not a posing day'
     return 'Closed' if public_view && reason&.start_with?('Closed:')
 
     reason
+  end
+
+  def calendar_future_placeholder?(calendar, date, manager:)
+    date > calendar.last_date || (!manager && date.beginning_of_month != calendar.month)
+  end
+
+  def calendar_day_label(booking, reason)
+    return booking ? booking.display_status : reason if reason == 'Past Session'
+    return reason if ['No Session', 'Future'].include?(reason)
+    return 'Booked' if booking
+
+    reason ? 'Blocked' : 'Available'
   end
 
   def calendar_day_class(booking, reason)
@@ -45,7 +65,7 @@ module VenueCalendarHelper
   end
 
   def calendar_time(calendar, date)
-    booking = calendar.bookings[date]
+    booking = calendar.displayed_bookings[date]
     return booking.scheduled_start.in_time_zone(calendar.venue.time_zone).strftime('%-I:%M %p') if booking
 
     clock = calendar.schedule.time_for(date)
