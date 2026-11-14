@@ -55,9 +55,10 @@ class ProgramCalendar
 
   def gender_blocked_reason(date, user, excluding: nil)
     @gender_rule ||= BookingGenderRule.new(program, excluding: excluding)
-    return unless @gender_rule.blocked_reason(date, user)
+    decision = @gender_rule.evaluate(date, user)
+    return unless decision
 
-    @program.message(user.gender.blank? ? 'bookings.gender_needed' : 'bookings.gender_rule')
+    @program.message(decision.code == :gender_required ? 'bookings.gender_needed' : 'bookings.gender_rule')
   end
 
   def history_for(user)

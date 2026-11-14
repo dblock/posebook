@@ -75,10 +75,12 @@ class OrganizerBookingMutation
   end
 
   def gender_override(date, participant, attributes, excluding:)
-    message = BookingGenderRule.new(@program, excluding: excluding).blocked_reason(date, participant)
-    return unless message
+    decision = BookingGenderRule.new(@program, excluding: excluding).evaluate(date, participant)
+    return unless decision
 
-    raise BookingMutation::Invalid, message if participant.gender.blank? || attributes[:override_gender_rule] != '1'
+    unless decision.overridable && attributes[:override_gender_rule] == '1'
+      raise BookingMutation::Invalid, decision.message
+    end
 
     explanation(attributes[:reason])
   end

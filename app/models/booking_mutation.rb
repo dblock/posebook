@@ -79,8 +79,8 @@ class BookingMutation
   end
 
   def check_gender!(date, excluding: nil)
-    reason = BookingGenderRule.new(@program, excluding: excluding).blocked_reason(date, @user)
-    raise Invalid, reason if reason
+    decision = BookingGenderRule.new(@program, excluding: excluding).evaluate(date, @user)
+    raise Invalid, decision.message if decision
   end
 
   def rescheduling_date(original, value)

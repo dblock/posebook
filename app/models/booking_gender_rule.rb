@@ -8,21 +8,25 @@ class BookingGenderRule
     @bookings = {}
   end
 
-  def blocked_reason(date, user)
+  def evaluate(date, user)
     genders = @program.no_consecutive_genders
     return if genders.empty?
 
     gender = user.gender
-    return @program.message('bookings.gender_required') if gender.blank?
+    return decision(:gender_required, overridable: false) if gender.blank?
     return unless genders.include?(gender)
 
     dates = [-1, 1].map { |direction| adjacent_date(date, direction) }
     return unless bookings_on(dates).any? { |booking| booking.user.gender == gender }
 
-    @program.message('bookings.gender_restricted')
+    decision(:gender_restricted, overridable: true)
   end
 
   private
+
+  def decision(code, overridable:)
+    BookingRuleDecision.new(code: code, message: @program.message("bookings.#{code}"), overridable: overridable)
+  end
 
   def adjacent_date(date, direction)
     candidate = date + direction
