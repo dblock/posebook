@@ -1,0 +1,16 @@
+<main>
+  <h1>Change Your Booking Date</h1>
+  <%= render "programs/regular_schedule", program: @program %>
+  <p>Your current booking is <%= @booking.date.to_fs(:long) %> at <%= booking_time(@booking) %>, <%= @program.name %>. It stays reserved unless your new date is successfully booked.</p>
+  <% if @booking.rescheduling_locked? %>
+    <%= render "bookings/rescheduling_notice", program: @program %>
+  <% else %>
+    <%= form_with url: program_booking_path(@program, @booking), method: :patch, id: "booking-change-form" do %>
+          <%= hidden_field_tag :booking_version, request.get? ? @booking.lock_version : params[:booking_version] %>
+      <p>Plans changed? Not a problem. Tell us, then choose an available date below.</p>
+      <p><%= label_tag :reason, "What changed?" %><br><%= text_area_tag :reason, params[:reason], required: true, maxlength: 2000, rows: 3 %></p>
+    <% end %>
+    <%= render "programs/calendar", calendar: @calendar, public_view: false %>
+  <% end %>
+  <p><%= link_to "Keep Current Date", program_path(@program) %></p>
+</main>

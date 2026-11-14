@@ -1,0 +1,88 @@
+# frozen_string_literal: true
+
+module ProgramCalendarHelper
+  def booking_participant_name(participant, manager: false)
+    manager && participant.public_profile_private? ? participant.name : participant.public_name
+  end
+
+  def program_organizer_contacts(program)
+    ids = program.memberships.coordinators.distinct(:user_id)
+    User.active.where(:id.in => ids).order_by(name: :asc)
+  end
+
+  def calendar_access_context(public_view, manager:, program:, booking:)
+    return "public:#{current_user&.id || 'guest'}" if public_view
+
+    "#{manager ? 'manager' : 'participant'}:#{current_user.id}:#{current_user.system_admin?}:" \
+      "#{program.schedule_revision}:#{booking&.confirmation_open?}:#{booking&.rescheduling_locked?}:" \
+      "#{current_user.gender}"
+  end
+
+  def calendar_day_empty?(calendar, date)
+    date < calendar.today && !calendar.displayed_bookings[date] && !calendar.session_on?(date)
+  end
+
+  def calendar_day_reason(calendar, date, public_view:, manager: false)
+    return "Past #{calendar.program.program_label.titleize}" if date < calendar.today
+    return 'Future' if calendar_future_placeholder?(calendar, date, manager: manager)
+
+    reason = calendar.blocked_reason(date)
+    return "No #{calendar.program.program_label.titleize}" if reason == 'Not a scheduled day'
+    return 'Closed' if public_view && reason&.start_with?('Closed:')
+
+    reason
+  end
+
+  def calendar_future_placeholder?(calendar, date, manager:)
+    date > calendar.last_date || (!manager && date.beginning_of_month != calendar.month)
+  end
+
+  def calendar_day_label(booking, reason)
+    return past_booking_label(booking) if reason&.start_with?('Past ')
+    return 'Unavailable' if reason&.start_with?('No ')
+    return reason if reason == 'Future'
+    return booking.display_status if booking
+
+    reason ? 'Blocked' : 'Available'
+  end
+
+  def past_booking_label(booking)
+    booking ? booking.display_status : 'Past'
+  end
+
+  def calendar_day_class(booking, reason)
+    return 'booked' if booking
+
+    reason ? 'blocked' : 'available'
+  end
+
+  def program_schedule_summary(program)
+    weekdays = program.available_weekdays.sort_by(&:to_i).map { |day| Date::DAYNAMES[day.to_i] }.to_sentence
+    "#{weekdays} at #{format_start_time(program.start_time)} (#{program.time_zone})"
+  end
+
+  def format_start_time(clock)
+    DateTime.strptime(clock, '%H:%M').strftime('%-I:%M %p')
+  end
+
+  def booking_time(booking)
+    booking.scheduled_start.in_time_zone(booking.time_zone).strftime('%-I:%M %p %Z')
+  end
+
+  def calendar_time(calendar, date)
+    booking = calendar.displayed_bookings[date]
+    return booking.scheduled_start.in_time_zone(calendar.program.time_zone).strftime('%-I:%M %p') if booking
+
+    clock = calendar.schedule.time_for(date)
+    format_start_time(clock) if clock
+  end
+
+  def calendar_month_path(calendar, month, changing_booking = nil)
+    options = { month: month.strftime('%Y-%m') }
+    if changing_booking
+      edit_program_booking_path(calendar.program, changing_booking, **options)
+    else
+      program_path(calendar.program, **options)
+    end
+  end
+end

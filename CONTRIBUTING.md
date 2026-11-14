@@ -51,7 +51,7 @@ Audit-history tests cover user/session settings, original/modified values, actor
 
 Session tests cover configuration validation, decimal pay, cross-session isolation, scoped admin/coordinator mutations, inactive accounts, inherited permissions, revocation, and concurrent duplicate role grants against the real unique index. Track membership records before deleting their related fixtures. Do not grant global privileges to represent local schedule access.
 
-Slug tests cover name defaults, editable values, history, duplicate/reserved names, ID-shaped values, unique-index conflicts, scoped lookup, and nested management URLs. Production packaging seeds a legacy venue before boot and verifies the entry point splits it and backfills both slug domains. Run `bundle exec rails 'mongoid_slug:set[Venue,DrawingSession]'` to backfill existing local locations and sessions; it skips documents already containing slugs.
+Slug tests cover name defaults, editable values, history, duplicate/reserved names, ID-shaped values, unique-index conflicts, scoped lookup, and nested management URLs. Production packaging seeds a legacy venue before boot and verifies the entry point splits it and backfills both slug domains. Run `bundle exec rails 'mongoid_slug:set[Venue,Program]'` to backfill existing local locations and sessions; it skips documents already containing slugs.
 
 Invitation tests use a MongoDB 8.0 replica set and exercise single-use consumption, transaction rollback under competing account claims, scoped access, existing-account login returns, optional email delivery, expiry/revocation, and preserving membership roles. Track newly accepted accounts and memberships before fixture cleanup. No tests send external messages.
 

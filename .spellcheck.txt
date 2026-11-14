@@ -20,10 +20,12 @@ dev
 DigitalOcean
 DigitalOcean's
 Dockerfile
-DrawingSession
+Program
+ProgramMembership
+ProgramRoster
+ProgramScheduleException
+ParticipantInvitation
 DrawingSessionMembership
-DrawingSessionModelRoster
-DrawingSessionScheduleException
 Doubrovkine
 Enochs
 env
@@ -60,8 +62,9 @@ md
 MERCHANTABILITY
 mongo
 MongoDB
+ObjectId
 Mongoid
-ModelBooking
+Booking
 mongosh
 ne
 nin
@@ -90,6 +93,7 @@ replSet
 reviewable
 RuboCop
 samesite
+schemas
 setOnInsert
 SHA
 signup
@@ -104,6 +108,7 @@ sublicense
 tbody
 tcp
 td
+dt
 TLS
 tmp
 txt

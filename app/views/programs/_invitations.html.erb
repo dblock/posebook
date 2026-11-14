@@ -1,0 +1,15 @@
+<section>
+  <h2><%= @program.participant_label.titleize %> Invitations</h2>
+  <p><%= link_to "Invite #{@program.participant_article} #{@program.participant_label.titleize}", new_program_participant_invitation_path(@program) %></p>
+  <ul>
+    <% @invitations.each do |invitation| %>
+      <li>
+        <%= invitation.name.presence || "Personal invitation" %>
+        <%= invitation.email %> - <%= status_label(invitation.status) %>
+        <% if invitation.status == "Pending" %>
+          <%= button_to "Revoke Invitation", program_participant_invitation_path(@program, invitation), method: :delete %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+</section>

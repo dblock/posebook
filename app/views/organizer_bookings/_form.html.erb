@@ -1,32 +1,32 @@
-<%= render "drawing_sessions/regular_schedule", drawing_session: @drawing_session %>
-<p>Organizers can change bookings and attendance at this session without the model's five-day restriction. Changing the date or model retains the original booking and its confirmation history. Choose the attendance status for the resulting booking.</p>
+<%= render "programs/regular_schedule", program: @program %>
+<p>Organizers can change bookings and attendance at this <%= @program.program_label.downcase %> without the <%= @program.participant_label.downcase %>'s five-day restriction. Changing the date or <%= @program.participant_label.downcase %> retains the original booking and its confirmation history. Choose the attendance status for the resulting booking.</p>
 <% values = params[:booking] || { user_id: @booking&.user_id, date: @booking&.date&.iso8601 || params[:date], attendance: @booking&.attendance_confirmed? ? "confirmed" : "unconfirmed", lock_version: @booking&.lock_version } %>
-<%= form_with url: @booking ? drawing_session_organizer_booking_path(@drawing_session, @booking) : drawing_session_organizer_bookings_path(@drawing_session), method: @booking ? :patch : :post, scope: :booking do |form| %>
+<%= form_with url: @booking ? program_organizer_booking_path(@program, @booking) : program_organizer_bookings_path(@program), method: @booking ? :patch : :post, scope: :booking do |form| %>
   <%= form.hidden_field :lock_version, value: values[:lock_version], id: nil if @booking %>
-  <%= form.label :user_id, "Model" %>
-  <%= form.select :user_id, @models.map { |model| ["#{model.name} (#{model.gender&.capitalize || 'Gender not selected'})", model.id] }, selected: values[:user_id], include_blank: "Choose a model" %>
-  <%= form.label :date, "Posing date" %>
+  <%= form.label :user_id, @program.participant_label.titleize %>
+  <%= form.select :user_id, @participants.map { |participant| ["#{participant.name} (#{participant.gender&.capitalize || 'Gender not selected'})", participant.id] }, selected: values[:user_id], include_blank: "Choose #{@program.participant_article} #{@program.participant_label.downcase}" %>
+  <%= form.label :date, "Booking date" %>
   <%= form.date_field :date, value: values[:date], required: true %>
   <%= form.label :attendance, "Attendance" %>
   <%= form.select :attendance, [["Not confirmed", "unconfirmed"], ["Confirmed", "confirmed"]], selected: values[:attendance] %>
   <%= form.label :reason, "Explanation" %>
   <%= form.text_area :reason, value: values[:reason], required: @booking.present?, maxlength: 2000, rows: 2 %>
-  <% if @drawing_session.no_consecutive_genders.any? %>
+  <% if @program.no_consecutive_genders.any? %>
     <p>
       <%= form.check_box :override_gender_rule, checked: values[:override_gender_rule] == "1" %>
-      <%= form.label :override_gender_rule, "Override the session's consecutive-gender rule" %><br>
-      <small>Check this explicitly and provide an explanation above to book adjacent sessions against the rule. The override is retained in private booking history. A gender selection is still required.</small>
+      <%= form.label :override_gender_rule, "Override the #{@program.program_label.downcase}'s consecutive-gender rule" %><br>
+      <small>Check this explicitly and provide an explanation above to book adjacent <%= @program.program_label.pluralize.downcase %> against the rule. The override is retained in private booking history. A gender selection is still required.</small>
     </p>
   <% end %>
   <%= form.submit "Save Booking" %>
 <% end %>
 <% if @booking %>
   <h2>Cancel Booking</h2>
-  <%= form_with url: cancel_drawing_session_organizer_booking_path(@drawing_session, @booking), scope: :booking do |form| %>
+  <%= form_with url: cancel_program_organizer_booking_path(@program, @booking), scope: :booking do |form| %>
     <%= form.hidden_field :lock_version, value: values[:lock_version], id: nil %>
     <%= form.label :reason, "Cancellation explanation", for: "booking-cancellation-reason" %>
     <%= form.text_area :reason, id: "booking-cancellation-reason", required: true, maxlength: 2000, rows: 2 %>
     <%= form.submit "Cancel Booking" %>
   <% end %>
 <% end %>
-<p><%= link_to "Back to DrawingSession", drawing_session_path(@drawing_session) %></p>
+<p><%= link_to "Back to #{@program.program_label.titleize}", program_path(@program) %></p>

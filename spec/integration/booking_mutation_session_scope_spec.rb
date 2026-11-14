@@ -9,26 +9,26 @@ RSpec.describe BookingMutation, :aggregate_failures, :database do
 
   it 'allows one upcoming booking per session, including the same date at the same venue' do
     venue = create_venue
-    programs = Array.new(2) { create_drawing_session(venue: venue) }
-    model = create_user
+    programs = Array.new(2) { create_program(venue: venue) }
+    participant = create_user
     bookings = programs.map do |program|
-      grant_model_access(program, model)
-      track_booking(described_class.new(drawing_session: program, user: model).book(date: '2026-11-16'))
+      grant_participant_access(program, participant)
+      track_booking(described_class.new(program: program, user: participant).book(date: '2026-11-16'))
     end
-    expect(bookings.map(&:drawing_session_id)).to match_array(programs.map(&:id))
-    expect(ModelBookingClaim.where(user_id: model.id).count).to eq(2)
-    expect { described_class.new(drawing_session: programs.first, user: model).book(date: '2026-11-23') }
+    expect(bookings.map(&:program_id)).to match_array(programs.map(&:id))
+    expect(BookingClaim.where(user_id: participant.id).count).to eq(2)
+    expect { described_class.new(program: programs.first, user: participant).book(date: '2026-11-23') }
       .to raise_error(BookingMutation::Invalid)
   end
 
-  it 'does not turn an invitation for one session into model access at its siblings' do
+  it 'does not turn an invitation for one session into participant access at its siblings' do
     venue = create_venue
-    first = create_drawing_session(venue: venue)
-    sibling = create_drawing_session(venue: venue)
-    model = create_user
-    grant_model_access(first, model)
-    expect { described_class.new(drawing_session: sibling, user: model).book(date: '2026-11-16') }
+    first = create_program(venue: venue)
+    sibling = create_program(venue: venue)
+    participant = create_user
+    grant_participant_access(first, participant)
+    expect { described_class.new(program: sibling, user: participant).book(date: '2026-11-16') }
       .to raise_error(BookingMutation::Invalid)
-    expect(sibling.memberships.models).to be_empty
+    expect(sibling.memberships.participants).to be_empty
   end
 end

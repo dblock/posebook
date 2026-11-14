@@ -1,7 +1,7 @@
 <main>
-  <h1>Pose at <%= @invitation.drawing_session.name %></h1>
-  <%= render "drawing_sessions/regular_schedule", drawing_session: @invitation.drawing_session %>
-  <p>Accept this personal invitation to join the session as a model. You can then view its calendar. One person can accept this link.</p>
+  <h1>Join <%= @program.name %> as <%= @program.participant_article %> <%= @program.participant_label.downcase %></h1>
+  <%= render "programs/regular_schedule", program: @invitation.program %>
+  <p>Accept this personal invitation to join the <%= @program.program_label.downcase %> as <%= @program.participant_article %> <%= @program.participant_label.downcase %>. You can then view its calendar. One person can accept this link.</p>
   <% if current_user %>
     <p>Signed in as <%= current_user.name %> (<%= current_user.email %>).</p>
     <%= form_with url: invitation_path do |form| %>

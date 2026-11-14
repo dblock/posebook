@@ -66,14 +66,14 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     expect(response.parsed_body.css('.venue-photo').count).to eq(13)
   end
 
-  it 'requires authentication and does not grant photo writes to models or schedule organizers' do
+  it 'requires authentication and does not grant photo writes to participants or schedule organizers' do
     url = venue_photo_path(venue, photo)
     post venue_photos_path(venue), params: { venue_photo: { file: photo_upload } }
     expect(response).to redirect_to(new_session_path)
     user = create_user
-    drawing_session = create_drawing_session(venue: venue)
-    grant_coordinator_access(drawing_session, user)
-    grant_model_access(drawing_session, user)
+    program = create_program(venue: venue)
+    grant_coordinator_access(program, user)
+    grant_participant_access(program, user)
     sign_in(user)
     post venue_photos_path(venue), params: { venue_photo: { file: photo_upload } }
     expect(response).to have_http_status(:forbidden)

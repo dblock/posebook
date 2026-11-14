@@ -1,0 +1,15 @@
+<main>
+  <h1><%= @program.program_label.titleize %> Coordinators at <%= @program.name %></h1>
+  <%= render "programs/regular_schedule", program: @program %>
+  <% @organizers.each do |membership| %>
+    <p><%= membership.user.name %> (<%= membership.user.email %>)</p>
+    <% unless membership.user.active? %><%= status_label("Inactive") %> account<% end %>
+    <%= button_to "Remove Coordinator", program_coordinator_path(@program, membership), method: :delete %>
+  <% end %>
+  <%= form_with url: program_coordinators_path(@program) do |form| %>
+    <p><%= form.label :email, "Registered user's email" %><br><%= form.email_field :email, required: true %></p>
+    <%= form.submit "Add #{@program.program_label.titleize} Coordinator" %>
+  <% end %>
+  <p>Venue coordinators inherit access to every <%= @program.program_label.downcase %> at their venue. <%= @program.program_label.titleize %> coordinators cannot grant coordinator access.</p>
+  <p><%= link_to "Back to #{@program.program_label.titleize}", program_path(@program) %></p>
+</main>

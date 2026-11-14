@@ -3,8 +3,8 @@
 require 'net/smtp'
 
 class BookingInvitationDelivery
-  def initialize(drawing_session:, user:)
-    @mutation = ModelAccessMutation.new(drawing_session: drawing_session, user: user)
+  def initialize(program:, user:)
+    @mutation = ParticipantAccessMutation.new(program: program, user: user)
   end
 
   def call(id)

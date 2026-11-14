@@ -30,7 +30,7 @@ class PhotoGallery
     return false unless @viewer
     return @organizer unless @organizer.nil?
 
-    drawing_session_ids = DrawingSessionMembership.models.where(user_id: user.id).pluck(:drawing_session_id)
-    @organizer = DrawingSession.managed_by(@viewer).exists?(:id.in => drawing_session_ids)
+    program_ids = ProgramMembership.participants.where(user_id: user.id).pluck(:program_id)
+    @organizer = Program.managed_by(@viewer).exists?(:id.in => program_ids)
   end
 end

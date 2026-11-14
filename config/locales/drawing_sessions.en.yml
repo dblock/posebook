@@ -1,7 +1,0 @@
-en:
-  drawing_sessions:
-    created: Session created.
-    updated: Session settings saved.
-    schedule_saved: Drawing schedule saved.
-    organizer_added: Session coordinator added.
-    organizer_removed: Session coordinator removed.

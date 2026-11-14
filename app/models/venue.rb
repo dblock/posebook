@@ -10,16 +10,16 @@ class Venue
   field :custom_slug, type: String
   field :address, type: String
   field :instagram_handle, type: String
-  field :session_schema_version, type: Integer, default: 1
+  field :program_schema_version, type: Integer, default: 1
 
-  slug :name, :custom_slug, history: true, reserve: DrawingSession::RESERVED_SLUGS, max_length: 100 do |venue|
+  slug :name, :custom_slug, history: true, reserve: Program::RESERVED_SLUGS, max_length: 100 do |venue|
     (venue.custom_slug.presence || venue.name).to_url
   end
   track_history on: %i[name custom_slug _slugs address instagram_handle],
                 modifier_field_optional: true, modifier_field_inverse_of: nil, track_blank_changes: true
 
   has_many :memberships, class_name: 'VenueMembership', inverse_of: :venue, dependent: :restrict_with_error
-  has_many :drawing_sessions, inverse_of: :venue, dependent: :restrict_with_error
+  has_many :programs, inverse_of: :venue, dependent: :restrict_with_error
   has_many :photos, class_name: 'VenuePhoto', inverse_of: :venue, dependent: :destroy
 
   before_validation do
@@ -55,7 +55,7 @@ class Venue
   def self.visible_to(user)
     return all if user.system_admin?
 
-    ids = coordinated_by(user).pluck(:id) + DrawingSession.visible_to(user).distinct(:venue_id)
+    ids = coordinated_by(user).pluck(:id) + Program.visible_to(user).distinct(:venue_id)
     where(:id.in => ids)
   end
 

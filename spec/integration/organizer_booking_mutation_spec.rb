@@ -7,58 +7,58 @@ RSpec.describe OrganizerBookingMutation, :aggregate_failures, :database do
 
   around { |example| travel_to(Time.utc(2026, 11, 13, 15)) { example.run } }
 
-  let(:drawing_session) { create_drawing_session }
-  let(:model) { create_user }
+  let(:program) { create_program }
+  let(:participant) { create_user }
   let(:organizer) { create_user }
-  let(:mutation) { described_class.new(drawing_session: drawing_session, user: organizer) }
+  let(:mutation) { described_class.new(program: program, user: organizer) }
   let(:attributes) do
-    { date: '2026-11-16', user_id: model.id.to_s, attendance: 'confirmed', reason: 'Confirmed by phone.',
+    { date: '2026-11-16', user_id: participant.id.to_s, attendance: 'confirmed', reason: 'Confirmed by phone.',
       lock_version: 0 }
   end
 
   before do
-    grant_model_access(drawing_session, model)
-    grant_coordinator_access(drawing_session, organizer)
+    grant_participant_access(program, participant)
+    grant_coordinator_access(program, organizer)
   end
 
   def reserve
-    track_booking(BookingMutation.new(drawing_session: drawing_session, user: model).book(date: '2026-11-16'))
+    track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-11-16'))
   end
 
   it 'rolls back a date replacement and its history when the destination is occupied' do
     original = reserve
     other = create_user
-    grant_model_access(drawing_session, other)
-    track_booking(BookingMutation.new(drawing_session: drawing_session, user: other).book(date: '2026-11-23'))
+    grant_participant_access(program, other)
+    track_booking(BookingMutation.new(program: program, user: other).book(date: '2026-11-23'))
     expect do
       mutation.update(original.id, attributes.merge(date: '2026-11-23'))
     end.to raise_error(BookingMutation::Conflict, I18n.t('bookings.date_taken'))
     expect(original.reload.status).to eq('confirmed')
     expect(original.lock_version).to eq(0)
     expect(original.attendance_changes).to be_empty
-    expect(drawing_session.model_bookings.count).to eq(2)
-    expect(ModelBookingClaim.find_by(model_booking_id: original.id).date).to eq(original.date)
+    expect(program.bookings.count).to eq(2)
+    expect(BookingClaim.find_by(booking_id: original.id).date).to eq(original.date)
   end
 
-  it 'can reassign the same date but preserves the one-upcoming-booking constraint for the new model' do
+  it 'can reassign the same date but preserves the one-upcoming-booking constraint for the new participant' do
     original = reserve
     other = create_user
-    grant_model_access(drawing_session, other)
+    grant_participant_access(program, other)
     replacement = track_booking(mutation.update(original.id, attributes.merge(user_id: other.id.to_s)))
     expect(original.reload.status).to eq('rescheduled')
     expect(replacement).to have_attributes(date: original.date, user_id: other.id)
     expect do
       mutation.create(attributes.merge(user_id: other.id.to_s, date: '2026-11-23'))
     end.to raise_error(BookingMutation::Conflict)
-    expect(drawing_session.model_bookings.count).to eq(2)
+    expect(program.bookings.count).to eq(2)
   end
 
   it 'rechecks authorization for loaded organizers and permits system admins without membership' do
     original = reserve
-    drawing_session.memberships.coordinators.find_by(user_id: organizer.id).revoke_coordinator_access
+    program.memberships.coordinators.find_by(user_id: organizer.id).revoke_coordinator_access
     expect { mutation.update(original.id, attributes) }.to raise_error(BookingMutation::Invalid, /Schedule access/)
     admin = create_user(roles: ['system_admin'])
-    described_class.new(drawing_session: drawing_session, user: admin).update(original.id, attributes)
+    described_class.new(program: program, user: admin).update(original.id, attributes)
     expect(original.reload.attendance_confirmed_by_id).to eq(admin.id)
   end
 
@@ -66,13 +66,13 @@ RSpec.describe OrganizerBookingMutation, :aggregate_failures, :database do
     [{ date: 'invalid' }, { attendance: 'anything' }, { user_id: create_user.id.to_s }].each do |changes|
       expect { mutation.create(attributes.merge(changes)) }.to raise_error(BookingMutation::Invalid)
     end
-    expect(drawing_session.model_bookings).to be_empty
-    expect(ModelBookingClaim.where(drawing_session_id: drawing_session.id)).to be_empty
+    expect(program.bookings).to be_empty
+    expect(BookingClaim.where(program_id: program.id)).to be_empty
   end
 
   it 'rolls back a retained cancellation if its claim cannot be released' do
     original = reserve
-    ModelBookingClaim.where(model_booking_id: original.id).delete_all
+    BookingClaim.where(booking_id: original.id).delete_all
     expect { mutation.cancel(original.id, reason: 'Plans changed.', version: original.lock_version) }
       .to raise_error(BookingMutation::Conflict)
     expect(original.reload.status).to eq('confirmed')

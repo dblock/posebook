@@ -2,5 +2,5 @@
   <h1>Venues</h1>
   <% @venues.each do |venue| %><p><%= link_to venue.name, venue %></p><% end %>
   <% if current_user.system_admin? %><p><%= link_to "Create Venue", new_venue_path %></p><% end %>
-  <p><%= link_to "Sessions", drawing_sessions_path %></p>
+  <p><%= link_to "Sessions", programs_path %></p>
 </main>
