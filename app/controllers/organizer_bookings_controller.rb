@@ -38,7 +38,7 @@ class OrganizerBookingsController < ApplicationController
   end
 
   def booking_params
-    params.expect(booking: %i[date user_id attendance reason]).to_h.symbolize_keys
+    params.expect(booking: %i[date user_id attendance reason override_gender_rule]).to_h.symbolize_keys
   end
 
   def mutation

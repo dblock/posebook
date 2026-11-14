@@ -18,6 +18,15 @@
       <label><%= check_box_tag "venue[available_weekdays][]", index, venue.available_weekdays.include?(index.to_s), id: "weekday-#{index}" %> <%= day %></label>
     <% end %>
   </fieldset>
+  <fieldset>
+    <legend>Prevent Consecutive Models by Gender</legend>
+    <p>Each selected gender cannot repeat in immediately adjacent scheduled sessions. Unselected genders may repeat. An unbooked session breaks the sequence; closed dates are skipped.</p>
+    <%= hidden_field_tag "venue[no_consecutive_genders][]", "" %>
+    <% User::GENDERS.each do |gender| %>
+      <label><%= check_box_tag "venue[no_consecutive_genders][]", gender, venue.no_consecutive_genders.include?(gender), id: "no-consecutive-#{gender}" %> <%= gender.capitalize %></label>
+    <% end %>
+    <p>These rules apply to new bookings and replacements, not existing reservations. Organizers can explicitly override with an explanation.</p>
+  </fieldset>
   <p><%= form.label :instructions %><br><%= form.text_area :instructions, maxlength: 5000, rows: 4 %></p>
   <p>Changing the regular start time moves upcoming bookings that do not have a dated time exception, retaining each time change. Other settings do not rewrite existing bookings. Automated reminders are not available yet.</p>
   <%= form.submit venue.persisted? ? "Save Venue" : "Create Venue" %>

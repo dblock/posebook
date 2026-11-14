@@ -3,13 +3,20 @@
 <% values = params[:booking] || { user_id: @booking&.user_id, date: @booking&.date&.iso8601 || params[:date], attendance: @booking&.attendance_confirmed? ? "confirmed" : "unconfirmed" } %>
 <%= form_with url: @booking ? venue_organizer_booking_path(@venue, @booking) : venue_organizer_bookings_path(@venue), method: @booking ? :patch : :post, scope: :booking do |form| %>
   <%= form.label :user_id, "Model" %>
-  <%= form.select :user_id, @models.map { |model| [model.name, model.id] }, selected: values[:user_id], include_blank: "Choose a model" %>
+  <%= form.select :user_id, @models.map { |model| ["#{model.name} (#{model.gender&.capitalize || 'Gender not selected'})", model.id] }, selected: values[:user_id], include_blank: "Choose a model" %>
   <%= form.label :date, "Posing date" %>
   <%= form.date_field :date, value: values[:date], required: true %>
   <%= form.label :attendance, "Attendance" %>
   <%= form.select :attendance, [["Not confirmed", "unconfirmed"], ["Attendance confirmed", "confirmed"]], selected: values[:attendance] %>
   <%= form.label :reason, "Explanation" %>
   <%= form.text_area :reason, value: values[:reason], required: @booking.present?, maxlength: 2000, rows: 2 %>
+  <% if @venue.no_consecutive_genders.any? %>
+    <p>
+      <%= form.check_box :override_gender_rule, checked: values[:override_gender_rule] == "1" %>
+      <%= form.label :override_gender_rule, "Override the venue's consecutive-gender rule" %><br>
+      <small>Check this explicitly and provide an explanation above to book adjacent sessions against the rule. The override is retained in private booking history. A gender selection is still required.</small>
+    </p>
+  <% end %>
   <%= form.submit "Save Booking" %>
 <% end %>
 <% if @booking %>

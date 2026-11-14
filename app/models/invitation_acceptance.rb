@@ -8,7 +8,8 @@ class InvitationAcceptance
   def initialize(token:, user: nil, attributes: {})
     @token = token
     @existing_user = user
-    @attributes = attributes.slice(:name, :email, :phone, :password, :password_confirmation, *PublicProfile::FIELDS)
+    @attributes = attributes.slice(:name, :email, :phone, :gender, :password, :password_confirmation,
+                                   *PublicProfile::FIELDS)
   end
 
   def call

@@ -3,14 +3,16 @@
 class VenueSchedule
   TIME_FORMAT = /\A(?:[01]\d|2[0-3]):[0-5]\d\z/
 
-  def initialize(venue)
+  def initialize(venue, from: Time.current.in_time_zone(venue.time_zone).to_date)
     @venue = venue
+    @from = from
   end
 
   def exceptions
     @exceptions ||= if @venue.persisted?
-                      @venue.schedule_exceptions.where(:date.gte => Time.current.in_time_zone(@venue.time_zone).to_date)
-                            .index_by(&:date)
+                      records = @venue.schedule_exceptions
+                      records = records.where(:date.gte => @from) if @from
+                      records.index_by(&:date)
                     else
                       {}
                     end

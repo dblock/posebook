@@ -27,4 +27,5 @@
 - [#28](https://github.com/dblock/posebook/pull/28): Add seven-day attendance confirmation, five-day rescheduling deadlines, private overdue warnings, and venue-scoped organizer booking controls with retained history - [@dblock](https://github.com/dblock).
 - [#30](https://github.com/dblock/posebook/pull/30): Distinguish booked calendar dates with a darker green while keeping available dates pale green and unavailable dates gray - [@dblock](https://github.com/dblock).
 - [#25](https://github.com/dblock/posebook/pull/25): Show venue-wide model availability counts and compact paginated rosters while inviting across every page - [@dblock](https://github.com/dblock).
+- [#31](https://github.com/dblock/posebook/pull/31): Add private model gender selection and independent venue rules against consecutive models of each gender, enforced in booking calendars with explicit organizer overrides - [@dblock](https://github.com/dblock).
 - Your contribution here.

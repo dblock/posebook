@@ -13,8 +13,10 @@ class User
   # MongoDB's built-in unique ID makes competing first-user registrations atomic.
   BOOTSTRAP_ID = BSON::ObjectId.from_string('000000000000000000000001')
   GLOBAL_ROLES = %w[system_admin].freeze
+  GENDERS = %w[male female other].freeze
 
   field :name, type: String
+  field :gender, type: String
   field :email, type: String
   field :password_digest, type: String
   field :roles, type: Array, default: []
@@ -22,7 +24,7 @@ class User
   field :password_reset_digest, type: String
   field :password_reset_expires_at, type: Time
 
-  track_history on: %i[name email phone roles active email_verified_at
+  track_history on: %i[name gender email phone roles active email_verified_at
                        display_name instagram_handle instagram_tagging_allowed public_profile_private],
                 modifier_field_optional: true, modifier_field_inverse_of: nil, track_blank_changes: true
 
@@ -32,6 +34,8 @@ class User
   has_secure_password reset_token: false
 
   before_validation { self.email = email.to_s.strip.downcase }
+  before_validation { self.gender = gender.presence }
+  validates :gender, inclusion: { in: GENDERS }, allow_nil: true
   validates :name, presence: true, length: { maximum: 100 }
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP },
                     length: { maximum: 254 }, uniqueness: true
@@ -66,7 +70,7 @@ class User
   end
 
   def update_by_admin(attributes)
-    assign_attributes(attributes.slice(:name, :email, :phone, *PublicProfile::FIELDS))
+    assign_attributes(attributes.slice(:name, :email, :phone, :gender, *PublicProfile::FIELDS))
     self.email = email.to_s.strip.downcase
     clear_email_authentication if email_changed?
     save

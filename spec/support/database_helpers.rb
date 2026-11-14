@@ -13,7 +13,7 @@ module DatabaseHelpers
   end
 
   def user_attributes(**overrides)
-    { name: 'Test Artist', email: "artist-#{SecureRandom.hex(6)}@example.test",
+    { name: 'Test Artist', gender: 'other', email: "artist-#{SecureRandom.hex(6)}@example.test",
       password: TEST_PASSWORD, password_confirmation: TEST_PASSWORD }.merge(overrides)
   end
 

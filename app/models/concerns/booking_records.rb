@@ -19,10 +19,11 @@ module BookingRecords
     text
   end
 
-  def create_record(date, previous: nil, user: @user)
+  def create_record(date, previous: nil, user: @user, gender_override_reason: nil)
     ModelBooking.create!(venue: @venue, user: user, created_by_id: @user.id, date: date, time_zone: @venue.time_zone,
                          starts_at: VenueSchedule.new(@venue).starts_at(date),
-                         ends_at: (date + 1).in_time_zone(@venue.time_zone).utc, previous_booking: previous)
+                         ends_at: (date + 1).in_time_zone(@venue.time_zone).utc, previous_booking: previous,
+                         gender_override_reason: gender_override_reason)
   end
 
   def expire_claims

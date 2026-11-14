@@ -4,6 +4,7 @@
     <dt>Name</dt><dd><%= @user.name %></dd>
     <dt>Email</dt><dd><%= @user.email %></dd>
     <dt>Phone (unverified)</dt><dd><%= @user.phone.presence || "Not provided" %></dd>
+    <dt>Gender (private)</dt><dd><%= @user.gender&.capitalize || "Not selected" %></dd>
     <dt>Public Identity</dt><dd><%= @user.public_profile_private? ? "Private: To be announced on public calendars" : "Public" %></dd>
     <dt>Public Display Name</dt><dd><%= @user.public_name %><%= " (using your name)" if !@user.public_profile_private? && @user.display_name.blank? %></dd>
     <dt>Instagram Handle</dt><dd><% if (url = InstagramProfile.url(@user.instagram_handle)) %><%= link_to "@#{@user.instagram_handle}", url, rel: "noopener noreferrer" %><% else %>Not provided<% end %></dd>

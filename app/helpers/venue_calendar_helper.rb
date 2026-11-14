@@ -14,7 +14,8 @@ module VenueCalendarHelper
     return "public:#{current_user&.id || 'guest'}" if public_view
 
     "#{manager ? 'manager' : 'model'}:#{current_user.id}:#{current_user.system_admin?}:" \
-      "#{venue.schedule_revision}:#{booking&.confirmation_open?}:#{booking&.rescheduling_locked?}"
+      "#{venue.schedule_revision}:#{booking&.confirmation_open?}:#{booking&.rescheduling_locked?}:" \
+      "#{current_user.gender}"
   end
 
   def calendar_day_reason(calendar, date, public_view:)

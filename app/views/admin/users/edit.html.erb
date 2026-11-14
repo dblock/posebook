@@ -9,6 +9,7 @@
     <p><%= form.label :name %><br><%= form.text_field :name, required: true, autocomplete: "name", maxlength: 100 %></p>
     <p><%= form.label :email %><br><%= form.email_field :email, required: true, autocomplete: "email" %></p>
     <p><%= form.label :phone %><br><%= form.telephone_field :phone, autocomplete: "tel" %><br>Use an international number beginning with +. Phone numbers are unverified.</p>
+    <%= render "shared/gender_field", form: form %>
     <%= render "shared/public_profile_fields", form: form, self_service: false %>
     <%= form.submit "Save User" %>
   <% end %>

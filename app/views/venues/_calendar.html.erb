@@ -5,6 +5,12 @@
 <section aria-label="Posing calendar" data-calendar data-calendar-context="<%= calendar_access_context(public_view, manager: @manage_schedule, venue: calendar.venue, booking: @my_booking) %>">
   <h2>Posing Calendar</h2>
   <%= render "venues/regular_schedule", venue: calendar.venue %>
+  <% if !public_view && calendar.venue.no_consecutive_genders.any? %>
+    <p>Gender rules prevent repeats for each selected gender: <%= calendar.venue.no_consecutive_genders.map(&:capitalize).to_sentence %>. Only immediately adjacent scheduled sessions count. An unbooked session breaks the sequence; closed dates are skipped.</p>
+  <% end %>
+  <% if @booking_access&.model? && current_user.gender.blank? %>
+    <p role="status">Choose male, female, or other in <%= link_to "Edit Profile", edit_profile_path %> before your next booking. Existing reservations are unchanged.</p>
+  <% end %>
   <nav aria-label="Calendar months">
     <% if calendar.month > calendar.today.beginning_of_month %>
       <%= link_to "Previous Month", calendar_month_path(calendar, calendar.month - 1.month, @changing_booking), data: { calendar_navigation: true } %>
@@ -26,6 +32,7 @@
             <% reason ||= booking.user_id == current_user&.id ? "Your booking" : "Already booked" if booking %>
             <% reason ||= "You are already scheduled" if @my_booking && !@changing_booking %>
             <% reason ||= @booking_access.paused? ? "Posing paused" : "Invitation required" if @booking_access&.model? && !@can_book %>
+            <% reason ||= calendar.gender_blocked_reason(date, current_user, excluding: @changing_booking&.id) if !public_view && @can_book %>
             <td data-date="<%= date.iso8601 %>" class="<%= calendar_day_class(booking, reason) %>">
               <time datetime="<%= date.iso8601 %>"><%= date.day %></time>
               <% if (clock = calendar_time(calendar, date)) %><strong><%= clock %></strong><br><% end %>

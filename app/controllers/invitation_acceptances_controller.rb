@@ -22,7 +22,7 @@ class InvitationAcceptancesController < ApplicationController
   def register
     return redirect_to invitation_path(token: @token) if current_user
 
-    attributes = params.expect(user: %i[name email phone password password_confirmation
+    attributes = params.expect(user: %i[name email phone gender password password_confirmation
                                         display_name instagram_handle instagram_tagging_allowed
                                         public_profile_private]).to_h.symbolize_keys
     @acceptance = InvitationAcceptance.new(token: @token, attributes: attributes)
