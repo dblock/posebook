@@ -19,25 +19,6 @@
   <%= render "invitations" if @manage_schedule %>
 
   <% if current_user.system_admin? %>
-    <p><%= link_to "Edit Venue", edit_venue_path(@venue) %></p>
-    <h2>Organizers</h2>
-    <ul>
-      <% @organizers.each do |membership| %>
-        <li>
-          <%= membership.user.name %> (<%= membership.user.email %>) - manage_schedule
-          <%= "(inactive account)" unless membership.user.active? %>
-          <%= button_to "Remove Schedule Access", venue_organizer_path(@venue, membership), method: :delete %>
-        </li>
-      <% end %>
-    </ul>
-    <% if @eligible_users.any? %>
-      <%= form_with url: venue_organizers_path(@venue) do |form| %>
-        <p><%= form.label :user_id, "Existing user" %><br><%= form.select :user_id, @eligible_users.map { |user| ["#{user.name} (#{user.email})", user.id] }, { prompt: "Choose an active user" }, required: true %></p>
-        <%= form.submit "Grant Schedule Access" %>
-      <% end %>
-    <% else %>
-      <p>No other active users are available.</p>
-    <% end %>
-    <p>Organizers receive manage_schedule only at this venue. Model invitations grant model access, never organizer or global roles.</p>
+    <p><%= link_to "Edit Venue", edit_venue_path(@venue) %> | <%= link_to "Organizers", venue_organizers_path(@venue) %></p>
   <% end %>
 </main>

@@ -7,6 +7,8 @@ RSpec.describe 'Venue management', :aggregate_failures, :database, type: :reques
     create_user
     get venues_path
     expect(response).to redirect_to(new_session_path)
+    get venue_organizers_path(create_venue)
+    expect(response).to redirect_to(new_session_path)
   end
 
   it 'lets a system admin create and update venue settings' do
@@ -46,7 +48,9 @@ RSpec.describe 'Venue management', :aggregate_failures, :database, type: :reques
     expect(response.body).not_to include(other.name)
     get venue_path(venue)
     expect(response).to have_http_status(:ok)
-    expect(response.body).not_to include('Existing user', 'Edit Venue')
+    expect(response.body).not_to include('Existing user', 'Edit Venue', 'Organizers')
+    get venue_organizers_path(venue)
+    expect(response).to have_http_status(:forbidden)
     get venue_path(other)
     expect(response).to have_http_status(:not_found)
   end
@@ -78,9 +82,11 @@ RSpec.describe 'Venue management', :aggregate_failures, :database, type: :reques
     user = create_user
     post venue_organizers_path(venue), params: { user_id: user.id, roles: ['system_admin'] }
     membership = track_record(VenueMembership.find_by(venue_id: venue.id, user_id: user.id))
+    expect(response).to redirect_to(venue_organizers_path(venue))
     expect(membership.roles).to eq(['manage_schedule'])
     expect(user.reload.roles).to be_empty
     delete venue_organizer_path(venue, membership)
+    expect(response).to redirect_to(venue_organizers_path(venue))
     expect(membership.reload.roles).to be_empty
     expect(Venue.visible_to(user)).to be_empty
   end
@@ -109,9 +115,25 @@ RSpec.describe 'Venue management', :aggregate_failures, :database, type: :reques
     user = create_user
     grant_schedule_access(venue, user)
     user.set(active: false)
-    get venue_path(venue)
+    get venue_organizers_path(venue)
     expect(response.body).to include('inactive account', 'Remove Schedule Access', 'Existing user')
     options = response.parsed_body.css('select[name="user_id"]').text
     expect(options).not_to include(user.email)
+  end
+
+  it 'links to a separate organizer page beside venue editing without exposing controls on the venue' do
+    sign_in(create_user(roles: ['system_admin']))
+    venue = create_venue
+    user = create_user
+    get venue_path(venue)
+    links = response.parsed_body.css('main > p').find { |paragraph| paragraph.text.include?('Edit Venue') }
+    expect(links.css('a').pluck('href')).to eq([edit_venue_path(venue), venue_organizers_path(venue)])
+    expect(response.body).not_to include('Grant Schedule Access', 'Remove Schedule Access', user.email)
+    get venue_organizers_path(venue)
+    expect(response.body).to include('No organizers assigned.', 'Grant Schedule Access', user.email)
+    expect(response.parsed_body.at_css('main a')['href']).to eq(venue_path(venue))
+    sign_in(user)
+    get venue_organizers_path(venue)
+    expect(response).to have_http_status(:forbidden)
   end
 end
