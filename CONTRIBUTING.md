@@ -35,6 +35,8 @@ Account-settings tests cover profile permissions, verified email changes, confli
 
 Admin user-editing tests cover authorization, allowed contact fields, immediate email changes, session/challenge revocation, competing email claims, inactive accounts, self-edits, and preserving access controls. Admin email changes do not contact an email provider or mark an address verified.
 
+Audit-history tests cover user/venue settings, original/modified values, actors across independent requests and system writes, secret exclusion, no-op/failed saves, retained deletion snapshots, account activation, concurrent email confirmation, and transactional rollback. Use ordinary saves for audited changes; atomic/raw writes bypass `mongoid-history`. Cleanup disables tracking and removes only audit records for owned fixture IDs, never the whole history collection.
+
 Venue tests cover configuration validation, decimal pay, cross-venue isolation, administrator-only mutations, inactive accounts, scoped revocation, and concurrent duplicate role grants against the real unique index. Track membership records before deleting their related fixtures. Do not grant global privileges to represent local schedule access.
 
 Slug tests cover name defaults, editable values, history, duplicate/reserved names, ID-shaped values, unique-index conflicts, scoped shortcuts, and nested management URLs. Production packaging seeds a legacy venue before boot and verifies the entry point backfills its slug. Run `bundle exec rails 'mongoid_slug:set[Venue]'` to backfill existing local venues; it skips documents already containing slugs.

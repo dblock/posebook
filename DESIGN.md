@@ -24,6 +24,14 @@ Development emails are written to `tmp/mail`; tests use the in-memory mail adapt
 
 System admins can edit any existing user's name, email, and phone, including inactive accounts, without changing roles, passwords, or active status. Successful edits return to the user list with confirmation; invalid edits stay on the form. Admin email changes apply immediately without verification or the target user's password, clear previous verification, revoke all sessions and outstanding authentication challenges, and handle competing unique email claims. Name/phone-only edits preserve sessions and pending email changes. An admin changing their own email is signed out with confirmation and must sign in again. Account access still has separate explicit controls; missing edits or invalid access values never default to deactivation.
 
+## User and Venue Audit History
+
+`mongoid-history` stores user and venue audit entries in `history_trackers`, including original/modified values, action, version, timestamps, and an optional user modifier. User fields are limited to name, email, phone, global roles, active status, and email verification time. Venue history covers name, custom/generated slugs, address, time zone, model pay, instructions, booking horizon, and available weekdays. Authentication secrets and challenges, including pending email addresses, password digests, tokens, expiry fields, and session versions, are never tracked.
+
+The authenticated request user supplies the actor; anonymous registration and system/console writes have no actor unless explicitly wrapped in `Current.set(user: actor)`. Actor context is restored after each request and cleared on subsequent system writes. History begins with new writes; existing records receive no fabricated historical baseline. Storage only is implemented: there are no history pages or undo/redo routes.
+
+Email confirmation, deactivation, and reactivation use fresh-document saves inside retrying replica-set transactions, committing the audited change and its history together. Token expiry/single-use and protected-admin predicates are checked again inside each attempt. Password-only operations retain their atomic credential updates without creating history. Other saves use the gem's normal callback semantics, including cleanup after failed persistence; this is not a database-wide audit log. Raw driver writes, atomic updates, and the missing-slug startup backfill bypass callbacks and history. Maintenance scripts must use ordinary saves and explicit actor context when audit entries are required.
+
 ## Agreed Model Workflow
 
 An organizer first connects with a model by email, Instagram, or text. The organizer adds them to the appropriate venue, possibly with only a name or social handle, then sends a private registration link by email or through the existing conversation.

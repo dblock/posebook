@@ -20,5 +20,6 @@ RSpec.describe InvitationAcceptance, :aggregate_failures, :database do
     expect(users.size).to eq(1)
     expect(invitation.reload.used_by_id).to eq(users.first.id)
     expect(venue.memberships.count).to eq(1)
+    expect(HistoryTracker.where(:'modified.email'.in => attributes.pluck(:email)).count).to eq(1)
   end
 end

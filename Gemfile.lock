@@ -136,6 +136,7 @@ GEM
     date (3.6.0)
     diff-lcs (1.6.2)
     drb (2.2.3)
+    easy_diff (1.0.0)
     erb (6.0.7)
     erubi (1.13.1)
     faraday (2.15.1)
@@ -240,6 +241,14 @@ GEM
       concurrent-ruby (>= 1.0.5, < 2.0)
       mongo (>= 2.18.0, < 3.0.0)
       ostruct
+    mongoid-compatibility (1.1.0)
+      activesupport
+      mongoid (>= 2.0)
+    mongoid-history (0.9.0)
+      activesupport
+      easy_diff
+      mongoid (>= 3.0)
+      mongoid-compatibility (>= 0.5.1)
     mongoid-slug (7.1.0)
       mongoid (>= 7.0)
       stringex (~> 2.0)
@@ -481,6 +490,7 @@ DEPENDENCIES
   danger-changelog (~> 0.10)
   danger-pr-comment (~> 0.2)
   mongoid (~> 9.1, >= 9.1.2)
+  mongoid-history (~> 0.9)
   mongoid-slug (~> 7.1)
   propshaft (~> 1.3, >= 1.3.2)
   puma (~> 8.0, >= 8.0.3)
@@ -540,6 +550,7 @@ CHECKSUMS
   date (3.6.0) sha256=18ac945c4e24ebd93534f8eab8c2fd8c5604b3e977105b3798d62a1e8d27b580
   diff-lcs (1.6.2) sha256=9ae0d2cba7d4df3075fe8cd8602a8604993efc0dfa934cff568969efb1909962
   drb (2.2.3) sha256=0b00d6fdb50995fe4a45dea13663493c841112e4068656854646f418fda13373
+  easy_diff (1.0.0) sha256=9cb8238d31af91e5d91bbf4508a5c9fa8bf4ca9108568ef2c6e557787c6f5b1a
   erb (6.0.7) sha256=c5ca6dc25b0ef974a44dc8f59fe847577122483b1968a38dec305c60bf91ee92
   erubi (1.13.1) sha256=a082103b0885dbc5ecf1172fede897f9ebdb745a4b97a5e8dc63953db1ee4ad9
   faraday (2.15.1) sha256=8708154deda739c5e86cc42b74960e23e8491fce0eba9e11639a6a34b1ac288f
@@ -582,6 +593,8 @@ CHECKSUMS
   minitest (6.1.0) sha256=ff373595aa8888631e8a5463986a76b3845346ae6d7fa46e139c1633d418076e
   mongo (2.26.1) sha256=ed47d4bc9d5c372976fa28ab3945878afaa8d0a9b6f7cbda7a0bdfd7e48157c5
   mongoid (9.1.2) sha256=77dade514b2fea07828a22386b4c69af7637522518de491cb78af2a9ec9d6f97
+  mongoid-compatibility (1.1.0) sha256=c62b337fd198940c4996100c2c9978fbff097336f3ae2ff5bc98946137ee6949
+  mongoid-history (0.9.0) sha256=2edf25d5eb66b8afb4e11f1a42c9952d7e1e233ba251faec9dc8d3b9f8266a4d
   mongoid-slug (7.1.0) sha256=cbc65c1aae3a125ac1a16b705ceadffe39bf14567789ff5cbae30cc4ab2fc5cb
   moxml (0.6.9) sha256=98ade5db899231f430d0727452d30eb3aa48eadc3e1b8f4cacc701dd2e48efd2
   nap (1.2.0) sha256=fdb4fd0de5509edca600b471570d00ce90745c9c06dc7d877efb513401953051

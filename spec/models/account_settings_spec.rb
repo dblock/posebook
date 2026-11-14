@@ -17,6 +17,8 @@ RSpec.describe AccountSettings, :aggregate_failures, :database do
       Thread.new { User.find(user.id).confirm_email_change(token).present? }
     end.map(&:value)
     expect(results.count(true)).to eq(1)
+    expect(user.history_tracks.where('modified.email' => 'confirmed@example.test').count).to eq(1)
+    expect(user.reload.version).to eq(user.history_tracks.last.version)
   end
 
   it 'rejects a confirmation that expires after its page loads' do

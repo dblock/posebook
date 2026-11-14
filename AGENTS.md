@@ -20,6 +20,8 @@ Only system admins configure venues or grant/revoke organizer access. `manage_sc
 
 Venue URLs use `mongoid-slug` with name-derived defaults, optional custom values, and retained slug history. Preserve ID-based URLs and scope slug lookups through the same authorization criteria. The root shortcut route belongs last, after application routes; reserve conflicting path names. Production startup creates slug indexes and runs the gem's missing-slug task, never regenerating existing slugs as a migration.
 
+`mongoid-history` audits whitelisted User/Venue business fields, never credentials, authentication challenges, or session secrets. Keep request actor context scoped and allow nil for anonymous/system writes. Audited email confirmation and account activation changes require fresh-document transactional saves; preserve expiry, token, and protected-admin predicates on retries. Atomic/raw updates bypass history; do not use them for normal audited field changes. No history or undo interface exists.
+
 Tests use `MONGODB_TEST_URI`, never the development or production connection. The test database guard requires `posebook_test` or a `posebook_test_` prefix. Delete only records owned by a test, not entire collections or databases. Keep real network-provider calls out of tests.
 
 ## Validation and Documentation
