@@ -4,12 +4,13 @@ class InvitationAcceptancesController < ApplicationController
   before_action :find_invitation
   rate_limit to: 5, within: 5.minutes, only: %i[create register]
   rescue_from Mongo::Error::OperationFailure, with: :handle_database_error
+  rescue_from InvitationAcceptance::RecipientMismatch, with: :handle_recipient_mismatch
 
   def show
     session.delete(:invitation_token)
     session.delete(:coordinator_invitation_token)
     session[invitation_session_key] = @token
-    @user = User.new
+    @user = User.new(name: @invitation.name, email: @invitation.email)
   end
 
   def create
@@ -77,5 +78,13 @@ class InvitationAcceptancesController < ApplicationController
     @user = @acceptance.user
     flash.now[:alert] = t('invitations.conflict')
     render :show, status: :conflict
+  end
+
+  def handle_recipient_mismatch
+    @user = @acceptance.user
+    @user.email = @invitation.email if @user.new_record?
+    @user.errors.add(:email, t('invitations.email_mismatch'))
+    flash.now[:alert] = t('invitations.wrong_account', email: @invitation.email)
+    render :show, status: @user.persisted? ? :forbidden : :unprocessable_content
   end
 end

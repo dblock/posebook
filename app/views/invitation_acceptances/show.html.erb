@@ -2,11 +2,16 @@
   <h1>Join <%= @program.name %> as <%= @program.participant_article %> <%= @program.participant_label.downcase %></h1>
   <%= render "programs/regular_schedule", program: @invitation.program %>
   <p>Accept this personal invitation to join the <%= @program.program_label.downcase %> as <%= @program.participant_article %> <%= @program.participant_label.downcase %>. You can then view its calendar. One person can accept this link.</p>
+  <% if @invitation.email.present? %><p>This invitation is restricted to <%= @invitation.email %>.</p><% end %>
   <% if current_user %>
     <p>Signed in as <%= current_user.name %> (<%= current_user.email %>).</p>
-    <%= form_with url: invitation_path do |form| %>
-      <%= hidden_field_tag :token, @token %>
-      <%= form.submit "Accept Invitation" %>
+    <% if @invitation.acceptable_by?(current_user) %>
+      <%= form_with url: invitation_path do |form| %>
+        <%= hidden_field_tag :token, @token %>
+        <%= form.submit "Accept Invitation" %>
+      <% end %>
+    <% else %>
+      <%= render "shared/invitation_account_mismatch", sign_out_path: session_path(invitation_token: @token) %>
     <% end %>
   <% else %>
     <p><%= link_to "Sign In with an Existing Account", new_session_path %></p>
@@ -15,7 +20,7 @@
     <%= form_with model: @user, url: invited_registration_path do |form| %>
       <%= hidden_field_tag :token, @token %>
       <p><%= form.label :name %><br><%= form.text_field :name, required: true, maxlength: 100, autocomplete: "name" %></p>
-      <p><%= form.label :email %><br><%= form.email_field :email, required: true, autocomplete: "email" %></p>
+      <p><%= form.label :email %><br><%= form.email_field :email, required: true, readonly: @invitation.email.present?, autocomplete: "email" %></p>
       <p><%= form.label :phone, "Phone (optional)" %><br><%= form.telephone_field :phone, autocomplete: "tel" %></p>
       <%= render "shared/gender_field", form: form %>
       <%= render "shared/public_profile_fields", form: form, self_service: true %>

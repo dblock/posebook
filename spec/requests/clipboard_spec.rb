@@ -29,7 +29,8 @@ RSpec.describe 'Copy controls', :aggregate_failures, :database, type: :request d
 
   it 'copies the participant invitation field only while its single-use link is displayed' do
     sign_in(admin)
-    post program_participant_invitations_path(program), params: { participant_invitation: { name: 'Avery Artist' } }
+    post program_participant_invitations_path(program),
+         params: { participant_invitation: { name: 'Avery Artist', email: 'artist@example.test' } }
     invitation = track_record(program.participant_invitations.first)
     follow_redirect!
     button = response.parsed_body.at_css('[data-copy-target="invitation_link"]')
@@ -38,8 +39,28 @@ RSpec.describe 'Copy controls', :aggregate_failures, :database, type: :request d
     field = response.parsed_body.at_css('.copy-field')
     expect(field.at_css('[data-copy-target="invitation_link"]')).to eq(button)
     expect(field.at_css('#invitation_link')['value']).to include('/invitation?token=')
+    expect(response.body).to include('Only artist@example.test can accept it.')
     get program_participant_invitation_path(program, invitation)
     expect(response.parsed_body.at_css('[data-copy-target]')).to be_nil
+  end
+
+  it 'retains coordinator history links and email copy controls for optional recipient addresses' do
+    named = create_coordinator_invitation(program.venue, admin, email: nil, name: 'Invited Manager')
+    unnamed = create_coordinator_invitation(program.venue, admin, email: nil, name: nil)
+    restricted = create_coordinator_invitation(program.venue, admin, email: 'manager@example.test')
+    sign_in(admin)
+    get venue_coordinators_path(program.venue)
+    expect(response.parsed_body.at_css("a[href='#{venue_coordinator_invitation_path(program.venue, named)}']").text)
+      .to eq('Invited Manager')
+    expect(response.parsed_body.at_css("a[href='#{venue_coordinator_invitation_path(program.venue, unnamed)}']").text)
+      .to eq('Personal invitation')
+    expect(response.parsed_body.at_css('[data-copy-value="manager@example.test"]')).to be_present
+    get venue_coordinator_invitation_path(program.venue, restricted)
+    expect(response.parsed_body.at_css('[data-copy-value="manager@example.test"]')).to be_present
+    expect(response.body).to include('using the invited email address')
+    get venue_coordinator_invitation_path(program.venue, named)
+    expect(response.body).to include('No email restriction.')
+    expect(response.parsed_body.at_css('[aria-label="Copy invited email"]')).to be_nil
   end
 
   it 'copies coordinator invitation fields without recovering tokens on later visits' do

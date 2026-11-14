@@ -2,7 +2,7 @@
   <h1>Invite <%= @program.participant_article %> <%= @program.participant_label.titleize %> to <%= @program.name %></h1>
   <%= render "programs/regular_schedule", program: @program %>
   <%= render "shared/errors", record: @invitation %>
-  <p>Create a single-use personal link to share by email or direct message. The recipient can register or sign in with any email address. Links expire in 30 days.</p>
+  <p>Create a single-use personal link to share privately. Leave email blank to let the recipient use any account, or enter an email to restrict acceptance to that address. Links expire in 30 days.</p>
   <%= form_with model: @invitation, url: program_participant_invitations_path(@program) do |form| %>
     <p><%= form.label :name, "Name or handle (optional)" %><br><%= form.text_field :name, maxlength: 100 %></p>
     <p><%= form.label :email, "Email (optional)" %><br><%= form.email_field :email %></p>

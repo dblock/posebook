@@ -17,9 +17,11 @@ class SessionsController < ApplicationController
 
   def destroy
     coordinator_token = params[:coordinator_invitation_token]
+    invitation_token = params[:invitation_token]
     reset_session
-    redirect_to(coordinator_token ? coordinator_invitation_path(token: coordinator_token) : new_session_path,
-                status: :see_other)
+    return redirect_to coordinator_invitation_path(token: coordinator_token), status: :see_other if coordinator_token
+
+    redirect_to(invitation_token ? invitation_path(token: invitation_token) : new_session_path, status: :see_other)
   end
 
   private

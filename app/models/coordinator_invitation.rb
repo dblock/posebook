@@ -13,9 +13,9 @@ class CoordinatorInvitation
 
   index({ venue_id: 1, program_id: 1, created_at: -1 })
   validates :name, length: { maximum: 100 }, allow_nil: true
-  validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }, length: { maximum: 254 }
+  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, length: { maximum: 254 }, allow_nil: true
   validate { errors.add(:base, :invalid) unless venue.present? ^ program.present? }
-  before_validation { self.email = email.to_s.strip.downcase }
+  before_validation { self.email = email.to_s.strip.downcase.presence }
 
   def self.available(token)
     invitation = super
@@ -35,7 +35,7 @@ class CoordinatorInvitation
   end
 
   def acceptable_by?(user)
-    user.email.to_s.strip.downcase == email && authorized?
+    super && authorized?
   end
 
   def grant_access(user, session: nil)

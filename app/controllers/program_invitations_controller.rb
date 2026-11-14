@@ -48,15 +48,15 @@ class ProgramInvitationsController < ApplicationController
   end
 
   def delivery_available?
-    return true unless params[:send_email] == '1'
-    return true if @invitation.email.present? && Rails.configuration.x.password_reset_delivery_enabled
+    return true if @invitation.email.blank? || params[:send_email] != '1'
+    return true if Rails.configuration.x.password_reset_delivery_enabled
 
     @invitation.errors.add(:base, t('invitations.delivery_unavailable'))
     false
   end
 
   def deliver_invitation
-    return unless params[:send_email] == '1'
+    return unless @invitation.email.present? && params[:send_email] == '1'
 
     ParticipantInvitationMailer.invite(@invitation, @invitation.token).deliver_now
   rescue IOError, SystemCallError, Timeout::Error, Net::SMTPError => e

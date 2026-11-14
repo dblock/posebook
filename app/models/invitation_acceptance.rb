@@ -2,6 +2,7 @@
 
 class InvitationAcceptance
   class Unavailable < StandardError; end
+  class RecipientMismatch < StandardError; end
 
   attr_reader :user
 
@@ -26,12 +27,16 @@ class InvitationAcceptance
     invitation = @invitation_class.available(@token)
     raise Unavailable unless invitation
 
-    @user = @existing_user || User.new(@attributes)
-    raise Unavailable unless user.active? && invitation.acceptable_by?(user)
-
+    prepare_user(invitation)
     user.save! if user.new_record?
     claim(invitation, session)
     invitation.grant_access(user, session: session)
+  end
+
+  def prepare_user(invitation)
+    @user = @existing_user ? User.find(@existing_user.id) : User.new(@attributes)
+    raise Unavailable unless user.active?
+    raise RecipientMismatch unless invitation.acceptable_by?(user)
   end
 
   def claim(invitation, session)

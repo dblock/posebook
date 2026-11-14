@@ -31,6 +31,10 @@ module InvitationToken
     )
   end
 
+  def acceptable_by?(user)
+    email.blank? || user.email.to_s.strip.casecmp?(email)
+  end
+
   def status
     return 'Accepted' if used_at
     return 'Revoked' if revoked_at

@@ -6,9 +6,15 @@ New programs default to **Program** and **Participant**, zero pay, Mondays at 09
 
 `APP_HOST` now defaults to `localhost`. Set it to your actual hostname for an external deployment, particularly if the installation previously relied on the old built-in hostname. Public `/sessions` URLs and authentication `/session` remain unchanged. No data migration is required.
 
+## Optional Invitation Email Restrictions
+
+All invitation types now allow a blank recipient email, generating a private single-use link without sending email. When an email is specified, registration and existing-account acceptance must match it. This also applies to pending participant invitations created before this change: their optional delivery address now restricts acceptance. Revoke and reissue an invitation without email, or with the intended address, if its existing recipient address is unsuitable. Already-consumed invitations and memberships are unchanged; no token or database migration is required.
+
+Wrong signed-in accounts must sign out and switch to the invited address; the invitation is preserved across logout/login. Direct acceptance clients now receive 403 for an existing-account email mismatch or 422 for a registration mismatch, rather than consuming participant invitations or reporting a coordinator link as expired. Blank-email coordinator creation clients may omit the `email` parameter.
+
 ## Coordinator Invitations
 
-Coordinator pages now accept new or registered email addresses. Existing-email promotion requires an explicit confirmation; direct email-based assignment clients must submit `grant_access=1` to confirm. Existing user-ID assignment remains supported. New coordinator invitations use a separate collection and restrict acceptance to the invited email. Normal startup creates its declared indexes; no data migration or changes to existing memberships and participant invitations are required.
+Coordinator pages accept new or registered email addresses. Existing-email promotion requires an explicit confirmation; direct email-based assignment clients must submit `grant_access=1` to confirm. Existing user-ID assignment remains supported. Coordinator invitations use a separate collection; see the optional email policy above. Normal startup creates its declared indexes; no data migration or changes to existing memberships are required.
 
 ## Retired One-Time Conversions
 
