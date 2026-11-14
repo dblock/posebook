@@ -16,16 +16,21 @@ class SessionsController < ApplicationController
   end
 
   def destroy
+    coordinator_token = params[:coordinator_invitation_token]
     reset_session
-    redirect_to new_session_path, status: :see_other
+    redirect_to(coordinator_token ? coordinator_invitation_path(token: coordinator_token) : new_session_path,
+                status: :see_other)
   end
 
   private
 
   def finish_sign_in(user)
     invitation_token = session[:invitation_token]
+    coordinator_token = session[:coordinator_invitation_token]
     booking_program = session[:booking_program]
     start_session(user, remember_me: params[:remember_me] == '1')
+    return redirect_to coordinator_invitation_path(token: coordinator_token) if coordinator_token
+
     redirect_to(invitation_token ? invitation_path(token: invitation_token) : booking_return_path(
       booking_program, user
     ))

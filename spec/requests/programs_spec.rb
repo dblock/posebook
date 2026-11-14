@@ -255,7 +255,7 @@ RSpec.describe 'Session management', :aggregate_failures, :database, type: :requ
     expect(response.body).to include(program_coordinators_path(program))
     expect(response.body).not_to include('Grant Schedule Access', 'Remove Schedule Access', user.email)
     get program_coordinators_path(program)
-    expect(response.body).to include('Add Session Coordinator')
+    expect(response.body).to include('Invite or Promote a Coordinator', 'Continue')
     expect(response.body).not_to include(user.email)
     expect(response.parsed_body.css('main a').last['href']).to eq(program_path(program))
     sign_in(user)

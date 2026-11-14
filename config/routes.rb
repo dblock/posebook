@@ -2,7 +2,7 @@
 
 Rails.application.routes.draw do
   root 'pages#home'
-  resource :registration, only: %i[new create]
+  draw :invitations
   resource :session, only: %i[new create destroy]
   resource :profile, only: %i[show edit update]
   resources :participants, only: :show, controller: 'participant_profiles' do
@@ -11,12 +11,11 @@ Rails.application.routes.draw do
   resource :password, only: %i[edit update]
   resource :account_deactivation, only: %i[new create]
   resource :email_change, only: %i[show update]
-  resource :invitation, only: %i[show create], controller: 'invitation_acceptances'
-  post 'invitation/register', to: 'invitation_acceptances#register', as: :invited_registration
   namespace(:admin) { resources :users, only: %i[index edit update] }
   resources :venues, except: :destroy do
     resources :photos, only: %i[show create destroy], controller: 'venue_photos'
     resources :coordinators, only: %i[index create destroy], controller: 'venue_coordinators'
+    resources :coordinator_invitations, only: %i[show destroy]
     resources :programs, path: 'sessions', only: %i[new create]
   end
   resources :programs, path: 'sessions', only: %i[index show edit update] do
@@ -32,6 +31,7 @@ Rails.application.routes.draw do
       %i[cancel confirm].each { |action| post action, on: :member }
     end
     resources :coordinators, controller: 'program_coordinators', only: %i[index create destroy]
+    resources :coordinator_invitations, only: %i[show destroy]
   end
   resources :password_resets, param: :token, only: %i[new create edit update]
   get 'up' => 'rails/health#show', as: :rails_health_check

@@ -23,8 +23,8 @@ class ProgramMembership
   scope :participants, -> { where(:roles.in => ['participant']) }
   validate { errors.add(:roles, :invalid) unless (roles - %w[program_coordinator participant]).empty? }
 
-  def self.grant_coordinator_access(program, user)
-    grant_role(program, user, 'program_coordinator')
+  def self.grant_coordinator_access(program, user, session: nil)
+    grant_role(program, user, 'program_coordinator', session: session)
   end
 
   def self.grant_participant_access(program, user, session:)

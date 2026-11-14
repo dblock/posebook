@@ -1,0 +1,7 @@
+en:
+  coordinator_invitations:
+    accepted: "You can now manage %{name}."
+    granted: "%{role} access granted."
+    inactive: This account is inactive. Reactivate it before granting coordinator access.
+    account_changed: This account is no longer available. Start again with its current email address.
+    subject: "Invitation to manage %{name} as a %{role}"

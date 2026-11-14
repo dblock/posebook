@@ -5,15 +5,16 @@ class InvitationAcceptance
 
   attr_reader :user
 
-  def initialize(token:, user: nil, attributes: {})
+  def initialize(token:, user: nil, attributes: {}, invitation_class: ParticipantInvitation)
     @token = token
     @existing_user = user
+    @invitation_class = invitation_class
     @attributes = attributes.slice(:name, :email, :phone, :gender, :password, :password_confirmation,
                                    *PublicProfile::FIELDS)
   end
 
   def call
-    ParticipantInvitation.with_session do |session|
+    @invitation_class.with_session do |session|
       session.with_transaction { accept(session) }
     end
     user
@@ -22,19 +23,19 @@ class InvitationAcceptance
   private
 
   def accept(session)
-    invitation = ParticipantInvitation.available(@token)
+    invitation = @invitation_class.available(@token)
     raise Unavailable unless invitation
 
     @user = @existing_user || User.new(@attributes)
-    raise Unavailable unless user.active?
+    raise Unavailable unless user.active? && invitation.acceptable_by?(user)
 
     user.save! if user.new_record?
     claim(invitation, session)
-    ProgramMembership.grant_participant_access(invitation.program, user, session: session)
+    invitation.grant_access(user, session: session)
   end
 
   def claim(invitation, session)
-    changed = ParticipantInvitation.collection.find(
+    changed = @invitation_class.collection.find(
       _id: invitation.id, used_at: nil, revoked_at: nil, expires_at: { '$gt' => Time.current }
     ).find_one_and_update(
       { '$set' => { used_at: Time.current, used_by_id: user.id, updated_at: Time.current } }, session: session

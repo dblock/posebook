@@ -1,0 +1,21 @@
+<%= render "shared/errors", record: @invitation %>
+<% if @existing_user&.active? && @invitation.errors.empty? %>
+  <section aria-label="Confirm coordinator access">
+    <h2>This Email Is Already Registered</h2>
+    <p><%= @existing_user.name %> (<%= @existing_user.email %>) already has an account. Give them <%= @invitation.coordinator_label.downcase %> access to <%= @invitation.target.name %>?</p>
+    <p>This grants management access, not a system admin role. Their existing account and memberships will be retained.</p>
+    <%= form_with url: polymorphic_path([@invitation.target, :coordinators]) do |form| %>
+      <%= hidden_field_tag :email, @existing_user.email, id: nil %>
+      <%= hidden_field_tag :grant_access, "1" %>
+      <%= form.submit "Grant #{@invitation.coordinator_label} Access" %>
+    <% end %>
+  </section>
+<% end %>
+<h2>Invite or Promote a Coordinator</h2>
+<p>Enter an email address. For a registered account, confirm management access. For a new account, create a personal registration invitation restricted to that email. Links expire in 30 days.</p>
+<%= form_with url: polymorphic_path([@invitation.target, :coordinators]) do |form| %>
+  <p><%= form.label :name, "Name (optional, for new accounts)" %><br><%= form.text_field :name, value: @invitation.name, maxlength: 100 %></p>
+  <p><%= form.label :email, "Email" %><br><%= form.email_field :email, value: @invitation.email, required: true %></p>
+  <p><label><%= check_box_tag :send_email, "1", params[:send_email] == "1" %> Also send new-account invitations by email</label></p>
+  <%= form.submit "Continue" %>
+<% end %>

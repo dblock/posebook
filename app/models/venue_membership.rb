@@ -13,11 +13,11 @@ class VenueMembership
   scope :coordinators, -> { where(:roles.in => ['venue_coordinator']) }
   validate { errors.add(:roles, :invalid) unless (roles - ['venue_coordinator']).empty? }
 
-  def self.grant_coordinator_access(venue, user)
+  def self.grant_coordinator_access(venue, user, session: nil)
     collection.find(venue_id: venue.id, user_id: user.id).update_one(
       { '$setOnInsert' => { _id: BSON::ObjectId.new, created_at: Time.current },
         '$set' => { updated_at: Time.current },
-        '$addToSet' => { roles: 'venue_coordinator' } }, upsert: true
+        '$addToSet' => { roles: 'venue_coordinator' } }, upsert: true, session: session
     )
   end
 

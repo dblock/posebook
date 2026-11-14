@@ -1,0 +1,28 @@
+<main>
+  <h1>Manage <%= @invitation.target.name %> as a <%= @invitation.coordinator_label.downcase %></h1>
+  <p>This invitation is restricted to <%= @invitation.email %>. It grants management access at <%= @invitation.target.name %>, not a system admin role.</p>
+  <% if current_user %>
+    <p>Signed in as <%= current_user.name %> (<%= current_user.email %>).</p>
+    <% if current_user.email == @invitation.email %>
+      <%= form_with url: coordinator_invitation_path do |form| %>
+        <%= hidden_field_tag :token, @token %>
+        <%= form.submit "Accept #{@invitation.coordinator_label} Invitation" %>
+      <% end %>
+    <% else %>
+      <p>Sign in using the invited email address to accept this invitation.</p>
+      <%= button_to "Sign Out and Use the Invited Account", session_path(coordinator_invitation_token: @token), method: :delete %>
+    <% end %>
+  <% else %>
+    <p><%= link_to "Sign In with an Existing Account", new_session_path %></p>
+    <h2>Create Your Account</h2>
+    <%= render "shared/errors", record: @user %>
+    <%= form_with model: @user, url: coordinator_invited_registration_path do |form| %>
+      <%= hidden_field_tag :token, @token %>
+      <p><%= form.label :name %><br><%= form.text_field :name, required: true, maxlength: 100, autocomplete: "name" %></p>
+      <p><%= form.label :email %><br><%= form.email_field :email, required: true, readonly: true, autocomplete: "email" %></p>
+      <p><%= form.label :password %><br><%= form.password_field :password, required: true, minlength: 12, autocomplete: "new-password" %></p>
+      <p><%= form.label :password_confirmation %><br><%= form.password_field :password_confirmation, required: true, autocomplete: "new-password" %></p>
+      <%= form.submit "Create Account and Accept Invitation" %>
+    <% end %>
+  <% end %>
+</main>

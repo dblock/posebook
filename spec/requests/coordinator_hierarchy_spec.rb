@@ -43,6 +43,10 @@ RSpec.describe 'Coordinator hierarchy', :aggregate_failures, :database, type: :r
     get program_coordinators_path(program)
     expect(response.body).not_to include(assignee.email)
     post program_coordinators_path(program), params: { email: assignee.email, roles: ['system_admin'] }
+    expect(response.body).to include('This Email Is Already Registered', 'Grant Session Coordinator Access')
+    expect(program.memberships.where(user_id: assignee.id)).to be_empty
+    post program_coordinators_path(program), params: { email: assignee.email, grant_access: '1',
+                                                       roles: ['system_admin'] }
     membership = track_record(ProgramMembership.find_by(program_id: program.id, user_id: assignee.id))
     expect(membership.roles).to eq(['program_coordinator'])
     expect(assignee.reload.roles).to be_empty
@@ -67,7 +71,7 @@ RSpec.describe 'Coordinator hierarchy', :aggregate_failures, :database, type: :r
   it 'allows only admins to assign venue coordinators and revokes inherited access immediately' do
     admin = create_user(roles: ['system_admin'])
     sign_in(admin)
-    post venue_coordinators_path(venue), params: { email: coordinator.email }
+    post venue_coordinators_path(venue), params: { email: coordinator.email, grant_access: '1' }
     membership = track_record(VenueMembership.find_by(venue_id: venue.id, user_id: coordinator.id))
     expect(program.managed_by?(coordinator)).to be(true)
     delete venue_coordinator_path(venue, membership)
