@@ -9,6 +9,8 @@ RSpec.describe 'Account access management', :aggregate_failures, :database, type
     token = reset_token(user)
     post account_deactivation_path, params: { current_password: DatabaseHelpers::TEST_PASSWORD }
     expect(response).to redirect_to(new_session_path)
+    follow_redirect!
+    expect(response.body).to include('Your account has been deactivated.')
     expect(User.find(user.id)).not_to be_active
     expect(User.for_password_reset(token)).to be_nil
     post session_path, params: { email: user.email, password: DatabaseHelpers::TEST_PASSWORD }
@@ -23,12 +25,16 @@ RSpec.describe 'Account access management', :aggregate_failures, :database, type
     sign_in(user)
     post account_deactivation_path, params: { current_password: 'incorrect' }
     expect(response).to have_http_status(:unprocessable_content)
+    expect(response.parsed_body.css('main form').pluck('id')).to eq(['deactivation-form'])
     expect(user.reload).to be_active
   end
 
   it 'protects system admin accounts from deactivation' do
     user = create_user(roles: ['system_admin'])
     sign_in(user)
+    get new_account_deactivation_path
+    expect(response.body).to include('System admin accounts stay active')
+    expect(response.parsed_body.css('main form')).to be_empty
     post account_deactivation_path, params: { current_password: DatabaseHelpers::TEST_PASSWORD }
     expect(response).to have_http_status(:unprocessable_content)
     patch admin_user_path(user), params: { active: false }

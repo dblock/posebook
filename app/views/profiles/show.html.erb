@@ -1,0 +1,14 @@
+<main>
+  <h1>Profile</h1>
+  <dl>
+    <dt>Name</dt><dd><%= @user.name %></dd>
+    <dt>Email</dt><dd><%= @user.email %></dd>
+    <dt>Phone (unverified)</dt><dd><%= @user.phone.presence || "Not provided" %></dd>
+  </dl>
+  <% if @user.pending_email.present? %>
+    <p>Verification pending for <%= @user.pending_email %>. Your current email is still <%= @user.email %>.</p>
+  <% end %>
+  <p><%= link_to "Edit Profile", edit_profile_path %></p>
+  <p><%= link_to "Change Password", edit_password_path %></p>
+  <p><%= link_to "Deactivate Account", new_account_deactivation_path %></p>
+</main>

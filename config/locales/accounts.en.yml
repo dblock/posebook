@@ -7,7 +7,7 @@ en:
     deactivated: Your account has been deactivated.
     status_updated: Account access updated.
   profiles:
-    updated: Profile saved. If you changed your email, check the new address for a confirmation link.
+    updated: Profile saved.
     password_updated: Password changed. Other sessions and outstanding recovery links were revoked.
   email_changes:
     invalid: This email confirmation link is invalid or expired.

@@ -17,7 +17,7 @@
       <%= link_to "Posebook", root_path %>
       <% if current_user %>
         <span><%= current_user.name %></span>
-        <%= link_to "Account Settings", edit_profile_path %>
+        <%= link_to "Profile", profile_path %>
         <%= link_to "Venues", venues_path %>
         <%= link_to "Users", admin_users_path if current_user.system_admin? %>
         <%= button_to "Sign Out", session_path, method: :delete %>

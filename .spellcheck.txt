@@ -36,6 +36,7 @@ eval
 Gemfile
 GitHub
 hostname
+href
 Hotwire
 HTTPS
 IANA

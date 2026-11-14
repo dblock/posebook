@@ -11,19 +11,45 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     ActionMailer::Base.deliveries.last.body.decoded[/email_change\?token=([A-Za-z0-9_-]+)/, 1]
   end
 
-  it 'requires authentication for profile and password changes' do
+  it 'requires authentication for all account pages and password changes' do
     create_user
-    get edit_profile_path
-    expect(response).to redirect_to(new_session_path)
+    [profile_path, edit_profile_path, edit_password_path, new_account_deactivation_path].each do |path|
+      get path
+      expect(response).to redirect_to(new_session_path)
+    end
     patch password_path, params: { user: {} }
     expect(response).to redirect_to(new_session_path)
+  end
+
+  it 'shows account information and edit links without editing forms' do
+    user = create_user
+    sign_in(user)
+    get profile_path
+    expect(response.body).to include(user.name, user.email, 'Not provided')
+    expect(response.parsed_body.css('main form')).to be_empty
+    expect(response.parsed_body.css('main a').pluck('href'))
+      .to eq([edit_profile_path, edit_password_path, new_account_deactivation_path])
+  end
+
+  it 'provides one dedicated form per page with a cancel link to the profile' do
+    sign_in(create_user)
+    { edit_profile_path => 'profile-form', edit_password_path => 'password-form',
+      new_account_deactivation_path => 'deactivation-form' }.each do |path, form_id|
+      get path
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.css('main form').pluck('id')).to eq([form_id])
+      expect(response.parsed_body.at_css('main a')['href']).to eq(profile_path)
+    end
   end
 
   it 'updates name and phone without accepting privileged fields' do
     user = create_user
     sign_in(user)
     update_profile(user, name: 'Updated Artist', phone: '+12125551234', roles: ['system_admin'], active: false)
-    expect(response).to redirect_to(edit_profile_path)
+    expect(response).to redirect_to(profile_path)
+    follow_redirect!
+    expect(response.body).to include('Profile saved.', 'Updated Artist', '+12125551234')
+    expect(response.parsed_body.css('main form')).to be_empty
     expect(user.reload.name).to eq('Updated Artist')
     expect(user.phone).to eq('+12125551234')
     expect(user).not_to be_system_admin
@@ -35,6 +61,7 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     sign_in(user)
     update_profile(user, phone: '123')
     expect(response).to have_http_status(:unprocessable_content)
+    expect(response.parsed_body.at_css('main h1').text).to eq('Edit Profile')
     update_profile(user, email: 'new@example.test', current_password: 'incorrect')
     expect(response).to have_http_status(:unprocessable_content)
     expect(user.reload.pending_email).to be_nil
@@ -46,7 +73,8 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     sign_in(user)
     update_profile(user, email: 'verified@example.test', current_password: DatabaseHelpers::TEST_PASSWORD)
     token = confirmation_token
-    expect(user.reload.email).to eq(old_email)
+    follow_redirect!
+    expect(response.body).to include('Profile saved.', 'Verification pending for verified@example.test.', old_email)
     get email_change_path(token: token)
     expect(response.body).to include('Confirm Email Change')
     expect(user.reload.email).to eq(old_email)
@@ -116,26 +144,29 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     other_client = ActionDispatch::Integration::Session.new(Rails.application)
     sign_in(user, client: other_client)
     token = reset_token(user)
-    patch password_path, params: { user: { current_password: 'incorrect', password: 'a brand new test password',
-                                           password_confirmation: 'a brand new test password' } }
-    expect(response).to have_http_status(:unprocessable_content)
     patch password_path, params: { user: { current_password: DatabaseHelpers::TEST_PASSWORD,
                                            password: 'a brand new test password',
                                            password_confirmation: 'a brand new test password' } }
-    get root_path
+    expect(response).to redirect_to(profile_path)
+    follow_redirect!
     expect(response).to have_http_status(:ok)
+    expect(response.body).to include('Password changed.')
+    expect(response.parsed_body.css('main form')).to be_empty
     other_client.get(root_path)
     expect(other_client.response.location).to end_with(new_session_path)
     expect(User.for_password_reset(token)).to be_nil
     expect(user.reload.authenticate('a brand new test password')).to eq(user)
   end
 
-  it 'rejects an invalid new password' do
+  it 'keeps password errors on the password form without changing credentials' do
     user = create_user
     sign_in(user)
-    patch password_path, params: { user: { current_password: DatabaseHelpers::TEST_PASSWORD,
-                                           password: 'short', password_confirmation: 'short' } }
-    expect(response).to have_http_status(:unprocessable_content)
+    [{ current_password: 'incorrect', password: 'a brand new test password' },
+     { current_password: DatabaseHelpers::TEST_PASSWORD, password: 'short' }].each do |attributes|
+      patch password_path, params: { user: attributes.merge(password_confirmation: attributes[:password]) }
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body.css('main form').pluck('id')).to eq(['password-form'])
+    end
     expect(user.reload.authenticate(DatabaseHelpers::TEST_PASSWORD)).to eq(user)
   end
 
