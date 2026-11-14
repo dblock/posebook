@@ -1,12 +1,15 @@
-<section aria-label="Posing calendar">
+<% content_for :head do %>
+  <%= javascript_include_tag "calendar", defer: true %>
+<% end %>
+<section aria-label="Posing calendar" data-calendar>
   <h2>Posing Calendar</h2>
   <nav aria-label="Calendar months">
     <% if calendar.month > calendar.today.beginning_of_month %>
-      <%= link_to "Previous Month", calendar_month_path(calendar, calendar.month - 1.month, @changing_booking) %>
+      <%= link_to "Previous Month", calendar_month_path(calendar, calendar.month - 1.month, @changing_booking), data: { calendar_navigation: true } %>
     <% end %>
-    <strong><%= calendar.month.strftime("%B %Y") %></strong>
+    <strong data-calendar-month tabindex="-1"><%= calendar.month.strftime("%B %Y") %></strong>
     <% if calendar.month < calendar.last_date.beginning_of_month %>
-      <%= link_to "Next Month", calendar_month_path(calendar, calendar.month + 1.month, @changing_booking) %>
+      <%= link_to "Next Month", calendar_month_path(calendar, calendar.month + 1.month, @changing_booking), data: { calendar_navigation: true } %>
     <% end %>
   </nav>
   <p>Dates and times use <%= calendar.venue.time_zone %>. Available days are shown in green; all other days are blocked.</p>
