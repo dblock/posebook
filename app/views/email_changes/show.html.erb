@@ -1,0 +1,9 @@
+<main>
+  <h1>Confirm Email Change</h1>
+  <p>Use <%= @user.pending_email %> for your Posebook account and password recovery?</p>
+  <%= render "shared/errors", record: @user %>
+  <%= form_with url: email_change_path, method: :patch do |form| %>
+    <%= form.hidden_field :token, value: params[:token] %>
+    <%= form.submit "Confirm Email" %>
+  <% end %>
+</main>

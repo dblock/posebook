@@ -6,6 +6,7 @@ class User
   include Mongoid::Document
   include Mongoid::Timestamps
   include ActiveModel::SecurePassword
+  include AccountSettings
 
   # MongoDB's built-in unique ID makes competing first-user registrations atomic.
   BOOTSTRAP_ID = BSON::ObjectId.from_string('000000000000000000000001')
@@ -50,8 +51,8 @@ class User
   def self.for_password_reset(token)
     return if token.blank?
 
-    where(password_reset_digest: Digest::SHA256.hexdigest(token),
-          :password_reset_expires_at.gt => Time.current).first
+    active.where(password_reset_digest: Digest::SHA256.hexdigest(token),
+                 :password_reset_expires_at.gt => Time.current).first
   end
 
   def system_admin?
@@ -59,7 +60,7 @@ class User
   end
 
   def self.with_email(email)
-    where(email: email.to_s.strip.downcase).first
+    active.where(email: email.to_s.strip.downcase).first
   end
 
   def send_password_reset
@@ -73,11 +74,11 @@ class User
     return false unless valid?
 
     result = self.class.collection.find(
-      _id: id, password_reset_digest: Digest::SHA256.hexdigest(token),
+      _id: id, active: { '$ne' => false }, password_reset_digest: Digest::SHA256.hexdigest(token),
       password_reset_expires_at: { '$gt' => Time.current }
     ).find_one_and_update(
       '$set' => { password_digest: password_digest, session_version: SecureRandom.hex(16), updated_at: Time.current },
-      '$unset' => { password_reset_digest: '', password_reset_expires_at: '' }
+      '$unset' => authentication_challenges
     )
     errors.add(:base, 'This reset link is invalid or expired.') unless result
     result

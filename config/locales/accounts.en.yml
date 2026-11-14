@@ -3,6 +3,16 @@ en:
     created: Your account has the system admin role.
     invitation_required: Registration requires an invitation.
     invalid_credentials: Invalid email or password.
+    admin_protected: System admin accounts cannot be deactivated until role transfer is available.
+    deactivated: Your account has been deactivated.
+    status_updated: Account access updated.
+  profiles:
+    updated: Profile saved. If you changed your email, check the new address for a confirmation link.
+    password_updated: Password changed. Other sessions and outstanding recovery links were revoked.
+  email_changes:
+    invalid: This email confirmation link is invalid or expired.
+    updated: Email confirmed. Sign in with your new email address.
+    subject: Confirm your Posebook email address
   password_resets:
     unavailable: Password reset email is not configured. Contact the organizer.
     sent: If that account exists, we sent a password reset email.

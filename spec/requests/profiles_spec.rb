@@ -1,0 +1,149 @@
+# frozen_string_literal: true
+
+require 'rails_helper'
+
+RSpec.describe 'Account settings', :aggregate_failures, :database, type: :request do
+  def update_profile(user, **attributes)
+    patch profile_path, params: { user: { name: user.name, email: user.email, phone: user.phone }.merge(attributes) }
+  end
+
+  def confirmation_token
+    ActionMailer::Base.deliveries.last.body.decoded[/email_change\?token=([A-Za-z0-9_-]+)/, 1]
+  end
+
+  it 'requires authentication for profile and password changes' do
+    create_user
+    get edit_profile_path
+    expect(response).to redirect_to(new_session_path)
+    patch password_path, params: { user: {} }
+    expect(response).to redirect_to(new_session_path)
+  end
+
+  it 'updates name and phone without accepting privileged fields' do
+    user = create_user
+    sign_in(user)
+    update_profile(user, name: 'Updated Artist', phone: '+12125551234', roles: ['system_admin'], active: false)
+    expect(response).to redirect_to(edit_profile_path)
+    expect(user.reload.name).to eq('Updated Artist')
+    expect(user.phone).to eq('+12125551234')
+    expect(user).not_to be_system_admin
+    expect(user).to be_active
+  end
+
+  it 'rejects invalid profile data and does not change email without the current password' do
+    user = create_user
+    sign_in(user)
+    update_profile(user, phone: '123')
+    expect(response).to have_http_status(:unprocessable_content)
+    update_profile(user, email: 'new@example.test', current_password: 'incorrect')
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(user.reload.pending_email).to be_nil
+  end
+
+  it 'verifies a new email before using it for login or recovery and rejects link replay' do
+    user = create_user
+    old_email = user.email
+    sign_in(user)
+    update_profile(user, email: 'verified@example.test', current_password: DatabaseHelpers::TEST_PASSWORD)
+    token = confirmation_token
+    expect(user.reload.email).to eq(old_email)
+    get email_change_path(token: token)
+    expect(response.body).to include('Confirm Email Change')
+    expect(user.reload.email).to eq(old_email)
+    patch email_change_path, params: { token: token }
+    expect(user.reload.email).to eq('verified@example.test')
+    expect(user.email_verified_at).not_to be_nil
+    expect(User.with_email(old_email)).to be_nil
+    patch email_change_path, params: { token: token }
+    expect(response).to redirect_to(new_session_path)
+  end
+
+  it 'rejects blank, malformed, and already registered email changes' do
+    user = create_user
+    other = create_user
+    sign_in(user)
+    ['', 'invalid', other.email].each do |email|
+      update_profile(user, email: email, current_password: DatabaseHelpers::TEST_PASSWORD)
+      expect(response).to have_http_status(:unprocessable_content)
+    end
+    expect(ActionMailer::Base.deliveries).to be_empty
+  end
+
+  it 'does not claim to verify an email when delivery is unavailable' do
+    user = create_user
+    sign_in(user)
+    allow(Rails.configuration.x).to receive(:password_reset_delivery_enabled).and_return(false)
+    update_profile(user, email: 'new@example.test', current_password: DatabaseHelpers::TEST_PASSWORD)
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(user.reload.pending_email).to be_nil
+  end
+
+  it 'handles verification mail delivery errors' do
+    user = create_user
+    sign_in(user)
+    allow(EmailChangeMailer).to receive(:confirm).and_raise(IOError, 'Unavailable')
+    update_profile(user, email: 'new@example.test', current_password: DatabaseHelpers::TEST_PASSWORD)
+    expect(response).to have_http_status(:service_unavailable)
+    expect(response.body).to include('could not be sent')
+  end
+
+  it 'rejects expired and missing email confirmation links' do
+    user = create_user
+    sign_in(user)
+    update_profile(user, email: 'new@example.test', current_password: DatabaseHelpers::TEST_PASSWORD)
+    token = confirmation_token
+    user.set(email_change_expires_at: 1.minute.ago)
+    get email_change_path(token: token)
+    expect(response).to redirect_to(new_session_path)
+    get email_change_path
+    expect(response).to redirect_to(new_session_path)
+  end
+
+  it 'handles a new email becoming unavailable before confirmation' do
+    user = create_user
+    sign_in(user)
+    update_profile(user, email: 'contested@example.test', current_password: DatabaseHelpers::TEST_PASSWORD)
+    token = confirmation_token
+    create_user(email: 'contested@example.test')
+    patch email_change_path, params: { token: token }
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(user.reload.email).not_to eq('contested@example.test')
+  end
+
+  it 'requires the current password and retains the current session while revoking others' do
+    user = create_user
+    sign_in(user)
+    other_client = ActionDispatch::Integration::Session.new(Rails.application)
+    sign_in(user, client: other_client)
+    token = reset_token(user)
+    patch password_path, params: { user: { current_password: 'incorrect', password: 'a brand new test password',
+                                           password_confirmation: 'a brand new test password' } }
+    expect(response).to have_http_status(:unprocessable_content)
+    patch password_path, params: { user: { current_password: DatabaseHelpers::TEST_PASSWORD,
+                                           password: 'a brand new test password',
+                                           password_confirmation: 'a brand new test password' } }
+    get root_path
+    expect(response).to have_http_status(:ok)
+    other_client.get(root_path)
+    expect(other_client.response.location).to end_with(new_session_path)
+    expect(User.for_password_reset(token)).to be_nil
+    expect(user.reload.authenticate('a brand new test password')).to eq(user)
+  end
+
+  it 'rejects an invalid new password' do
+    user = create_user
+    sign_in(user)
+    patch password_path, params: { user: { current_password: DatabaseHelpers::TEST_PASSWORD,
+                                           password: 'short', password_confirmation: 'short' } }
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(user.reload.authenticate(DatabaseHelpers::TEST_PASSWORD)).to eq(user)
+  end
+
+  it 'treats accounts from the earlier layer without an active field as active' do
+    user = create_user
+    User.collection.find(_id: user.id).update_one('$unset' => { active: '' })
+    sign_in(user)
+    get edit_profile_path
+    expect(response).to have_http_status(:ok)
+  end
+end
