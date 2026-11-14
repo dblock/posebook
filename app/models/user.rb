@@ -7,6 +7,7 @@ class User
   include Mongoid::Timestamps
   include ActiveModel::SecurePassword
   include AccountSettings
+  include HistoryTracking
 
   # MongoDB's built-in unique ID makes competing first-user registrations atomic.
   BOOTSTRAP_ID = BSON::ObjectId.from_string('000000000000000000000001')
@@ -19,6 +20,9 @@ class User
   field :session_version, type: String, default: -> { SecureRandom.hex(16) }
   field :password_reset_digest, type: String
   field :password_reset_expires_at, type: Time
+
+  track_history on: %i[name email phone roles active email_verified_at],
+                modifier_field_optional: true, modifier_field_inverse_of: nil, track_blank_changes: true
 
   index({ email: 1 }, unique: true)
   index({ password_reset_digest: 1 })

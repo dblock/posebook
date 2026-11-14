@@ -51,13 +51,16 @@ module DatabaseHelpers
   end
 
   def cleanup_records
-    tracked_records.reverse_each do |record|
-      if record.is_a?(ModelBooking)
-        ModelBooking.collection.find(_id: record.id).delete_one
-      elsif record.persisted?
-        record.destroy
+    Mongoid::History.disable do
+      tracked_records.reverse_each do |record|
+        if record.is_a?(ModelBooking)
+          ModelBooking.collection.find(_id: record.id).delete_one
+        elsif record.persisted?
+          record.destroy
+        end
       end
     end
+    HistoryTracker.where(:'association_chain.id'.in => tracked_records.map(&:id)).delete_all
   end
 
   def sign_in(user, client: self)

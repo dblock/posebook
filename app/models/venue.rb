@@ -4,6 +4,7 @@ class Venue
   include Mongoid::Document
   include Mongoid::Timestamps
   include Mongoid::Slug
+  include HistoryTracking
 
   TIME_ZONES = TZInfo::Timezone.all_identifiers.freeze
   RESERVED_SLUGS = %w[new edit admin assets rails up venues profile password registration session invitation].freeze
@@ -20,6 +21,10 @@ class Venue
   slug :name, :custom_slug, history: true, reserve: RESERVED_SLUGS, max_length: 100 do |venue|
     (venue.custom_slug.presence || venue.name).to_url
   end
+
+  track_history on: %i[name custom_slug _slugs address time_zone model_pay instructions booking_horizon_months
+                       available_weekdays],
+                modifier_field_optional: true, modifier_field_inverse_of: nil, track_blank_changes: true
 
   has_many :memberships, class_name: 'VenueMembership', inverse_of: :venue, dependent: :restrict_with_error
   has_many :model_invitations, inverse_of: :venue, dependent: :restrict_with_error

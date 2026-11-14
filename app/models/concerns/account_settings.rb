@@ -53,11 +53,9 @@ module AccountSettings
   end
 
   def confirm_email_change(token)
-    result = email_change_claim(token).find_one_and_update(
-      '$set' => { email: pending_email, email_verified_at: Time.current,
-                  session_version: SecureRandom.hex(16), updated_at: Time.current },
-      '$unset' => authentication_challenges
-    )
+    result = save_tracked_change(authentication_updates.merge(email: pending_email, email_verified_at: Time.current)) do
+      email_change_claim(token)
+    end
     errors.add(:base, I18n.t('email_changes.invalid')) unless result
     result
   rescue Mongo::Error::OperationFailure => e
@@ -86,21 +84,23 @@ module AccountSettings
       errors.add(:base, I18n.t('accounts.admin_protected'))
       return false
     end
-    self.class.collection.find(_id: id, roles: { '$ne' => 'system_admin' }).find_one_and_update(
-      '$set' => { active: false, session_version: SecureRandom.hex(16), updated_at: Time.current },
-      '$unset' => authentication_challenges
-    )
+    save_tracked_change(authentication_updates.merge(active: false)) do
+      self.class.where(_id: id, :roles.ne => 'system_admin')
+    end
   end
 
   def reactivate
-    set(active: true, session_version: SecureRandom.hex(16))
+    save_tracked_change(active: true, session_version: SecureRandom.hex(16)) { self.class.where(_id: id) }
   end
 
   private
 
+  def authentication_updates
+    authentication_challenges.transform_values { nil }.merge(session_version: SecureRandom.hex(16))
+  end
+
   def clear_email_authentication
-    assign_attributes(authentication_challenges.transform_values { nil }
-                        .merge(session_version: SecureRandom.hex(16), email_verified_at: nil))
+    assign_attributes(authentication_updates.merge(email_verified_at: nil))
   end
 
   def email_available?
@@ -116,7 +116,7 @@ module AccountSettings
   end
 
   def email_change_claim(token)
-    self.class.collection.find(
+    self.class.where(
       _id: id, active: { '$ne' => false }, email_change_digest: Digest::SHA256.hexdigest(token),
       email_change_expires_at: { '$gt' => Time.current }
     )

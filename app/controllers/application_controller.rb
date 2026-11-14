@@ -2,8 +2,13 @@
 
 class ApplicationController < ActionController::Base
   helper_method :current_user
+  around_action :with_history_actor
 
   private
+
+  def with_history_actor(&)
+    Current.set(user: current_user, &)
+  end
 
   def current_user
     return unless session[:user_id]

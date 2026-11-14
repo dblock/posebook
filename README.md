@@ -44,7 +44,9 @@ Changing or canceling requires an explanation. Rescheduling retains the old date
 
 Admins and assigned schedule organizers can **Invite a Model** at their venue. Create a single-use personal link to copy into email or a direct message, with optional SMTP delivery. The private link is displayed once, expires after 30 days, and can be revoked without deleting its record. Recipients can register or sign in with any existing account, then explicitly accept. They receive only venue-local model access, never organizer or global roles; models cannot see invitation/contact lists. Acceptance persists account creation, link consumption, and membership together in a MongoDB transaction.
 
-MongoDB must be a replica set (including a single-node development/test replica set) for invitation and booking transactions. DigitalOcean managed replica sets are supported; retain the provider's connection options. For local setup, follow the replica-set commands in [Contributing](CONTRIBUTING.md). Do not use `directConnection=true` with the Ruby driver.
+User details/access and venue settings are audited with `mongoid-history`, storing previous/new values, action, time, and the signed-in actor in `history_trackers`. Passwords, authentication tokens/challenges, and session secrets are excluded. History starts with new writes after deployment; there is no history page or undo interface yet. Anonymous/system changes have no actor.
+
+MongoDB must be a replica set (including a single-node development/test replica set) for invitation, booking, email-confirmation, and account activation transactions. DigitalOcean managed replica sets are supported; retain the provider's connection options. For local setup, follow the replica-set commands in [Contributing](CONTRIBUTING.md). Do not use `directConnection=true` with the Ruby driver.
 
 ## Configuration
 
