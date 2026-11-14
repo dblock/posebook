@@ -45,6 +45,9 @@ RSpec.describe BookingGenderRule, :aggregate_failures, :database do
       program.update!(no_consecutive_genders: [gender])
       participant.update!(gender: gender)
       reserve('2026-11-16', gender: gender)
+      decision = described_class.new(program).evaluate(Date.new(2026, 11, 23), participant)
+      expect(decision).to have_attributes(code: :gender_restricted, overridable: true)
+      expect(decision.message).to include('consecutive-gender rule')
       expect { book('2026-11-23') }.to raise_error(BookingMutation::Invalid, /consecutive-gender/)
       expect(program.bookings.count).to eq(1)
       program.update!(no_consecutive_genders: [])
@@ -111,11 +114,25 @@ RSpec.describe BookingGenderRule, :aggregate_failures, :database do
   it 'allows booking and rescheduling without a gender when no rules are enabled' do
     program.update!(no_consecutive_genders: [])
     participant.update!(gender: nil)
+    expect(described_class.new(program).evaluate(Date.new(2026, 11, 23), participant)).to be_nil
     original = book('2026-11-23')
     replacement = change(original, '2026-11-30')
     expect(replacement).to be_persisted
     expect(replacement.starts_at).to eq(Time.utc(2026, 11, 30, 9))
     expect(original.reload.status).to eq('rescheduled')
+  end
+
+  it 'reports a missing-gender decision that organizers cannot override using configured labels' do
+    program.update!(program_label: 'Workshop', participant_label: 'Instructor')
+    participant.update!(gender: nil)
+    decision = described_class.new(program).evaluate(Date.new(2026, 11, 23), participant)
+    expect(decision).to be_a(BookingRuleDecision)
+    expect(decision).to have_attributes(
+      code: :gender_required, overridable: false,
+      message: "Select a gender in the instructor's profile to book with this workshop's gender rules."
+    )
+    expect(ProgramCalendar.new(program).gender_blocked_reason(Date.new(2026, 11, 23), participant))
+      .to eq('Select gender')
   end
 
   it 'requires a gender after enabling rules without changing an existing booking' do

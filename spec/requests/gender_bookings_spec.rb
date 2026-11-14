@@ -155,6 +155,20 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
     expect(Booking.where(user_id: participant.id)).to be_empty
   end
 
+  it 'honors a rule decision that forbids an otherwise explicitly requested organizer override' do
+    decision = BookingRuleDecision.new(code: :gender_restricted, message: 'Override is not permitted.',
+                                       overridable: false)
+    rule = instance_double(BookingGenderRule, evaluate: decision)
+    allow(BookingGenderRule).to receive(:new).and_return(rule)
+    sign_in(organizer)
+    post program_organizer_bookings_path(program),
+         params: { booking: organizer_booking(override_gender_rule: '1', reason: 'Agreed by phone.') }
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include(decision.message)
+    expect(Booking.where(user_id: participant.id)).to be_empty
+    expect(BookingClaim.where(program_id: program.id)).to be_empty
+  end
+
   it 'lets organizers book an unspecified gender when optional rules are disabled' do
     program.update!(no_consecutive_genders: [])
     participant.update!(gender: nil)
