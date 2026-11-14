@@ -34,12 +34,9 @@ module BookingAttendance
     return if attendance_confirmed? == confirmed
 
     change = { confirmed: confirmed, changed_at: Time.current, changed_by_id: actor.id, reason: explanation }
-    result = self.class.collection.find(_id: id, status: 'confirmed', ends_at: { '$gt' => Time.current }).update_one(
+    atomic_change!(
       { '$set' => attendance_fields(confirmed, actor), '$push' => { attendance_changes: change } }, session: session
     )
-    raise BookingMutation::Conflict, I18n.t('bookings.conflict') unless result.modified_count == 1
-
-    reload
   end
 
   private

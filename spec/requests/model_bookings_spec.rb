@@ -135,7 +135,8 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
     get edit_venue_model_booking_path(venue, original)
     expect(response.body).to include('Change Your Posing Date', 'booking-change-form',
                                      'Plans changed? Not a problem. Tell us, then choose an available date below.')
-    patch venue_model_booking_path(venue, original), params: { date: '2026-11-30', reason: 'Travel plans changed.' }
+    patch venue_model_booking_path(venue, original),
+          params: { date: '2026-11-30', reason: 'Travel plans changed.', booking_version: original.lock_version }
     replacement = track_booking(venue.model_bookings.where(previous_booking_id: original.id).first)
     expect(original.reload).to have_attributes(date: Date.new(2026, 11, 23), status: 'rescheduled',
                                                reason: 'Travel plans changed.', changed_by_id: model.id)
@@ -150,7 +151,8 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
     other = create_user
     grant_model_access(venue, other)
     book('2026-11-30', user: other)
-    patch venue_model_booking_path(venue, original), params: { date: '2026-11-30', reason: 'Need another date.' }
+    patch venue_model_booking_path(venue, original),
+          params: { date: '2026-11-30', reason: 'Need another date.', booking_version: original.lock_version }
     expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include('someone else just booked that date')
     expect(response.parsed_body.at_css('#reason').text.strip).to eq('Need another date.')
@@ -162,14 +164,29 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
   it 'requires explanations and keeps month navigation on the change form after errors' do
     prepare_model
     original = book('2026-11-23')
-    patch venue_model_booking_path(venue, original), params: { date: '2026-11-30', reason: ' ' }
+    patch venue_model_booking_path(venue, original),
+          params: { date: '2026-11-30', reason: ' ', booking_version: original.lock_version }
     expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include('Please tell us what changed')
     expect(response.parsed_body.at_css('nav[aria-label="Calendar months"] a')['href'])
       .to start_with(edit_venue_model_booking_path(venue, original))
-    post cancel_venue_model_booking_path(venue, original), params: { reason: '' }
+    post cancel_venue_model_booking_path(venue, original),
+         params: { reason: '', booking_version: original.lock_version }
     expect(response).to have_http_status(:unprocessable_content)
     expect(original.reload.status).to eq('confirmed')
+  end
+
+  it 'rejects missing and malformed booking versions without changing the reservation' do
+    prepare_model
+    original = book('2026-11-23')
+    [nil, '', 'not-a-version', '-1', '00'].each do |version|
+      patch venue_model_booking_path(venue, original),
+            params: { date: '2026-11-30', reason: 'Travel.', booking_version: version }
+      expect(response).to redirect_to(venue_path(venue))
+      expect(flash[:alert]).to include('changed while you were editing')
+    end
+    expect(original.reload).to have_attributes(status: 'confirmed', lock_version: 0)
+    expect(venue.model_bookings.count).to eq(1)
   end
 
   it 'retains a canceled booking and explanation when the model books a different day' do
@@ -177,15 +194,18 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
     original = book
     get cancellation_venue_model_booking_path(venue, original)
     expect(response.body).to include('Cancel Your Booking')
-    post cancel_venue_model_booking_path(venue, original), params: { reason: 'A family commitment.' }
+    post cancel_venue_model_booking_path(venue, original),
+         params: { reason: 'A family commitment.', booking_version: original.lock_version }
     expect(original.reload).to have_attributes(status: 'canceled', reason: 'A family commitment.')
     post venue_model_bookings_path(venue), params: { date: '2026-11-23' }
     replacement = track_booking(venue.model_bookings.where(status: 'confirmed').first)
     expect(replacement.id).not_to eq(original.id)
     follow_redirect!
     expect(response.body).to include('2026-11-16', 'Canceled', 'A family commitment.', '2026-11-23', 'Confirmed')
-    post cancel_venue_model_booking_path(venue, original), params: { reason: 'Overwrite history' }
-    expect(response).to have_http_status(:not_found)
+    post cancel_venue_model_booking_path(venue, original),
+         params: { reason: 'Overwrite history', booking_version: original.lock_version }
+    expect(response).to redirect_to(venue_path(venue))
+    expect(flash[:alert]).to include('changed while you were editing')
     expect(original.reload.reason).to eq('A family commitment.')
   end
 
@@ -200,7 +220,8 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
     expect(response.body).not_to include(model.email, 'Change Date')
     get edit_venue_model_booking_path(venue, original)
     expect(response).to have_http_status(:not_found)
-    post cancel_venue_model_booking_path(venue, original), params: { reason: 'Forbidden' }
+    post cancel_venue_model_booking_path(venue, original),
+         params: { reason: 'Forbidden', booking_version: original.lock_version }
     expect(response).to have_http_status(:not_found)
     expect(original.reload.status).to eq('confirmed')
   end
@@ -226,7 +247,8 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
     get venue_path(venue)
     expect(response.body).to include('Your Upcoming Booking', 'Change Date', 'Cancel Booking')
     expect(original.reload.status).to eq('confirmed')
-    patch venue_model_booking_path(venue, original), params: { date: '2026-11-24', reason: 'New venue weekday.' }
+    patch venue_model_booking_path(venue, original),
+          params: { date: '2026-11-24', reason: 'New venue weekday.', booking_version: original.lock_version }
     replacement = track_booking(venue.model_bookings.where(previous_booking_id: original.id).first)
     expect(replacement.date).to eq(Date.new(2026, 11, 24))
   end
@@ -248,7 +270,8 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
       expect(response.parsed_body.at_css('a[href="tel:+12125551234"]')).to be_present
       expect(response.parsed_body.at_css('#booking-change-form')).to be_nil
       expect(response.parsed_body.at_css('[data-calendar]')).to be_nil
-      patch venue_model_booking_path(venue, original), params: { date: '2026-11-23', reason: 'Plans changed.' }
+      patch venue_model_booking_path(venue, original),
+            params: { date: '2026-11-23', reason: 'Plans changed.', booking_version: original.lock_version }
       expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include('Please contact an organizer before rescheduling', organizer.email)
       expect(original.reload.status).to eq('confirmed')

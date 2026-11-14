@@ -7,6 +7,7 @@ class ModelBookingsController < ApplicationController
   before_action :find_booking, except: :create
   before_action :require_booking_permission, only: %i[create edit update]
   rescue_from BookingMutation::Invalid, BookingMutation::Conflict, with: :show_error
+  rescue_from BookingMutation::Stale, with: :show_stale_booking
 
   def edit
     load_calendar unless @booking.rescheduling_locked?
@@ -18,19 +19,21 @@ class ModelBookingsController < ApplicationController
   end
 
   def update
-    @booking = mutation.change(booking: @booking, date: params[:date], reason: params[:reason])
+    @booking = mutation.change(booking: @booking, date: params[:date], reason: params[:reason],
+                               version: params[:booking_version])
     finish_booking('bookings.changed')
   end
 
   def cancellation; end
 
   def confirm
-    @booking = AttendanceMutation.new(venue: @venue, user: current_user).confirm(@booking.id)
+    @booking = AttendanceMutation.new(venue: @venue, user: current_user)
+                                 .confirm(@booking.id, version: params[:booking_version])
     finish_booking('bookings.attendance_confirmed')
   end
 
   def cancel
-    @booking = mutation.cancel(booking: @booking, reason: params[:reason])
+    @booking = mutation.cancel(booking: @booking, reason: params[:reason], version: params[:booking_version])
     finish_booking('bookings.canceled')
   end
 
@@ -52,7 +55,8 @@ class ModelBookingsController < ApplicationController
   end
 
   def find_booking
-    @booking = ModelBooking.upcoming.where(venue_id: @venue.id, user_id: current_user.id).find(params.expect(:id))
+    records = %w[edit cancellation].include?(action_name) ? ModelBooking.upcoming : ModelBooking.all
+    @booking = records.where(venue_id: @venue.id, user_id: current_user.id).find(params.expect(:id))
   end
 
   def mutation
@@ -77,5 +81,9 @@ class ModelBookingsController < ApplicationController
     load_calendar
     flash.now[:alert] = error.message
     render(action_name == 'cancel' ? :cancellation : :edit, status: :unprocessable_content)
+  end
+
+  def show_stale_booking(error)
+    redirect_to venue_path(@venue), alert: error.message
   end
 end

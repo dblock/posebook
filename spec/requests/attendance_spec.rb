@@ -20,10 +20,15 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     sign_in(model)
   end
 
+  def confirm_booking(**attributes)
+    post confirm_venue_model_booking_path(venue, booking),
+         params: { booking_version: booking.lock_version }.merge(attributes)
+  end
+
   it 'offers confirmation and the usual rescheduling workflow seven days before posing' do
     get venue_path(venue)
     expect(response.body).to include('I&#39;ll be there!', 'I can no longer make it.')
-    post confirm_venue_model_booking_path(venue, booking)
+    confirm_booking
     follow_redirect!
     expect(response.body).to include('You&#39;re confirmed')
     expect(response.parsed_body.at_css('.calendar .attendance-confirmed').text).to eq('Confirmed')
@@ -33,10 +38,10 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
 
   it 'rejects early confirmation and makes a repeated or forged request to clear confirmation harmless' do
     travel_to Time.utc(2026, 11, 16, 4, 59, 59)
-    post confirm_venue_model_booking_path(venue, booking)
+    confirm_booking
     expect(booking.reload.attendance_confirmed?).to be(false)
     travel_to Time.utc(2026, 11, 16, 5)
-    2.times { post confirm_venue_model_booking_path(venue, booking), params: { attendance: 'unconfirmed' } }
+    2.times { confirm_booking(attendance: 'unconfirmed') }
     expect(booking.reload.attendance_changes.size).to eq(1)
     expect(booking.attendance_confirmed?).to be(true)
   end
@@ -48,10 +53,11 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     get venue_path(venue)
     expect(response.body).to include('Please contact an organizer ASAP', organizer.email, organizer.phone)
     expect(response.body).not_to include('I can no longer make it.')
-    patch venue_model_booking_path(venue, booking), params: { date: '2026-11-30', reason: 'Travel.' }
+    patch venue_model_booking_path(venue, booking),
+          params: { date: '2026-11-30', reason: 'Travel.', booking_version: booking.lock_version }
     expect(response).to have_http_status(:unprocessable_content)
     expect(booking.reload.status).to eq('confirmed')
-    post confirm_venue_model_booking_path(venue, booking)
+    confirm_booking
     follow_redirect!
     expect(response.body).not_to include('Please contact an organizer ASAP', 'Attendance not confirmed')
   end
@@ -71,7 +77,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
   end
 
   it 'publishes a positive confirmation without revealing a private model or confirmation history' do
-    post confirm_venue_model_booking_path(venue, booking)
+    confirm_booking
     delete session_path
     get venue_path(venue)
     expect(response.body).to include('To be announced')
@@ -83,7 +89,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     other = create_user
     grant_model_access(venue, other)
     sign_in(other)
-    post confirm_venue_model_booking_path(venue, booking)
+    confirm_booking
     expect(response).to have_http_status(:not_found)
     other_venue = create_venue
     grant_model_access(other_venue, model)
@@ -95,7 +101,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
 
   it 'permits an already booked paused model to confirm without granting repeat booking access' do
     venue.memberships.models.find_by(user_id: model.id).update!(model_paused: true, model_pause_reason: 'On a break.')
-    post confirm_venue_model_booking_path(venue, booking)
+    confirm_booking
     expect(booking.reload.attendance_confirmed?).to be(true)
     get venue_path(venue)
     expect(response.body).not_to include('I can no longer make it.')
@@ -104,8 +110,23 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
   it 'reloads stale private summaries when confirmation changes during calendar navigation' do
     get venue_path(venue)
     context = response.parsed_body.at_css('[data-calendar]')['data-calendar-context']
-    post confirm_venue_model_booking_path(venue, booking)
+    confirm_booking
     get venue_path(venue, month: '2026-12')
     expect(response.parsed_body.at_css('[data-calendar]')['data-calendar-context']).not_to eq(context)
+  end
+
+  it 'does not confirm a changed drawing time from an old confirmation button' do
+    organizer = create_user
+    grant_schedule_access(venue, organizer)
+    get venue_path(venue)
+    version = response.parsed_body.at_css('input[name="booking_version"]')['value']
+    track_record(VenueScheduleMutation.new(venue: venue, user: organizer).call(
+                   date: booking.date.iso8601, mode: 'open', start_time: '20:00', reason: 'Later drawing.'
+                 ))
+    confirm_booking(booking_version: version)
+    expect(response).to redirect_to(venue_path(venue))
+    expect(flash[:alert]).to include('changed while you were editing')
+    expect(booking.reload.attendance_confirmed?).to be(false)
+    expect(booking.time_changes.size).to eq(1)
   end
 end

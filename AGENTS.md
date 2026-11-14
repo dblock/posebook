@@ -34,6 +34,8 @@ Venue URLs use `mongoid-slug` with name-derived defaults, optional custom values
 
 Tests use `MONGODB_TEST_URI`, never the development or production connection. The test database guard requires `posebook_test` or a `posebook_test_` prefix. Delete only records owned by a test, not entire collections or databases. Keep real network-provider calls out of tests.
 
+Booking writes must atomically compare and increment `lock_version` with their state/history changes. Model and organizer mutation forms submit the displayed revision; do not make missing or stale tokens default to the latest state. Preserve the originally submitted version across transaction retries and redirect conflicts to fresh venue details, not a stale draft with a new token. Schedule time changes also invalidate old booking forms. Missing stored revisions are legacy zero; repeated positive confirmations may be idempotent but must never reverse a newer organizer clear.
+
 ## Validation and Documentation
 
 Run `bundle exec rake spec` and `bundle exec rake lint` before every development push. Run `bundle exec rake package` before committing changes to packaging, runtime dependencies, configuration, or HTTP entry points. Reuse passing results only if the tested content and configuration have not changed. The package check builds and runs the actual production Docker image and cleans up its own container and image.

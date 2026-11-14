@@ -6,6 +6,7 @@
     <%= render "model_bookings/rescheduling_notice", venue: @venue %>
   <% else %>
     <%= form_with url: venue_model_booking_path(@venue, @booking), method: :patch, id: "booking-change-form" do %>
+          <%= hidden_field_tag :booking_version, request.get? ? @booking.lock_version : params[:booking_version] %>
       <p>Plans changed? Not a problem. Tell us, then choose an available date below.</p>
       <p><%= label_tag :reason, "What changed?" %><br><%= text_area_tag :reason, params[:reason], required: true, maxlength: 2000, rows: 3 %></p>
     <% end %>
