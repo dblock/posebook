@@ -1,7 +1,8 @@
 <main>
   <h1><%= @venue.name %></h1>
-  <%= simple_format(@venue.address) %>
-  <% if @venue.public_instagram_url %><p><%= link_to "@#{@venue.public_instagram_handle}", @venue.public_instagram_url, target: "_blank", rel: "noopener noreferrer" %></p><% end %>
+  <p><%= copyable(venue_url(@venue), label: "venue link") { link_to "Venue Link", venue_path(@venue) } %></p>
+  <%= simple_format(@venue.address) %><%= copy_button(value: @venue.address, label: "address") %>
+  <% if @venue.public_instagram_url %><p><%= copyable("@#{@venue.public_instagram_handle}", label: "Instagram handle") { link_to "@#{@venue.public_instagram_handle}", @venue.public_instagram_url, target: "_blank", rel: "noopener noreferrer" } %></p><% end %>
   <h2>Programs</h2>
   <% @venue.programs.order_by(name: :asc).each do |program| %>
     <p><%= link_to program.name, program %><br><%= program_schedule_summary(program) %></p>

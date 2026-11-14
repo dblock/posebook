@@ -1,10 +1,10 @@
 <main>
   <h1><%= @invitation.coordinator_label %> Invitation to <%= @invitation.target.name %></h1>
-  <p>Invited email: <%= @invitation.email %>. <%= status_label(@invitation.status) %></p>
+  <p>Invited email: <%= copyable(@invitation.email, label: "invited email") %>. <%= status_label(@invitation.status) %></p>
   <p>This invitation grants management access only at <%= @invitation.target.name %>. The recipient must register or sign in using the invited email address. It expires in 30 days and can be accepted once.</p>
   <% if @token %>
     <p>Copy this private link now; it will not be shown again. Share it only with the invited recipient.</p>
-    <p><%= label_tag :invitation_link, "Private invitation link" %><br><%= text_field_tag :invitation_link, coordinator_invitation_url(token: @token), readonly: true %></p>
+    <p><%= label_tag :invitation_link, "Private invitation link" %><span class="copy-field"><%= text_field_tag :invitation_link, coordinator_invitation_url(token: @token), readonly: true %><%= copy_button(target: "invitation_link", label: "private invitation link") %></span></p>
   <% end %>
   <% if @invitation.status == "Pending" %>
     <%= button_to "Revoke Invitation", polymorphic_path([@invitation.target, @invitation]), method: :delete %>

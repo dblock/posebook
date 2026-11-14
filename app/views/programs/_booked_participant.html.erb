@@ -6,7 +6,7 @@
       <%= booking_participant_name(participant, manager: local_assigns[:manager]) %>
     <% end %>
     <% if (url = participant.public_instagram_url) %>
-      <br><%= link_to "@#{participant.public_instagram_handle}", url, target: "_blank", rel: "noopener noreferrer" %>
+      <br><%= copyable("@#{participant.public_instagram_handle}", label: "Instagram handle") { link_to "@#{participant.public_instagram_handle}", url, target: "_blank", rel: "noopener noreferrer" } %>
     <% end %>
   </div>
 <% end %>

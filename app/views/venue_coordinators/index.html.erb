@@ -3,7 +3,7 @@
   <%= render "coordinator_invitations/form" %>
   <h2>Current Coordinators</h2>
   <% @coordinators.each do |membership| %>
-    <p><%= membership.user.name %> (<%= membership.user.email %>)</p>
+    <p><%= copyable(membership.user.name, label: "name") %> (<%= copyable(membership.user.email, label: "email") %>)</p>
     <%= button_to "Remove Coordinator", venue_coordinator_path(@venue, membership), method: :delete %>
   <% end %>
   <%= render "coordinator_invitations/history" %>
