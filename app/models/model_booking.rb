@@ -40,6 +40,10 @@ class ModelBooking
     starts_at || VenueSchedule.local_start(date, '18:30', time_zone)
   end
 
+  def rescheduling_locked?
+    scheduled_start < 1.week.from_now
+  end
+
   def change_time!(start, explanation, actor, session:)
     return if scheduled_start == start
 

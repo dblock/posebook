@@ -64,6 +64,7 @@ lockfile
 lockfiles
 lookups
 matchers
+mailto
 md
 MERCHANTABILITY
 mongo

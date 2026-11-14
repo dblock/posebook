@@ -9,7 +9,7 @@ class ModelBookingsController < ApplicationController
   rescue_from BookingMutation::Invalid, BookingMutation::Conflict, with: :show_error
 
   def edit
-    load_calendar
+    load_calendar unless @booking.rescheduling_locked?
   end
 
   def create
