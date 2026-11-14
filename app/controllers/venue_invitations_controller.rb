@@ -56,7 +56,8 @@ class VenueInvitationsController < ApplicationController
     return unless params[:send_email] == '1'
 
     ModelInvitationMailer.invite(@invitation, @invitation.token).deliver_now
-  rescue IOError, SystemCallError, Timeout::Error, Net::SMTPError
+  rescue IOError, SystemCallError, Timeout::Error, Net::SMTPError => e
+    NewRelic::Agent.notice_error(e)
     flash[:alert] = t('invitations.delivery_failed')
   end
 end

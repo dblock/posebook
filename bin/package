@@ -43,6 +43,19 @@ def check_photos(container)
   docker!('exec', container, 'bundle', 'exec', 'rails', 'runner', source)
 end
 
+def check_monitoring(container)
+  source = <<~RUBY
+    config = NewRelic::Agent.config
+    raise "Monitoring requires a license" if config[:agent_enabled]
+    %i[attributes.enabled mongo.capture_queries application_logging.enabled
+       browser_monitoring.auto_instrument].each do |setting|
+      raise "Unsafe monitoring setting: \#{setting}" if config[setting]
+    end
+    raise "Exception messages are not private" unless config[:'strip_exception_messages.enabled']
+  RUBY
+  docker!('exec', container, 'bundle', 'exec', 'rails', 'runner', source)
+end
+
 suffix = SecureRandom.hex(6)
 image = "posebook-package:#{suffix}"
 network = nil
@@ -107,7 +120,9 @@ begin
           'raise Mongoid::Errors::Rollback }; ' \
           'raise "Rollback failed" if Venue.where(name: "Package Transaction").exists?')
   check_photos(container)
-  puts 'Production image passed photo processing/storage/deletion, handle migration, slug setup, rollback, ' \
+  check_monitoring(container)
+  puts 'Production image passed monitoring configuration, photo processing/storage/deletion, ' \
+       'handle migration, slug setup, rollback, ' \
        'indexes, registration, ' \
        'stylesheet, and liveness checks.'
 ensure

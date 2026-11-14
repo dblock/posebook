@@ -1,0 +1,24 @@
+common: &defaults
+  app_name: Posebook
+  agent_enabled: false
+  log_file_path: STDOUT
+  attributes:
+    enabled: false
+  mongo:
+    capture_queries: false
+  strip_exception_messages:
+    enabled: true
+  application_logging:
+    enabled: false
+  browser_monitoring:
+    auto_instrument: false
+
+development:
+  <<: *defaults
+
+test:
+  <<: *defaults
+
+production:
+  <<: *defaults
+  agent_enabled: <%= !ENV.fetch('NEW_RELIC_LICENSE_KEY', '').strip.empty? %>

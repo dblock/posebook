@@ -67,10 +67,13 @@ RSpec.describe 'Password recovery', :aggregate_failures, :database, type: :reque
 
   it 'reports delivery failures without sending real email' do
     user = create_user
-    allow(PasswordResetMailer).to receive(:reset).and_raise(Net::SMTPAuthenticationError, 'Unavailable')
+    error = Net::SMTPAuthenticationError.new('Unavailable')
+    allow(PasswordResetMailer).to receive(:reset).and_raise(error)
+    allow(NewRelic::Agent).to receive(:notice_error)
     post password_resets_path, params: { email: user.email }
 
     expect(response).to have_http_status(:service_unavailable)
     expect(response.body).to include('could not be sent')
+    expect(NewRelic::Agent).to have_received(:notice_error).with(error).once
   end
 end

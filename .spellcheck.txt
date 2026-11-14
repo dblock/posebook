@@ -58,6 +58,7 @@ JavaScript
 JSON
 LCOV
 lifecycle
+unhandled
 liveness
 localhost
 lockfile
@@ -79,6 +80,8 @@ non
 noopener
 noreferrer
 NONINFRINGEMENT
+NewRelic
+newrelic
 npm
 opt
 passwordless

@@ -14,7 +14,8 @@ class PasswordResetsController < ApplicationController
   def create
     User.with_email(params[:email])&.send_password_reset
     redirect_to new_session_path, notice: t('password_resets.sent')
-  rescue IOError, SystemCallError, Timeout::Error, Net::SMTPError
+  rescue IOError, SystemCallError, Timeout::Error, Net::SMTPError => e
+    NewRelic::Agent.notice_error(e)
     flash.now[:alert] = t('password_resets.failed')
     render :new, status: :service_unavailable
   end
