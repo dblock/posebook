@@ -12,9 +12,9 @@
     <div class="photo-gallery">
       <% photos.each_with_index do |photo, index| %>
         <figure class="venue-photo profile-photo" data-photo="<%= photo.id %>">
-          <%= link_to venue_photo_path(venue, photo), target: "_blank", rel: "noopener noreferrer" do %>
-            <%= image_tag venue_photo_path(venue, photo, thumbnail: 1), alt: "#{venue.name} photo #{index + 1}", width: 400, height: 400, loading: "lazy" %>
-          <% end %>
+          <%= render "shared/photo_thumbnail", full_url: venue_photo_path(venue, photo),
+                     thumbnail_url: venue_photo_path(venue, photo, thumbnail: 1),
+                     description: "#{venue.name} photo #{index + 1}" %>
           <% if editable %><%= button_to "Delete Venue Photo", venue_photo_path(venue, photo), method: :delete %><% end %>
         </figure>
       <% end %>

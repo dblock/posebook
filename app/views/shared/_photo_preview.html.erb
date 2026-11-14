@@ -1,0 +1,7 @@
+<dialog class="photo-preview" data-photo-dialog aria-labelledby="photo-preview-heading">
+  <h2 id="photo-preview-heading" class="photo-preview-heading">Photo Preview</h2>
+  <button type="button" data-photo-close autofocus>Close</button>
+  <p data-photo-error role="status" hidden>This photo is no longer available.</p>
+  <img data-photo-image alt="" hidden>
+</dialog>
+<%= javascript_include_tag "photo-preview", defer: true %>

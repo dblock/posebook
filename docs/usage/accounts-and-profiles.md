@@ -9,3 +9,5 @@ Venue/session coordinator invitations are restricted to the invited email addres
 Use **Profile** to edit your name, display name, phone, Instagram handle, and privacy preferences. Your display name defaults to your account name. Instagram appears on public calendars only when tagging is enabled; **Keep all my information private** hides your name and Instagram from public pages while retaining your preferences.
 
 Use **Change Password** or **Deactivate Account** from your profile to manage account access. Changing your password signs out other sessions. Deactivation signs you out and retains your booking history.
+
+Your profile shows your uploaded photos, including private ones. Use **Manage Photos** to upload, delete, or change sharing preferences. Click a photo in any profile or venue gallery to preview the larger image without leaving the page. Close the preview with **Close**, Escape, or a click outside it.

@@ -48,4 +48,5 @@
 - [#52](https://github.com/dblock/posebook/pull/52): Generalize programs, participants, bookings, and pay with session-specific terminology settings and automatic deployment-time schema conversion while preserving figure-drawing booking rules - [@dblock](https://github.com/dblock).
 - [#53](https://github.com/dblock/posebook/pull/53): Retire all historical schema and Instagram migrations, startup slug backfills, migration flags, and legacy packaging fixtures after the one-time conversion - [@dblock](https://github.com/dblock).
 - [#54](https://github.com/dblock/posebook/pull/54): Invite new venue/session coordinators or confirm promotions of registered accounts, with email-bound single-use links and scoped management roles - [@dblock](https://github.com/dblock).
+- [#55](https://github.com/dblock/posebook/pull/55): Show uploaded photos on account profiles and preview larger images in accessible popups across profile and venue galleries while preserving photo privacy - [@dblock](https://github.com/dblock).
 - Your contribution here.
