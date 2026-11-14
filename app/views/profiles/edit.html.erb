@@ -1,0 +1,34 @@
+<main>
+  <h1>Account Settings</h1>
+  <%= render "shared/errors", record: @user %>
+  <% if @user.pending_email.present? %>
+    <p>Verification pending for <%= @user.pending_email %>. Your current email is still <%= @user.email %>.</p>
+  <% end %>
+  <h2>Profile</h2>
+  <%= form_with model: @user, url: profile_path, method: :patch, id: "profile-form" do |form| %>
+    <p><%= form.label :name %><br><%= form.text_field :name, required: true, autocomplete: "name", maxlength: 100 %></p>
+    <p><%= form.label :email %><br><%= form.email_field :email, value: @user.pending_email.presence || @user.email, required: true, autocomplete: "email" %></p>
+    <p><%= form.label :phone %><br><%= form.telephone_field :phone, autocomplete: "tel", placeholder: "+12125551234" %><br>Use an international number beginning with +. Phone recovery is not available yet.</p>
+    <p><%= label_tag "profile-current-password", "Current password (required for email changes)" %><br><%= password_field_tag "user[current_password]", nil, id: "profile-current-password", autocomplete: "current-password" %></p>
+    <%= form.submit "Save Profile" %>
+  <% end %>
+
+  <h2>Change Password</h2>
+  <%= form_with url: password_path, scope: :user, method: :patch, id: "password-form" do |form| %>
+    <p><%= form.label :current_password, for: "change-current-password" %><br><%= form.password_field :current_password, id: "change-current-password", required: true, autocomplete: "current-password" %></p>
+    <p><%= form.label :password, "New password" %><br><%= form.password_field :password, required: true, minlength: 12, autocomplete: "new-password" %></p>
+    <p><%= form.label :password_confirmation %><br><%= form.password_field :password_confirmation, required: true, autocomplete: "new-password" %></p>
+    <%= form.submit "Change Password" %>
+  <% end %>
+
+  <h2>Deactivate Account</h2>
+  <% if @user.system_admin? %>
+    <p>System admin accounts stay active until role transfer is available, so administrator access cannot be lost.</p>
+  <% else %>
+    <p>Deactivation revokes access but keeps your history. A system admin can reactivate your account.</p>
+    <%= form_with url: account_deactivation_path, id: "deactivation-form" do |form| %>
+      <p><%= form.label :current_password, for: "deactivate-current-password" %><br><%= form.password_field :current_password, id: "deactivate-current-password", required: true, autocomplete: "current-password" %></p>
+      <%= form.submit "Deactivate My Account" %>
+    <% end %>
+  <% end %>
+</main>

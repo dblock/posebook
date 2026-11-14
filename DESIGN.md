@@ -4,7 +4,7 @@
 
 Posebook coordinates invitation-first model registration, scheduling, and reminders across figure drawing venues. The first venue is Figure Drawing at Enoch's, intended for `enochs.dblock.org`. The repository and application are named Posebook, not after a single venue.
 
-The application currently provides first-user registration, role-bearing user accounts, email/password login, email password recovery, a protected home page, and a Rails `/up` liveness endpoint. `/up` proves application boot, not MongoDB connectivity. Model invitations, venue scheduling, bookings, and durable reminders are not implemented yet.
+The application currently provides first-user registration, role-bearing user accounts, email/password login, email password recovery, account settings, deactivation/reactivation, a protected home page, and a Rails `/up` liveness endpoint. `/up` proves application boot, not MongoDB connectivity. Model invitations, venue scheduling, bookings, and durable reminders are not implemented yet.
 
 ## Accounts and Recovery
 
@@ -14,7 +14,11 @@ Use email/password authentication initially, with BCrypt password hashing, a 12-
 
 Email recovery links use random tokens, store only their SHA-256 digests, expire after 30 minutes, and are consumed atomically with the password update. Resetting rotates the session version, invalidating every existing session. A newer reset request supersedes older links. Requests use the same success message for known and unknown emails. Login, signup, and reset requests use Rails rate limits backed by the application's cache; these limits are per process with the current memory cache, not distributed across instances.
 
-Development emails are written to `tmp/mail`; tests use the in-memory mail adapter. Production recovery uses configurable SMTP, requires `SMTP_ADDRESS` and `MAIL_FROM`, and reports unavailable delivery rather than pretending to send email. Reset URLs use configured mailer hosts, not incoming request hosts. Phone recovery, email changes/verification, and account invitations remain future work.
+Account settings allow name and optional international-format phone changes. Phone numbers are unverified and cannot be used for recovery or messaging yet. Email changes require the current password and a single-use, 30-minute verification link at the new address. GET displays confirmation without changing the address; an atomic PATCH consumes the token, changes email under its unique index, invalidates all sessions, and clears authentication challenges. Until then, login and recovery use the old email. Authenticated password changes require the current password, rotate session versions, retain the current browser, and invalidate other sessions and outstanding challenges.
+
+Deactivation retains the user and history while revoking sessions, email-change links, and recovery links. Inactive users cannot log in or request recovery; old documents without an active flag remain active. Only system admins can manage other users or reactivate accounts. System admin accounts cannot be deactivated until global role transfer exists: protecting these accounts atomically avoids concurrent last-admin races. Public registration remains closed even if all non-admin accounts are inactive.
+
+Development emails are written to `tmp/mail`; tests use the in-memory mail adapter. Production account email uses configurable SMTP, requires `SMTP_ADDRESS` and `MAIL_FROM`, and reports unavailable delivery rather than pretending to send email. Links use configured mailer hosts, not incoming request hosts. Phone recovery and account invitations remain future work.
 
 ## Agreed Model Workflow
 
@@ -48,6 +52,6 @@ Production requires `MONGODB_URI` and a deployment-supplied `SECRET_KEY_BASE`. `
 
 ## Delivery Scope
 
-Implementation proceeds through focused stacked PRs: account bootstrap and recovery, venue/organizer setup, recurring sessions, invitations, then bookings and email/SMS reminders. SMS consent, phone verification, opt-outs, invitation expiry, and adult-model expectations are required before the corresponding public functionality launches.
+Implementation proceeds through focused stacked PRs: account bootstrap and recovery, account settings and lifecycle, venue/organizer setup, recurring sessions, invitations, then bookings and email/SMS reminders. SMS consent, phone verification, opt-outs, invitation expiry, and adult-model expectations are required before the corresponding public functionality launches.
 
 Version one excludes payments, artist registration, public model directories, and photo uploads. No logo or other artwork has been selected or created.

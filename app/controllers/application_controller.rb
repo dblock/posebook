@@ -8,8 +8,8 @@ class ApplicationController < ActionController::Base
   def current_user
     return unless session[:user_id]
 
-    @current_user ||= User.where(id: session[:user_id],
-                                 session_version: session[:session_version]).first
+    @current_user ||= User.active.where(id: session[:user_id],
+                                        session_version: session[:session_version]).first
   end
 
   def require_authentication
@@ -22,5 +22,9 @@ class ApplicationController < ActionController::Base
     reset_session
     session[:user_id] = user.id.to_s
     session[:session_version] = user.session_version
+  end
+
+  def require_system_admin
+    head :forbidden unless current_user.system_admin?
   end
 end

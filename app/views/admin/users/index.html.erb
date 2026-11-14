@@ -1,0 +1,23 @@
+<main>
+  <h1>Users</h1>
+  <table>
+    <thead><tr><th>Name</th><th>Email</th><th>Global Roles</th><th>Status</th><th>Access</th></tr></thead>
+    <tbody>
+      <% @users.each do |user| %>
+        <tr>
+          <td><%= user.name %></td><td><%= user.email %></td><td><%= user.roles.join(", ") %></td>
+          <td><%= user.active? ? "Active" : "Inactive" %></td>
+          <td>
+            <% if !user.active? %>
+              <%= button_to "Reactivate", admin_user_path(user), method: :patch, params: { active: true } %>
+            <% elsif !user.system_admin? %>
+              <%= button_to "Deactivate", admin_user_path(user), method: :patch, params: { active: false } %>
+            <% else %>
+              Protected
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</main>
