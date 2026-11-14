@@ -16,6 +16,21 @@ RSpec.describe 'Venue management', :aggregate_failures, :database, type: :reques
     expect(response.parsed_body.at_css('input[name="venue[start_time]"]')['value']).to eq('19:15')
   end
 
+  it 'shows a working venue URL beneath the slug only after the venue is saved' do
+    sign_in(create_user(roles: ['system_admin']))
+    get new_venue_path
+    expect(response.parsed_body.at_css('#venue_custom_slug ~ small a')).to be_nil
+    [create_venue, create_venue(custom_slug: 'weekly-drawing')].each do |venue|
+      get edit_venue_path(venue)
+      link = response.parsed_body.at_css('#venue_custom_slug ~ small a')
+      expect(link['href']).to eq(venue_shortcut_path(venue))
+      expect(link.text).to eq("#{request.base_url}#{venue_shortcut_path(venue)}")
+      get link['href']
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(venue.name)
+    end
+  end
+
   it 'requires authentication for management but allows public venue shortcuts' do
     create_user
     get venues_path
