@@ -27,7 +27,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     delete session_path
     [nil, organizer].each do |viewer|
       sign_in(viewer) if viewer
-      get program_path(program)
+      get program_path(program, section: 'calendar')
       booked = response.parsed_body.at_css('[data-date="2026-11-16"]')
       expect(booked['class']).to eq('booked')
       expect(booked.css('.status-label').map(&:text)).to eq(['Unconfirmed'])
@@ -144,7 +144,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     expect(original.reload).to have_attributes(date: Date.new(2026, 11, 23), status: 'rescheduled',
                                                reason: 'Travel plans changed.', changed_by_id: participant.id)
     expect(replacement.date).to eq(Date.new(2026, 11, 30))
-    follow_redirect!
+    get program_path(program, section: 'history')
     expect(response.body).to include('Rescheduled', 'Moved from 2026-11-23', 'Travel plans changed.', 'Unconfirmed')
   end
 
@@ -203,7 +203,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     post program_bookings_path(program), params: { date: '2026-11-23' }
     replacement = track_booking(program.bookings.where(status: 'confirmed').first)
     expect(replacement.id).not_to eq(original.id)
-    follow_redirect!
+    get program_path(program, section: 'history')
     expect(response.body).to include('2026-11-16', 'Canceled', 'A family commitment.', '2026-11-23', 'Unconfirmed')
     post cancel_program_booking_path(program, original),
          params: { reason: 'Overwrite history', booking_version: original.lock_version }
@@ -218,7 +218,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     other = create_user(name: 'Another Participant')
     grant_participant_access(program, other)
     sign_in(other)
-    get program_path(program)
+    get program_path(program, section: 'calendar')
     expect(response.body).to include(participant.public_name)
     expect(response.body).not_to include(participant.email, 'Change Date')
     get edit_program_booking_path(program, original)
@@ -235,7 +235,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     organizer = create_user(name: 'Program Organizer')
     grant_coordinator_access(program, organizer)
     sign_in(organizer)
-    get program_path(program)
+    get program_path(program, section: 'history')
     expect(response.body).to include('Program Booking History', participant.name, original.date.iso8601)
     expect(response.parsed_body.css('.calendar form')).to be_empty
     get program_path(create_program)

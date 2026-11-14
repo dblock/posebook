@@ -237,7 +237,7 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
     get program_path(program, booking_invitation: '1')
     expect(response).to redirect_to(new_session_path)
     sign_in(participant)
-    expect(response).to redirect_to(program_path(program))
+    expect(response).to redirect_to(program_path(program, section: 'calendar'))
     delete session_path
     get program_path(create_program, booking_invitation: '1')
     sign_in(participant)

@@ -2,7 +2,7 @@
 
 [Back to Posebook](../../README.md)
 
-Anyone with a venue link can view its address, photos, Instagram, and recurring programs. A program link opens that program's regular schedule and public calendar. Venue and program lists and booking actions require sign-in and the appropriate access. Public calendars show only active participants' public names and opted-in Instagram handles; private profiles appear as **To be announced**.
+Anyone with a venue link can view its address, photos, Instagram, and recurring programs. A program link opens its details; choose **Calendar** to view the public schedule. Signed-in participants can also open their **History**. Venue and program lists and booking actions require sign-in and the appropriate access. Public calendars show only active participants' public names and opted-in Instagram handles; private profiles appear as **To be announced**.
 
 As a participant, choose an available date at a program to make a booking. You can have one upcoming booking per recurring program, including multiple programs at the same venue. Invitations are program-specific, with no additional cross-program date/time conflict restriction. Use **Change Date** or **Cancel Booking** on your booking to update plans, and provide a short explanation when prompted. Dates and times follow the program's time zone. Gender is optional unless that program enables gender rules.
 

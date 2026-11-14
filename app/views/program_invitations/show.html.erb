@@ -1,4 +1,5 @@
 <main>
+  <%= render "programs/navigation", program: @program, active: "participants", detail: "#{@program.participant_label.titleize} Invitation" %>
   <h1><%= @program.participant_label.titleize %> Invitation</h1>
   <p><%= @program.name %> - <%= status_label(@invitation.status) %></p>
   <%= render "programs/regular_schedule", program: @program %>
@@ -8,5 +9,5 @@
   <% else %>
     <p>The private link is only displayed when the invitation is created. Create a new invitation if you did not keep it.</p>
   <% end %>
-  <p><%= link_to "Back to #{@program.program_label.titleize}", program_path(@program) %></p>
+  <p><%= link_to "Back to #{@program.participant_label.pluralize.titleize}", program_participants_path(@program) %></p>
 </main>

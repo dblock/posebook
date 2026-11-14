@@ -64,7 +64,8 @@ class BookingsController < ApplicationController
   end
 
   def finish_booking(message)
-    redirect_to program_path(@program, month: @booking.date.strftime('%Y-%m')), notice: @program.message(message)
+    redirect_to program_path(@program, month: @booking.date.strftime('%Y-%m')),
+                notice: @program.message(message)
   end
 
   def load_calendar
@@ -74,14 +75,16 @@ class BookingsController < ApplicationController
   end
 
   def show_error(error)
-    if %w[create confirm].include?(action_name)
-      return redirect_to program_path(@program, month: params[:date]&.to_s&.first(7)),
-                         alert: error.message
-    end
+    return redirect_to error_calendar_path, alert: error.message if %w[create confirm].include?(action_name)
 
     load_calendar
     flash.now[:alert] = error.message
     render(action_name == 'cancel' ? :cancellation : :edit, status: :unprocessable_content)
+  end
+
+  def error_calendar_path
+    month = params[:date]&.to_s&.first(7)
+    program_path(@program, month: month, section: ('calendar' if month.blank?))
   end
 
   def show_stale_booking(error)

@@ -3,6 +3,50 @@
 require 'rails_helper'
 
 RSpec.describe 'Program management', :aggregate_failures, :database, type: :request do
+  it 'separates public view and calendar while keeping history private' do
+    program = create_program(program_label: 'Session', participant_label: 'Model', instructions: 'Private instructions')
+    get program_path(program)
+    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to eq(%w[View Calendar])
+    expect(response.body).not_to include('Private instructions', 'Program Calendar')
+    get program_path(program, section: 'history')
+    expect(response).to have_http_status(:not_found)
+    get program_path(program, section: 'calendar')
+    expect(response.body).to include('Session Calendar')
+    expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Calendar')
+    breadcrumb = response.parsed_body.at_css('nav[aria-label="Breadcrumb"]').text
+    expect(breadcrumb).to include(program.venue.name, program.name)
+  end
+
+  it 'shows participants only their permitted navigation' do
+    program = create_program(program_label: 'Session', participant_label: 'Model')
+    participant = create_user
+    grant_participant_access(program, participant)
+    sign_in(participant)
+    get program_path(program, section: 'history')
+    expect(response.body).to include('Your Booking History')
+    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to eq(%w[View Calendar History])
+    get program_participants_path(program)
+    expect(response).to have_http_status(:not_found)
+  end
+
+  it 'shows managers the roster and reserves coordinator controls for venue coordinators' do
+    program = create_program(program_label: 'Session', participant_label: 'Model')
+    organizer = create_user
+    grant_coordinator_access(program, organizer)
+    sign_in(organizer)
+    get program_participants_path(program)
+    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to eq(%w[View Calendar History Models])
+    expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Models')
+    expect(response.body).to include('Model Invitations')
+    get program_coordinators_path(program)
+    expect(response).to have_http_status(:forbidden)
+
+    sign_in(create_user(roles: ['system_admin']))
+    get program_coordinators_path(program)
+    expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Coordinators')
+    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to eq(%w[View Calendar History Models Coordinators])
+  end
+
   context 'with configurable terminology' do
     let(:program) { create_program(program_label: 'Workshop', participant_label: 'Instructor') }
     let(:organizer) { create_user }
@@ -18,8 +62,10 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
       patch program_path(program), params: { program: { program_label: 'Lecture', participant_label: 'Speaker' } }
       expect(response).to redirect_to(program_path(program))
       follow_redirect!
-      expect(response.body).to include('Lecture settings saved.', 'Lecture Calendar', 'Schedule a Speaker')
+      expect(response.body).to include('Lecture settings saved.')
       expect(response.parsed_body.css('dt').map(&:text)).to include('Pay')
+      get program_path(program, section: 'calendar')
+      expect(response.body).to include('Lecture Calendar', 'Schedule a Speaker')
       get edit_program_path(program)
       expect(response.parsed_body.at_css('input[name="program[participant_label]"]')['value']).to eq('Speaker')
       expect(response.body).to include('Save Lecture', 'Prevent Consecutive Speakers by Gender')
@@ -257,7 +303,7 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     get program_coordinators_path(program)
     expect(response.body).to include('Invite or Promote a Coordinator', 'Continue')
     expect(response.body).not_to include(user.email)
-    expect(response.parsed_body.css('main a').last['href']).to eq(program_path(program))
+    expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Coordinators')
     sign_in(user)
     get program_coordinators_path(program)
     expect(response).to have_http_status(:forbidden)

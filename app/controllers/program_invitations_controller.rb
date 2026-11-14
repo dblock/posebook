@@ -31,7 +31,7 @@ class ProgramInvitationsController < ApplicationController
 
   def destroy
     result = @invitation.revoke
-    redirect_to @program,
+    redirect_to program_participants_path(@program),
                 result ? { notice: t('invitations.revoked') } : { alert: t('invitations.not_pending') }
   end
 

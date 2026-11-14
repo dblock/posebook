@@ -5,6 +5,8 @@ class ProgramsController < ApplicationController
   before_action :require_authentication, except: :show
   before_action :find_venue, only: %i[new create]
   before_action :find_program, only: %i[show edit update]
+  before_action :prepare_program_access, only: :show
+  before_action :prepare_program_page, only: :show
   rescue_from Mongo::Error::OperationFailure, with: :handle_slug_conflict
 
   def index
@@ -12,16 +14,12 @@ class ProgramsController < ApplicationController
   end
 
   def show
-    @calendar = ProgramCalendar.new(@program, month: params[:month])
-    @program_coordinator = current_user && @program.managed_by?(current_user)
-    @program_member = @program_coordinator || (current_user && @program.participant?(current_user))
-    load_calendar if @program_member
-    if calendar_navigation?
+    if @section == 'calendar' && calendar_navigation?
       return render partial: 'programs/calendar',
                     locals: { calendar: @calendar, public_view: !@program_member }
     end
 
-    @invitations = @program.participant_invitations.order_by(created_at: :desc) if @program_coordinator
+    @booking_history = @calendar.history_for(current_user) if @section == 'history'
   end
 
   def new
@@ -50,6 +48,24 @@ class ProgramsController < ApplicationController
   end
 
   private
+
+  def prepare_program_access
+    @program_coordinator = current_user && @program.managed_by?(current_user)
+    @program_member = @program_coordinator || (current_user && @program.participant?(current_user))
+    @section = params[:section].presence || default_section
+  end
+
+  def prepare_program_page
+    return head :not_found unless %w[view calendar history].include?(@section)
+    return head :not_found if @section == 'history' && !@program_member
+
+    @calendar = ProgramCalendar.new(@program, month: params[:month])
+    load_calendar if @program_member
+  end
+
+  def default_section
+    params[:month].present? || request.headers['X-Posebook-Calendar-Context'].present? ? 'calendar' : 'view'
+  end
 
   def find_venue
     @venue = Venue.coordinated_by(current_user).find(params.expect(:venue_id))
@@ -81,7 +97,6 @@ class ProgramsController < ApplicationController
     @booking_access = BookingAccess.new(@program.memberships.participants.where(user_id: current_user.id).first)
     @can_book = @booking_access.allowed?
     @my_booking = @calendar.current_booking(current_user)
-    @booking_history = @calendar.history_for(current_user)
   end
 
   def find_program

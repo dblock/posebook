@@ -1,6 +1,6 @@
 <main>
+  <%= render "programs/navigation", program: @program, active: "calendar", detail: "Manage Schedule" %>
   <h1><%= @program.program_label.titleize %> Schedule</h1>
-  <p><%= link_to @program.name, program_path(@program) %></p>
   <%= render "programs/regular_schedule", program: @program %>
   <p>Open an extra date, change one <%= @program.program_label.downcase %>'s time, close a date, or restore its regular weekday schedule. A short explanation is required and retained. Closing a booked date cancels that booking; time changes keep the <%= @program.participant_label.downcase %> booked. Automated notifications are not available yet.</p>
   <%= render "shared/errors", record: @exception %>
@@ -11,7 +11,7 @@
     <p><%= form.label :end_time, "End time (optional)" %><br><%= form.time_field :end_time, step: 60 %><br><small>An earlier end time means the next day. Leave blank for no end time; ignored unless opening or changing a date.</small></p>
     <p><%= form.label :reason, "Explanation" %><br><%= form.text_area :reason, required: true, maxlength: 200, rows: 2 %></p>
     <%= form.submit "Save Schedule" %>
-    <%= link_to "Cancel", program_path(@program) %>
+    <%= link_to "Cancel", program_path(@program, section: "calendar") %>
   <% end %>
   <h2>Upcoming Exceptions</h2>
   <% if @exceptions.any? %>

@@ -5,10 +5,13 @@
     <% @invitations.each do |invitation| %>
       <li>
         <%= invitation.name.presence || "Personal invitation" %>
-        <%= copyable(invitation.email, label: "invited email") %> - <%= status_label(invitation.status) %>
-        <% if invitation.status == "Pending" %>
-          <%= button_to "Revoke Invitation", program_participant_invitation_path(@program, invitation), method: :delete %>
-        <% end %>
+        <%= copyable(invitation.email, label: "invited email") %> -
+        <span class="invitation-status">
+          <%= status_label(invitation.status) %>
+          <% if invitation.status == "Pending" %>
+            <%= button_to "Revoke", program_participant_invitation_path(@program, invitation), method: :delete, class: "secondary-action", aria: { label: "Revoke invitation for #{invitation.name.presence || invitation.email.presence || 'participant'}" } %>
+          <% end %>
+        </span>
       </li>
     <% end %>
   </ul>

@@ -27,7 +27,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
 
   def history_status(viewer, heading, column)
     sign_in(viewer)
-    get program_path(program)
+    get program_path(program, section: 'history')
     history = response.parsed_body.at_xpath("//section[h2='#{heading}']")
     row = history.css('tbody tr').find { |entry| entry.at_css('td').text.start_with?(booking.date.iso8601) }
     row.at_css("td:nth-child(#{column})")
@@ -76,6 +76,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
      [organizer, 'Program Booking History', 3]].each do |viewer, heading, column|
       status = history_status(viewer, heading, column)
       expect(status.css('.status-label').map(&:text)).to eq(['Unconfirmed'])
+      get program_path(program, section: 'calendar')
       day = response.parsed_body.at_css(".calendar [data-date='#{booking.date.iso8601}']")
       expect(day.css('.status-label').map(&:text)).to eq(['Unconfirmed'])
     end
@@ -137,7 +138,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     grant_coordinator_access(program, organizer)
     travel_to Time.utc(2026, 11, 18, 5)
     sign_in(organizer)
-    [program_path(program), program_participants_path(program)].each do |path|
+    [program_path(program, section: 'calendar'), program_participants_path(program)].each do |path|
       get path
       expect(response.body).to include('Unconfirmed', 'Please contact an organizer ASAP')
       warning = response.parsed_body.at_css('.attendance-warning')
@@ -148,14 +149,14 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
       expect(cell.css('.status-label').map(&:text)).to eq(['Unconfirmed'])
     end
     delete session_path
-    get program_path(program)
+    get program_path(program, section: 'calendar')
     expect(response.body).not_to include('Attendance not confirmed', 'follow up ASAP', 'Edit Booking')
   end
 
   it 'publishes a positive confirmation without revealing a private participant or confirmation history' do
     confirm_booking
     delete session_path
-    get program_path(program)
+    get program_path(program, section: 'calendar')
     expect(response.body).to include('To be announced')
     expect(response.parsed_body.at_css('.calendar .attendance-confirmed').text).to eq('Confirmed')
     expect(response.body).not_to include(participant.name, participant.email, 'Program Booking History',
@@ -186,7 +187,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
   end
 
   it 'reloads stale private summaries when confirmation changes during calendar navigation' do
-    get program_path(program)
+    get program_path(program, section: 'calendar')
     context = response.parsed_body.at_css('[data-calendar]')['data-calendar-context']
     confirm_booking
     get program_path(program, month: '2026-12')

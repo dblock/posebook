@@ -47,7 +47,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
   end
 
   it 'uses one-word labels and leaves past non-session cells entirely blank' do
-    get program_path(program)
+    get program_path(program, section: 'calendar')
     expect(day('2026-11-17').css('.status-label').text).to eq('Unavailable')
     expect(day('2026-11-09').css('.status-label').text).to eq('Past')
     expect(response.parsed_body.css('.status-label').map(&:text)).to all(match(/\A[[:alpha:]]+\z/))
@@ -60,7 +60,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
   it 'honors historical openings and closures without publishing their explanations' do
     exception('2026-11-09', 'closed')
     exception('2026-11-10', 'open', start_time: '21:15')
-    get program_path(program)
+    get program_path(program, section: 'calendar')
     expect(day('2026-11-09').children).to be_empty
     expect(day('2026-11-10').text).to include('9:15 PM', 'Past Program')
     expect(response.body).not_to include('Private historical explanation.')
@@ -69,7 +69,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
   it 'keeps a completed session and saved time visible even after its regular weekday changes' do
     booking = historical_booking('2026-11-09', display_name: 'Past Public Participant')
     program.update!(available_weekdays: ['2'])
-    get program_path(program)
+    get program_path(program, section: 'calendar')
     expect(day('2026-11-09').text).to include('Completed', '8:45 PM', 'Past Public Participant')
     expect(day('2026-11-09').css('form, button')).to be_empty
     expect(response.body).not_to include(booking.user.email, 'Your Upcoming Booking')
@@ -80,19 +80,19 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
                                                       instagram_handle: 'past_artist', instagram_tagging_allowed: true)
     hidden = historical_booking('2026-11-09', name: 'Private Past Participant', public_profile_private: true,
                                               instagram_handle: 'hidden_past_artist', instagram_tagging_allowed: true)
-    get program_path(program)
+    get program_path(program, section: 'calendar')
     expect(day('2026-11-02').text).to include('Past Public Participant', '@past_artist')
     expect(day('2026-11-09').text).to include('To be announced')
     expect(response.body).not_to include(hidden.user.name, 'hidden_past_artist', hidden.user.email)
     public_booking.user.update!(instagram_tagging_allowed: false)
-    get program_path(program)
+    get program_path(program, section: 'calendar')
     expect(response.body).not_to include('@past_artist')
   end
 
   it 'does not publish canceled or foreign-session history when showing past sessions' do
     historical_booking('2026-11-02', status: 'canceled', display_name: 'Canceled Past Participant')
     historical_booking('2026-11-09', at: create_program, display_name: 'Foreign Past Participant')
-    get program_path(program)
+    get program_path(program, section: 'calendar')
     expect(day('2026-11-02').text).to include('Past Program')
     expect(response.body).not_to include('Canceled Past Participant', 'Foreign Past Participant',
                                          'Private cancellation.')
@@ -102,7 +102,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     historical_booking('2026-11-30', display_name: 'Previous Month Participant')
     travel_to Time.utc(2026, 12, 4, 15)
     sign_in(organizer_for)
-    get program_path(program)
+    get program_path(program, section: 'calendar')
     expect(day('2026-11-30').text).to include('Completed', 'Previous Month Participant')
     expect(day('2026-11-30').css('a, form, button')).to be_empty
     expect(day('2026-11-29').children).to be_empty
@@ -113,7 +113,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     booking = historical_booking('2026-11-09')
     grant_participant_access(program, booking.user)
     sign_in(booking.user)
-    get program_path(program)
+    get program_path(program, section: 'calendar')
     expect(response.body).not_to include('Your Upcoming Booking', 'You are already scheduled')
     expect(day('2026-11-16').at_css('form')).to be_present
     expect(day('2026-11-09').css('form, button')).to be_empty
