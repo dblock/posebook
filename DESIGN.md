@@ -88,6 +88,8 @@ System admins and assigned venue organizers manage individual or bulk invitation
 
 Email is sent once after each successful grant transaction, outside retry blocks. Delivery failures or unavailable SMTP leave access enabled and are reported for explicit follow-up; bulk results report sent, failed, and skipped counts. Email links preserve the intended venue across login but resolve it through the signed-in user's authorized venue scope. No token grants access by itself, no delayed invitation release is implemented, and no background scheduler is introduced.
 
+The private Models roster shows 25 models per page with stable ordering, venue-wide counts, and compact invitation/resume controls; pause forms and notes expand on demand. Counts group inactive accounts first, then paused models, then booked models, with remaining models available for invitations, including previously invited models without upcoming bookings. Bulk invitations always cover every page and recheck availability when granting access. Individual and bulk actions retain the current page.
+
 Legacy memberships without an invitation timestamp may finish or cancel an existing booking cycle using the latest booking's creation time as a compatibility baseline. Completed cycles do not renew, and a legacy model with no bookings requires an explicit invitation. Cancellation history remains usable rather than expiring permission on the canceled date. No bulk permission backfill is performed.
 
 ## Architecture and Deployment

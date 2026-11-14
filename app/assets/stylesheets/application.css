@@ -130,3 +130,51 @@ td {
   font-size: inherit;
   padding: 0.2rem;
 }
+
+.model-help,
+.model-pagination {
+  margin: 0.75rem 0;
+}
+
+.model-roster {
+  table-layout: fixed;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.model-roster th,
+.model-roster td {
+  padding: 0.4rem;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.model-email {
+  font-size: 0.8rem;
+}
+
+.model-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.model-actions form {
+  margin: 0;
+}
+
+.model-actions button,
+.model-actions input[type="submit"] {
+  padding: 0.25rem 0.4rem;
+  font-size: inherit;
+}
+
+.model-roster summary,
+.model-help summary {
+  cursor: pointer;
+}
+
+.model-pause[open] {
+  flex-basis: 100%;
+}

@@ -41,10 +41,88 @@ RSpec.describe 'Venue model access', :aggregate_failures, :database, type: :requ
     grant_model_access(venue, create_user(active: false))
     grant_model_access(create_venue, create_user)
     manage_models
+    get venue_models_path(venue)
+    expect(response.parsed_body.at_css('.model-counts').text.squish)
+      .to eq("4 total models \u00b7 1 available \u00b7 1 booked \u00b7 1 paused \u00b7 1 inactive")
+    expect(response.parsed_body.at_css('main form button').text).to eq('Invite All Available Models (1)')
     post invite_all_venue_models_path(venue)
     expect(ActionMailer::Base.deliveries.map(&:to)).to eq([[available.user.email]])
     follow_redirect!
     expect(response.body).to include('3 booked, paused, or inactive models skipped')
+  end
+
+  context 'with a paginated roster' do
+    let(:members) { Array.new(3) { |index| grant_model_access(venue, create_user(name: "Roster Model #{index}")) } }
+
+    before do
+      stub_const('VenueModelRoster::PER_PAGE', 2)
+      members
+      manage_models
+    end
+
+    it 'orders pages consistently and shows venue-wide counts and navigation' do
+      get venue_models_path(venue)
+      expect(response.parsed_body.css('tr[data-membership]').pluck('data-membership'))
+        .to eq(members.first(2).map { |item| item.id.to_s })
+      expect(response.body).to include('3 total models', '3 available', 'Invite All Available Models (3)')
+      expect(response.parsed_body.at_css('a[rel="next"]')['href']).to eq(venue_models_path(venue, page: 2))
+      expect(response.parsed_body.at_css('a[rel="prev"]')).to be_nil
+      get venue_models_path(venue, page: 2)
+      expect(response.parsed_body.css('tr[data-membership]').pluck('data-membership')).to eq([members.last.id.to_s])
+      expect(response.parsed_body.at_css('a[rel="prev"]')['href']).to eq(venue_models_path(venue, page: 1))
+      expect(response.parsed_body.at_css('a[rel="next"]')).to be_nil
+    end
+
+    it 'invites all pages and retains the current page after individual and bulk actions' do
+      post invite_all_venue_models_path(venue, page: 2)
+      expect(response).to redirect_to(venue_models_path(venue, page: 2))
+      expect(ActionMailer::Base.deliveries.flat_map(&:to)).to match_array(members.map { |item| item.user.email })
+      post pause_venue_model_path(venue, members.last, page: 2), params: { reason: 'Travel.' }
+      expect(response).to redirect_to(venue_models_path(venue, page: 2))
+      follow_redirect!
+      expect(response.body).to include('3 total models', '2 available', '1 paused')
+      expect(response.parsed_body.at_css("tr[data-membership='#{members.last.id}'] summary").text).to eq('Pause note')
+    end
+
+    it 'clamps missing, invalid, and out-of-range pages to valid bounds' do
+      get venue_models_path(venue, page: 999)
+      expect(response.body).to include('Page 2 of 2')
+      get venue_models_path(venue, page: -1)
+      expect(response.body).to include('Page 1 of 2')
+      get venue_models_path(venue, page: 'invalid')
+      expect(response.body).to include('Page 1 of 2')
+    end
+  end
+
+  it 'handles an empty roster without pagination or an enabled bulk action' do
+    manage_models
+    get venue_models_path(venue, page: 999)
+    expect(response.body).to include('0 total models', '0 available', 'No models assigned.')
+    expect(response.parsed_body.at_css('form button[disabled]').text).to eq('Invite All Available Models (0)')
+    expect(response.parsed_body.at_css('nav[aria-label="Model pages"]')).to be_nil
+    membership.update!(model_paused: true, model_pause_reason: 'Taking a break.')
+    get venue_models_path(venue)
+    expect(response.body).to include('1 total models', '0 available', '1 paused')
+    expect(response.parsed_body.at_css('form button[disabled]').text).to eq('Invite All Available Models (0)')
+  end
+
+  it 'counts overlapping statuses once and treats completed or canceled bookings as available' do
+    completed = membership
+    past = track_booking(BookingMutation.new(venue: venue, user: model).book(date: '2026-11-16'))
+    canceled_user = create_user
+    grant_model_access(venue, canceled_user)
+    canceled = track_booking(BookingMutation.new(venue: venue, user: canceled_user).book(date: '2026-11-23'))
+    BookingMutation.new(venue: venue, user: canceled_user).cancel(booking: canceled, reason: 'Travel.')
+    inactive = grant_model_access(venue, create_user(active: false))
+    inactive.update!(model_paused: true, model_pause_reason: 'Inactive and paused.')
+    manage_models
+
+    travel_to(past.ends_at + 1.second)
+    get venue_models_path(venue)
+    expect(response.parsed_body.at_css('.model-counts').text.squish)
+      .to eq("3 total models \u00b7 2 available \u00b7 0 booked \u00b7 0 paused \u00b7 1 inactive")
+    expect(response.parsed_body.at_css("tr[data-membership='#{completed.id}']").text)
+      .to include('Invitation required', 'Invite to Book')
   end
 
   it 'keeps granted permission and reports failed email rather than claiming delivery succeeded' do
