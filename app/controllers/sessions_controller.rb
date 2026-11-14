@@ -25,7 +25,7 @@ class SessionsController < ApplicationController
   def finish_sign_in(user)
     invitation_token = session[:invitation_token]
     booking_venue = session[:booking_venue]
-    start_session(user)
+    start_session(user, remember_me: params[:remember_me] == '1')
     redirect_to(invitation_token ? invitation_path(token: invitation_token) : booking_return_path(booking_venue, user))
   end
 

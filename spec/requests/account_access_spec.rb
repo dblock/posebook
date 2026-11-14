@@ -60,7 +60,7 @@ RSpec.describe 'Account access management', :aggregate_failures, :database, type
     admin = create_user(roles: ['system_admin'])
     user = create_user
     client = ActionDispatch::Integration::Session.new(Rails.application)
-    sign_in(user, client: client)
+    client.post(session_path, params: { email: user.email, password: DatabaseHelpers::TEST_PASSWORD, remember_me: '1' })
     sign_in(admin)
     get admin_users_path
     expect(response.body).to include(user.email, 'Deactivate')

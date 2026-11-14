@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
 class ApplicationController < ActionController::Base
+  REMEMBER_COOKIE = :_posebook_remember_me
+
   helper_method :current_user
+  around_action :with_remembered_login
   around_action :with_history_actor
 
   private
@@ -11,10 +14,22 @@ class ApplicationController < ActionController::Base
   end
 
   def current_user
+    @current_user ||= session_user || remembered_user
+  end
+
+  def session_user
     return unless session[:user_id]
 
-    @current_user ||= User.active.where(id: session[:user_id],
-                                        session_version: session[:session_version]).first
+    User.active.where(id: session[:user_id], session_version: session[:session_version]).first
+  end
+
+  def remembered_user
+    credentials = cookies.encrypted[REMEMBER_COOKIE]
+    return unless credentials.is_a?(Hash)
+
+    user = User.active.where(id: credentials['user_id'], session_version: credentials['session_version']).first
+    start_session(user, remember_me: true) if user
+    user
   end
 
   def require_authentication
@@ -23,10 +38,31 @@ class ApplicationController < ActionController::Base
     redirect_to(User.exists? ? new_session_path : new_registration_path)
   end
 
-  def start_session(user)
+  def start_session(user, remember_me: false)
     reset_session
     session[:user_id] = user.id.to_s
     session[:session_version] = user.session_version
+    session[:remember_me] = true if remember_me
+    @current_user = user
+  end
+
+  def with_remembered_login
+    yield
+  ensure
+    if session[:remember_me] && current_user
+      remember_user(current_user)
+    elsif cookies[REMEMBER_COOKIE]
+      cookies.delete(REMEMBER_COOKIE)
+    end
+  end
+
+  def remember_user(user)
+    options = { httponly: true, same_site: :lax, secure: request.ssl? }
+    cookies.encrypted[REMEMBER_COOKIE] = options.merge(
+      value: { user_id: user.id.to_s, session_version: user.session_version }
+    )
+    # Browser storage has a renewable lifetime; the encrypted credential has no application deadline.
+    cookies[REMEMBER_COOKIE] = options.merge(value: cookies[REMEMBER_COOKIE], expires: 20.years.from_now)
   end
 
   def require_system_admin

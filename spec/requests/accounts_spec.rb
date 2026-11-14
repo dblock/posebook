@@ -3,6 +3,26 @@
 require 'rails_helper'
 
 RSpec.describe 'Accounts', :aggregate_failures, :database, type: :request do
+  include ActiveSupport::Testing::TimeHelpers
+
+  around { |example| travel_to(Time.utc(2026, 11, 14, 17)) { example.run } }
+
+  def remembered_sign_in(user, client: self)
+    client.post(session_path, params: { email: user.email, password: DatabaseHelpers::TEST_PASSWORD, remember_me: '1' })
+  end
+
+  def cookie_expiry(name = '_posebook_session')
+    cookie = Array(response.headers['Set-Cookie']).find { |value| value.start_with?("#{name}=") }
+    Time.httpdate(cookie[/expires=([^;]+)/i, 1])
+  end
+
+  def restored_browser(value)
+    client = ActionDispatch::Integration::Session.new(Rails.application)
+    client.cookies['_posebook_remember_me'] = value
+    client.get(profile_path)
+    client
+  end
+
   it 'registers the first user with system admin roles and signs them in' do
     post registration_path, params: { user: user_attributes }
     user = track_record(User.find(User::BOOTSTRAP_ID))
@@ -50,6 +70,140 @@ RSpec.describe 'Accounts', :aggregate_failures, :database, type: :request do
 
   it 'renders the sign-in form' do
     get new_session_path
-    expect(response.body).to include('Sign In', 'Forgot your password?')
+    expect(response.body).to include('Sign In', 'Forgot your password?', 'Remember me')
+    expect(response.parsed_body.at_css('input[type="checkbox"][name="remember_me"]')['checked']).to be_nil
+  end
+
+  it 'uses ordinary sessions and renews browser persistence only after explicit opt-in' do
+    user = create_user
+    %w[0 1].each do |remember_me|
+      post session_path, params: { email: user.email, password: DatabaseHelpers::TEST_PASSWORD, remember_me: remember_me }
+      expect(cookie_expiry).to eq(7.days.from_now)
+      expect(cookies['_posebook_remember_me'].present?).to eq(remember_me == '1')
+      travel 2.days
+      get profile_path
+      expect(response).to have_http_status(:ok)
+      expect(cookie_expiry('_posebook_remember_me')).to eq(20.years.from_now) if remember_me == '1'
+    end
+  end
+
+  it 'keeps a remembered login usable after an ordinary login expires' do
+    user = create_user
+    remembered = ActionDispatch::Integration::Session.new(Rails.application)
+    sign_in(user)
+    remembered_sign_in(user, client: remembered)
+    travel 8.days
+    get profile_path
+    expect(response).to redirect_to(new_session_path)
+    remembered.get(profile_path)
+    expect(remembered.response).to have_http_status(:ok)
+  end
+
+  it 'retains remembered expiry when a controller handles a booking validation exception' do
+    user = create_user
+    venue = create_venue
+    grant_model_access(venue, user)
+    remembered_sign_in(user)
+    post venue_model_bookings_path(venue), params: { date: 'not-a-date' }
+    expect(response).to have_http_status(:found)
+    expect(cookie_expiry('_posebook_remember_me')).to eq(20.years.from_now)
+  end
+
+  it 'has no application deadline when a remembered credential is restored after decades' do
+    remembered_sign_in(create_user)
+    original_cookie = cookies['_posebook_remember_me']
+    travel 21.years
+    restored = restored_browser(original_cookie)
+    expect(restored.response).to have_http_status(:ok)
+  end
+
+  it 'clears remembered login on logout and allows a later seven-day sign-in' do
+    user = create_user
+    remembered_sign_in(user)
+    delete session_path
+    expect(cookies['_posebook_remember_me']).to be_blank
+    get profile_path
+    expect(response).to redirect_to(new_session_path)
+    sign_in(user)
+    expect(cookie_expiry).to eq(7.days.from_now)
+    expect(cookies['_posebook_remember_me']).to be_blank
+  end
+
+  it 'does not grant a remembered session on failed login and preserves the submitted choice' do
+    user = create_user
+    post session_path, params: { email: user.email, password: 'incorrect', remember_me: '1' }
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(cookie_expiry).to eq(7.days.from_now)
+    expect(cookies['_posebook_remember_me']).to be_blank
+    expect(response.parsed_body.at_css('input[type="checkbox"][name="remember_me"]')['checked']).to be_present
+    get profile_path
+    expect(response).to redirect_to(new_session_path)
+  end
+
+  it 'clears current-browser remember state and revokes older credentials after a password change' do
+    remembered_sign_in(create_user)
+    old_cookie = cookies['_posebook_remember_me']
+    patch password_path, params: { user: { current_password: DatabaseHelpers::TEST_PASSWORD,
+                                           password: 'a new sufficiently long password',
+                                           password_confirmation: 'a new sufficiently long password' } }
+    expect(response).to redirect_to(profile_path)
+    expect(cookies['_posebook_remember_me']).to be_blank
+    expect(cookie_expiry).to eq(7.days.from_now)
+    stale = restored_browser(old_cookie)
+    expect(stale.response.location).to end_with(new_session_path)
+    travel 8.days
+    get profile_path
+    expect(response).to redirect_to(new_session_path)
+  end
+
+  it 'retains remembered login after accepting an invitation as an existing account' do
+    user = create_user
+    invitation = create_model_invitation(create_venue, create_user(roles: ['system_admin']))
+    get invitation_path(token: invitation.token)
+    remembered_sign_in(user)
+    expect(response).to redirect_to(invitation_path(token: invitation.token))
+    post invitation_path, params: { token: invitation.token }
+    track_model_membership(invitation.venue, user)
+    expect(cookie_expiry('_posebook_remember_me')).to eq(20.years.from_now)
+    travel 8.days
+    get profile_path
+    expect(response).to have_http_status(:ok)
+  end
+
+  it 'rejects a tampered remembered credential without granting a session' do
+    remembered_sign_in(create_user)
+    client = restored_browser("#{cookies['_posebook_remember_me']}tampered")
+    expect(client.response.location).to end_with(new_session_path)
+    expect(client.cookies['_posebook_remember_me']).to be_blank
+  end
+
+  it 'remembers the new account when switching away from an already remembered account' do
+    remembered_sign_in(create_user(name: 'First Artist'))
+    remembered_sign_in(create_user(name: 'Second Artist'))
+    cookies.delete('_posebook_session')
+    get profile_path
+    expect(response.body).to include('Second Artist')
+    expect(response.body).not_to include('First Artist')
+  end
+
+  it 'clears current-browser remember state and revokes older credentials after email confirmation' do
+    user = create_user
+    remembered_sign_in(user)
+    old_cookie = cookies['_posebook_remember_me']
+    patch profile_path, params: { user: { name: user.name, email: 'changed@example.test',
+                                          current_password: DatabaseHelpers::TEST_PASSWORD } }
+    token = ActionMailer::Base.deliveries.last.body.decoded[/email_change\?token=([A-Za-z0-9_-]+)/, 1]
+    patch email_change_path, params: { token: token }
+    expect(response).to redirect_to(new_session_path)
+    expect(cookies['_posebook_remember_me']).to be_blank
+    stale = restored_browser(old_cookie)
+    expect(stale.response.location).to end_with(new_session_path)
+  end
+
+  it 'protects remembered credentials with HTTP-only same-site cookies secured over HTTPS' do
+    https!
+    remembered_sign_in(create_user)
+    header = Array(response.headers['Set-Cookie']).find { |value| value.start_with?('_posebook_remember_me=') }
+    expect(header.downcase).to include('httponly', 'samesite=lax', 'secure')
   end
 end
