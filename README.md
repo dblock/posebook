@@ -6,7 +6,7 @@ Invitation-first model registration, scheduling, and reminders for figure drawin
 
 ## Installation
 
-Requires Ruby 4.0.9 or newer within 4.0, Bundler, and MongoDB 8.0 or 9.0. The Docker packaging check also requires Docker.
+Requires Ruby 4.0.9 or newer within 4.0, Bundler, and MongoDB 8.0. The Docker packaging check also requires Docker.
 
 ```sh
 git clone https://github.com/dblock/posebook.git

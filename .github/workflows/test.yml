@@ -17,7 +17,6 @@ jobs:
       matrix:
         entry:
           - { ruby: '4.0.9', mongodb: '8.0' }
-          - { ruby: '4.0.9', mongodb: '9.0' }
     services:
       mongodb:
         image: mongo:${{ matrix.entry.mongodb }}
@@ -39,7 +38,6 @@ jobs:
       - name: Run Tests
         run: bundle exec rake spec
       - name: Upload Coverage to Coveralls
-        if: matrix.entry.mongodb == '9.0'
         uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
         with:
           file: coverage/lcov.info

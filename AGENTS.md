@@ -6,7 +6,7 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) and [DESIGN.md](DESIGN.md) before making
 
 Posebook is an invitation-first Rails/Mongoid web application for figure drawing models and organizers. Payments, artist registration, and public model directories are out of scope. The scaffold has no booking or notification functionality; preserve that distinction in documentation.
 
-Runtime code lives in `app/`, configuration in `config/`, request tests in `spec/requests/`, database integration tests in `spec/integration/`, and the tested workflow display-name checker in `script/` and `spec/script/`. Ruby 4.0.9 within 4.0 and Rails 8.1 are supported; CI tests MongoDB 8.0 and 9.0. Use public Rails, Mongoid, and provider APIs. Verify and prefer current stable releases when selecting or updating dependencies while preserving compatibility.
+Runtime code lives in `app/`, configuration in `config/`, request tests in `spec/requests/`, database integration tests in `spec/integration/`, and the tested workflow display-name checker in `script/` and `spec/script/`. Ruby 4.0.9 within 4.0 and Rails 8.1 are supported; test only MongoDB 8.0 to match the deployment target. Use public Rails, Mongoid, and provider APIs. Verify and prefer current stable releases when selecting or updating dependencies while preserving compatibility.
 
 ## Invariants
 
@@ -31,6 +31,8 @@ Maintain README links to every project Markdown document. Keep DESIGN focused on
 ## Git and Release Safety
 
 Start topic branches from `master` with `git switch -c dblock/<topic> master`, using the actual contributor login in place of `dblock`. Use the existing checkout unless parallel tasks require separate worktrees. Preserve unrelated tracked and untracked changes; inspect status and worktrees before switching. Never develop directly on or force-push `master`.
+
+Stack dependent PRs sequentially: branch from the preceding PR's pushed tip, target its branch, and register bottom-to-top native GitHub stack membership. Do not mix independent changes into a stack or recreate partially merged stack metadata.
 
 Prefer one coherent commit per PR; independently reviewable commits are acceptable. Task-owned PR commits may be amended or squashed without another approval: verify ownership, record the remote tip, reconcile remote changes, validate, and push only with `--force-with-lease` against the recorded SHA. Never rewrite another contributor's work. Squash-merge PRs; merge commits are prohibited.
 
