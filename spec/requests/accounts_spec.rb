@@ -109,10 +109,10 @@ RSpec.describe 'Accounts', :aggregate_failures, :database, type: :request do
 
   it 'retains remembered expiry when a controller handles a booking validation exception' do
     user = create_user
-    venue = create_venue
-    grant_model_access(venue, user)
+    drawing_session = create_drawing_session
+    grant_model_access(drawing_session, user)
     remembered_sign_in(user)
-    post venue_model_bookings_path(venue), params: { date: 'not-a-date' }
+    post drawing_session_model_bookings_path(drawing_session), params: { date: 'not-a-date' }
     expect(response).to have_http_status(:found)
     expect(cookie_expiry('_posebook_remember_me')).to eq(20.years.from_now)
   end
@@ -166,12 +166,12 @@ RSpec.describe 'Accounts', :aggregate_failures, :database, type: :request do
 
   it 'retains remembered login after accepting an invitation as an existing account' do
     user = create_user
-    invitation = create_model_invitation(create_venue, create_user(roles: ['system_admin']))
+    invitation = create_model_invitation(create_drawing_session, create_user(roles: ['system_admin']))
     get invitation_path(token: invitation.token)
     remembered_sign_in(user)
     expect(response).to redirect_to(invitation_path(token: invitation.token))
     post invitation_path, params: { token: invitation.token }
-    track_model_membership(invitation.venue, user)
+    track_model_membership(invitation.drawing_session, user)
     expect(cookie_expiry('_posebook_remember_me')).to eq(20.years.from_now)
     travel 8.days
     get profile_path

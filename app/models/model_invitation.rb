@@ -6,7 +6,7 @@ class ModelInvitation
 
   attr_accessor :token
 
-  belongs_to :venue, inverse_of: :model_invitations
+  belongs_to :drawing_session, inverse_of: :model_invitations
   belongs_to :invited_by, class_name: 'User', inverse_of: nil
   field :name, type: String
   field :email, type: String
@@ -17,7 +17,7 @@ class ModelInvitation
   field :revoked_at, type: Time
 
   index({ token_digest: 1 }, unique: true)
-  index({ venue_id: 1, created_at: -1 })
+  index({ drawing_session_id: 1, created_at: -1 })
   validates :name, length: { maximum: 100 }, allow_nil: true
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, length: { maximum: 254 }, allow_nil: true
   before_validation { self.email = email.to_s.strip.downcase.presence }

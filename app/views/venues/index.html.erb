@@ -1,13 +1,6 @@
 <main>
   <h1>Venues</h1>
-  <%= link_to "Create Venue", new_venue_path if current_user.system_admin? %>
-  <% if @venues.empty? %>
-    <p>No venues assigned. A system admin can create venues and grant schedule access.</p>
-  <% else %>
-    <ul>
-      <% @venues.each do |venue| %>
-        <li><%= link_to venue.name, venue %> - <%= venue_schedule_summary(venue) %></li>
-      <% end %>
-    </ul>
-  <% end %>
+  <% @venues.each do |venue| %><p><%= link_to venue.name, venue %></p><% end %>
+  <% if current_user.system_admin? %><p><%= link_to "Create Venue", new_venue_path %></p><% end %>
+  <p><%= link_to "Sessions", drawing_sessions_path %></p>
 </main>

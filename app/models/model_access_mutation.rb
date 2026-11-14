@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 class ModelAccessMutation
-  include VenueScheduleLock
+  include DrawingSessionScheduleLock
 
-  def initialize(venue:, user:)
-    @venue = venue
+  def initialize(drawing_session:, user:)
+    @drawing_session = drawing_session
     @user = user
   end
 
@@ -32,9 +32,12 @@ class ModelAccessMutation
 
   def run(id)
     with_schedule_lock do
-      raise BookingMutation::Invalid, I18n.t('model_access.forbidden') unless @user.active? && @venue.managed_by?(@user)
+      unless @user.active? && @drawing_session.managed_by?(@user)
+        raise BookingMutation::Invalid,
+              I18n.t('model_access.forbidden')
+      end
 
-      @membership = @venue.memberships.models.find(id)
+      @membership = @drawing_session.memberships.models.find(id)
       yield @membership
     end
     @membership

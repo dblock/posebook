@@ -19,12 +19,13 @@ RSpec.describe 'Stored audit history', :aggregate_failures, :database, type: :re
   it 'attributes admin changes to the admin without leaking that actor to another session' do
     admin = create_user(roles: ['system_admin'])
     user = create_user
-    venue = create_venue
+    drawing_session = create_drawing_session
     sign_in(admin)
     patch admin_user_path(user), params: { user: { name: 'Admin Edit', email: user.email } }
     expect(user.history_tracks.last.modifier_id).to eq(admin.id)
-    patch venue_path(venue), params: { venue: { instructions: 'Updated venue instructions.' } }
-    expect(venue.history_tracks.last.modifier_id).to eq(admin.id)
+    patch drawing_session_path(drawing_session),
+          params: { drawing_session: { instructions: 'Updated session instructions.' } }
+    expect(drawing_session.history_tracks.last.modifier_id).to eq(admin.id)
     other_client = ActionDispatch::Integration::Session.new(Rails.application)
     sign_in(user, client: other_client)
     other_client.patch(profile_path, params: { user: { name: 'Self Edit', email: user.email } })

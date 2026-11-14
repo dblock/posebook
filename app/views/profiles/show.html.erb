@@ -8,7 +8,7 @@
     <dt>Public Identity</dt><dd><%= status_label(@user.public_profile_private? ? "Private" : "Public") %><% if @user.public_profile_private? %>: To be announced on public calendars<% end %></dd>
     <dt>Public Display Name</dt><dd><%= @user.public_name %><%= " (using your name)" if !@user.public_profile_private? && @user.display_name.blank? %></dd>
     <dt>Instagram Handle</dt><dd><% if (url = InstagramProfile.url(@user.instagram_handle)) %><%= link_to "@#{@user.instagram_handle}", url, target: "_blank", rel: "noopener noreferrer" %><% else %>Not provided<% end %></dd>
-    <dt>Instagram Tagging</dt><dd><% if @user.public_profile_private? %><%= status_label("Hidden") %> while your information is private<% elsif @user.instagram_tagging_allowed? %><%= status_label("Enabled") %>: handle appears in announcements and venue calendars<% else %><%= status_label("Off") %>: Instagram stays private<% end %></dd>
+    <dt>Instagram Tagging</dt><dd><% if @user.public_profile_private? %><%= status_label("Hidden") %> while your information is private<% elsif @user.instagram_tagging_allowed? %><%= status_label("Enabled") %>: handle appears in announcements and drawing_session calendars<% else %><%= status_label("Off") %>: Instagram stays private<% end %></dd>
   </dl>
   <% if @user.pending_email.present? %>
     <p><%= status_label("Verification pending") %> for <%= @user.pending_email %>. Your current email is still <%= @user.email %>.</p>

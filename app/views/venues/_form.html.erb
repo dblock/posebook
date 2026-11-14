@@ -1,36 +1,8 @@
 <%= render "shared/errors", record: venue %>
 <%= form_with model: venue do |form| %>
   <p><%= form.label :name %><br><%= form.text_field :name, required: true, maxlength: 100 %></p>
-  <p><%= form.label :custom_slug, "Slug" %><br><%= form.text_field :custom_slug, maxlength: 100, placeholder: venue.name.to_s.to_url %><br>
-    <small>Leave blank to generate from the venue name. Previous links keep working when the slug changes. <% if venue.persisted? %>Current link: <%= link_to venue_shortcut_url(venue), venue_shortcut_path(venue) %>.<% end %></small>
-  </p>
+  <p><%= form.label :custom_slug, "Slug" %><br><%= form.text_field :custom_slug, maxlength: 100, placeholder: venue.name.to_s.to_url %></p>
   <p><%= form.label :address %><br><%= form.text_area :address, required: true, maxlength: 500 %></p>
-  <p><%= form.label :instagram_handle, "Instagram" %><br><%= form.text_field :instagram_handle, maxlength: 200, placeholder: "@enochs.nyc or an Instagram profile URL" %><br>
-    <small>Optional. Displayed publicly on the venue page as a linked @handle.</small>
-  </p>
-  <p><%= form.label :time_zone, "Time zone" %><br><%= form.select :time_zone, Venue::TIME_ZONES, {}, required: true %></p>
-  <p><%= form.label :start_time, "Regular start time" %><br><%= form.time_field :start_time, required: true, step: 60 %><br>
-    <small>Usual event start in the venue's time zone. Use Manage Schedule to change a single date.</small>
-  </p>
-  <p><%= form.label :model_pay, "Model pay (USD)" %><br><%= form.number_field :model_pay, min: 0, step: "0.01", required: true %></p>
-  <p><%= form.label :booking_horizon_months, "Booking horizon (months)" %><br><%= form.number_field :booking_horizon_months, min: 1, required: true %></p>
-  <fieldset>
-    <legend>Available Weekdays</legend>
-    <%= hidden_field_tag "venue[available_weekdays][]", "" %>
-    <% Date::DAYNAMES.each_with_index do |day, index| %>
-      <label><%= check_box_tag "venue[available_weekdays][]", index, venue.available_weekdays.include?(index.to_s), id: "weekday-#{index}" %> <%= day %></label>
-    <% end %>
-  </fieldset>
-  <fieldset>
-    <legend>Prevent Consecutive Models by Gender</legend>
-    <p>Each selected gender cannot repeat in immediately adjacent scheduled sessions. Unselected genders may repeat. An unbooked session breaks the sequence; closed dates are skipped.</p>
-    <%= hidden_field_tag "venue[no_consecutive_genders][]", "" %>
-    <% User::GENDERS.each do |gender| %>
-      <label><%= check_box_tag "venue[no_consecutive_genders][]", gender, venue.no_consecutive_genders.include?(gender), id: "no-consecutive-#{gender}" %> <%= gender.capitalize %></label>
-    <% end %>
-    <p>These rules apply to new bookings and replacements, not existing reservations. Organizers can explicitly override with an explanation.</p>
-  </fieldset>
-  <p><%= form.label :instructions %><br><%= form.text_area :instructions, maxlength: 5000, rows: 4 %></p>
-  <p>Changing the regular start time moves upcoming bookings that do not have a dated time exception, retaining each time change. Other settings do not rewrite existing bookings. Automated reminders are not available yet.</p>
+  <p><%= form.label :instagram_handle, "Instagram" %><br><%= form.text_field :instagram_handle, maxlength: 200, placeholder: "@enochs.nyc" %><br><small>Optional and visible publicly.</small></p>
   <%= form.submit venue.persisted? ? "Save Venue" : "Create Venue" %>
 <% end %>

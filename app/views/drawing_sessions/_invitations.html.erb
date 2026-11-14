@@ -1,0 +1,15 @@
+<section>
+  <h2>Model Invitations</h2>
+  <p><%= link_to "Invite a Model", new_drawing_session_model_invitation_path(@drawing_session) %></p>
+  <ul>
+    <% @invitations.each do |invitation| %>
+      <li>
+        <%= invitation.name.presence || "Personal invitation" %>
+        <%= invitation.email %> - <%= status_label(invitation.status) %>
+        <% if invitation.status == "Pending" %>
+          <%= button_to "Revoke Invitation", drawing_session_model_invitation_path(@drawing_session, invitation), method: :delete %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+</section>

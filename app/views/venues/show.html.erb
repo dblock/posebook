@@ -1,44 +1,14 @@
 <main>
   <h1><%= @venue.name %></h1>
-  <p>Shortcut: <%= link_to venue_shortcut_path(@venue), venue_shortcut_path(@venue) %></p>
   <%= simple_format(@venue.address) %>
-  <% if @venue.public_instagram_url %>
-    <p><%= link_to "@#{@venue.public_instagram_handle}", @venue.public_instagram_url, target: "_blank", rel: "noopener noreferrer" %></p>
+  <% if @venue.public_instagram_url %><p><%= link_to "@#{@venue.public_instagram_handle}", @venue.public_instagram_url, target: "_blank", rel: "noopener noreferrer" %></p><% end %>
+  <h2>Sessions</h2>
+  <% @venue.drawing_sessions.order_by(name: :asc).each do |drawing_session| %>
+    <p><%= link_to drawing_session.name, drawing_session %><br><%= drawing_session_schedule_summary(drawing_session) %></p>
   <% end %>
-  <dl>
-    <dt>Time Zone</dt><dd><%= @venue.time_zone %></dd>
-    <dt>Regular Schedule</dt><dd><%= venue_schedule_summary(@venue) %></dd>
-    <% if @venue_member %>
-      <dt>Model Pay</dt><dd><%= number_to_currency(@venue.model_pay) %> USD</dd>
-      <dt>Booking Horizon</dt><dd><%= @venue.booking_horizon_months %> months</dd>
-    <% end %>
-  </dl>
-  <% if @venue_member %>
-    <h2>Instructions</h2>
-    <%= simple_format(@venue.instructions) %>
+  <% if @venue.coordinated_by?(current_user) %>
+    <p><%= link_to "Edit Venue", edit_venue_path(@venue) %> | <%= link_to "Create Session", new_venue_drawing_session_path(@venue) %></p>
   <% end %>
-  <% if @booking_access&.model? && !@can_book %><p role="status"><%= @booking_access.reason %></p><% end %>
-  <% if @my_booking %>
-    <h2>Your Upcoming Booking</h2>
-    <p><%= @my_booking.date.to_fs(:long) %> at <%= booking_time(@my_booking) %>. You can have one upcoming booking at this venue.</p>
-    <%= render "model_bookings/attendance", venue: @venue, booking: @my_booking %>
-    <% if @my_booking.rescheduling_locked? %><%= render "model_bookings/rescheduling_notice", venue: @venue, urgent: @my_booking.attendance_overdue? %><% end %>
-    <p><% if @can_book && !@my_booking.confirmation_open? && !@my_booking.rescheduling_locked? %><%= link_to "Change Date", edit_venue_model_booking_path(@venue, @my_booking) %> | <% end %><%= link_to "Cancel Booking", cancellation_venue_model_booking_path(@venue, @my_booking) %></p>
-  <% end %>
-  <%= render "calendar", calendar: @calendar, public_view: !@venue_member %>
-  <% if @venue_member %>
-    <%= render "booking_history" %>
-    <p>Changes and cancellations require an explanation and retain every booking record. Automated reminders are not available yet.</p>
-  <% else %>
-    <p>Booking is available to invited models. <%= link_to "Sign In", venue_path(@venue, booking_invitation: "1") unless current_user %></p>
-  <% end %>
-  <%= render "invitations" if @manage_schedule %>
-  <% if @manage_schedule %>
-    <p><%= link_to "Schedule a Model", new_venue_organizer_booking_path(@venue) %> | <%= link_to "Manage Schedule", venue_schedule_path(@venue) %> | <%= link_to "Models", venue_models_path(@venue) %></p>
-  <% end %>
-
-  <% if current_user&.system_admin? %>
-    <p><%= link_to "Edit Venue", edit_venue_path(@venue) %> | <%= link_to "Organizers", venue_organizers_path(@venue) %></p>
-  <% end %>
-  <%= render "photos" %>
+  <% if current_user&.system_admin? %><p><%= link_to "Venue Coordinators", venue_coordinators_path(@venue) %></p><% end %>
+  <%= render "photos", venue: @venue, editable: @venue.coordinated_by?(current_user) %>
 </main>

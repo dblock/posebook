@@ -30,7 +30,7 @@ class InvitationAcceptance
 
     user.save! if user.new_record?
     claim(invitation, session)
-    VenueMembership.grant_model_access(invitation.venue, user, session: session)
+    DrawingSessionMembership.grant_model_access(invitation.drawing_session, user, session: session)
   end
 
   def claim(invitation, session)

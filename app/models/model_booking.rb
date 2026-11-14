@@ -7,7 +7,7 @@ class ModelBooking
 
   class HistoryRetained < StandardError; end
 
-  belongs_to :venue, inverse_of: :model_bookings
+  belongs_to :drawing_session, inverse_of: :model_bookings
   belongs_to :user, inverse_of: nil
   belongs_to :previous_booking, class_name: 'ModelBooking', inverse_of: nil, optional: true
   field :date, type: Date
@@ -23,11 +23,12 @@ class ModelBooking
   field :gender_override_reason, type: String
   field :lock_version, type: Integer, default: 0
 
-  attr_readonly :venue_id, :user_id, :date, :time_zone, :ends_at, :starts_at, :time_changes, :previous_booking_id,
+  attr_readonly :drawing_session_id, :user_id, :date, :time_zone, :ends_at, :starts_at, :time_changes,
+                :previous_booking_id,
                 :created_by_id, :gender_override_reason, :lock_version
-  index({ venue_id: 1, user_id: 1, date: -1 })
-  index({ venue_id: 1, status: 1, ends_at: 1 })
-  index({ venue_id: 1, date: -1, created_at: -1 })
+  index({ drawing_session_id: 1, user_id: 1, date: -1 })
+  index({ drawing_session_id: 1, status: 1, ends_at: 1 })
+  index({ drawing_session_id: 1, date: -1, created_at: -1 })
   scope :upcoming, -> { where(status: 'confirmed', :ends_at.gt => Time.current) }
   validates :date, :ends_at, :time_zone, presence: true
   validates :status, inclusion: { in: %w[confirmed canceled rescheduled] }
@@ -42,7 +43,7 @@ class ModelBooking
   end
 
   def scheduled_start
-    starts_at || VenueSchedule.local_start(date, '18:30', time_zone)
+    starts_at || DrawingSessionSchedule.local_start(date, '18:30', time_zone)
   end
 
   def assert_version!(version)

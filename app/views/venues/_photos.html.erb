@@ -1,22 +1,21 @@
-<% photos = @venue.photos.order_by(created_at: :asc).to_a %>
-<% editable = current_user&.system_admin? %>
+<% photos = venue.photos.order_by(created_at: :asc).to_a %>
 <% if photos.any? || editable %>
   <section aria-labelledby="venue-photos-heading">
     <h2 id="venue-photos-heading">Venue Photos</h2>
     <% if editable %>
-      <p>All venue photos are public. There is no photo-count limit. Photos are optimized for the web; click a square thumbnail to see the full image.</p>
-      <%= form_with url: venue_photos_path(@venue), scope: :venue_photo, multipart: true do |form| %>
-        <p><%= form.label :file, "New Venue Photo" %><br><%= form.file_field :file, accept: "image/jpeg,image/png,image/webp", required: true %><br><small>JPEG, PNG, or WebP, up to 10 MB and 40 megapixels per photo.</small></p>
+      <p>All venue photos are public. There is no photo-count limit.</p>
+      <%= form_with url: venue_photos_path(venue), scope: :venue_photo, multipart: true do |form| %>
+        <p><%= form.label :file, "New Venue Photo" %><br><%= form.file_field :file, accept: "image/jpeg,image/png,image/webp", required: true %></p>
         <%= form.submit "Upload Venue Photo" %>
       <% end %>
     <% end %>
     <div class="photo-gallery">
       <% photos.each_with_index do |photo, index| %>
         <figure class="venue-photo profile-photo" data-photo="<%= photo.id %>">
-          <%= link_to venue_photo_path(@venue, photo), target: "_blank", rel: "noopener noreferrer" do %>
-            <%= image_tag venue_photo_path(@venue, photo, thumbnail: 1), alt: "#{@venue.name} photo #{index + 1}", width: 400, height: 400, loading: "lazy" %>
+          <%= link_to venue_photo_path(venue, photo), target: "_blank", rel: "noopener noreferrer" do %>
+            <%= image_tag venue_photo_path(venue, photo, thumbnail: 1), alt: "#{venue.name} photo #{index + 1}", width: 400, height: 400, loading: "lazy" %>
           <% end %>
-          <% if editable %><%= button_to "Delete Venue Photo", venue_photo_path(@venue, photo), method: :delete %><% end %>
+          <% if editable %><%= button_to "Delete Venue Photo", venue_photo_path(venue, photo), method: :delete %><% end %>
         </figure>
       <% end %>
     </div>

@@ -1,7 +1,7 @@
 en:
   model_access:
-    subject: "Choose your next posing date at %{venue}"
-    paused: Your posing access at this venue is paused. Contact an organizer; you can still cancel an existing booking.
+    subject: "Choose your next posing date at %{drawing_session}"
+    paused: Your posing access at this session is paused. Contact an organizer; you can still cancel an existing booking.
     invitation_required: Please wait for an organizer to invite you to choose your next posing date.
     reason_required: Provide a pause explanation of 1 to 200 characters.
     forbidden: Model management access is required.

@@ -1,0 +1,38 @@
+<section>
+  <h2><%= @session_coordinator ? "Session Booking History" : "Your Booking History" %></h2>
+  <% if @booking_history.any? %>
+    <p class="scroll-hint">Scroll horizontally to view the full history.</p>
+    <div class="table-scroll" role="region" aria-label="Booking history" tabindex="0">
+      <table>
+        <thead><tr><th>Date / Time</th><% if @session_coordinator %><th>Model</th><% end %><th>Status</th><th>Explanation</th></tr></thead>
+        <tbody>
+          <% @booking_history.each do |booking| %>
+            <tr>
+              <td><%= booking.date.iso8601 %><br><%= booking_time(booking) %><% if booking.previous_booking %><br>Moved from <%= booking.previous_booking.date.iso8601 %><% end %></td>
+              <% if @session_coordinator %><td><%= booking_model_name(booking.user, manager: true) %></td><% end %>
+              <td>
+                <%= status_label(booking.display_status) unless booking.attendance_confirmed? && booking.display_status == "Confirmed" %>
+                <%= render "drawing_sessions/attendance_status", booking: booking, private_view: true %>
+                <% if @session_coordinator && booking.status == "confirmed" && booking.ends_at > Time.current %><%= link_to "Edit Booking", edit_drawing_session_organizer_booking_path(@drawing_session, booking) %><% end %>
+              </td>
+              <td>
+                <%= booking.reason.presence || "-" %>
+                <% if @session_coordinator && booking.gender_override_reason.present? %>
+                  <p>Gender-rule override: <%= booking.gender_override_reason %></p>
+                <% end %>
+                <% booking.time_changes.each do |change| %>
+                  <p><%= change["from"].in_time_zone(booking.time_zone).strftime("%-I:%M %p %Z") %> to <%= change["to"].in_time_zone(booking.time_zone).strftime("%-I:%M %p %Z") %>: <%= change["reason"] %></p>
+                <% end %>
+                <% booking.attendance_changes.each do |change| %>
+                  <p><%= change["confirmed"] ? "Confirmed" : "Attendance confirmation cleared" %> on <%= change["changed_at"].in_time_zone(booking.time_zone).to_fs(:long) %>: <%= change["reason"] %></p>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p>No bookings yet.</p>
+  <% end %>
+</section>

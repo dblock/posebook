@@ -2,7 +2,7 @@
 
 class OrganizerBookingsController < ApplicationController
   before_action :require_authentication
-  before_action :find_venue
+  before_action :find_drawing_session
   before_action :find_booking, only: %i[edit update cancel]
   rescue_from BookingMutation::Invalid, BookingMutation::Conflict, with: :show_error
   rescue_from BookingMutation::Stale, with: :show_stale_booking
@@ -27,15 +27,15 @@ class OrganizerBookingsController < ApplicationController
 
   private
 
-  def find_venue
-    @venue = Venue.managed_by(current_user).find(params.expect(:venue_id))
-    ids = @venue.memberships.models.distinct(:user_id)
+  def find_drawing_session
+    @drawing_session = DrawingSession.managed_by(current_user).find(params.expect(:drawing_session_id))
+    ids = @drawing_session.memberships.models.distinct(:user_id)
     @models = User.active.where(:id.in => ids).order_by(name: :asc).to_a
   end
 
   def find_booking
     records = action_name == 'edit' ? ModelBooking.upcoming : ModelBooking.all
-    @booking = records.where(venue_id: @venue.id).find(params.expect(:id))
+    @booking = records.where(drawing_session_id: @drawing_session.id).find(params.expect(:id))
     @models << @booking.user unless @models.any? { |model| model.id == @booking.user_id }
   end
 
@@ -44,11 +44,12 @@ class OrganizerBookingsController < ApplicationController
   end
 
   def mutation
-    OrganizerBookingMutation.new(venue: @venue, user: current_user)
+    OrganizerBookingMutation.new(drawing_session: @drawing_session, user: current_user)
   end
 
   def finish_booking
-    redirect_to venue_path(@venue, month: @booking.date.strftime('%Y-%m')), notice: t('bookings.organizer_saved')
+    redirect_to drawing_session_path(@drawing_session, month: @booking.date.strftime('%Y-%m')),
+                notice: t('bookings.organizer_saved')
   end
 
   def show_error(error)
@@ -57,6 +58,6 @@ class OrganizerBookingsController < ApplicationController
   end
 
   def show_stale_booking(error)
-    redirect_to venue_path(@venue), alert: error.message
+    redirect_to drawing_session_path(@drawing_session), alert: error.message
   end
 end

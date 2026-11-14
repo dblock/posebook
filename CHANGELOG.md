@@ -43,4 +43,5 @@
 - [#46](https://github.com/dblock/posebook/pull/46): Apply the warm Caramellatte theme with sanguine accents, serif headings, styled forms, and readable scrolling calendars and tables on mobile - [@dblock](https://github.com/dblock).
 - [#47](https://github.com/dblock/posebook/pull/47): Batch roster booking reads, send smaller authorized calendar navigation responses, load venue photos once, and speed CI with Docker layer caching and overlapping setup - [@dblock](https://github.com/dblock).
 - [#48](https://github.com/dblock/posebook/pull/48): Separate user and technical documentation and describe continuous production updates - [@dblock](https://github.com/dblock).
+- [#49](https://github.com/dblock/posebook/pull/49): Separate physical venues from recurring drawing sessions, inherit admin/venue/session coordinator permissions, and migrate existing schedules, bookings, invitations, and audit history - [@dblock](https://github.com/dblock).
 - Your contribution here.

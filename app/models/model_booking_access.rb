@@ -53,6 +53,6 @@ class ModelBookingAccess
   end
 
   def records
-    ModelBooking.where(venue_id: @membership.venue_id, user_id: @membership.user_id)
+    ModelBooking.where(drawing_session_id: @membership.drawing_session_id, user_id: @membership.user_id)
   end
 end

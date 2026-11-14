@@ -1,7 +1,7 @@
 en:
   venues:
     created: Venue created.
-    updated: Venue settings saved.
-    schedule_saved: Drawing schedule saved.
-    organizer_added: Schedule access granted at this venue.
-    organizer_removed: Schedule access removed at this venue.
+    updated: Venue updated.
+    coordinator_added: Venue coordinator added.
+    coordinator_removed: Venue coordinator removed.
+    coordinator_not_found: Enter the email address of an active registered user.

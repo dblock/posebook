@@ -32,9 +32,8 @@ Prose/MaxLength:
 Spellcheck:
   DictionaryFiles:
     en:
-      - gem:rubocop-spellcheck/data/en/en.dic
-      - .spellcheck.txt
-
+    - gem:rubocop-spellcheck/data/en/en.dic
+    - ".spellcheck.txt"
 Style/Documentation:
   Exclude:
     - 'app/**/*'

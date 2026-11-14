@@ -45,7 +45,7 @@ class InvitationAcceptancesController < ApplicationController
   def finish_acceptance
     @user = @acceptance.call
     start_session(@user, remember_me: current_user == @user && session[:remember_me])
-    redirect_to venue_path(@invitation.venue), notice: t('invitations.accepted')
+    redirect_to drawing_session_path(@invitation.drawing_session), notice: t('invitations.accepted')
   end
 
   def handle_database_error(error)

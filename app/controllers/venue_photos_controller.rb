@@ -2,7 +2,6 @@
 
 class VenuePhotosController < ApplicationController
   before_action :require_authentication, except: :show
-  before_action :require_system_admin, except: :show
   before_action :find_venue
   before_action :find_photo, except: :create
 
@@ -29,6 +28,7 @@ class VenuePhotosController < ApplicationController
 
   def find_venue
     @venue = Venue.find(params.expect(:venue_id))
+    head :forbidden unless action_name == 'show' || @venue.coordinated_by?(current_user)
   end
 
   def find_photo
