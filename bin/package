@@ -117,8 +117,13 @@ begin
     raise 'First-user registration did not render'
   end
 
-  stylesheet = response.body[/href="([^"]+\.css)"/, 1]
-  raise 'The packaged stylesheet is missing' unless stylesheet && request(port, stylesheet).code == '200'
+  stylesheets = response.body.scan(/href="([^"]+\.css)"/).flatten
+  theme = stylesheets.find { |path| path.include?('/caramellatte-') }
+  unless theme && request(port, theme).body.include?('--color-base-100') &&
+         stylesheets.all? { |path| request(port, path).code == '200' } &&
+         response.body.include?('data-theme="caramellatte"')
+    raise 'The packaged theme and stylesheets are missing'
+  end
 
   logo = response.body[/src="([^"]*posebook-logo[^"]+\.png)"/, 1]
   favicon = response.body[/href="([^"]*posebook-favicon[^"]+\.png)"/, 1]
