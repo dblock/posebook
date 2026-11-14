@@ -37,4 +37,5 @@
 - [#39](https://github.com/dblock/posebook/pull/39): Prevent concurrent booking edits from overwriting newer changes with atomic revision checks inside transactions and friendly stale-form conflicts - [@dblock](https://github.com/dblock).
 - [#40](https://github.com/dblock/posebook/pull/40): Add opt-in persistent remembered login without an application expiry, revoked by password or email changes while preserving ordinary seven-day sessions and encrypted-cookie protections - [@dblock](https://github.com/dblock).
 - [#41](https://github.com/dblock/posebook/pull/41): Show Confirmed only once in booking history and never mark canceled or rescheduled bookings attendance-confirmed, while retaining their audit history - [@dblock](https://github.com/dblock).
+- [#43](https://github.com/dblock/posebook/pull/43): Add an original sanguine female portrait logo, a serif wordmark, and a matching PNG favicon - [@dblock](https://github.com/dblock).
 - Your contribution here.

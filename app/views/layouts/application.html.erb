@@ -4,6 +4,7 @@
     <title><%= content_for(:title) || "Posebook" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="application-name" content="Posebook">
+    <%= favicon_link_tag "posebook-favicon.png", rel: "icon", type: "image/png", sizes: "64x64" %>
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
@@ -14,7 +15,10 @@
 
   <body>
     <nav aria-label="Account">
-      <%= link_to "Posebook", root_path %>
+      <%= link_to root_path, class: "brand" do %>
+        <%= image_tag "posebook-logo.png", alt: "", width: 64, height: 64 %>
+        <span>Posebook</span>
+      <% end %>
       <% if current_user %>
         <span><%= current_user.name %></span>
         <%= link_to "Profile", profile_path %>
