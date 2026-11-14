@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe 'Drawing schedules', :aggregate_failures, :database, type: :request do
+RSpec.describe 'Booking schedules', :aggregate_failures, :database, type: :request do
   include ActiveSupport::Testing::TimeHelpers
 
   around { |example| travel_to(Time.utc(2026, 11, 13, 15)) { example.run } }
@@ -21,7 +21,7 @@ RSpec.describe 'Drawing schedules', :aggregate_failures, :database, type: :reque
     grant_coordinator_access(program, organizer)
     sign_in(organizer)
     get program_schedule_path(program, date: '2026-11-16')
-    expect(response.body).to include('Session Schedule', 'Save Schedule')
+    expect(response.body).to include('Program Schedule', 'Save Schedule')
     save_day
     expect(response).to redirect_to(program_path(program, month: '2026-11'))
     expect(program.schedule_exceptions.first.history_tracks.last.modifier_id).to eq(organizer.id)
@@ -46,11 +46,11 @@ RSpec.describe 'Drawing schedules', :aggregate_failures, :database, type: :reque
 
   it 'renders calendar times, one-off openings, holiday reasons, and manager edit links' do
     sign_in(create_user(roles: ['system_admin']))
-    save_day(date: '2026-11-17', start_time: '14:00', reason: 'Extra drawing.')
+    save_day(date: '2026-11-17', start_time: '14:00', reason: 'Extra booking.')
     save_day(date: '2026-11-23', mode: 'closed', reason: 'Holiday closure.')
     get program_path(program)
-    expect(response.parsed_body.at_css('[data-date="2026-11-16"]').text).to include('6:30 PM')
-    expect(response.parsed_body.at_css('[data-date="2026-11-17"]').text).to include('2:00 PM', 'Extra drawing.')
+    expect(response.parsed_body.at_css('[data-date="2026-11-16"]').text).to include('9:00 AM')
+    expect(response.parsed_body.at_css('[data-date="2026-11-17"]').text).to include('2:00 PM', 'Extra booking.')
     expect(response.parsed_body.at_css('[data-date="2026-11-23"]').text).to include('Blocked', 'Holiday closure.')
     expect(response.body).to include('Manage Schedule', 'Edit Day')
   end

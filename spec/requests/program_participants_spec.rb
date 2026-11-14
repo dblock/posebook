@@ -2,14 +2,14 @@
 
 require 'rails_helper'
 
-RSpec.describe 'Session participant access', :aggregate_failures, :database, type: :request do
+RSpec.describe 'Program participant access', :aggregate_failures, :database, type: :request do
   include ActiveSupport::Testing::TimeHelpers
 
   around { |example| travel_to(Time.utc(2026, 11, 13, 15)) { example.run } }
 
   let(:program) { create_program }
   let(:organizer) { create_user }
-  let(:participant) { create_user(name: 'Invited Model') }
+  let(:participant) { create_user(name: 'Invited Participant') }
   let(:membership) { grant_participant_access(program, participant) }
 
   def manage_participants
@@ -35,7 +35,7 @@ RSpec.describe 'Session participant access', :aggregate_failures, :database, typ
   end
 
   it 'sends an individual email and records who opened booking access' do
-    program.update!(start_time: '19:15')
+    program.update!(start_time: '19:15', time_zone: 'America/New_York')
     membership
     manage_participants
     post invite_program_participant_path(program, membership)
@@ -75,18 +75,18 @@ RSpec.describe 'Session participant access', :aggregate_failures, :database, typ
     manage_participants
     get program_participants_path(program)
     expect(response.parsed_body.at_css('.participant-counts').text.squish)
-      .to eq("4 total models \u00b7 1 available \u00b7 1 booked \u00b7 1 paused \u00b7 1 inactive")
-    expect(response.parsed_body.at_css('main form button').text).to eq('Invite All Available Models (1)')
+      .to eq("4 total participants \u00b7 1 available \u00b7 1 booked \u00b7 1 paused \u00b7 1 inactive")
+    expect(response.parsed_body.at_css('main form button').text).to eq('Invite All Available Participants (1)')
     post invite_all_program_participants_path(program)
     expect(ActionMailer::Base.deliveries.map(&:to)).to eq([[available.user.email]])
     follow_redirect!
-    expect(response.body).to include('3 booked, paused, or inactive models skipped')
+    expect(response.body).to include('3 booked, paused, or inactive participants skipped')
   end
 
   context 'with a paginated roster' do
     let(:members) do
       Array.new(3) do |index|
-        grant_participant_access(program, create_user(name: "Roster Model #{index}"))
+        grant_participant_access(program, create_user(name: "Roster Participant #{index}"))
       end
     end
 
@@ -100,8 +100,8 @@ RSpec.describe 'Session participant access', :aggregate_failures, :database, typ
       get program_participants_path(program)
       expect(response.parsed_body.css('tr[data-membership]').pluck('data-membership'))
         .to eq(members.first(2).map { |item| item.id.to_s })
-      expect(response.parsed_body.text).to include('3 total models', '3 available',
-                                                   'Invite All Available Models (3)')
+      expect(response.parsed_body.text).to include('3 total participants', '3 available',
+                                                   'Invite All Available Participants (3)')
       expect(response.parsed_body.at_css('a[rel="next"]')['href']).to eq(program_participants_path(program,
                                                                                                    page: 2))
       expect(response.parsed_body.at_css('a[rel="prev"]')).to be_nil
@@ -119,7 +119,7 @@ RSpec.describe 'Session participant access', :aggregate_failures, :database, typ
       post pause_program_participant_path(program, members.last, page: 2), params: { reason: 'Travel.' }
       expect(response).to redirect_to(program_participants_path(program, page: 2))
       follow_redirect!
-      expect(response.parsed_body.text).to include('3 total models', '2 available', '1 paused')
+      expect(response.parsed_body.text).to include('3 total participants', '2 available', '1 paused')
       expect(response.parsed_body.at_css("tr[data-membership='#{members.last.id}'] summary").text).to eq('Pause note')
     end
 
@@ -136,13 +136,13 @@ RSpec.describe 'Session participant access', :aggregate_failures, :database, typ
   it 'handles an empty roster without pagination or an enabled bulk action' do
     manage_participants
     get program_participants_path(program, page: 999)
-    expect(response.parsed_body.text).to include('0 total models', '0 available', 'No models assigned.')
-    expect(response.parsed_body.at_css('form button[disabled]').text).to eq('Invite All Available Models (0)')
-    expect(response.parsed_body.at_css('nav[aria-label="Model pages"]')).to be_nil
+    expect(response.parsed_body.text).to include('0 total participants', '0 available', 'No participants assigned.')
+    expect(response.parsed_body.at_css('form button[disabled]').text).to eq('Invite All Available Participants (0)')
+    expect(response.parsed_body.at_css('nav[aria-label="Participant pages"]')).to be_nil
     membership.update!(participant_paused: true, participant_pause_reason: 'Taking a break.')
     get program_participants_path(program)
-    expect(response.parsed_body.text).to include('1 total models', '0 available', '1 paused')
-    expect(response.parsed_body.at_css('form button[disabled]').text).to eq('Invite All Available Models (0)')
+    expect(response.parsed_body.text).to include('1 total participants', '0 available', '1 paused')
+    expect(response.parsed_body.at_css('form button[disabled]').text).to eq('Invite All Available Participants (0)')
   end
 
   it 'counts overlapping statuses once and treats completed or canceled bookings as available' do
@@ -161,7 +161,7 @@ RSpec.describe 'Session participant access', :aggregate_failures, :database, typ
     travel_to(past.ends_at + 1.second)
     get program_participants_path(program)
     expect(response.parsed_body.at_css('.participant-counts').text.squish)
-      .to eq("3 total models \u00b7 2 available \u00b7 0 booked \u00b7 0 paused \u00b7 1 inactive")
+      .to eq("3 total participants \u00b7 2 available \u00b7 0 booked \u00b7 0 paused \u00b7 1 inactive")
     expect(response.parsed_body.at_css("tr[data-membership='#{completed.id}']").text)
       .to include('Uninvited', 'Invite to Book')
   end
@@ -223,7 +223,7 @@ RSpec.describe 'Session participant access', :aggregate_failures, :database, typ
     post pause_program_participant_path(program, membership), params: { reason: 'Private organizer note.' }
     sign_in(participant)
     get program_path(program)
-    expect(response.body).to include('booking access at this session is paused', 'Cancel Booking')
+    expect(response.body).to include('booking access at this program is paused', 'Cancel Booking')
     expect(response.body).not_to include('Private organizer note.', 'Change Date')
     get edit_program_booking_path(program, original)
     expect(response).to redirect_to(program_path(program))

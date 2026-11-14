@@ -4,9 +4,9 @@ require 'rails_helper'
 
 RSpec.describe User, :aggregate_failures, :database do
   it 'normalizes email and hashes passwords without granting roles by default' do
-    user = create_user(email: ' Artist@Example.test ')
+    user = create_user(email: ' Participant@Example.test ')
 
-    expect(user.email).to eq('artist@example.test')
+    expect(user.email).to eq('participant@example.test')
     expect(user.password_digest).not_to eq(DatabaseHelpers::TEST_PASSWORD)
     expect(user.authenticate(DatabaseHelpers::TEST_PASSWORD)).to eq(user)
     expect(user).not_to be_system_admin

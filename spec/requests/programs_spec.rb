@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe 'Session management', :aggregate_failures, :database, type: :request do
+RSpec.describe 'Program management', :aggregate_failures, :database, type: :request do
   context 'with configurable terminology' do
     let(:program) { create_program(program_label: 'Workshop', participant_label: 'Instructor') }
     let(:organizer) { create_user }
@@ -50,44 +50,44 @@ RSpec.describe 'Session management', :aggregate_failures, :database, type: :requ
     sign_in(create_user(roles: ['system_admin']))
     patch program_path(program), params: { program: { program_label: '', participant_label: '<script>' } }
     expect(response).to have_http_status(:unprocessable_content)
-    expect(program.reload).to have_attributes(program_label: 'Session', participant_label: 'Model')
+    expect(program.reload).to have_attributes(program_label: 'Program', participant_label: 'Participant')
     delete session_path
     sign_in(create_user)
     patch program_path(program), params: { program: { participant_label: 'Speaker' } }
     expect(response).to have_http_status(:not_found)
-    expect(program.reload.participant_label).to eq('Model')
+    expect(program.reload.participant_label).to eq('Participant')
   end
 
-  it 'normalizes session Instagram handles and URLs and publishes safe external links without account preferences' do
+  it 'normalizes program Instagram handles and URLs and publishes safe external links without account preferences' do
     venue = create_venue
     sign_in(create_user(roles: ['system_admin']))
-    [' @ENOCHS.NYC ', 'https://www.instagram.com/Enochs.NYC/?source=profile'].each do |value|
+    [' @COMMUNITY.VENUE ', 'https://www.instagram.com/Community.Venue/?source=profile'].each do |value|
       patch venue_path(venue), params: { venue: { instagram_handle: value } }
-      expect(venue.reload.instagram_handle).to eq('enochs.nyc')
+      expect(venue.reload.instagram_handle).to eq('community.venue')
     end
     delete session_path
     get venue_path(venue)
-    link = response.parsed_body.at_css('a[href="https://www.instagram.com/enochs.nyc/"]')
-    expect(link.text).to eq('@enochs.nyc')
+    link = response.parsed_body.at_css('a[href="https://www.instagram.com/community.venue/"]')
+    expect(link.text).to eq('@community.venue')
     expect(link['target']).to eq('_blank')
     expect(link['rel'].split).to include('noopener', 'noreferrer')
   end
 
-  it 'rejects invalid session Instagram accounts and removes the public link when cleared' do
-    venue = create_venue(instagram_handle: '@enochs.nyc')
+  it 'rejects invalid program Instagram accounts and removes the public link when cleared' do
+    venue = create_venue(instagram_handle: '@community.venue')
     sign_in(create_user(roles: ['system_admin']))
     %w[https://example.test/account https://instagram.com/p/post/].each do |value|
       patch venue_path(venue), params: { venue: { instagram_handle: value } }
       expect(response).to have_http_status(:unprocessable_content)
-      expect(venue.reload.instagram_handle).to eq('enochs.nyc')
+      expect(venue.reload.instagram_handle).to eq('community.venue')
     end
     patch venue_path(venue), params: { venue: { instagram_handle: '' } }
     delete session_path
     get venue_path(venue)
-    expect(response.body).not_to include('instagram.com/enochs.nyc')
+    expect(response.body).not_to include('instagram.com/community.venue')
   end
 
-  it 'shows the configured usual weekdays, event time, and time zone across session pages' do
+  it 'shows the configured usual weekdays, event time, and time zone across program pages' do
     program = create_program(start_time: '19:15', time_zone: 'America/Los_Angeles',
                              available_weekdays: %w[3 1])
     sign_in(create_user(roles: ['system_admin']))
@@ -105,11 +105,11 @@ RSpec.describe 'Session management', :aggregate_failures, :database, type: :requ
     expect(response.parsed_body.at_css('input[name="program[start_time]"]')['value']).to eq('19:15')
   end
 
-  it 'shows a working session URL beneath the slug only after the session is saved' do
+  it 'shows a working program URL beneath the slug only after the program is saved' do
     sign_in(create_user(roles: ['system_admin']))
     get new_venue_program_path(create_venue)
     expect(response.parsed_body.at_css('#program_custom_slug ~ small a')).to be_nil
-    [create_program, create_program(custom_slug: 'weekly-drawing')].each do |program|
+    [create_program, create_program(custom_slug: 'weekly-booking')].each do |program|
       get edit_program_path(program)
       link = response.parsed_body.at_css('#program_custom_slug ~ small a')
       expect(link['href']).to eq(program_path(program))
@@ -120,7 +120,7 @@ RSpec.describe 'Session management', :aggregate_failures, :database, type: :requ
     end
   end
 
-  it 'requires authentication for management but allows public session shortcuts' do
+  it 'requires authentication for management but allows public program shortcuts' do
     create_user
     get programs_path
     expect(response).to redirect_to(new_session_path)
@@ -130,14 +130,14 @@ RSpec.describe 'Session management', :aggregate_failures, :database, type: :requ
     expect(response).to have_http_status(:ok)
   end
 
-  it 'lets a system admin create and update session settings' do
+  it 'lets a system admin create and update program settings' do
     sign_in(create_user(roles: ['system_admin']))
     venue = create_venue
     get new_venue_program_path(venue)
     expect(response).to have_http_status(:ok)
-    attributes = { name: "Enoch's", time_zone: 'America/New_York', pay: '140.00' }
+    attributes = { name: 'Community Venue', time_zone: 'America/New_York', pay: '140.00' }
     post venue_programs_path(venue), params: { program: attributes }
-    program = track_record(Program.find_by(name: "Enoch's"))
+    program = track_record(Program.find_by(name: 'Community Venue'))
     expect(response).to redirect_to(program_path(program))
     get edit_program_path(program)
     expect(response).to have_http_status(:ok)
@@ -159,7 +159,7 @@ RSpec.describe 'Session management', :aggregate_failures, :database, type: :requ
     expect(response).to have_http_status(:unprocessable_content)
   end
 
-  it 'limits organizers to managing their assigned sessions while allowing public information elsewhere' do
+  it 'limits organizers to managing their assigned programs while allowing public information elsewhere' do
     program = create_program
     other = create_program
     user = create_user
@@ -170,8 +170,8 @@ RSpec.describe 'Session management', :aggregate_failures, :database, type: :requ
     expect(response.body).not_to include(other.name)
     get program_path(program)
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include('Edit Session')
-    expect(response.body).not_to include('Existing user', 'Session Coordinators')
+    expect(response.body).to include('Edit Program')
+    expect(response.body).not_to include('Existing user', 'Program Coordinators')
     get program_coordinators_path(program)
     expect(response).to have_http_status(:forbidden)
     get program_path(other)
@@ -179,7 +179,7 @@ RSpec.describe 'Session management', :aggregate_failures, :database, type: :requ
     expect(response.body).not_to include('Instructions', 'Pay', 'Edit Day', 'Booking History')
   end
 
-  it 'allows session editing but does not grant venue or coordinator administration' do
+  it 'allows program editing but does not grant venue or coordinator administration' do
     program = create_program
     user = create_user
     grant_coordinator_access(program, user)
@@ -188,16 +188,16 @@ RSpec.describe 'Session management', :aggregate_failures, :database, type: :requ
     expect(response).to have_http_status(:forbidden)
     post venue_programs_path(program.venue), params: { program: { name: 'Forbidden' } }
     expect(response).to have_http_status(:not_found)
-    patch program_path(program), params: { program: { name: 'Updated Session' } }
+    patch program_path(program), params: { program: { name: 'Updated Program' } }
     expect(response).to redirect_to(program_path(program.reload))
     post program_coordinators_path(program), params: { user_id: user.id }
     expect(response).to have_http_status(:forbidden)
   end
 
-  it 'shows an empty session list to users without assignments' do
+  it 'shows an empty program list to users without assignments' do
     sign_in(create_user)
     get programs_path
-    expect(response.body).to include('No sessions assigned')
+    expect(response.body).to include('No programs assigned')
   end
 
   it 'lets a system admin grant and revoke schedule access without deleting membership history' do
@@ -245,12 +245,12 @@ RSpec.describe 'Session management', :aggregate_failures, :database, type: :requ
     expect(response.parsed_body.css('select[name="user_id"]')).to be_empty
   end
 
-  it 'links to a separate organizer page beside session editing without exposing controls on the session' do
+  it 'links to a separate organizer page beside program editing without exposing controls on the program' do
     sign_in(create_user(roles: ['system_admin']))
     program = create_program
     user = create_user
     get program_path(program)
-    links = response.parsed_body.css('main > p').find { |paragraph| paragraph.text.include?('Edit Session') }
+    links = response.parsed_body.css('main > p').find { |paragraph| paragraph.text.include?('Edit Program') }
     expect(links.css('a').pluck('href')).to eq([edit_program_path(program)])
     expect(response.body).to include(program_coordinators_path(program))
     expect(response.body).not_to include('Grant Schedule Access', 'Remove Schedule Access', user.email)
@@ -263,7 +263,7 @@ RSpec.describe 'Session management', :aggregate_failures, :database, type: :requ
     expect(response).to have_http_status(:forbidden)
   end
 
-  it 'resolves public session slugs and legacy IDs without exposing management or root shortcuts' do
+  it 'resolves public program slugs and legacy IDs without exposing management or root shortcuts' do
     program = create_program
     user = create_user
     grant_coordinator_access(program, user)
@@ -276,7 +276,7 @@ RSpec.describe 'Session management', :aggregate_failures, :database, type: :requ
     other = create_program
     get program_path(other)
     expect(response).to have_http_status(:ok)
-    expect(response.body).not_to include('Edit Session', 'Manage Schedule')
+    expect(response.body).not_to include('Edit Program', 'Manage Schedule')
     get "/#{program.slug}"
     expect(response).to have_http_status(:not_found)
   end
@@ -285,22 +285,22 @@ RSpec.describe 'Session management', :aggregate_failures, :database, type: :requ
     sign_in(create_user(roles: ['system_admin']))
     program = create_program
     previous = program.slug
-    patch program_path(program), params: { program: { custom_slug: 'Weekly Drawing' } }
-    expect(response).to redirect_to('/sessions/weekly-drawing')
+    patch program_path(program), params: { program: { custom_slug: 'Weekly Booking' } }
+    expect(response).to redirect_to('/sessions/weekly-booking')
     get "/sessions/#{previous}"
     expect(response).to have_http_status(:ok)
     get "/#{previous}"
     expect(response).to have_http_status(:not_found)
     get program_coordinators_path(program.reload)
     expect(response).to have_http_status(:ok)
-    expect(response.parsed_body.at_css('main form')['action']).to eq('/sessions/weekly-drawing/coordinators')
+    expect(response.parsed_body.at_css('main form')['action']).to eq('/sessions/weekly-booking/coordinators')
   end
 
-  it 'keeps built-in routes reachable when a session requests a reserved slug' do
+  it 'keeps built-in routes reachable when a program requests a reserved slug' do
     sign_in(create_user(roles: ['system_admin']))
     program = create_program(custom_slug: 'programs')
     get programs_path
-    expect(response.body).to include('Sessions', program.name)
+    expect(response.body).to include('Programs', program.name)
     get '/up'
     expect(response).to have_http_status(:ok)
     get program_path(program)
@@ -317,9 +317,9 @@ RSpec.describe 'Session management', :aggregate_failures, :database, type: :requ
         end
       end
     end
-    post venue_programs_path(create_venue), params: { program: { name: 'Racing Session' } }
+    post venue_programs_path(create_venue), params: { program: { name: 'Racing Program' } }
     expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include('has already been taken')
-    expect(Program.where(name: 'Racing Session')).to be_empty
+    expect(Program.where(name: 'Racing Program')).to be_empty
   end
 end

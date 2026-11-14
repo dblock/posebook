@@ -4,26 +4,26 @@ require 'rails_helper'
 
 RSpec.describe Program, :aggregate_failures, :database do
   it 'defaults slugs from names and retains history when changing or clearing a custom slug' do
-    program = create_program(name: "Enoch's Drawing")
-    expect(program.slug).to eq('enochs-drawing')
-    program.update!(custom_slug: ' Weekly Life Drawing ')
-    expect(program.slug).to eq('weekly-life-drawing')
-    program.update!(name: "Enoch's Renamed")
-    expect(program.slug).to eq('weekly-life-drawing')
+    program = create_program(name: 'Community Workshop')
+    expect(program.slug).to eq('community-workshop')
+    program.update!(custom_slug: ' Weekly Workshop ')
+    expect(program.slug).to eq('weekly-workshop')
+    program.update!(name: 'Community Program')
+    expect(program.slug).to eq('weekly-workshop')
     program.update!(custom_slug: '')
-    expect(program.slug).to eq('enochs-renamed')
-    %w[enochs-drawing weekly-life-drawing enochs-renamed].each do |slug|
+    expect(program.slug).to eq('community-program')
+    %w[community-workshop weekly-workshop community-program].each do |slug|
       expect(described_class.find(slug)).to eq(program)
     end
     expect(described_class.find(program.id)).to eq(program)
   end
 
   it 'adds suffixes to duplicate, reserved, and database-ID-shaped slugs' do
-    first = create_program(name: 'Shared Session')
-    duplicate = create_program(name: 'Shared Session')
+    first = create_program(name: 'Shared Program')
+    duplicate = create_program(name: 'Shared Program')
     reserved = create_program(custom_slug: 'sessions')
     id_shaped = create_program(custom_slug: first.id.to_s)
-    expect([first.slug, duplicate.slug, reserved.slug]).to eq(%w[shared-session shared-session-1 sessions-1])
+    expect([first.slug, duplicate.slug, reserved.slug]).to eq(%w[shared-program shared-program-1 sessions-1])
     expect(id_shaped.slug).to eq("#{first.id}-1")
     expect(described_class.find(id_shaped.slug)).to eq(id_shaped)
   end
@@ -44,7 +44,7 @@ RSpec.describe Program, :aggregate_failures, :database do
     expect { other.set(_slugs: [old_slug]) }.to raise_error(Mongo::Error::OperationFailure)
   end
 
-  it 'validates session configuration and stores participant pay without floating-point rounding' do
+  it 'validates program configuration and stores participant pay without floating-point rounding' do
     program = create_program(pay: '140.35', time_zone: 'America/New_York')
     expect(program.reload.pay).to eq(BigDecimal('140.35'))
     program.assign_attributes(time_zone: 'not/a/zone', booking_horizon_months: 0, pay: -1)
@@ -52,7 +52,7 @@ RSpec.describe Program, :aggregate_failures, :database do
     expect(program.errors.attribute_names).to include(:time_zone, :booking_horizon_months, :pay)
   end
 
-  it 'stores organizer access per session without granting global privileges' do
+  it 'stores organizer access per program without granting global privileges' do
     program = create_program
     other = create_program
     user = create_user

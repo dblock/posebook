@@ -7,7 +7,7 @@ RSpec.describe AttendanceMutation, :aggregate_failures, :database do
 
   around { |example| travel_to(Time.utc(2026, 11, 13, 15)) { example.run } }
 
-  let(:program) { create_program }
+  let(:program) { create_program(time_zone: 'America/New_York', start_time: '18:30') }
   let(:participant) { create_user }
   let(:booking) do
     grant_participant_access(program, participant)
@@ -39,7 +39,7 @@ RSpec.describe AttendanceMutation, :aggregate_failures, :database do
     expect(record.scheduled_start).to eq(Time.utc(2026, 11, 2, 23, 30))
   end
 
-  it 'closes confirmation at the drawing start but retains a previous confirmation' do
+  it 'closes confirmation at the booking start but retains a previous confirmation' do
     record = booking
     travel_to record.scheduled_start
     expect { confirm }.to raise_error(BookingMutation::Invalid, /closes when it starts/)
@@ -62,7 +62,7 @@ RSpec.describe AttendanceMutation, :aggregate_failures, :database do
     record = booking
     travel_to Time.utc(2026, 11, 16, 15)
     User.find(participant.id).update!(active: false)
-    expect { confirm }.to raise_error(BookingMutation::Invalid, /model invitation/)
+    expect { confirm }.to raise_error(BookingMutation::Invalid, /participant invitation/)
     expect(record.reload.attendance_confirmed?).to be(false)
   end
 

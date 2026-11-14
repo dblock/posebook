@@ -11,16 +11,16 @@ class Program
                       session invitation].freeze
 
   field :name, type: String
-  field :program_label, type: String, default: 'Session'
-  field :participant_label, type: String, default: 'Model'
+  field :program_label, type: String, default: 'Program'
+  field :participant_label, type: String, default: 'Participant'
   field :custom_slug, type: String
-  field :time_zone, type: String, default: 'America/New_York'
-  field :pay, type: BigDecimal, default: 140
+  field :time_zone, type: String, default: 'UTC'
+  field :pay, type: BigDecimal, default: 0
   field :instructions, type: String
   field :booking_horizon_months, type: Integer, default: 6
   field :available_weekdays, type: Array, default: ['1']
   field :no_consecutive_genders, type: Array, default: []
-  field :start_time, type: String, default: '18:30'
+  field :start_time, type: String, default: '09:00'
   field :schedule_revision, type: Integer, default: 0
 
   slug :name, :custom_slug, history: true, reserve: RESERVED_SLUGS, max_length: 100 do |program|

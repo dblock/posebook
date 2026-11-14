@@ -30,7 +30,7 @@ RSpec.describe 'Organizer bookings', :aggregate_failures, :database, type: :requ
 
   it 'creates a booking for an assigned participant without granting unrelated administrator permissions' do
     get new_program_organizer_booking_path(program)
-    expect(response.body).to include('Schedule a Model', participant.name)
+    expect(response.body).to include('Schedule a Participant', participant.name)
     expect(response.parsed_body.at_css('#booking_attendance option[value="confirmed"]').text).to eq('Confirmed')
     post program_organizer_bookings_path(program), params: booking_params
     record = track_booking(program.bookings.first)
@@ -88,14 +88,15 @@ RSpec.describe 'Organizer bookings', :aggregate_failures, :database, type: :requ
     patch program_organizer_booking_path(program, record),
           params: booking_params(attendance: 'confirmed')
     post cancel_program_organizer_booking_path(program, record),
-         params: booking_params(reason: 'Model is ill.')
-    expect(record.reload).to have_attributes(status: 'canceled', reason: 'Model is ill.', changed_by_id: organizer.id)
+         params: booking_params(reason: 'Participant is ill.')
+    expect(record.reload).to have_attributes(status: 'canceled', reason: 'Participant is ill.',
+                                             changed_by_id: organizer.id)
     expect(record.attendance_confirmed?).to be(false)
     expect(record.attendance_confirmed_at).to be_present
     expect(record.attendance_changes.pluck('confirmed')).to eq([true])
     expect(BookingClaim.where(booking_id: record.id)).to be_empty
     get program_path(program)
-    history = response.parsed_body.at_xpath('//section[h2="Session Booking History"]')
+    history = response.parsed_body.at_xpath('//section[h2="Program Booking History"]')
     status = history.at_css('tbody tr td:nth-child(3)')
     expect(status.text.strip).to eq('Canceled')
     expect(status.at_css('.attendance-confirmed')).to be_nil

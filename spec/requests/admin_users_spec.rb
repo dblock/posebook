@@ -37,12 +37,12 @@ RSpec.describe 'Administrator user editing', :aggregate_failures, :database, typ
     expect(response.parsed_body.at_css("a[href='#{edit_admin_user_path(user)}']")).to be_present
     get edit_admin_user_path(user)
     expect(response.parsed_body.css('main input[type=password]')).to be_empty
-    update_user(user, name: 'Edited Artist', email: " #{user.email.upcase} ", phone: '+12125551234',
+    update_user(user, name: 'Edited Participant', email: " #{user.email.upcase} ", phone: '+12125551234',
                       roles: ['system_admin'], active: false, password: 'a forbidden password change')
     expect(response).to redirect_to(admin_users_path)
     follow_redirect!
-    expect(response.body).to include('User information saved.', 'Edited Artist', '+12125551234')
-    expect(user.reload).to have_attributes(name: 'Edited Artist', phone: '+12125551234', roles: [],
+    expect(response.body).to include('User information saved.', 'Edited Participant', '+12125551234')
+    expect(user.reload).to have_attributes(name: 'Edited Participant', phone: '+12125551234', roles: [],
                                            active: true, session_version: version)
     expect(user.authenticate(DatabaseHelpers::TEST_PASSWORD)).to eq(user)
   end
@@ -72,22 +72,23 @@ RSpec.describe 'Administrator user editing', :aggregate_failures, :database, typ
     user = create_user
     get edit_admin_user_path(user)
     expect(response.parsed_body.css('input[name="user[instagram_tagging_allowed]"]')).not_to be_empty
-    update_user(user, display_name: 'Alex Artist', instagram_handle: '@Alex.Artist', instagram_tagging_allowed: '1')
+    update_user(user, display_name: 'Alex Participant', instagram_handle: '@Alex.Participant',
+                      instagram_tagging_allowed: '1')
     expect(response).to redirect_to(admin_users_path)
-    expect(user.reload.public_name).to eq('Alex Artist')
-    expect(user.instagram_handle).to eq('alex.artist')
-    expect(user.public_instagram_url).to eq('https://www.instagram.com/alex.artist/')
+    expect(user.reload.public_name).to eq('Alex Participant')
+    expect(user.instagram_handle).to eq('alex.participant')
+    expect(user.public_instagram_url).to eq('https://www.instagram.com/alex.participant/')
     expect(user.history_tracks.last.modified).to include('instagram_tagging_allowed' => true)
   end
 
   it 'preserves tagging when an administrator changes handles and supports turning it off explicitly' do
     sign_in(create_user(roles: ['system_admin']))
-    user = create_user(instagram_handle: '@Artist.Model', instagram_tagging_allowed: true)
-    update_user(user, name: 'Updated Artist', instagram_handle: 'instagram.com/ARTIST.MODEL')
-    expect(user.reload.public_instagram_handle).to eq('artist.model')
-    update_user(user, instagram_handle: '@Another.Artist')
-    expect(user.reload.instagram_handle).to eq('another.artist')
-    expect(user.public_instagram_handle).to eq('another.artist')
+    user = create_user(instagram_handle: '@Public.Participant', instagram_tagging_allowed: true)
+    update_user(user, name: 'Updated Participant', instagram_handle: 'instagram.com/PUBLIC.PARTICIPANT')
+    expect(user.reload.public_instagram_handle).to eq('public.participant')
+    update_user(user, instagram_handle: '@Another.Participant')
+    expect(user.reload.instagram_handle).to eq('another.participant')
+    expect(user.public_instagram_handle).to eq('another.participant')
     update_user(user, instagram_tagging_allowed: '0')
     expect(user.reload.public_instagram_url).to be_nil
     expect(user.history_tracks.last.modified).to include('instagram_tagging_allowed' => false)
@@ -133,9 +134,9 @@ RSpec.describe 'Administrator user editing', :aggregate_failures, :database, typ
   it 'edits inactive users without reactivating them or dropping pending email changes' do
     sign_in(create_user(roles: ['system_admin']))
     user = create_user(active: false, pending_email: 'pending@example.test', email_change_digest: 'pending')
-    update_user(user, name: 'Updated Inactive Artist')
+    update_user(user, name: 'Updated Inactive Participant')
     expect(response).to redirect_to(admin_users_path)
-    expect(user.reload).to have_attributes(name: 'Updated Inactive Artist', active: false,
+    expect(user.reload).to have_attributes(name: 'Updated Inactive Participant', active: false,
                                            pending_email: 'pending@example.test', email_change_digest: 'pending')
   end
 

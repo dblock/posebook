@@ -1,5 +1,11 @@
 # Upgrading
 
+## Generic Defaults
+
+New programs default to **Program** and **Participant**, zero pay, Mondays at 09:00 UTC, and a six-month booking horizon. Existing stored labels, schedules, pay, memberships, and booking history are not rewritten. Gender selection is required only for programs that enable consecutive-gender rules; otherwise participants and organizers may book without it. Configured gender rules and explicit organizer overrides remain supported.
+
+`APP_HOST` now defaults to `localhost`. Set it to your actual hostname for an external deployment, particularly if the installation previously relied on the old built-in hostname. Public `/sessions` URLs and authentication `/session` remain unchanged. No data migration is required.
+
 ## Coordinator Invitations
 
 Coordinator pages now accept new or registered email addresses. Existing-email promotion requires an explicit confirmation; direct email-based assignment clients must submit `grant_access=1` to confirm. Existing user-ID assignment remains supported. New coordinator invitations use a separate collection and restrict acceptance to the invited email. Normal startup creates its declared indexes; no data migration or changes to existing memberships and participant invitations are required.

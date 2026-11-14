@@ -7,7 +7,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
 
   around { |example| travel_to(Time.utc(2026, 11, 13, 15)) { example.run } }
 
-  let(:program) { create_program }
+  let(:program) { create_program(time_zone: 'America/New_York', start_time: '18:30') }
   let(:participant) { create_user(public_profile_private: true) }
   let(:booking) do
     grant_participant_access(program, participant)
@@ -42,7 +42,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     track_booking(mutation.change(**attributes, date: '2026-11-30'))
   end
 
-  it 'offers confirmation and the usual rescheduling workflow seven days before posing' do
+  it 'offers confirmation and the usual rescheduling workflow seven days before participating' do
     get program_path(program)
     expect(response.body).to include('I&#39;ll be there!', 'I can no longer make it.')
     confirm_booking
@@ -60,7 +60,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     organizer = create_user
     grant_coordinator_access(program, organizer)
     [[participant, 'Your Booking History', 2],
-     [organizer, 'Session Booking History', 3]].each do |viewer, heading, column|
+     [organizer, 'Program Booking History', 3]].each do |viewer, heading, column|
       status = history_status(viewer, heading, column)
       expect(status.at_css('.attendance-confirmed').text).to eq('Confirmed')
       expect(status.css('.status-label').map(&:text)).to eq(['Confirmed'])
@@ -73,7 +73,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     organizer = create_user
     grant_coordinator_access(program, organizer)
     [[participant, 'Your Booking History', 2],
-     [organizer, 'Session Booking History', 3]].each do |viewer, heading, column|
+     [organizer, 'Program Booking History', 3]].each do |viewer, heading, column|
       status = history_status(viewer, heading, column)
       expect(status.css('.status-label').map(&:text)).to eq(['Unconfirmed'])
       day = response.parsed_body.at_css(".calendar [data-date='#{booking.date.iso8601}']")
@@ -87,7 +87,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
       organizer = create_user
       grant_coordinator_access(program, organizer)
       [[participant, 'Your Booking History', 2],
-       [organizer, 'Session Booking History', 3]].each do |viewer, heading, column|
+       [organizer, 'Program Booking History', 3]].each do |viewer, heading, column|
         status = history_status(viewer, heading, column)
         expect(status.text.strip).to eq(state.humanize)
         expect(status.css('.status-label').map(&:text)).to eq([state.humanize])
@@ -158,7 +158,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     get program_path(program)
     expect(response.body).to include('To be announced')
     expect(response.parsed_body.at_css('.calendar .attendance-confirmed').text).to eq('Confirmed')
-    expect(response.body).not_to include(participant.name, participant.email, 'Session Booking History',
+    expect(response.body).not_to include(participant.name, participant.email, 'Program Booking History',
                                          'I&#39;ll be there!')
   end
 
@@ -193,13 +193,13 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     expect(response.parsed_body.at_css('[data-calendar]')['data-calendar-context']).not_to eq(context)
   end
 
-  it 'does not confirm a changed drawing time from an old confirmation button' do
+  it 'does not confirm a changed booking time from an old confirmation button' do
     organizer = create_user
     grant_coordinator_access(program, organizer)
     get program_path(program)
     version = response.parsed_body.at_css('input[name="booking_version"]')['value']
     track_record(ProgramScheduleMutation.new(program: program, user: organizer).call(
-                   date: booking.date.iso8601, mode: 'open', start_time: '20:00', reason: 'Later drawing.'
+                   date: booking.date.iso8601, mode: 'open', start_time: '20:00', reason: 'Later booking.'
                  ))
     confirm_booking(booking_version: version)
     expect(response).to redirect_to(program_path(program))

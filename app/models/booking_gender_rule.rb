@@ -9,11 +9,15 @@ class BookingGenderRule
   end
 
   def blocked_reason(date, user)
-    return @program.message('bookings.gender_required') if user.gender.blank?
-    return unless @program.no_consecutive_genders.include?(user.gender)
+    genders = @program.no_consecutive_genders
+    return if genders.empty?
+
+    gender = user.gender
+    return @program.message('bookings.gender_required') if gender.blank?
+    return unless genders.include?(gender)
 
     dates = [-1, 1].map { |direction| adjacent_date(date, direction) }
-    return unless bookings_on(dates).any? { |booking| booking.user.gender == user.gender }
+    return unless bookings_on(dates).any? { |booking| booking.user.gender == gender }
 
     @program.message('bookings.gender_restricted')
   end

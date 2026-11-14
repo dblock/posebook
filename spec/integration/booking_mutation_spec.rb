@@ -17,14 +17,14 @@ RSpec.describe BookingMutation, :aggregate_failures, :database do
     program.bookings.each { |booking| track_booking(booking) }
   end
 
-  it 'allows a date change six local calendar days before the saved one-off drawing' do
-    program = create_program
+  it 'allows a date change six local calendar days before the saved one-off booking' do
+    program = create_program(time_zone: 'America/New_York', start_time: '18:30')
     user = create_user
     grant_participant_access(program, user)
     track_record(
       ProgramScheduleException.create!(
         program: program, date: Date.new(2026, 11, 23), mode: 'open',
-        start_time: '20:00', reason: 'Later drawing.'
+        start_time: '20:00', reason: 'Later booking.'
       )
     )
     original = track_booking(attempt(program, user, '2026-11-23'))
@@ -36,7 +36,7 @@ RSpec.describe BookingMutation, :aggregate_failures, :database do
   end
 
   it 'rechecks the five-day cutoff at program-local midnight after a change page was opened' do
-    program = create_program
+    program = create_program(time_zone: 'America/New_York', start_time: '18:30')
     user = create_user
     grant_participant_access(program, user)
     original = track_booking(attempt(program, user, '2026-11-23'))
@@ -108,7 +108,7 @@ RSpec.describe BookingMutation, :aggregate_failures, :database do
 
   it 'preserves booking dates and UTC expiry across daylight saving and session time-zone edits' do
     travel_to Time.utc(2026, 10, 30, 15)
-    program = create_program
+    program = create_program(time_zone: 'America/New_York', start_time: '18:30')
     user = create_user
     grant_participant_access(program, user)
     booking = track_booking(attempt(program, user, '2026-11-02'))

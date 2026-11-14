@@ -4,7 +4,7 @@ require 'rails_helper'
 require 'vips'
 
 RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request do
-  let(:participant) { create_user(name: 'Account Artist', display_name: 'Public Artist') }
+  let(:participant) { create_user(name: 'Account Participant', display_name: 'Public Participant') }
   let(:photo) { ProfilePhoto.add(participant, photo_upload) }
   let(:photo_url) { participant_photo_path(participant, photo.id) }
   let(:uploads) { [] }
@@ -117,7 +117,7 @@ RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request 
     hidden = ProfilePhoto.add(participant.reload, photo_upload)
     get participant_path(participant)
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include('Public Artist', photo.id.to_s)
+    expect(response.body).to include('Public Participant', photo.id.to_s)
     expect(response.body).not_to include(hidden.id.to_s, participant.name, participant.email, 'Upload Photo',
                                          'Delete Photo')
     get photo_url
@@ -158,7 +158,7 @@ RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request 
     get photo_url
     expect(response).to have_http_status(:ok)
     get participant_path(participant)
-    expect(response.body).to include('Account Artist', 'Private')
+    expect(response.body).to include('Account Participant', 'Private')
     expect(response.body).not_to include('Upload Photo', 'Make Public', 'Delete Photo')
     post participant_photos_path(participant), params: { profile_photo: { file: photo_upload } }
     expect(response).to have_http_status(:forbidden)

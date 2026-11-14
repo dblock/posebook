@@ -29,7 +29,7 @@ RSpec.describe 'Accounts', :aggregate_failures, :database, type: :request do
     follow_redirect!
 
     expect(user).to be_system_admin
-    expect(response.body).to include('Welcome, Test Artist.', 'system admin role')
+    expect(response.body).to include('Welcome, Test Participant.', 'system admin role')
   end
 
   it 'renders errors without claiming the first user for invalid registration' do
@@ -53,7 +53,7 @@ RSpec.describe 'Accounts', :aggregate_failures, :database, type: :request do
     user = create_user
     post session_path, params: { email: " #{user.email.upcase} ", password: DatabaseHelpers::TEST_PASSWORD }
     follow_redirect!
-    expect(response.body).to include('Welcome, Test Artist.')
+    expect(response.body).to include('Welcome, Test Participant.')
     delete session_path
     get root_path
     expect(response).to redirect_to(new_session_path)
@@ -186,12 +186,12 @@ RSpec.describe 'Accounts', :aggregate_failures, :database, type: :request do
   end
 
   it 'remembers the new account when switching away from an already remembered account' do
-    remembered_sign_in(create_user(name: 'First Artist'))
-    remembered_sign_in(create_user(name: 'Second Artist'))
+    remembered_sign_in(create_user(name: 'First Participant'))
+    remembered_sign_in(create_user(name: 'Second Participant'))
     cookies.delete('_posebook_session')
     get profile_path
-    expect(response.body).to include('Second Artist')
-    expect(response.body).not_to include('First Artist')
+    expect(response.body).to include('Second Participant')
+    expect(response.body).not_to include('First Participant')
   end
 
   it 'clears current-browser remember state and revokes older credentials after email confirmation' do

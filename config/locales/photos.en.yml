@@ -1,6 +1,6 @@
 en:
   photos:
-    venue_uploaded: "Session photo uploaded. It is visible publicly."
+    venue_uploaded: "Venue photo uploaded. It is visible publicly."
     uploaded: "Photo uploaded. It is private until you choose Make Public."
     updated: "Photo visibility updated."
     deleted: "Photo deleted."

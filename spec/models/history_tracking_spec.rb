@@ -5,14 +5,14 @@ require 'rails_helper'
 RSpec.describe HistoryTracking, :aggregate_failures, :database do
   it 'stores user creation and profile/access changes without authentication material' do
     user = create_user
-    user.update!(name: 'Updated Artist', phone: '+12125551234', roles: ['system_admin'],
+    user.update!(name: 'Updated Participant', phone: '+12125551234', roles: ['system_admin'],
                  password: 'a replacement password for history',
                  password_confirmation: 'a replacement password for history',
                  session_version: 'private session', password_reset_digest: 'private digest',
                  email_change_digest: 'private confirmation', pending_email: 'pending@example.test')
     change = user.history_tracks.last
-    expect(change.original['name']).to eq('Test Artist')
-    expect(change.modified).to include('name' => 'Updated Artist', 'phone' => '+12125551234',
+    expect(change.original['name']).to eq('Test Participant')
+    expect(change.modified).to include('name' => 'Updated Participant', 'phone' => '+12125551234',
                                        'roles' => ['system_admin'])
     expect(user.history_tracks.to_a.to_json).not_to include('password', 'digest', 'session_version', 'pending_email',
                                                             'private session', 'private digest', 'private confirmation')
@@ -24,7 +24,7 @@ RSpec.describe HistoryTracking, :aggregate_failures, :database do
     program = create_program
     previous_slug = program.slug
     program.update!(
-      name: 'Drawing Session', custom_slug: 'drawing', time_zone: 'America/Los_Angeles',
+      name: 'Booking Program', custom_slug: 'booking', time_zone: 'America/Los_Angeles',
       pay: 150, instructions: 'Arrive early.', booking_horizon_months: 9, available_weekdays: ['3']
     )
     change = program.history_tracks.last

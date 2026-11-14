@@ -105,7 +105,7 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
     expect(participant.history_tracks.last.modifier_id).to eq(admin.id)
   end
 
-  it 'lets coordinators and admins save separate session restrictions including clearing all of them' do
+  it 'lets coordinators and admins save separate program restrictions including clearing all of them' do
     sign_in(organizer)
     patch program_path(program), params: { program: { no_consecutive_genders: ['female'] } }
     expect(response).to redirect_to(program_path(program))
@@ -153,6 +153,30 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
     expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include('Select a gender')
     expect(Booking.where(user_id: participant.id)).to be_empty
+  end
+
+  it 'lets organizers book an unspecified gender when optional rules are disabled' do
+    program.update!(no_consecutive_genders: [])
+    participant.update!(gender: nil)
+    sign_in(organizer)
+    get new_program_organizer_booking_path(program)
+    expect(response.body).not_to include('Gender not selected', 'Override the')
+    post program_organizer_bookings_path(program), params: { booking: organizer_booking }
+    booking = track_booking(Booking.find_by(program_id: program.id, user_id: participant.id))
+    expect(response).to redirect_to(program_path(program, month: '2026-11'))
+    expect(booking.gender_override_reason).to be_nil
+  end
+
+  it 'lets participants book from their calendar without selecting a gender when rules are disabled' do
+    program.update!(no_consecutive_genders: [])
+    participant.update!(gender: nil)
+    sign_in(participant)
+    get program_path(program)
+    expect(response.body).not_to include('before your next booking')
+    expect(calendar_day('2026-11-23').css('form')).to be_present
+    post program_bookings_path(program), params: { date: '2026-11-23' }
+    track_booking(Booking.find_by(program_id: program.id, user_id: participant.id))
+    expect(response).to redirect_to(program_path(program, month: '2026-11'))
   end
 
   it 'checks organizer replacements without losing the original and records an explicit override' do

@@ -45,12 +45,12 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
   it 'updates name and phone without accepting privileged fields' do
     user = create_user
     sign_in(user)
-    update_profile(user, name: 'Updated Artist', phone: '+12125551234', roles: ['system_admin'], active: false)
+    update_profile(user, name: 'Updated Participant', phone: '+12125551234', roles: ['system_admin'], active: false)
     expect(response).to redirect_to(profile_path)
     follow_redirect!
-    expect(response.body).to include('Profile saved.', 'Updated Artist', '+12125551234')
+    expect(response.body).to include('Profile saved.', 'Updated Participant', '+12125551234')
     expect(response.parsed_body.css('main form')).to be_empty
-    expect(user.reload.name).to eq('Updated Artist')
+    expect(user.reload.name).to eq('Updated Participant')
     expect(user.phone).to eq('+12125551234')
     expect(user).not_to be_system_admin
     expect(user).to be_active
@@ -70,19 +70,19 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
   it 'stores only the handle from a profile URL and keeps tagging off by default' do
     user = create_user
     sign_in(user)
-    update_profile(user, display_name: '  Alex Artist  ',
-                         instagram_handle: 'https://www.instagram.com/Alex.Artist/?igsh=tracking')
+    update_profile(user, display_name: '  Alex Participant  ',
+                         instagram_handle: 'https://www.instagram.com/Alex.Participant/?igsh=tracking')
     expect(response).to redirect_to(profile_path)
     follow_redirect!
-    expect(response.parsed_body.text).to include('Profile saved.', 'Alex Artist', '@alex.artist',
+    expect(response.parsed_body.text).to include('Profile saved.', 'Alex Participant', '@alex.participant',
                                                  'Off: Instagram stays private')
-    link = response.parsed_body.at_css('a[href="https://www.instagram.com/alex.artist/"]')
+    link = response.parsed_body.at_css('a[href="https://www.instagram.com/alex.participant/"]')
     expect(link['target']).to eq('_blank')
     expect(link['rel'].split).to include('noopener', 'noreferrer')
-    expect(user.reload).to have_attributes(display_name: 'Alex Artist',
-                                           instagram_handle: 'alex.artist')
+    expect(user.reload).to have_attributes(display_name: 'Alex Participant',
+                                           instagram_handle: 'alex.participant')
     expect(User.collection.find(_id: user.id).first).not_to have_key('instagram_url')
-    expect(user.public_name).to eq('Alex Artist')
+    expect(user.public_name).to eq('Alex Participant')
     expect(user.public_instagram_url).to be_nil
     expect(user.public_instagram_handle).to be_nil
   end
@@ -90,11 +90,11 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
   it 'audits tagging preferences and lets the user turn tagging off and clear their display name' do
     user = create_user
     sign_in(user)
-    update_profile(user, display_name: 'Alex', instagram_handle: '@Artist.Model', instagram_tagging_allowed: '1')
-    expect(user.reload.public_instagram_handle).to eq('artist.model')
-    expect(user.public_instagram_url).to eq('https://www.instagram.com/artist.model/')
+    update_profile(user, display_name: 'Alex', instagram_handle: '@Public.Participant', instagram_tagging_allowed: '1')
+    expect(user.reload.public_instagram_handle).to eq('public.participant')
+    expect(user.public_instagram_url).to eq('https://www.instagram.com/public.participant/')
     expect(user.history_tracks.last.modified).to include('display_name' => 'Alex', 'instagram_tagging_allowed' => true,
-                                                         'instagram_handle' => 'artist.model')
+                                                         'instagram_handle' => 'public.participant')
     expect(user.history_tracks.last.modifier_id).to eq(user.id)
     update_profile(user, display_name: ' ', instagram_tagging_allowed: '0')
     expect(user.reload.public_name).to eq(user.name)

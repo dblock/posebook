@@ -1,6 +1,6 @@
 # Operating Posebook
 
-Posebook is a self-hosted Rails application for figure-drawing venues. The hosted [instance](https://posebook.dblock.org/) serves Enoch's figure-drawing sessions; see the [session overview](https://art.dblock.org/2026/05/25/figure-drawing-at-enochs.html). You can install and run a separate instance for your own venue.
+Posebook is a self-hosted Rails application for managing recurring programs, participant invitations, and bookings at venues.
 
 ## Stack and Local Development
 
@@ -19,15 +19,15 @@ bin/dev
 
 ## Configuration
 
-| Variable                                      | Purpose                                                                                     |
-| ---                                           | ---                                                                                         |
-| `MONGODB_URI`                                 | MongoDB connection; required in production.                                                 |
-| `MONGODB_TEST_URI`                            | Isolated test connection.                                                                   |
-| `APP_HOST`                                    | Allowed application hostname and host used in email links; defaults to `enochs.dblock.org`. |
-| `SECRET_KEY_BASE`                             | Required production session and encryption secret.                                          |
-| `PORT`                                        | HTTP port behind the HTTPS-terminating proxy; defaults to `3000`.                           |
-| `SMTP_ADDRESS`, `MAIL_FROM`                   | Enable production password recovery and email-change confirmations.                         |
-| `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` | Optional SMTP connection settings; STARTTLS is enabled automatically.                       |
+| Variable                                      | Purpose                                                                                                     |
+| ---                                           | ---                                                                                                         |
+| `MONGODB_URI`                                 | MongoDB connection; required in production.                                                                 |
+| `MONGODB_TEST_URI`                            | Isolated test connection.                                                                                   |
+| `APP_HOST`                                    | Allowed application hostname and email-link host; defaults to `localhost`. Set it for external deployments. |
+| `SECRET_KEY_BASE`                             | Required production session and encryption secret.                                                          |
+| `PORT`                                        | HTTP port behind the HTTPS-terminating proxy; defaults to `3000`.                                           |
+| `SMTP_ADDRESS`, `MAIL_FROM`                   | Enable production password recovery and email-change confirmations.                                         |
+| `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` | Optional SMTP connection settings; STARTTLS is enabled automatically.                                       |
 
 Without SMTP configuration, account recovery reports that email is unavailable. SMS delivery is not implemented.
 

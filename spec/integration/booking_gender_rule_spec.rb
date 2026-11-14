@@ -76,7 +76,7 @@ RSpec.describe BookingGenderRule, :aggregate_failures, :database do
     expect(book('2026-11-30')).to be_persisted
   end
 
-  it 'checks completed drawings and their historical one-off schedule' do
+  it 'checks completed bookings and their historical one-off schedule' do
     travel_to Time.utc(2026, 11, 6, 15)
     exception('2026-11-12', 'open')
     previous = reserve('2026-11-12')
@@ -108,11 +108,24 @@ RSpec.describe BookingGenderRule, :aggregate_failures, :database do
     expect(program.bookings.count).to eq(2)
   end
 
-  it 'requires an actual gender selection even when the session has no restrictions' do
+  it 'allows booking and rescheduling without a gender when no rules are enabled' do
     program.update!(no_consecutive_genders: [])
     participant.update!(gender: nil)
-    expect { book('2026-11-16') }.to raise_error(BookingMutation::Invalid, /Select a gender/)
-    expect(program.bookings).to be_empty
+    original = book('2026-11-23')
+    replacement = change(original, '2026-11-30')
+    expect(replacement).to be_persisted
+    expect(replacement.starts_at).to eq(Time.utc(2026, 11, 30, 9))
+    expect(original.reload.status).to eq('rescheduled')
+  end
+
+  it 'requires a gender after enabling rules without changing an existing booking' do
+    program.update!(no_consecutive_genders: [])
+    participant.update!(gender: nil)
+    original = book('2026-11-23')
+    program.update!(no_consecutive_genders: ['male'])
+    expect { change(original, '2026-11-30') }.to raise_error(BookingMutation::Invalid, /Select a gender/)
+    expect(original.reload.status).to eq('confirmed')
+    expect(BookingClaim.find_by(booking_id: original.id).date).to eq(original.date)
   end
 
   it 'reloads the selected gender rather than trusting a stale profile' do

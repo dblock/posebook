@@ -26,8 +26,8 @@ RSpec.describe 'Coordinator hierarchy', :aggregate_failures, :database, type: :r
     grant_venue_access(venue, coordinator)
     sign_in(coordinator)
     post venue_programs_path(venue),
-         params: { program: { name: 'Tuesday Drawing', available_weekdays: ['2'] } }
-    created = track_record(venue.programs.find_by(name: 'Tuesday Drawing'))
+         params: { program: { name: 'Tuesday Booking', available_weekdays: ['2'] } }
+    created = track_record(venue.programs.find_by(name: 'Tuesday Booking'))
     expect(response).to redirect_to(program_path(created))
     post venue_programs_path(other_program.venue), params: { program: { name: 'Forbidden' } }
     expect(response).to have_http_status(:not_found)
@@ -43,7 +43,7 @@ RSpec.describe 'Coordinator hierarchy', :aggregate_failures, :database, type: :r
     get program_coordinators_path(program)
     expect(response.body).not_to include(assignee.email)
     post program_coordinators_path(program), params: { email: assignee.email, roles: ['system_admin'] }
-    expect(response.body).to include('This Email Is Already Registered', 'Grant Session Coordinator Access')
+    expect(response.body).to include('This Email Is Already Registered', 'Grant Program Coordinator Access')
     expect(program.memberships.where(user_id: assignee.id)).to be_empty
     post program_coordinators_path(program), params: { email: assignee.email, grant_access: '1',
                                                        roles: ['system_admin'] }
@@ -83,7 +83,7 @@ RSpec.describe 'Coordinator hierarchy', :aggregate_failures, :database, type: :r
     program
     get venue_path(venue)
     expect(response.body).to include(venue.name, venue.address, program_path(program))
-    expect(response.body).not_to include('Pay', 'Booking History', 'Create Session', 'Session Coordinators')
+    expect(response.body).not_to include('Pay', 'Booking History', 'Create Program', 'Program Coordinators')
     expect(response.parsed_body.css('[data-calendar], form')).to be_empty
   end
 end

@@ -13,7 +13,7 @@ module DatabaseHelpers
   end
 
   def user_attributes(**overrides)
-    { name: 'Test Artist', gender: 'other', email: "artist-#{SecureRandom.hex(6)}@example.test",
+    { name: 'Test Participant', gender: 'other', email: "participant-#{SecureRandom.hex(6)}@example.test",
       password: TEST_PASSWORD, password_confirmation: TEST_PASSWORD }.merge(overrides)
   end
 
@@ -23,7 +23,7 @@ module DatabaseHelpers
 
   def create_program(**overrides)
     location = overrides.delete(:venue) || create_venue(**overrides.extract!(:address, :instagram_handle))
-    track_record(Program.create!({ name: "Test Session #{SecureRandom.hex(4)}", venue: location }
+    track_record(Program.create!({ name: "Test Program #{SecureRandom.hex(4)}", venue: location }
                                .merge(overrides)))
   end
 

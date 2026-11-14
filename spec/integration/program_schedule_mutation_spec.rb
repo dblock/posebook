@@ -7,12 +7,12 @@ RSpec.describe ProgramScheduleMutation, :aggregate_failures, :database do
 
   around { |example| travel_to(Time.utc(2026, 11, 13, 15)) { example.run } }
 
-  let(:program) { create_program }
+  let(:program) { create_program(time_zone: 'America/New_York', start_time: '18:30') }
   let(:admin) { create_user(roles: ['system_admin']) }
   let(:participant) { create_user }
 
   def change_schedule(**attributes)
-    values = { date: '2026-11-16', mode: 'open', start_time: '19:30', reason: 'Later drawing.' }.merge(attributes)
+    values = { date: '2026-11-16', mode: 'open', start_time: '19:30', reason: 'Later booking.' }.merge(attributes)
     track_record(described_class.new(program: program, user: admin).call(values))
   end
 
@@ -47,14 +47,14 @@ RSpec.describe ProgramScheduleMutation, :aggregate_failures, :database do
     expect(booking.reload).to have_attributes(status: 'confirmed', starts_at: Time.utc(2026, 11, 17, 0, 30))
     expect(booking.time_changes.last).to include('from' => Time.utc(2026, 11, 16, 23, 30),
                                                  'to' => Time.utc(2026, 11, 17, 0, 30),
-                                                 'reason' => 'Later drawing.', 'changed_by_id' => admin.id)
+                                                 'reason' => 'Later booking.', 'changed_by_id' => admin.id)
     expect(BookingClaim.find_by(booking_id: booking.id).user_id).to eq(participant.id)
     expect(program.bookings.count).to eq(1)
   end
 
   it 'restores regular scheduling without deleting the prior exception or its history' do
     first = change_schedule(mode: 'closed', reason: 'Holiday.')
-    Current.set(user: admin) { change_schedule(mode: 'regular', reason: 'Session reopened.') }
+    Current.set(user: admin) { change_schedule(mode: 'regular', reason: 'Program reopened.') }
     expect(first.reload.mode).to eq('regular')
     expect(first.history_tracks.count).to eq(2)
     expect(first.history_tracks.last).to have_attributes(modifier_id: admin.id)
