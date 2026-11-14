@@ -39,11 +39,11 @@ class ModelBookingAccess
   end
 
   def status
-    return 'Inactive account' unless @membership.user.active?
+    return 'Inactive' unless @membership.user.active?
     return 'Paused' if paused?
-    return "Booked: #{booking.date.iso8601}" if booking
+    return 'Booked' if booking
 
-    allowed? ? 'Invited to book' : 'Invitation required'
+    allowed? ? 'Invited' : 'Uninvited'
   end
 
   private

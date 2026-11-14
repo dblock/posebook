@@ -49,6 +49,8 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     follow_redirect!
     expect(response.body).to include('You&#39;re confirmed')
     expect(response.parsed_body.at_css('.calendar .attendance-confirmed').text).to eq('Confirmed')
+    day = response.parsed_body.at_css(".calendar [data-date='#{booking.date.iso8601}']")
+    expect(day.css('.status-label').map(&:text)).to eq(['Confirmed'])
     expect(response.parsed_body.at_css('form[action$="/confirm"]')).to be_nil
     expect(booking.reload.attendance_confirmed_by_id).to eq(model.id)
   end
@@ -61,8 +63,21 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
      [organizer, 'Session Booking History', 3]].each do |viewer, heading, column|
       status = history_status(viewer, heading, column)
       expect(status.at_css('.attendance-confirmed').text).to eq('Confirmed')
-      expect(status.css('.status-label-success').map(&:text)).to eq(['Confirmed'])
+      expect(status.css('.status-label').map(&:text)).to eq(['Confirmed'])
       expect(status.text.scan(/\bConfirmed\b/).size).to eq(1)
+    end
+  end
+
+  it 'shows one unconfirmed label before the confirmation window on calendars and history' do
+    travel_to Time.utc(2026, 11, 13, 15)
+    organizer = create_user
+    grant_coordinator_access(drawing_session, organizer)
+    [[model, 'Your Booking History', 2],
+     [organizer, 'Session Booking History', 3]].each do |viewer, heading, column|
+      status = history_status(viewer, heading, column)
+      expect(status.css('.status-label').map(&:text)).to eq(['Unconfirmed'])
+      day = response.parsed_body.at_css(".calendar [data-date='#{booking.date.iso8601}']")
+      expect(day.css('.status-label').map(&:text)).to eq(['Unconfirmed'])
     end
   end
 
@@ -82,12 +97,13 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     end
   end
 
-  it 'keeps the historical confirmation badge on completed sessions' do
+  it 'shows only completed while retaining confirmation in the historical explanation' do
     confirm_booking
     travel_to booking.ends_at
     status = history_status(model, 'Your Booking History', 2)
-    expect(status.text).to include('Completed', 'Confirmed')
-    expect(status.at_css('.attendance-confirmed').text).to eq('Confirmed')
+    expect(status.css('.status-label').map(&:text)).to eq(['Completed'])
+    expect(status.at_css('.attendance-confirmed')).to be_nil
+    expect(response.body).to include('Confirmed on ')
   end
 
   it 'rejects early confirmation and makes a repeated or forged request to clear confirmation harmless' do
@@ -123,8 +139,13 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     sign_in(organizer)
     [drawing_session_path(drawing_session), drawing_session_models_path(drawing_session)].each do |path|
       get path
-      expect(response.body).to include('Attendance not confirmed - follow up ASAP')
-      expect(response.parsed_body.at_css('.attendance-warning.status-label-warning')['role']).to eq('status')
+      expect(response.body).to include('Unconfirmed', 'Please contact an organizer ASAP')
+      warning = response.parsed_body.at_css('.attendance-warning')
+      expect(warning['role']).to eq('status')
+      expect(warning['class']).not_to include('status-label')
+      selector = ".calendar [data-date='#{booking.date.iso8601}'], .model-roster td:nth-child(2)"
+      cell = response.parsed_body.at_css(selector)
+      expect(cell.css('.status-label').map(&:text)).to eq(['Unconfirmed'])
     end
     delete session_path
     get drawing_session_path(drawing_session)

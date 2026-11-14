@@ -186,7 +186,7 @@ RSpec.describe 'Session management', :aggregate_failures, :database, type: :requ
     grant_coordinator_access(drawing_session, user)
     user.set(active: false)
     get drawing_session_coordinators_path(drawing_session)
-    expect(response.body).to include('Inactive account', 'Remove Coordinator')
+    expect(response.parsed_body.text).to include('Inactive account', 'Remove Coordinator')
     expect(response.parsed_body.css('select[name="user_id"]')).to be_empty
   end
 

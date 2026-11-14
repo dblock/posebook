@@ -38,9 +38,10 @@ module DrawingSessionCalendarHelper
   end
 
   def calendar_day_label(booking, reason)
-    return booking ? booking.display_status : reason if reason == 'Past Session'
-    return reason if ['No Session', 'Future'].include?(reason)
-    return 'Booked' if booking
+    return booking ? booking.display_status : 'Past' if reason == 'Past Session'
+    return 'Unavailable' if reason == 'No Session'
+    return reason if reason == 'Future'
+    return booking.display_status if booking
 
     reason ? 'Blocked' : 'Available'
   end

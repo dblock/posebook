@@ -46,9 +46,11 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     track_booking(BookingMutation.new(drawing_session: drawing_session, user: user).book(date: date))
   end
 
-  it 'shows No Session without a redundant Blocked label and leaves past non-session cells entirely blank' do
+  it 'uses one-word labels and leaves past non-session cells entirely blank' do
     get drawing_session_path(drawing_session)
-    expect(day('2026-11-17').css('span').text).to eq('No Session')
+    expect(day('2026-11-17').css('.status-label').text).to eq('Unavailable')
+    expect(day('2026-11-09').css('.status-label').text).to eq('Past')
+    expect(response.parsed_body.css('.status-label').map(&:text)).to all(match(/\A[[:alpha:]]+\z/))
     expect(day('2026-11-17').text).not_to include('Blocked', 'Not a posing day')
     expect(day('2026-11-10').children).to be_empty
     expect(day('2026-11-09').text).to include('6:30 PM', 'Past Session')
@@ -134,7 +136,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     booking = reserve('2026-12-28')
     sign_in(organizer_for)
     get drawing_session_path(drawing_session, month: '2027-01')
-    expect(day('2026-12-28').text).to include('Booked', '6:30 PM', booking.user.public_name)
+    expect(day('2026-12-28').text).to include('Unconfirmed', '6:30 PM', booking.user.public_name)
     expect(day('2026-12-28').at_css('a')['href']).to eq(edit_drawing_session_organizer_booking_path(drawing_session,
                                                                                                     booking))
     expect(day('2027-02-01').text).to include('Available', '6:30 PM', 'Schedule Model', 'Edit Day')

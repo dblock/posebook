@@ -121,7 +121,7 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
   it 'keeps inactive accounts reserved without publishing their identity or Instagram' do
     tagged_booking.user.update!(active: false)
     get drawing_session_path(drawing_session)
-    expect(response.parsed_body.at_css('[data-date="2026-11-23"]').text).to include('Booked')
+    expect(response.parsed_body.at_css('[data-date="2026-11-23"]').text).to include('Unconfirmed')
     expect(response.body).not_to include('Fallback Artist', 'public_model')
   end
 

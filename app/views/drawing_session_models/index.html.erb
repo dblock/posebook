@@ -23,10 +23,14 @@
             <tr data-membership="<%= membership.id %>">
               <td><strong><%= membership.user.name %></strong><br><span class="model-email"><%= membership.user.email %></span></td>
               <td>
-                <%= status_label(access.status) %>
-                <%= " at #{booking_time(access.booking)}" if access.booking && !access.paused? && membership.user.active? %>
-                <%= render "drawing_sessions/attendance_status", booking: access.booking, private_view: true if access.booking %>
-                <% if access.paused? && access.booking %><br>Booking retained: <%= access.booking.date.iso8601 %> at <%= booking_time(access.booking) %><% end %>
+                <% if access.booking && !access.paused? && membership.user.active? %>
+                  <%= render "drawing_sessions/booking_status", booking: access.booking, private_view: true %>
+                  on <%= access.booking.date.iso8601 %> at <%= booking_time(access.booking) %>
+                <% else %>
+                  <%= status_label(access.status) %>
+                  <% if access.booking %><br>Booking retained: <%= access.booking.date.iso8601 %> at <%= booking_time(access.booking) %> (<%= access.booking.display_status %>)<% end %>
+                  <% if access.booking&.attendance_overdue? %><small class="attendance-warning" role="status">Please contact an organizer ASAP.</small><% end %>
+                <% end %>
                 <% if membership.model_pause_reason.present? %>
                   <details><summary>Pause note</summary><p>Last pause: <%= membership.model_pause_reason %></p></details>
                 <% end %>

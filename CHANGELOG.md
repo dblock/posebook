@@ -44,4 +44,5 @@
 - [#47](https://github.com/dblock/posebook/pull/47): Batch roster booking reads, send smaller authorized calendar navigation responses, load venue photos once, and speed CI with Docker layer caching and overlapping setup - [@dblock](https://github.com/dblock).
 - [#48](https://github.com/dblock/posebook/pull/48): Separate user and technical documentation and describe continuous production updates - [@dblock](https://github.com/dblock).
 - [#49](https://github.com/dblock/posebook/pull/49): Separate physical venues from recurring drawing sessions, inherit admin/venue/session coordinator permissions, and migrate existing schedules, bookings, invitations, and audit history - [@dblock](https://github.com/dblock).
+- [#50](https://github.com/dblock/posebook/pull/50): Use single-word status labels throughout the site and one combined booking/attendance label per entry, using Unconfirmed until acknowledgment and retaining private follow-up as plain text - [@dblock](https://github.com/dblock).
 - Your contribution here.

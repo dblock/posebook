@@ -1,5 +1,0 @@
-<% if booking.attendance_confirmed? %>
-  <%= status_label("Confirmed", class: "attendance-confirmed") %>
-<% elsif local_assigns.fetch(:private_view, false) && booking.attendance_overdue? %>
-  <%= status_label("Attendance not confirmed - follow up ASAP", class: "attendance-warning", role: "status") %>
-<% end %>

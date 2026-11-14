@@ -22,7 +22,7 @@
           <% @exceptions.each do |exception| %>
             <tr>
               <td><%= exception.date.iso8601 %></td>
-              <td><%= status_label(exception.mode == "regular" ? "Regular schedule restored" : exception.mode.humanize) %></td>
+              <td><%= status_label(exception.mode.humanize) %><%= " schedule restored" if exception.mode == "regular" %></td>
               <td><%= drawing_time(exception.start_time) if exception.start_time %></td>
               <td><%= exception.reason %></td>
               <td><%= link_to "Edit", drawing_session_schedule_path(@drawing_session, date: exception.date.iso8601) %></td>
