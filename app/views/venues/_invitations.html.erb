@@ -5,7 +5,7 @@
     <% @invitations.each do |invitation| %>
       <li>
         <%= invitation.name.presence || "Personal invitation" %>
-        <%= invitation.email %> - <%= invitation.status %>
+        <%= invitation.email %> - <%= status_label(invitation.status) %>
         <% if invitation.status == "Pending" %>
           <%= button_to "Revoke Invitation", venue_model_invitation_path(@venue, invitation), method: :delete %>
         <% end %>

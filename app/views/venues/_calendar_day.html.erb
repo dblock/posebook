@@ -11,7 +11,7 @@
   <td data-date="<%= date.iso8601 %>" class="<%= calendar_day_class(booking, reason) %>">
     <time datetime="<%= date.iso8601 %>"><%= date.day %></time>
     <% if reason != "Future" && (clock = calendar_time(calendar, date)) %><strong><%= clock %></strong><br><% end %>
-    <span><%= label %></span>
+    <%= status_label(label) %>
     <%= render "venues/booked_model", booking: booking, manager: @manage_schedule if booking %>
     <%= render "venues/attendance_status", booking: booking, private_view: !public_view && (@manage_schedule || booking.user_id == current_user&.id) if booking %>
     <% if booking && @manage_schedule && booking.ends_at > Time.current %><%= link_to "Edit Booking", edit_venue_organizer_booking_path(calendar.venue, booking) %><% end %>

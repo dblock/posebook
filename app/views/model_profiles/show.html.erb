@@ -24,7 +24,7 @@
           <%= image_tag model_photo_path(@user, photo, thumbnail: 1), alt: "Profile photo #{index + 1}", width: 400, height: 400, loading: "lazy" %>
         <% end %>
         <% if @gallery.private_access? %>
-          <figcaption><%= photo.public? ? "Public" : "Private" %></figcaption>
+          <figcaption><%= status_label(photo.public? ? "Public" : "Private") %></figcaption>
         <% end %>
         <% if @gallery.editable? %>
           <div class="photo-actions">

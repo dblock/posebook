@@ -50,6 +50,7 @@ RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request 
     image = response.parsed_body.at_css('.profile-photo img')
     expect(image.attributes.transform_values(&:value)).to include('width' => '400', 'height' => '400')
     expect(response.body).to include('Make Public', 'Delete Photo', '1 of 10')
+    expect(response.parsed_body.at_css('.profile-photo .status-label-neutral').text).to eq('Private')
   end
 
   it 'corrects orientation, strips metadata, preserves full-image proportions and creates optimized WebP squares' do

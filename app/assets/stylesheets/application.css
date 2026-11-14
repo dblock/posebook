@@ -61,23 +61,42 @@ nav {
   background: #fff;
 }
 
-.attendance-confirmed,
-.attendance-warning {
-  display: block;
+.status-label {
+  display: inline-block;
+  box-sizing: border-box;
+  max-width: 100%;
   margin: 0.25rem 0;
   padding: 0.15rem 0.35rem;
   border-radius: 0.2rem;
   font-size: 0.85em;
+  font-weight: 600;
+  line-height: 1.35;
+  vertical-align: baseline;
+  overflow-wrap: anywhere;
 }
 
-.attendance-confirmed {
+.status-label-success {
   background: #dcefdc;
   color: #215321;
 }
 
-.attendance-warning {
+.status-label-warning {
   background: #fff3d4;
   color: #704b0b;
+}
+
+.status-label-danger {
+  background: #f4dfd9;
+  color: #7b3426;
+}
+
+.status-label-neutral {
+  background: #e9e7e3;
+  color: #45413c;
+}
+
+.attendance-warning {
+  display: block;
 }
 
 input:not([type="hidden"]):not([type="submit"]):not([type="checkbox"]),
@@ -112,6 +131,15 @@ table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
+}
+
+.table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.table-scroll .status-label {
+  overflow-wrap: normal;
 }
 
 th,
@@ -152,6 +180,17 @@ td {
 .calendar button {
   font-size: inherit;
   padding: 0.2rem;
+}
+
+@media (max-width: 30rem) {
+  .calendar th,
+  .calendar td {
+    padding: 0.4rem 0.2rem;
+  }
+
+  .calendar .status-label {
+    padding: 0.15rem;
+  }
 }
 
 .model-help,

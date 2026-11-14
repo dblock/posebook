@@ -1,6 +1,6 @@
 <main>
   <h1>Model Invitation</h1>
-  <p><%= @venue.name %> - <%= @invitation.status %></p>
+  <p><%= @venue.name %> - <%= status_label(@invitation.status) %></p>
   <%= render "venues/regular_schedule", venue: @venue %>
   <% if @token.present? %>
     <p><%= label_tag :invitation_link, "Invitation link (copy now)" %><br><%= url_field_tag :invitation_link, invitation_url(token: @token, **Rails.configuration.action_mailer.default_url_options), readonly: true %></p>
