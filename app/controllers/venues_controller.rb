@@ -11,10 +11,11 @@ class VenuesController < ApplicationController
 
   def show
     @calendar = VenueCalendar.new(@venue, month: params[:month])
+    @manage_schedule = @venue.managed_by?(current_user)
+    @invitations = @venue.model_invitations.order_by(created_at: :desc) if @manage_schedule
     return unless current_user.system_admin?
 
-    @organizers = @venue.memberships.schedule_managers.includes(:user).to_a
-    @eligible_users = User.active.where(:id.nin => @organizers.map(&:user_id)).order_by(name: :asc)
+    load_organizers
   end
 
   def new
@@ -41,6 +42,11 @@ class VenuesController < ApplicationController
   end
 
   private
+
+  def load_organizers
+    @organizers = @venue.memberships.schedule_managers.includes(:user).to_a
+    @eligible_users = User.active.where(:id.nin => @organizers.map(&:user_id)).order_by(name: :asc)
+  end
 
   def find_venue
     @venue = Venue.visible_to(current_user).find(params.expect(:id))

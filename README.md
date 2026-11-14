@@ -20,7 +20,7 @@ bin/setup --skip-server
 bin/dev
 ```
 
-Open [localhost:3000](http://localhost:3000) and create the first user with a name, email, and password of at least 12 characters. That user receives the global `system_admin` role. Public registration then closes; later accounts will require invitations, which are not implemented yet. Sign in with email/password and use "Forgot your password?" for email recovery. Passwordless access and phone recovery are deferred.
+Open [localhost:3000](http://localhost:3000) and create the first user with a name, email, and password of at least 12 characters. That user receives the global `system_admin` role. Public registration then closes; later accounts require personal venue invitations. Sign in with email/password and use "Forgot your password?" for email recovery. Passwordless access and phone recovery are deferred.
 
 Development reset emails are written to `tmp/mail/`. Reset links expire after 30 minutes, can be used once, and invalidate existing sessions when used. Model registration, booking, and reminders are not implemented yet. `/up` checks application liveness, not database readiness.
 
@@ -34,9 +34,13 @@ System admins can use **Users > Edit** to change an existing user's name, email,
 
 Use **Venues** to create a venue as a system admin, configure its address, IANA time zone, informational model pay in USD, instructions, and booking horizon, then grant `manage_schedule` to existing active users. Defaults are `America/New_York`, $140, and six months; each venue can have different settings. Organizers see only their assigned venues and cannot edit venue settings, manage other users, or assign organizers. System admins can manage all venues.
 
-Removing schedule access preserves the membership record and immediately removes access to that venue. Deactivated users retain their assignments but cannot sign in until reactivated. Only system admins see organizer contact details and the existing-user selector. Creating accounts by invitation, generating schedules, booking, and sending model reminders remain future work.
+Removing schedule access preserves the membership record and immediately removes access to that venue. Deactivated users retain their assignments but cannot sign in until reactivated. Only system admins see organizer contact details and the existing-user selector. Booking and sending model reminders remain future work.
 
 Venue settings include one or more available weekdays, defaulting to Monday. The venue's month calendar previews availability in its time zone through its configured booking horizon, with past dates, other weekdays, and dates outside the window explicitly blocked. This preview does not reserve dates yet.
+
+Admins and assigned schedule organizers can **Invite a Model** at their venue. Create a single-use personal link to copy into email or a direct message, with optional SMTP delivery. The private link is displayed once, expires after 30 days, and can be revoked without deleting its record. Recipients can register or sign in with any existing account, then explicitly accept. They receive only venue-local model access, never organizer or global roles; models cannot see invitation/contact lists. Acceptance persists account creation, link consumption, and membership together in a MongoDB transaction.
+
+MongoDB must be a replica set (including a single-node development/test replica set) for invitation transactions. DigitalOcean managed replica sets are supported; retain the provider's connection options. For local setup, start `mongo:8.0` with `--replSet rs0 --bind_ip_all`, then run `mongosh --eval 'rs.initiate()'` inside that container and wait for a writable primary before setup.
 
 ## Configuration
 

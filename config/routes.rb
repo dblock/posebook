@@ -8,10 +8,13 @@ Rails.application.routes.draw do
   resource :password, only: %i[edit update]
   resource :account_deactivation, only: %i[new create]
   resource :email_change, only: %i[show update]
+  resource :invitation, only: %i[show create], controller: 'invitation_acceptances'
+  post 'invitation/register', to: 'invitation_acceptances#register', as: :invited_registration
   namespace :admin do
     resources :users, only: %i[index edit update]
   end
   resources :venues, except: :destroy do
+    resources :model_invitations, controller: 'venue_invitations', only: %i[new create show destroy]
     resources :organizers, controller: 'venue_organizers', only: %i[create destroy]
   end
   resources :password_resets, param: :token, only: %i[new create edit update]

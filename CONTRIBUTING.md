@@ -7,14 +7,15 @@ Install Ruby 4.0.9, Bundler, MongoDB 8.0, and Docker. Use only MongoDB 8.0 for t
 Use an existing local MongoDB server or start a dedicated development container on an unused port:
 
 ```sh
-docker run --detach --name posebook-mongo --publish 127.0.0.1:27017:27017 mongo:8.0
+docker run --detach --name posebook-mongo --publish 127.0.0.1:27017:27017 mongo:8.0 --replSet rs0 --bind_ip_all
+docker exec posebook-mongo mongosh --quiet --eval 'rs.initiate({_id:"rs0",members:[{_id:0,host:"127.0.0.1:27017"}]})'
 bin/setup --skip-server
 bundle exec rake spec
 bundle exec rake lint
 bundle exec rake package
 ```
 
-If port 27017 is occupied, use your existing server or select a different local port and export `MONGODB_URI` and `MONGODB_TEST_URI` accordingly. Do not overwrite another project's containers. Stop your development container with `docker stop posebook-mongo` when no longer needed.
+Wait for a writable replica-set primary before setup. If port 27017 is occupied, use an existing replica set or run MongoDB on the same unused port inside and outside the container, advertise that address in the replica-set configuration, and export `MONGODB_URI` and `MONGODB_TEST_URI` with `?replicaSet=rs0`. Do not use `directConnection=true`: the Ruby driver treats it as standalone topology and refuses transactions. Do not overwrite another project's containers. Stop your development container with `docker stop posebook-mongo` when no longer needed.
 
 Run tests and lint before every development push, including amendments. Run packaging validation before committing packaging, runtime dependency, configuration, or HTTP entry-point changes. Passing final checks can be reused for a push only while the validated content and configuration are unchanged.
 
@@ -35,6 +36,8 @@ Account-settings tests cover profile permissions, verified email changes, confli
 Admin user-editing tests cover authorization, allowed contact fields, immediate email changes, session/challenge revocation, competing email claims, inactive accounts, self-edits, and preserving access controls. Admin email changes do not contact an email provider or mark an address verified.
 
 Venue tests cover configuration validation, decimal pay, cross-venue isolation, administrator-only mutations, inactive accounts, scoped revocation, and concurrent duplicate role grants against the real unique index. Track membership records before deleting their related fixtures. Do not grant global privileges to represent local schedule access.
+
+Invitation tests use a MongoDB 8.0 replica set and exercise single-use consumption, transaction rollback under competing account claims, scoped access, existing-account login returns, optional email delivery, expiry/revocation, and preserving membership roles. Track newly accepted accounts and memberships before fixture cleanup. No tests send external messages.
 
 Workflow checker specs exercise valid and invalid human-readable names, ignored identifiers, malformed YAML, and real command exit statuses. Keep fixtures isolated and never delete shared databases or collections. New implementation tests should cover meaningful behavior, authorization boundaries, concurrency, time zones, and errors; use fake delivery providers instead of sending real emails or texts.
 

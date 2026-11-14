@@ -1,4 +1,13 @@
 en:
+  invitations:
+    created: Invitation created. Copy the personal link below.
+    accepted: Invitation accepted. You are a model at this venue.
+    revoked: Invitation revoked.
+    not_pending: This invitation has already been accepted or revoked.
+    conflict: Another request claimed this email or membership. Try again, or sign in with an existing account.
+    delivery_unavailable: Email delivery needs an address and configured SMTP. Uncheck email delivery to share a link instead.
+    delivery_failed: Email delivery failed. Copy the personal link and share it directly instead.
+    subject: "You are invited to pose at %{venue}"
   accounts:
     created: Your account has the system admin role.
     invitation_required: Registration requires an invitation.
