@@ -29,7 +29,7 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
   def expect_public_only
     expect(response.body).not_to include(program.instructions, 'Pay', 'Booking History',
                                          'Manage Schedule', 'Invite a Participant', 'Your Upcoming Booking')
-    expect(response.parsed_body.css('.calendar form, .calendar button')).to be_empty
+    expect(response.parsed_body.css('.calendar form, .calendar button:not(.copy-button)')).to be_empty
   end
 
   it 'renders only the calendar for a matching public navigation context' do

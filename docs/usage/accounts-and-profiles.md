@@ -13,3 +13,5 @@ Gender is optional and private. Programs without gender rules allow booking with
 Use **Change Password** or **Deactivate Account** from your profile to manage account access. Changing your password signs out other sessions. Deactivation signs you out and retains your booking history.
 
 Your profile shows your uploaded photos, including private ones. Use **Manage Photos** to upload, delete, or change sharing preferences. Click a photo in any profile or venue gallery to preview the larger image without leaving the page. Close the preview with **Close**, Escape, or a click outside it.
+
+Use **Copy** beside contact details, Instagram handles, venue addresses, and venue/program links to copy the displayed value or share the page. Private invitation links have a **Copy** button inside the link box while first shown; keep those links private. The button changes to **Copied** for three seconds after copying, then returns to **Copy**. If your browser denies clipboard access, a message asks you to select and copy manually.
