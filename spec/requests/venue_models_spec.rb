@@ -64,7 +64,7 @@ RSpec.describe 'Venue model access', :aggregate_failures, :database, type: :requ
       get venue_models_path(venue)
       expect(response.parsed_body.css('tr[data-membership]').pluck('data-membership'))
         .to eq(members.first(2).map { |item| item.id.to_s })
-      expect(response.body).to include('3 total models', '3 available', 'Invite All Available Models (3)')
+      expect(response.parsed_body.text).to include('3 total models', '3 available', 'Invite All Available Models (3)')
       expect(response.parsed_body.at_css('a[rel="next"]')['href']).to eq(venue_models_path(venue, page: 2))
       expect(response.parsed_body.at_css('a[rel="prev"]')).to be_nil
       get venue_models_path(venue, page: 2)
@@ -80,7 +80,7 @@ RSpec.describe 'Venue model access', :aggregate_failures, :database, type: :requ
       post pause_venue_model_path(venue, members.last, page: 2), params: { reason: 'Travel.' }
       expect(response).to redirect_to(venue_models_path(venue, page: 2))
       follow_redirect!
-      expect(response.body).to include('3 total models', '2 available', '1 paused')
+      expect(response.parsed_body.text).to include('3 total models', '2 available', '1 paused')
       expect(response.parsed_body.at_css("tr[data-membership='#{members.last.id}'] summary").text).to eq('Pause note')
     end
 
@@ -97,12 +97,12 @@ RSpec.describe 'Venue model access', :aggregate_failures, :database, type: :requ
   it 'handles an empty roster without pagination or an enabled bulk action' do
     manage_models
     get venue_models_path(venue, page: 999)
-    expect(response.body).to include('0 total models', '0 available', 'No models assigned.')
+    expect(response.parsed_body.text).to include('0 total models', '0 available', 'No models assigned.')
     expect(response.parsed_body.at_css('form button[disabled]').text).to eq('Invite All Available Models (0)')
     expect(response.parsed_body.at_css('nav[aria-label="Model pages"]')).to be_nil
     membership.update!(model_paused: true, model_pause_reason: 'Taking a break.')
     get venue_models_path(venue)
-    expect(response.body).to include('1 total models', '0 available', '1 paused')
+    expect(response.parsed_body.text).to include('1 total models', '0 available', '1 paused')
     expect(response.parsed_body.at_css('form button[disabled]').text).to eq('Invite All Available Models (0)')
   end
 

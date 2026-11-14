@@ -21,8 +21,8 @@ RSpec.describe 'Public identity privacy', :aggregate_failures, :database, type: 
     expect(user.history_tracks.last.modified).to include('public_profile_private' => true)
     expect(user.history_tracks.last.modifier_id).to eq(user.id)
     follow_redirect!
-    expect(response.body).to include('Profile saved.', 'Private: To be announced on public calendars',
-                                     'Hidden while your information is private')
+    expect(response.parsed_body.text).to include('Profile saved.', 'Private: To be announced on public calendars',
+                                                 'Hidden while your information is private')
   end
 
   it 'renders private sharing controls disabled while keeping the privacy choice available' do

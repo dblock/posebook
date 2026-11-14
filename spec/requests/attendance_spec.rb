@@ -60,6 +60,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     [[model, 'Your Booking History', 2], [organizer, 'Venue Booking History', 3]].each do |viewer, heading, column|
       status = history_status(viewer, heading, column)
       expect(status.at_css('.attendance-confirmed').text).to eq('Confirmed')
+      expect(status.css('.status-label-success').map(&:text)).to eq(['Confirmed'])
       expect(status.text.scan(/\bConfirmed\b/).size).to eq(1)
     end
   end
@@ -72,6 +73,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
       [[model, 'Your Booking History', 2], [organizer, 'Venue Booking History', 3]].each do |viewer, heading, column|
         status = history_status(viewer, heading, column)
         expect(status.text.strip).to eq(state.humanize)
+        expect(status.css('.status-label').map(&:text)).to eq([state.humanize])
         expect(status.at_css('.attendance-confirmed')).to be_nil
         expect(response.body).to include('Confirmed on ')
       end
@@ -120,6 +122,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     [venue_path(venue), venue_models_path(venue)].each do |path|
       get path
       expect(response.body).to include('Attendance not confirmed - follow up ASAP')
+      expect(response.parsed_body.at_css('.attendance-warning.status-label-warning')['role']).to eq('status')
     end
     delete session_path
     get venue_path(venue)

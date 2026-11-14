@@ -1,7 +1,7 @@
 <main>
   <h1>Models at <%= @venue.name %></h1>
   <%= render "venues/regular_schedule", venue: @venue %>
-  <p class="model-counts"><strong><%= @roster.counts[:total] %> total models</strong> &middot; <%= @roster.counts[:available] %> available &middot; <%= @roster.counts[:booked] %> booked &middot; <%= @roster.counts[:paused] %> paused &middot; <%= @roster.counts[:inactive] %> inactive</p>
+  <p class="model-counts"><strong><%= @roster.counts[:total] %> total models</strong> &middot; <%= @roster.counts[:available] %> <%= status_label("available") %> &middot; <%= @roster.counts[:booked] %> <%= status_label("booked") %> &middot; <%= @roster.counts[:paused] %> <%= status_label("paused") %> &middot; <%= @roster.counts[:inactive] %> <%= status_label("inactive") %></p>
   <%= button_to "Invite All Available Models (#{@roster.counts[:available]})", invite_all_venue_models_path(@venue, page: @roster.page), disabled: @roster.counts[:available].zero? %>
   <p>Invites available models across <strong>all pages</strong>, not just the models shown below.</p>
   <details class="model-help">
@@ -21,7 +21,7 @@
           <tr data-membership="<%= membership.id %>">
             <td><strong><%= membership.user.name %></strong><br><span class="model-email"><%= membership.user.email %></span></td>
             <td>
-              <%= access.status %>
+              <%= status_label(access.status) %>
               <%= " at #{booking_time(access.booking)}" if access.booking && !access.paused? && membership.user.active? %>
               <%= render "venues/attendance_status", booking: access.booking, private_view: true if access.booking %>
               <% if access.paused? && access.booking %><br>Booking retained: <%= access.booking.date.iso8601 %> at <%= booking_time(access.booking) %><% end %>

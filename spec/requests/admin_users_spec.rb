@@ -8,6 +8,18 @@ RSpec.describe 'Administrator user editing', :aggregate_failures, :database, typ
                                                 .merge(attributes) }
   end
 
+  it 'labels account access states consistently without changing their controls' do
+    create_user
+    create_user(active: false)
+    sign_in(create_user(roles: ['system_admin']))
+    get admin_users_path
+    expect(response.parsed_body.css('td:nth-child(5) .status-label').map(&:text))
+      .to contain_exactly('Active', 'Active', 'Inactive')
+    expect(response.parsed_body.at_css('td:nth-child(5) .status-label-danger').text).to eq('Inactive')
+    expect(response.parsed_body.at_css('td:nth-child(6) .status-label-neutral').text).to eq('Protected')
+    expect(response.body).to include('Reactivate', 'Deactivate')
+  end
+
   it 'requires authentication before reading or editing user information' do
     user = create_user
     get edit_admin_user_path(user)

@@ -74,7 +74,8 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
                          instagram_handle: 'https://www.instagram.com/Alex.Artist/?igsh=tracking')
     expect(response).to redirect_to(profile_path)
     follow_redirect!
-    expect(response.body).to include('Profile saved.', 'Alex Artist', '@alex.artist', 'Off: Instagram stays private')
+    expect(response.parsed_body.text).to include('Profile saved.', 'Alex Artist', '@alex.artist',
+                                                 'Off: Instagram stays private')
     link = response.parsed_body.at_css('a[href="https://www.instagram.com/alex.artist/"]')
     expect(link['target']).to eq('_blank')
     expect(link['rel'].split).to include('noopener', 'noreferrer')
@@ -119,7 +120,8 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     update_profile(user, email: 'verified@example.test', current_password: DatabaseHelpers::TEST_PASSWORD)
     token = confirmation_token
     follow_redirect!
-    expect(response.body).to include('Profile saved.', 'Verification pending for verified@example.test.', old_email)
+    expect(response.parsed_body.text).to include('Profile saved.', 'Verification pending for verified@example.test.',
+                                                 old_email)
     get email_change_path(token: token)
     expect(response.body).to include('Confirm Email Change')
     expect(user.reload.email).to eq(old_email)

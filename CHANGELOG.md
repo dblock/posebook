@@ -39,4 +39,5 @@
 - [#41](https://github.com/dblock/posebook/pull/41): Show Confirmed only once in booking history and never mark canceled or rescheduled bookings attendance-confirmed, while retaining their audit history - [@dblock](https://github.com/dblock).
 - [#43](https://github.com/dblock/posebook/pull/43): Add an original sanguine female portrait logo, a serif wordmark, and a matching PNG favicon - [@dblock](https://github.com/dblock).
 - [#44](https://github.com/dblock/posebook/pull/44): Add public venue photos without a photo-count limit and normalized public Instagram links, with administrator-only editing and optimized GridFS storage - [@dblock](https://github.com/dblock).
+- [#45](https://github.com/dblock/posebook/pull/45): Use consistent colored status labels across bookings, calendars, invitations, model access, accounts, and photo visibility without changing their state or privacy rules - [@dblock](https://github.com/dblock).
 - Your contribution here.

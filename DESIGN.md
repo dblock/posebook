@@ -17,6 +17,8 @@ magick app/assets/images/posebook-logo.png -resize 64x64 -gravity center -backgr
 
 Inspect the full portrait, the header at its actual size, and the favicon at 16 and 32 pixels after artwork changes. Keep source artwork outside the public asset pipeline.
 
+Displayed states share compact status labels: green for positive states, sanguine for canceled/revoked/inactive states, amber for pending/paused/attention states, and warm gray for neutral states. Booking, calendar, invitation, roster, account, schedule, and photo-visibility displays use the same helper and styles. Color never replaces the visible status text. State logic, private attendance warnings, and showing Confirmed only once are unchanged; retained audit explanations and form options remain ordinary text rather than current-state labels.
+
 ## Accounts and Recovery
 
 There is one `User` model, not a separate admin account type. A blank installation allows anyone to register the first user without an installation secret, as explicitly requested. That account receives `system_admin` in its global roles. Public registration closes once any user exists; subsequent accounts require a personal venue invitation. A fixed bootstrap document ID uses MongoDB's built-in unique `_id` constraint to prevent two concurrent first-user claims, without requiring a transaction or replica set.

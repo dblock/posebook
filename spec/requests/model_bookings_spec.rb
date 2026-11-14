@@ -31,8 +31,10 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
       booked = response.parsed_body.at_css('[data-date="2026-11-16"]')
       expect(booked['class']).to eq('booked')
       expect(booked.text).to include('Booked')
+      expect(booked.at_css('.status-label-neutral').text).to eq('Booked')
       expect(booked.css('form')).to be_empty
       expect(response.parsed_body.at_css('[data-date="2026-11-23"]')['class']).to eq('available')
+      expect(response.parsed_body.at_css('[data-date="2026-11-23"] .status-label-success').text).to eq('Available')
       expect(response.parsed_body.at_css('[data-date="2026-11-17"]')['class']).to eq('blocked')
     end
   end

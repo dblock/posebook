@@ -15,6 +15,7 @@ RSpec.describe 'Model invitations', :aggregate_failures, :database, type: :reque
     post venue_model_invitations_path(venue), params: { model_invitation: { name: 'Demo Model' } }
     invitation = track_record(venue.model_invitations.first)
     follow_redirect!
+    expect(response.parsed_body.at_css('.status-label-warning').text).to eq('Pending')
     token = invitation_token
     expect(ModelInvitation.available(token)).to eq(invitation)
     expect(invitation.attributes.values).not_to include(token)
@@ -157,5 +158,20 @@ RSpec.describe 'Model invitations', :aggregate_failures, :database, type: :reque
     expect(response).to redirect_to(venue_path(invitation.venue))
     expect(invitation.reload.status).to eq('Revoked')
     expect(ModelInvitation.available(invitation.token)).to be_nil
+    follow_redirect!
+    expect(response.parsed_body.at_css('.status-label-danger').text).to eq('Revoked')
+  end
+
+  it 'labels accepted and expired invitations on the private venue list' do
+    admin = create_user(roles: ['system_admin'])
+    venue = create_venue
+    create_model_invitation(venue, admin, used_at: Time.current)
+    create_model_invitation(venue, admin, expires_at: 1.minute.ago)
+    sign_in(admin)
+    get venue_path(venue)
+    invitations = response.parsed_body.at_xpath("//section[h2='Model Invitations']")
+    expect(invitations.at_css('.status-label-success').text).to eq('Accepted')
+    expect(invitations.at_css('.status-label-neutral').text).to eq('Expired')
+    expect(invitations.css('form')).to be_empty
   end
 end

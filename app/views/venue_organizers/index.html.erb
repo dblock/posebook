@@ -7,7 +7,7 @@
       <% @organizers.each do |membership| %>
         <li>
           <%= membership.user.name %> (<%= membership.user.email %>) - manage_schedule
-          <%= "(inactive account)" unless membership.user.active? %>
+          <%= status_label("inactive account") unless membership.user.active? %>
           <%= button_to "Remove Schedule Access", venue_organizer_path(@venue, membership), method: :delete %>
         </li>
       <% end %>
