@@ -8,7 +8,8 @@
   </dl>
   <h2>Instructions</h2>
   <%= simple_format(@venue.instructions) %>
-  <p>You have schedule access at this venue. Schedule creation, model invitations, booking, and reminders are not available yet.</p>
+  <%= render "calendar", calendar: @calendar %>
+  <p>This calendar previews weekly availability. Model invitations, booking, and reminders are not available yet.</p>
 
   <% if current_user.system_admin? %>
     <p><%= link_to "Edit Venue", edit_venue_path(@venue) %></p>

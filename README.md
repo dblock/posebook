@@ -36,6 +36,8 @@ Use **Venues** to create a venue as a system admin, configure its address, IANA 
 
 Removing schedule access preserves the membership record and immediately removes access to that venue. Deactivated users retain their assignments but cannot sign in until reactivated. Only system admins see organizer contact details and the existing-user selector. Creating accounts by invitation, generating schedules, booking, and sending model reminders remain future work.
 
+Venue settings include one or more available weekdays, defaulting to Monday. The venue's month calendar previews availability in its time zone through its configured booking horizon, with past dates, other weekdays, and dates outside the window explicitly blocked. This preview does not reserve dates yet.
+
 ## Configuration
 
 | Variable           | Default                                                         | Purpose                                                                                          |

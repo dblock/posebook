@@ -44,6 +44,8 @@ Organizers can list/view only assigned venues; unassigned venue lookups return 4
 
 Each venue currently stores name, address, IANA time zone, decimal model pay in USD, instructions, and a positive booking horizon in months. Defaults match the initial Enoch's venue: `America/New_York`, $140, and six months. Pay is informational, not payment processing. Validated time-zone identifiers prepare for calendar-aware scheduling; recurring dates and reminder calculations are not implemented here.
 
+Venues now configure available weekdays, with Monday as the default. A server-rendered month calendar shows a venue-local, inclusive calendar-month booking horizon. Past dates, other weekdays, and dates outside the displayed month/window are explicitly blocked; month navigation is bounded. This is a read-only availability preview until model invitations and booking are implemented. Calendar dates are civil dates, not timed sessions.
+
 Each venue owns its invitations, roster, recurring schedule, time zone, address, pay, instructions, and configurable booking horizon. Default availability is the next six months, opened automatically. Enoch's initially meets Mondays around 6:30-9:00 PM in `America/New_York`; individual dates can be blocked or overridden.
 
 A model may have one upcoming booking per venue, while retaining historical bookings. Database constraints and atomic mutations must prevent concurrent claims of one session or multiple upcoming bookings at one venue. A partial unique index on an explicit active-booking state can enforce active claims, but time passing does not update indexes: completion transitions must release claims, and the final design must test rollover and recovery. Do not rely on uniqueness validations alone.
