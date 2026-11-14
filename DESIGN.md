@@ -4,7 +4,7 @@
 
 Posebook coordinates invitation-first model registration, scheduling, and reminders across figure drawing venues. The first venue is Figure Drawing at Enoch's, intended for `enochs.dblock.org`. The repository and application are named Posebook, not after a single venue.
 
-The application currently provides first-user registration, role-bearing user accounts, email/password login, email password recovery, account settings, deactivation/reactivation, venue configuration, scoped organizer access, a protected home page, and a Rails `/up` liveness endpoint. `/up` proves application boot, not MongoDB connectivity. Model invitations, venue scheduling, bookings, and durable reminders are not implemented yet.
+The application currently provides first-user registration, role-bearing user accounts, email/password login, email password recovery, account settings, deactivation/reactivation, venue configuration, scoped organizer/model access, personal model invitations, calendar previews, and a Rails `/up` liveness endpoint. `/up` proves application boot, not MongoDB connectivity. Bookings and durable reminders are not implemented yet.
 
 ## Accounts and Recovery
 
@@ -20,7 +20,7 @@ The profile is a read-only account summary with links to separate profile-edit, 
 
 Deactivation retains the user and history while revoking sessions, email-change links, and recovery links. Inactive users cannot log in or request recovery; old documents without an active flag remain active. Only system admins can manage other users or reactivate accounts. System admin accounts cannot be deactivated until global role transfer exists: protecting these accounts atomically avoids concurrent last-admin races. Public registration remains closed even if all non-admin accounts are inactive.
 
-Development emails are written to `tmp/mail`; tests use the in-memory mail adapter. Production account email uses configurable SMTP, requires `SMTP_ADDRESS` and `MAIL_FROM`, and reports unavailable delivery rather than pretending to send email. Links use configured mailer hosts, not incoming request hosts. Phone recovery and account invitations remain future work.
+Development emails are written to `tmp/mail`; tests use the in-memory mail adapter. Production account email uses configurable SMTP, requires `SMTP_ADDRESS` and `MAIL_FROM`, and reports unavailable delivery rather than pretending to send email. Links use configured mailer hosts, not incoming request hosts. Phone recovery remains future work.
 
 System admins can edit any existing user's name, email, and phone, including inactive accounts, without changing roles, passwords, or active status. Successful edits return to the user list with confirmation; invalid edits stay on the form. Admin email changes apply immediately without verification or the target user's password, clear previous verification, revoke all sessions and outstanding authentication challenges, and handle competing unique email claims. Name/phone-only edits preserve sessions and pending email changes. An admin changing their own email is signed out with confirmation and must sign in again. Account access still has separate explicit controls; missing edits or invalid access values never default to deactivation.
 
@@ -28,7 +28,7 @@ System admins can edit any existing user's name, email, and phone, including ina
 
 An organizer first connects with a model by email, Instagram, or text. The organizer adds them to the appropriate venue, possibly with only a name or social handle, then sends a private registration link by email or through the existing conversation.
 
-The planned model invitation flow collects name, email, and phone number, verifies contact information, and obtains explicit consent for automated SMS. Initial accounts use passwords; passwordless access can follow later. Declining SMS must not prevent email-based registration or booking.
+The model invitation flow collects name, email, password, and optional phone. Personal invitations do not prove ownership of the chosen email address; phone numbers remain unverified. Contact verification and explicit SMS consent must precede any future automated SMS. Declining SMS must not prevent registration or booking.
 
 After registering, the model chooses an available session at the inviting venue. The invitation has no preselected date; the selection immediately confirms the booking. Send confirmation by email and, with consent, SMS, plus a calendar invitation. Models can cancel or reschedule and organizers are notified.
 
@@ -40,11 +40,11 @@ A model has one identity and separate venue memberships. Organizers see only mem
 
 Venue configuration and organizer access are implemented. Only global system admins can create/edit venues or grant/revoke organizer access. A `VenueMembership` links an existing user and venue with local roles; `manage_schedule` never changes the user's global roles. A compound unique index on venue/user plus an atomic upsert and set addition prevents duplicate memberships or roles under concurrent grants. Revocation atomically pulls just that role and preserves the membership for future history. Deactivation blocks the user's access without deleting assignments.
 
-Organizers can list/view only assigned venues; unassigned venue lookups return 404. Schedule access does not permit venue configuration, user administration, or role assignment. Only system admins see organizer emails and the active-user assignment selector. Invitations are deferred, so this interface assigns existing users only. Venue hostname routing, model rosters, and schedule editing remain future work.
+Organizers can list/view only assigned venues; unassigned venue lookups return 404. Schedule access does not permit venue configuration, user administration, or organizer role assignment. Only system admins see organizer emails and the active-user assignment selector. Assigned schedule organizers can invite models and see their venue's invitation history; models cannot see those contacts. Venue hostname routing and booking actions remain future work.
 
 Each venue currently stores name, address, IANA time zone, decimal model pay in USD, instructions, and a positive booking horizon in months. Defaults match the initial Enoch's venue: `America/New_York`, $140, and six months. Pay is informational, not payment processing. Validated time-zone identifiers prepare for calendar-aware scheduling; recurring dates and reminder calculations are not implemented here.
 
-Venues now configure available weekdays, with Monday as the default. A server-rendered month calendar shows a venue-local, inclusive calendar-month booking horizon. Past dates, other weekdays, and dates outside the displayed month/window are explicitly blocked; month navigation is bounded. This is a read-only availability preview until model invitations and booking are implemented. Calendar dates are civil dates, not timed sessions.
+Venues configure available weekdays, with Monday as the default. A server-rendered month calendar shows a venue-local, inclusive calendar-month booking horizon. Past dates, other weekdays, and dates outside the displayed month/window are explicitly blocked; month navigation is bounded. This is a read-only availability preview until booking is implemented. Calendar dates are civil dates, not timed sessions.
 
 Each venue owns its invitations, roster, recurring schedule, time zone, address, pay, instructions, and configurable booking horizon. Default availability is the next six months, opened automatically. Enoch's initially meets Mondays around 6:30-9:00 PM in `America/New_York`; individual dates can be blocked or overridden.
 
@@ -65,5 +65,9 @@ Production requires `MONGODB_URI` and a deployment-supplied `SECRET_KEY_BASE`. `
 ## Delivery Scope
 
 Implementation proceeds through focused stacked PRs: account bootstrap and recovery, account settings and lifecycle, venue/organizer setup, recurring sessions, invitations, then bookings and email/SMS reminders. SMS consent, phone verification, opt-outs, invitation expiry, and adult-model expectations are required before the corresponding public functionality launches.
+
+Single-use, 30-day personal venue invitations support private links and optional transactional SMTP delivery. They are bearer links, intentionally not restricted to the optional delivery address, and must be shared privately. Only digests persist; GET does not consume them. An explicit authenticated acceptance or invited registration atomically creates the account if needed, consumes the invitation, and adds a model role without dropping existing membership roles. Failed registration or a concurrent losing claim leaves no orphan account. Models see their assigned venues, not organizer controls or other models' contacts. Booking and automated notifications remain future work.
+
+Invitation transactions require a MongoDB replica set; development and CI use a single MongoDB 8.0 replica-set node. Production packaging verifies an actual transaction rollback. Optional invitation-email failure preserves the private link for manual delivery; missing SMTP never pretends email was sent. Normal public registration remains closed.
 
 Version one excludes payments, artist registration, public model directories, and photo uploads. No logo or other artwork has been selected or created.

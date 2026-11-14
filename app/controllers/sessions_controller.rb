@@ -8,8 +8,7 @@ class SessionsController < ApplicationController
   def create
     user = User.with_email(params[:email])
     if user&.authenticate(params[:password].to_s)
-      start_session(user)
-      redirect_to root_path
+      finish_sign_in(user)
     else
       flash.now[:alert] = t('accounts.invalid_credentials')
       render :new, status: :unprocessable_content
@@ -19,5 +18,13 @@ class SessionsController < ApplicationController
   def destroy
     reset_session
     redirect_to new_session_path, status: :see_other
+  end
+
+  private
+
+  def finish_sign_in(user)
+    invitation_token = session[:invitation_token]
+    start_session(user)
+    redirect_to(invitation_token ? invitation_path(token: invitation_token) : root_path)
   end
 end

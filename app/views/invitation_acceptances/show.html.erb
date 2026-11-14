@@ -1,0 +1,24 @@
+<main>
+  <h1>Pose at <%= @invitation.venue.name %></h1>
+  <p>Accept this personal invitation to join the venue as a model. You can then view its calendar. One person can accept this link.</p>
+  <% if current_user %>
+    <p>Signed in as <%= current_user.name %> (<%= current_user.email %>).</p>
+    <%= form_with url: invitation_path do |form| %>
+      <%= hidden_field_tag :token, @token %>
+      <%= form.submit "Accept Invitation" %>
+    <% end %>
+  <% else %>
+    <p><%= link_to "Sign In with an Existing Account", new_session_path %></p>
+    <h2>Create Your Account</h2>
+    <%= render "shared/errors", record: @user %>
+    <%= form_with model: @user, url: invited_registration_path do |form| %>
+      <%= hidden_field_tag :token, @token %>
+      <p><%= form.label :name %><br><%= form.text_field :name, required: true, maxlength: 100, autocomplete: "name" %></p>
+      <p><%= form.label :email %><br><%= form.email_field :email, required: true, autocomplete: "email" %></p>
+      <p><%= form.label :phone, "Phone (optional)" %><br><%= form.telephone_field :phone, autocomplete: "tel" %></p>
+      <p><%= form.label :password %><br><%= form.password_field :password, required: true, minlength: 12, autocomplete: "new-password" %></p>
+      <p><%= form.label :password_confirmation %><br><%= form.password_field :password_confirmation, required: true, autocomplete: "new-password" %></p>
+      <%= form.submit "Create Account and Accept Invitation" %>
+    <% end %>
+  <% end %>
+</main>

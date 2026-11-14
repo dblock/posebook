@@ -13,6 +13,6 @@
     <% end %>
   </fieldset>
   <p><%= form.label :instructions %><br><%= form.text_area :instructions, maxlength: 5000, rows: 4 %></p>
-  <p>The calendar previews available weekdays within the booking horizon. Model invitations, booking, and reminders are not available yet.</p>
+  <p>The calendar previews available weekdays within the booking horizon. Booking and reminders are not available yet.</p>
   <%= form.submit venue.persisted? ? "Save Venue" : "Create Venue" %>
 <% end %>

@@ -9,7 +9,8 @@
   <h2>Instructions</h2>
   <%= simple_format(@venue.instructions) %>
   <%= render "calendar", calendar: @calendar %>
-  <p>This calendar previews weekly availability. Model invitations, booking, and reminders are not available yet.</p>
+  <p>This calendar previews weekly availability. Booking and reminders are not available yet.</p>
+  <%= render "invitations" if @manage_schedule %>
 
   <% if current_user.system_admin? %>
     <p><%= link_to "Edit Venue", edit_venue_path(@venue) %></p>
@@ -31,6 +32,6 @@
     <% else %>
       <p>No other active users are available.</p>
     <% end %>
-    <p>Organizers receive manage_schedule only at this venue. Account invitations are coming later.</p>
+    <p>Organizers receive manage_schedule only at this venue. Model invitations grant model access, never organizer or global roles.</p>
   <% end %>
 </main>

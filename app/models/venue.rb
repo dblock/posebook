@@ -15,6 +15,7 @@ class Venue
   field :available_weekdays, type: Array, default: ['1']
 
   has_many :memberships, class_name: 'VenueMembership', inverse_of: :venue, dependent: :restrict_with_error
+  has_many :model_invitations, inverse_of: :venue, dependent: :restrict_with_error
 
   before_validation do
     self.name = name.to_s.strip
@@ -35,7 +36,22 @@ class Venue
   def self.visible_to(user)
     return all if user.system_admin?
 
+    ids = VenueMembership.where(user_id: user.id, :roles.in => %w[manage_schedule model]).distinct(:venue_id)
+    where(:id.in => ids)
+  end
+
+  def self.managed_by(user)
+    return all if user.system_admin?
+
     ids = VenueMembership.schedule_managers.where(user_id: user.id).distinct(:venue_id)
     where(:id.in => ids)
+  end
+
+  def managed_by?(user)
+    user.system_admin? || memberships.schedule_managers.exists?(user_id: user.id)
+  end
+
+  def model?(user)
+    memberships.models.exists?(user_id: user.id)
   end
 end

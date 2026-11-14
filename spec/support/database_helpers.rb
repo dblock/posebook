@@ -31,6 +31,14 @@ module DatabaseHelpers
     track_record(VenueMembership.find_by(venue_id: venue.id, user_id: user.id))
   end
 
+  def create_model_invitation(venue, inviter, **attributes)
+    track_record(ModelInvitation.create!(venue: venue, invited_by: inviter, **attributes))
+  end
+
+  def track_model_membership(venue, user)
+    track_record(VenueMembership.find_by(venue_id: venue.id, user_id: user.id))
+  end
+
   def sign_in(user, client: self)
     client.post(session_path, params: { email: user.email, password: TEST_PASSWORD })
   end

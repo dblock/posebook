@@ -1,0 +1,15 @@
+<section>
+  <h2>Model Invitations</h2>
+  <p><%= link_to "Invite a Model", new_venue_model_invitation_path(@venue) %></p>
+  <ul>
+    <% @invitations.each do |invitation| %>
+      <li>
+        <%= invitation.name.presence || "Personal invitation" %>
+        <%= invitation.email %> - <%= invitation.status %>
+        <% if invitation.status == "Pending" %>
+          <%= button_to "Revoke Invitation", venue_model_invitation_path(@venue, invitation), method: :delete %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+</section>

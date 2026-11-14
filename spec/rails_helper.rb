@@ -14,6 +14,7 @@ RSpec.configure do |config|
 
     User.create_indexes
     VenueMembership.create_indexes
+    ModelInvitation.create_indexes
     ActiveModel::SecurePassword.min_cost = true
   end
   config.before(:each, :database) { ActionMailer::Base.deliveries.clear }

@@ -44,6 +44,7 @@ idempotency
 inline
 Instagram
 integrations
+isWritablePrimary
 Invariants
 JavaScript
 JSON
@@ -81,6 +82,7 @@ rb
 README
 rebase
 rescuable
+replSet
 reviewable
 RSpec
 RuboCop

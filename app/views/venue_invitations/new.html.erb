@@ -1,0 +1,12 @@
+<main>
+  <h1>Invite a Model to <%= @venue.name %></h1>
+  <%= render "shared/errors", record: @invitation %>
+  <p>Create a single-use personal link to share by email or direct message. The recipient can register or sign in with any email address. Links expire in 30 days.</p>
+  <%= form_with model: @invitation, url: venue_model_invitations_path(@venue) do |form| %>
+    <p><%= form.label :name, "Name or handle (optional)" %><br><%= form.text_field :name, maxlength: 100 %></p>
+    <p><%= form.label :email, "Email (optional)" %><br><%= form.email_field :email %></p>
+    <p><label><%= check_box_tag :send_email, "1", params[:send_email] == "1" %> Also send the invitation by email</label></p>
+    <%= form.submit "Create Invitation" %>
+  <% end %>
+  <p><%= link_to "Cancel", venue_path(@venue) %></p>
+</main>
