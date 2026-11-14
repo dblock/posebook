@@ -22,7 +22,7 @@ COPY bin/docker-entrypoint bin/docker-entrypoint
 COPY config config
 COPY lib lib
 COPY public public
-COPY VERSION Rakefile config.ru LICENSE.txt ./
+COPY Rakefile config.ru LICENSE.txt ./
 RUN mkdir -p log tmp/pids
 RUN SECRET_KEY_BASE_DUMMY=1 \
     MONGODB_URI=mongodb://127.0.0.1:27017/posebook_build \
