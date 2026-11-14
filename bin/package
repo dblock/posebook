@@ -1,0 +1,64 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'net/http'
+require 'open3'
+require 'securerandom'
+
+def docker!(*)
+  output, status = Open3.capture2e('docker', *)
+  raise output unless status.success?
+
+  output.strip
+end
+
+def request(port, path)
+  Net::HTTP.start('127.0.0.1', port, open_timeout: 2, read_timeout: 2) do |http|
+    http.get(path, { 'Host' => 'enochs.dblock.org', 'X-Forwarded-Proto' => 'https' })
+  end
+end
+
+image = "posebook-package:#{SecureRandom.hex(6)}"
+container = nil
+
+begin
+  puts 'Building the production image...'
+  puts docker!('build', '--tag', image, '.')
+  container = docker!(
+    'run', '--detach', '--publish', '127.0.0.1::3000',
+    '--env', "SECRET_KEY_BASE=#{SecureRandom.hex(64)}",
+    '--env', 'MONGODB_URI=mongodb://127.0.0.1:27017/posebook_package',
+    image
+  )
+  port = docker!('port', container, '3000/tcp').split(':').last.to_i
+  deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 60
+
+  loop do
+    begin
+      break if request(port, '/up').code == '200'
+    rescue SystemCallError, Timeout::Error, EOFError
+      # Puma may not have bound its port yet.
+    end
+    if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+      raise 'The packaged application did not become healthy'
+    end
+
+    sleep 1
+  end
+
+  response = request(port, '/')
+  unless response.code == '200' && response.body.include?('<h1>Posebook</h1>')
+    raise 'The packaged home page did not render'
+  end
+
+  stylesheet = response.body[/href="([^"]+\.css)"/, 1]
+  raise 'The packaged stylesheet is missing' unless stylesheet && request(port, stylesheet).code == '200'
+
+  puts 'Production image passed home page, stylesheet, and liveness checks.'
+ensure
+  if container
+    puts docker!('logs', container)
+    docker!('rm', '--force', container)
+  end
+  docker!('image', 'rm', image) if system('docker', 'image', 'inspect', image, out: File::NULL, err: File::NULL)
+end

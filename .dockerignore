@@ -1,0 +1,14 @@
+.git
+.bundle
+.ruby-lsp
+.rspec_status
+.env
+.env.*
+config/master.key
+config/credentials*
+coverage
+log/*
+pkg
+spec
+tmp/*
+vendor

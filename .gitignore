@@ -1,0 +1,22 @@
+.bundle/
+.ruby-lsp/
+.rspec_status
+.env
+.env.*
+!.env.example
+/coverage/
+/log/*
+!/log/.keep
+/tmp/*
+!/tmp/.keep
+/tmp/pids/*
+!/tmp/pids/.keep
+/vendor/
+/pkg/
+/public/assets/
+/config/master.key
+/config/credentials/*.key
+.DS_Store
+
+# Ignore key files for decrypting credentials and more.
+/config/*.key
