@@ -16,6 +16,7 @@ class Venue
 
   has_many :memberships, class_name: 'VenueMembership', inverse_of: :venue, dependent: :restrict_with_error
   has_many :model_invitations, inverse_of: :venue, dependent: :restrict_with_error
+  has_many :model_bookings, inverse_of: :venue, dependent: :restrict_with_error
 
   before_validation do
     self.name = name.to_s.strip

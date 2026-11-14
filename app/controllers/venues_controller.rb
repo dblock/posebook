@@ -10,7 +10,7 @@ class VenuesController < ApplicationController
   end
 
   def show
-    @calendar = VenueCalendar.new(@venue, month: params[:month])
+    load_calendar
     @manage_schedule = @venue.managed_by?(current_user)
     @invitations = @venue.model_invitations.order_by(created_at: :desc) if @manage_schedule
     return unless current_user.system_admin?
@@ -42,6 +42,13 @@ class VenuesController < ApplicationController
   end
 
   private
+
+  def load_calendar
+    @calendar = VenueCalendar.new(@venue, month: params[:month])
+    @can_book = @venue.model?(current_user)
+    @my_booking = @calendar.current_booking(current_user)
+    @booking_history = @calendar.history_for(current_user)
+  end
 
   def load_organizers
     @organizers = @venue.memberships.schedule_managers.includes(:user).to_a

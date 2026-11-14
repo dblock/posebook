@@ -21,6 +21,20 @@ class VenueCalendar
     nil
   end
 
+  def bookings
+    @bookings ||= ModelBooking.upcoming.where(venue_id: venue.id).index_by(&:date)
+  end
+
+  def current_booking(user)
+    bookings.values.find { |booking| booking.user_id == user.id }
+  end
+
+  def history_for(user)
+    records = ModelBooking.where(venue_id: venue.id)
+    records = records.where(user_id: user.id) unless venue.managed_by?(user)
+    records.order_by(date: :desc, created_at: :desc).includes(:user, :previous_booking)
+  end
+
   private
 
   def selected_month(value)

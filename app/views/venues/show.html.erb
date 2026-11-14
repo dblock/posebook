@@ -8,8 +8,14 @@
   </dl>
   <h2>Instructions</h2>
   <%= simple_format(@venue.instructions) %>
+  <% if @my_booking %>
+    <h2>Your Upcoming Booking</h2>
+    <p><%= @my_booking.date.to_fs(:long) %>. You can have one upcoming booking at this venue.</p>
+    <p><%= link_to "Change Date", edit_venue_model_booking_path(@venue, @my_booking) %> | <%= link_to "Cancel Booking", cancellation_venue_model_booking_path(@venue, @my_booking) %></p>
+  <% end %>
   <%= render "calendar", calendar: @calendar %>
-  <p>This calendar previews weekly availability. Booking and reminders are not available yet.</p>
+  <%= render "booking_history" %>
+  <p>Changes and cancellations require an explanation and retain every booking record. Automated reminders are not available yet.</p>
   <%= render "invitations" if @manage_schedule %>
 
   <% if current_user.system_admin? %>

@@ -1,0 +1,20 @@
+<section>
+  <h2><%= @manage_schedule ? "Venue Booking History" : "Your Booking History" %></h2>
+  <% if @booking_history.any? %>
+    <table>
+      <thead><tr><th>Date</th><% if @manage_schedule %><th>Model</th><% end %><th>Status</th><th>Explanation</th></tr></thead>
+      <tbody>
+        <% @booking_history.each do |booking| %>
+          <tr>
+            <td><%= booking.date.iso8601 %><% if booking.previous_booking %><br>Moved from <%= booking.previous_booking.date.iso8601 %><% end %></td>
+            <% if @manage_schedule %><td><%= booking.user.name %></td><% end %>
+            <td><%= booking.display_status %></td>
+            <td><%= booking.reason.presence || "-" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>No bookings yet.</p>
+  <% end %>
+</section>
