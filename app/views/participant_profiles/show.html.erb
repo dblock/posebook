@@ -28,8 +28,8 @@
         <% end %>
         <% if @gallery.editable? %>
           <div class="photo-actions">
-            <%= button_to photo.public? ? "Make Private" : "Make Public", participant_photo_path(@user, photo), method: :patch, params: { profile_photo: { public: photo.public? ? "0" : "1" } } %>
-            <%= button_to "Delete Photo", participant_photo_path(@user, photo), method: :delete %>
+            <%= button_to photo.public? ? "Make Private" : "Make Public", participant_photo_path(@user, photo), method: :patch, params: { profile_photo: { public: photo.public? ? "0" : "1" } }, class: "secondary-action" %>
+            <%= button_to "Delete Photo", participant_photo_path(@user, photo), method: :delete, class: "secondary-action" %>
           </div>
         <% end %>
       </figure>

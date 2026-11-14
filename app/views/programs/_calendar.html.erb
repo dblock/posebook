@@ -20,7 +20,7 @@
       <%= link_to "Next Month", calendar_month_path(calendar, calendar.month + 1.month, @changing_booking), data: { calendar_navigation: true } %>
     <% end %>
   </nav>
-  <p>Dates and times use <%= calendar.program.time_zone %>. Available days are pale green, booked days are darker green, and unavailable days are grey.</p>
+  <p>Dates and times use <%= calendar.program.time_zone %>.</p>
   <p class="scroll-hint">Scroll horizontally to view all days.</p>
   <div class="table-scroll" role="region" aria-label="Calendar dates" tabindex="0">
     <table class="calendar">

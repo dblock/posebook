@@ -35,11 +35,14 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     post venue_photos_path(venue), params: { venue_photo: { file: photo_upload } }
     expect(response).to redirect_to(venue_path(venue))
     expect(venue.photos.count).to eq(1)
+    get venue_path(venue)
+    expect(response.parsed_body.at_css('.venue-photo button.secondary-action').text).to eq('Delete Photo')
     delete session_path
     get venue_path(venue)
     image = response.parsed_body.at_css('.venue-photo img')
     expect(image.attributes.transform_values(&:value)).to include('width' => '400', 'height' => '400')
-    expect(response.body).not_to include('Upload Venue Photo', 'Delete Venue Photo', admin.email)
+    expect(response.body).not_to include('Upload Venue Photo', admin.email)
+    expect(response.parsed_body.at_css('.venue-photo button.secondary-action')).to be_nil
     expect(image.parent['data-photo-preview']).to eq('true')
     expect(image.parent['target']).to be_nil
   end
