@@ -509,6 +509,11 @@ tbody tr:last-child td {
   background: #e1efdf;
 }
 
+.calendar .available .status-label-success {
+  background: #215321;
+  color: #fff;
+}
+
 .calendar .booked {
   background: #c2ddbc;
   color: #24472a;
