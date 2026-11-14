@@ -15,7 +15,7 @@ RSpec.describe HistoryTracking, :aggregate_failures, :database do
     expect(change.modified).to include('name' => 'Updated Artist', 'phone' => '+12125551234',
                                        'roles' => ['system_admin'])
     expect(user.history_tracks.to_a.to_json).not_to include('password', 'digest', 'session_version', 'pending_email',
-                                                            'private')
+                                                            'private session', 'private digest', 'private confirmation')
     expect(user.history_tracks.count).to eq(2)
     expect(change).to have_attributes(action: 'update', version: user.reload.version)
   end

@@ -23,7 +23,8 @@ class InvitationAcceptancesController < ApplicationController
     return redirect_to invitation_path(token: @token) if current_user
 
     attributes = params.expect(user: %i[name email phone password password_confirmation
-                                        display_name instagram_url instagram_tagging_allowed]).to_h.symbolize_keys
+                                        display_name instagram_url instagram_tagging_allowed
+                                        public_profile_private]).to_h.symbolize_keys
     @acceptance = InvitationAcceptance.new(token: @token, attributes: attributes)
     finish_acceptance
   rescue Mongoid::Errors::Validations

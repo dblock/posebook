@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 module VenueCalendarHelper
+  def booking_model_name(model, manager: false)
+    manager && model.public_profile_private? ? model.name : model.public_name
+  end
+
   def calendar_access_context(public_view, manager:)
     return "public:#{current_user&.id || 'guest'}" if public_view
 

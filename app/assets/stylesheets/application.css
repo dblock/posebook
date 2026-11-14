@@ -32,6 +32,17 @@ input[type="submit"] {
   cursor: pointer;
 }
 
+.public-sharing {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.public-sharing:disabled {
+  opacity: 0.55;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
