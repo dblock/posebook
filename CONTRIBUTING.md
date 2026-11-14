@@ -63,6 +63,8 @@ Prefer focused tests during development, then final checks before committing. Ai
 
 Danger runs in PR CI, not as a routine local validation command. Inspect its actual PR result. The Dangerfile uses `danger-changelog`'s update reminder only: its default format parser does not accept this project's dash-style placeholder. The initial scaffold has no changelog entry.
 
+Venue photo tests cover public full/thumbnail reads, administrator-only upload/deletion, cross-venue IDs, invalid files, removal and failed-save cleanup, storage error reporting, and more than ten photos with concurrent uploads/settings changes. Their standalone metadata documents keep the photo count independent of MongoDB's venue-document size. Shared image-file code must preserve user gallery privacy and the atomic ten-photo limit. Venue Instagram tests cover normalized handles/profile URLs, invalid accounts, clearing links, and public safe new-tab links.
+
 ## Pull Requests
 
 Read [DESIGN.md](DESIGN.md) and [AGENTS.md](AGENTS.md). Verify current stable versions and compatibility when adding or updating tools. Work on `<username>/<topic>` branches from `master` in the existing checkout; create separate worktrees only for parallel tasks. For dependent work, branch from the preceding PR, target that branch, and link PRs bottom to top using native GitHub stacks. Inspect status and worktrees before switching and preserve unrelated changes.

@@ -15,6 +15,7 @@ Rails.application.routes.draw do
   post 'invitation/register', to: 'invitation_acceptances#register', as: :invited_registration
   namespace(:admin) { resources :users, only: %i[index edit update] }
   resources :venues, except: :destroy do
+    resources :photos, only: %i[show create destroy], controller: 'venue_photos'
     resource :schedule, controller: 'venue_schedules', only: %i[show update]
     resources(:organizer_bookings, only: %i[new create edit update]) { post :cancel, on: :member }
     resources :models, controller: 'venue_models', only: :index do

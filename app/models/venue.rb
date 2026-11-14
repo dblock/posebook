@@ -12,6 +12,7 @@ class Venue
   field :name, type: String
   field :custom_slug, type: String
   field :address, type: String
+  field :instagram_handle, type: String
   field :time_zone, type: String, default: 'America/New_York'
   field :model_pay, type: BigDecimal, default: 140
   field :instructions, type: String
@@ -25,11 +26,12 @@ class Venue
     (venue.custom_slug.presence || venue.name).to_url
   end
 
-  track_history on: %i[name custom_slug _slugs address time_zone model_pay instructions booking_horizon_months
-                       available_weekdays start_time no_consecutive_genders],
+  track_history on: %i[name custom_slug _slugs address instagram_handle time_zone model_pay instructions
+                       booking_horizon_months available_weekdays start_time no_consecutive_genders],
                 modifier_field_optional: true, modifier_field_inverse_of: nil, track_blank_changes: true
 
   has_many :memberships, class_name: 'VenueMembership', inverse_of: :venue, dependent: :restrict_with_error
+  has_many :photos, class_name: 'VenuePhoto', inverse_of: :venue, dependent: :destroy
   has_many :model_invitations, inverse_of: :venue, dependent: :restrict_with_error
   has_many :model_bookings, inverse_of: :venue, dependent: :restrict_with_error
   has_many :schedule_exceptions, class_name: 'VenueScheduleException', inverse_of: :venue,
@@ -39,6 +41,7 @@ class Venue
     self.name = name.to_s.strip
     self.custom_slug = custom_slug.to_s.strip.presence
     self.address = address.to_s.strip
+    self.instagram_handle = InstagramProfile.normalize(instagram_handle) || instagram_handle.to_s.strip.presence
     self.available_weekdays = Array(available_weekdays).map(&:to_s).compact_blank.uniq
     self.no_consecutive_genders = Array(no_consecutive_genders).map(&:to_s).compact_blank.uniq
   end
@@ -59,6 +62,19 @@ class Venue
   end
   validate do
     errors.add(:no_consecutive_genders, :invalid) if (no_consecutive_genders - User::GENDERS).any?
+  end
+  validate do
+    if instagram_handle.present? && !InstagramProfile.normalize(instagram_handle)
+      errors.add(:instagram_handle, 'must be an Instagram handle or profile URL, not a post or another website')
+    end
+  end
+
+  def public_instagram_handle
+    InstagramProfile.normalize(instagram_handle)
+  end
+
+  def public_instagram_url
+    InstagramProfile.url(instagram_handle)
   end
 
   def self.visible_to(user)

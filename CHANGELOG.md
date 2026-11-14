@@ -38,4 +38,5 @@
 - [#40](https://github.com/dblock/posebook/pull/40): Add opt-in persistent remembered login without an application expiry, revoked by password or email changes while preserving ordinary seven-day sessions and encrypted-cookie protections - [@dblock](https://github.com/dblock).
 - [#41](https://github.com/dblock/posebook/pull/41): Show Confirmed only once in booking history and never mark canceled or rescheduled bookings attendance-confirmed, while retaining their audit history - [@dblock](https://github.com/dblock).
 - [#43](https://github.com/dblock/posebook/pull/43): Add an original sanguine female portrait logo, a serif wordmark, and a matching PNG favicon - [@dblock](https://github.com/dblock).
+- [#44](https://github.com/dblock/posebook/pull/44): Add public venue photos without a photo-count limit and normalized public Instagram links, with administrator-only editing and optimized GridFS storage - [@dblock](https://github.com/dblock).
 - Your contribution here.

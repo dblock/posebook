@@ -43,6 +43,20 @@ def check_photos(container)
   docker!('exec', container, 'bundle', 'exec', 'rails', 'runner', source)
 end
 
+def check_venue_photos(container)
+  source = <<~RUBY
+    require "tempfile"
+    Tempfile.create(["photo", ".png"]) do |file|
+      Vips::Image.black(30, 60).new_from_image([100, 90, 80]).write_to_file(file.path)
+      photo = VenuePhoto.add(Venue.find("legacy-package-venue"), Struct.new(:tempfile).new(file))
+      square = Vips::Image.new_from_buffer(photo.bytes(thumbnail: true), "")
+      raise "Venue photo processing failed" unless [square.width, square.height] == [400, 400]
+      photo.destroy!
+    end
+  RUBY
+  docker!('exec', container, 'bundle', 'exec', 'rails', 'runner', source)
+end
+
 def check_monitoring(container)
   source = <<~RUBY
     config = NewRelic::Agent.config
@@ -132,6 +146,7 @@ begin
           'raise Mongoid::Errors::Rollback }; ' \
           'raise "Rollback failed" if Venue.where(name: "Package Transaction").exists?')
   check_photos(container)
+  check_venue_photos(container)
   check_monitoring(container)
   puts 'Production image passed monitoring configuration, photo processing/storage/deletion, ' \
        'handle migration, slug setup, rollback, ' \
