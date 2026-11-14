@@ -28,6 +28,10 @@ Use **Account Settings** to edit your name, optional international-format phone 
 
 Non-admin users can deactivate their accounts with their current password; history is retained. System admins can deactivate or reactivate users from **Users**. System admin accounts cannot be deactivated until role transfer is available, so administrator access cannot be lost. Deactivation revokes sessions and recovery links and prevents login and recovery. Public registration stays closed even when accounts are inactive.
 
+Use **Venues** to create a venue as a system admin, configure its address, IANA time zone, informational model pay in USD, instructions, and booking horizon, then grant `manage_schedule` to existing active users. Defaults are `America/New_York`, $140, and six months; each venue can have different settings. Organizers see only their assigned venues and cannot edit venue settings, manage other users, or assign organizers. System admins can manage all venues.
+
+Removing schedule access preserves the membership record and immediately removes access to that venue. Deactivated users retain their assignments but cannot sign in until reactivated. Only system admins see organizer contact details and the existing-user selector. Creating accounts by invitation, generating schedules, booking, and sending model reminders remain future work.
+
 ## Configuration
 
 | Variable           | Default                                                         | Purpose                                                                                          |

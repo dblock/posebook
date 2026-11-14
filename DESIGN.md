@@ -4,7 +4,7 @@
 
 Posebook coordinates invitation-first model registration, scheduling, and reminders across figure drawing venues. The first venue is Figure Drawing at Enoch's, intended for `enochs.dblock.org`. The repository and application are named Posebook, not after a single venue.
 
-The application currently provides first-user registration, role-bearing user accounts, email/password login, email password recovery, account settings, deactivation/reactivation, a protected home page, and a Rails `/up` liveness endpoint. `/up` proves application boot, not MongoDB connectivity. Model invitations, venue scheduling, bookings, and durable reminders are not implemented yet.
+The application currently provides first-user registration, role-bearing user accounts, email/password login, email password recovery, account settings, deactivation/reactivation, venue configuration, scoped organizer access, a protected home page, and a Rails `/up` liveness endpoint. `/up` proves application boot, not MongoDB connectivity. Model invitations, venue scheduling, bookings, and durable reminders are not implemented yet.
 
 ## Accounts and Recovery
 
@@ -34,6 +34,12 @@ One week before posing, send email and consented SMS reminders with a confirmati
 
 A model has one identity and separate venue memberships. Organizers see only memberships and booking history for venues they manage. Contacts and model rosters are private by default. Visiting a venue hostname shows only that venue; hostname routing must never substitute for authorization.
 
+Venue configuration and organizer access are implemented. Only global system admins can create/edit venues or grant/revoke organizer access. A `VenueMembership` links an existing user and venue with local roles; `manage_schedule` never changes the user's global roles. A compound unique index on venue/user plus an atomic upsert and set addition prevents duplicate memberships or roles under concurrent grants. Revocation atomically pulls just that role and preserves the membership for future history. Deactivation blocks the user's access without deleting assignments.
+
+Organizers can list/view only assigned venues; unassigned venue lookups return 404. Schedule access does not permit venue configuration, user administration, or role assignment. Only system admins see organizer emails and the active-user assignment selector. Invitations are deferred, so this interface assigns existing users only. Venue hostname routing, model rosters, and schedule editing remain future work.
+
+Each venue currently stores name, address, IANA time zone, decimal model pay in USD, instructions, and a positive booking horizon in months. Defaults match the initial Enoch's venue: `America/New_York`, $140, and six months. Pay is informational, not payment processing. Validated time-zone identifiers prepare for calendar-aware scheduling; recurring dates and reminder calculations are not implemented here.
+
 Each venue owns its invitations, roster, recurring schedule, time zone, address, pay, instructions, and configurable booking horizon. Default availability is the next six months, opened automatically. Enoch's initially meets Mondays around 6:30-9:00 PM in `America/New_York`; individual dates can be blocked or overridden.
 
 A model may have one upcoming booking per venue, while retaining historical bookings. Database constraints and atomic mutations must prevent concurrent claims of one session or multiple upcoming bookings at one venue. A partial unique index on an explicit active-booking state can enforce active claims, but time passing does not update indexes: completion transitions must release claims, and the final design must test rollover and recovery. Do not rely on uniqueness validations alone.
@@ -46,7 +52,7 @@ Use Rails 8.1 with server-rendered views, Mongoid 9.1, and MongoDB 8.0. Ruby 4.0
 
 Use Rails and Mongoid public APIs. Do not configure Active Record, Solid Queue, or another SQL-backed component. The scaffold retains ActiveJob's in-process adapter solely as framework setup; a durable MongoDB-compatible worker and notification providers will be selected and tested in the implementation phase. No background reminders are promised by this scaffold.
 
-The Dockerfile explicitly selects runtime files, installs production dependencies, precompiles assets without live services, creates declared indexes at container startup, and runs Puma as a non-root user. The package check runs the built image against its own MongoDB 8.0 container and verifies first-user registration, compiled CSS, and liveness. Application tests exercise real MongoDB persistence and concurrent first-user/reset claims. Deployment is intended for DigitalOcean App Platform with managed MongoDB and an HTTPS-terminating proxy, but no infrastructure or credentials are provisioned.
+The Dockerfile explicitly selects runtime files, installs production dependencies, precompiles assets without live services, creates declared indexes at container startup, and runs Puma as a non-root user. The package check runs the built image against its own MongoDB 8.0 container and verifies first-user registration, compiled CSS, and liveness. Application tests exercise real MongoDB persistence and concurrent bootstrap, reset, email-confirmation, and organizer-assignment claims. Deployment is intended for DigitalOcean App Platform with managed MongoDB and an HTTPS-terminating proxy, but no infrastructure or credentials are provisioned.
 
 Production requires `MONGODB_URI` and a deployment-supplied `SECRET_KEY_BASE`. `APP_HOST` defaults to `enochs.dblock.org`; production requests are host-restricted except for `/up`. Local test configuration uses a separate URI and a test-only database-name guard. Filter email, phone, passwords, and authentication tokens from logs. Email password recovery uses SMTP; model notifications remain unimplemented.
 

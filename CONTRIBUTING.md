@@ -32,6 +32,8 @@ Account specs cover first-user races, closed public registration, hashed passwor
 
 Account-settings tests cover profile permissions, verified email changes, conflicting claims, password changes, session revocation, and inactive-account access. System admin accounts remain protected from deactivation. Tests for independent browser sessions inspect each client's own status and location; request redirect matchers use the default client.
 
+Venue tests cover configuration validation, decimal pay, cross-venue isolation, administrator-only mutations, inactive accounts, scoped revocation, and concurrent duplicate role grants against the real unique index. Track membership records before deleting their related fixtures. Do not grant global privileges to represent local schedule access.
+
 Workflow checker specs exercise valid and invalid human-readable names, ignored identifiers, malformed YAML, and real command exit statuses. Keep fixtures isolated and never delete shared databases or collections. New implementation tests should cover meaningful behavior, authorization boundaries, concurrency, time zones, and errors; use fake delivery providers instead of sending real emails or texts.
 
 Prefer focused tests during development, then final checks before committing. Aim for close to complete line and branch coverage of project-owned runtime code during initial implementation, without trivial tests or excluding meaningful logic. Report remaining gaps. CI keeps Test, Lint, and Package separate, uses explicit `matrix.entry` inline combinations, and reports coverage to Coveralls when the service is available.

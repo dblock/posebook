@@ -21,6 +21,16 @@ module DatabaseHelpers
     track_record(User.create!(user_attributes(**overrides)))
   end
 
+  def create_venue(**overrides)
+    track_record(Venue.create!({ name: "Test Venue #{SecureRandom.hex(4)}", address: '480 10th Avenue, New York' }
+                               .merge(overrides)))
+  end
+
+  def grant_schedule_access(venue, user)
+    VenueMembership.grant_schedule_access(venue, user)
+    track_record(VenueMembership.find_by(venue_id: venue.id, user_id: user.id))
+  end
+
   def sign_in(user, client: self)
     client.post(session_path, params: { email: user.email, password: TEST_PASSWORD })
   end
