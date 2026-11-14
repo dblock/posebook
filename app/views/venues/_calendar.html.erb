@@ -19,6 +19,7 @@
             <% reason = date.beginning_of_month == calendar.month ? calendar.blocked_reason(date) : "Outside displayed month" %>
             <% reason ||= calendar.bookings[date]&.user_id == current_user.id ? "Your booking" : "Already booked" if calendar.bookings.key?(date) %>
             <% reason ||= "You are already scheduled" if @my_booking && !@changing_booking %>
+            <% reason ||= @booking_access.paused? ? "Posing paused" : "Invitation required" if @booking_access&.model? && !@can_book %>
             <td data-date="<%= date.iso8601 %>" class="<%= reason ? "blocked" : "available" %>">
               <time datetime="<%= date.iso8601 %>"><%= date.day %></time>
               <% if (clock = calendar_time(calendar, date)) %><strong><%= clock %></strong><br><% end %>

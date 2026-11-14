@@ -5,6 +5,7 @@ class ModelBookingsController < ApplicationController
   before_action :find_venue
   before_action :require_model
   before_action :find_booking, except: :create
+  before_action :require_booking_permission, only: %i[create edit update]
   rescue_from BookingMutation::Invalid, BookingMutation::Conflict, with: :show_error
 
   def edit
@@ -29,6 +30,12 @@ class ModelBookingsController < ApplicationController
   end
 
   private
+
+  def require_booking_permission
+    @booking_access = ModelBookingAccess.new(@venue.memberships.models.where(user_id: current_user.id).first)
+    @can_book = @booking_access.allowed?
+    redirect_to venue_path(@venue), alert: @booking_access.reason unless @can_book
+  end
 
   def find_venue
     @venue = Venue.visible_to(current_user).find(params.expect(:venue_id))

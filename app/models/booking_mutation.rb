@@ -35,7 +35,7 @@ class BookingMutation
   end
 
   def cancel(booking:, reason:)
-    run do |session|
+    run(booking_access: false) do |session|
       original = active_booking(booking.id)
       original.close!('canceled', explanation(reason), @user, session: session)
       removed = ModelBookingClaim.collection.find(model_booking_id: original.id).find_one_and_delete(session: session)
@@ -47,17 +47,35 @@ class BookingMutation
 
   private
 
-  def run(&)
-    raise Invalid, I18n.t('bookings.model_required') unless @user.active? && @venue.model?(@user)
-
-    # Only disposable claims expire; model booking history is never removed.
-    ModelBookingClaim.collection.find(venue_id: @venue.id, ends_at: { '$lte' => Time.current }).delete_many
-    with_schedule_lock(&)
+  def run(booking_access: true)
+    verify_model!
+    expire_claims
+    with_schedule_lock do |session|
+      check_booking_access!(booking_access)
+      yield session
+    end
     @booking
   rescue Mongo::Error::OperationFailure => e
     raise unless e.code == 11_000
 
     raise Conflict, I18n.t('bookings.conflict')
+  end
+
+  def check_booking_access!(required)
+    verify_model!
+    return unless required
+
+    access = ModelBookingAccess.new(@venue.memberships.models.where(user_id: @user.id).first)
+    raise Invalid, access.reason unless access.allowed?
+  end
+
+  def verify_model!
+    raise Invalid, I18n.t('bookings.model_required') unless @user.active? && @venue.model?(@user)
+  end
+
+  def expire_claims
+    # Only disposable claims expire; model booking history is never removed.
+    ModelBookingClaim.collection.find(venue_id: @venue.id, ends_at: { '$lte' => Time.current }).delete_many
   end
 
   def claims

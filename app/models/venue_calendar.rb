@@ -17,10 +17,13 @@ class VenueCalendar
 
   def blocked_reason(date)
     return 'Outside booking window' unless date.between?(today, last_date)
-    return "Closed: #{schedule.exceptions[date].reason}" if schedule.exceptions[date]&.mode == 'closed'
+
+    exception = schedule.exceptions[date]
+    return "Closed: #{exception.reason}" if exception&.mode == 'closed'
     return 'Not a posing day' unless schedule.time_for(date)
 
-    schedule.starts_at(date)
+    return 'Drawing has already started' if schedule.starts_at(date) <= Time.current
+
     nil
   rescue ArgumentError
     'Start time unavailable because of daylight saving'

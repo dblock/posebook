@@ -15,4 +15,5 @@
 - [#14](https://github.com/dblock/posebook/pull/14): Add editable name-derived venue slugs, readable venue URLs, and root shortcuts while preserving existing links - [@dblock](https://github.com/dblock).
 - [#15](https://github.com/dblock/posebook/pull/15): Store user and venue audit history with actor attribution and authentication-secret exclusions using mongoid-history - [@dblock](https://github.com/dblock).
 - [#16](https://github.com/dblock/posebook/pull/16): Add editable drawing start times and reasoned one-off openings, holiday closures, and time changes with retained booking history - [@dblock](https://github.com/dblock).
+- [#17](https://github.com/dblock/posebook/pull/17): Gate repeat model bookings with individual and bulk email invitations and add venue-local pause controls with retained explanations - [@dblock](https://github.com/dblock).
 - Your contribution here.

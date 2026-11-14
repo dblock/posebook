@@ -11,7 +11,7 @@ RSpec.describe VenueCalendar, :aggregate_failures do
     travel_to Time.utc(2026, 11, 17, 1) do
       calendar = described_class.new(venue)
       expect(calendar.today).to eq(Date.new(2026, 11, 16))
-      expect(calendar.blocked_reason(calendar.today)).to be_nil
+      expect(calendar.blocked_reason(calendar.today)).to eq('Drawing has already started')
       expect(calendar.blocked_reason(calendar.today + 1)).to eq('Not a posing day')
     end
   end

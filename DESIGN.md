@@ -68,6 +68,16 @@ A model may have one upcoming booking per venue and a day may have one model. `M
 
 Calculate weekly sessions and the one-week reminder in the venue's local calendar, then store instants in UTC. Cover daylight saving changes. Cancellation and rescheduling must invalidate obsolete pending messages and update calendar invitations. Reminder delivery requires a durable worker, idempotent scheduling, retries, opt-out handling, and acknowledgment tracking; a successful provider request is not proof of recipient delivery.
 
+## Booking Permission and Model Pauses
+
+Venue model membership does not automatically grant unlimited repeat bookings. Membership stores the booking invitation time and inviting actor, plus a separate paused flag and short private explanation. The first accepted model role grants one booking cycle; accepting another registration invitation for an existing model never renews permission or bypasses a pause. A grant remains usable through cancellation/rescheduling and is exhausted when a confirmed drawing completes at its saved end-of-day instant. Past-start drawings cannot receive new bookings.
+
+System admins and assigned venue organizers manage individual or bulk invitations from the venue's Models page. Bulk delivery selects only active accounts at that venue without a pause or upcoming booking. Permission opens immediately. Grants and pause/resume changes share the venue schedule transaction lock with booking mutations, and booking/rescheduling rechecks permission inside each transaction attempt. Pauses retain existing bookings and cancellation rights; resume restores only unused permission, never a fresh cycle after completion. Changes are audited through `mongoid-history` on the membership, and pause explanations are not exposed to models or request logs.
+
+Email is sent once after each successful grant transaction, outside retry blocks. Delivery failures or unavailable SMTP leave access enabled and are reported for explicit follow-up; bulk results report sent, failed, and skipped counts. Email links preserve the intended venue across login but resolve it through the signed-in user's authorized venue scope. No token grants access by itself, no delayed invitation release is implemented, and no background scheduler is introduced.
+
+Legacy memberships without an invitation timestamp may finish or cancel an existing booking cycle using the latest booking's creation time as a compatibility baseline. Completed cycles do not renew, and a legacy model with no bookings requires an explicit invitation. Cancellation history remains usable rather than expiring permission on the canceled date. No bulk permission backfill is performed.
+
 ## Architecture and Deployment
 
 Use Rails 8.1 with server-rendered views, Mongoid 9.1, and MongoDB 8.0. Ruby 4.0.9 is the stable runtime selected at scaffold creation. Test one MongoDB version, 8.0, to match the deployment target rather than maintaining a server-version compatibility matrix. Commit `Gemfile.lock` because this is an application, not a published gem.

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class VenuesController < ApplicationController
+  before_action :remember_booking_destination, only: :show
   before_action :require_authentication
   before_action :require_system_admin, only: %i[new create edit update]
   before_action :find_venue, only: %i[show edit update]
@@ -42,6 +43,10 @@ class VenuesController < ApplicationController
 
   private
 
+  def remember_booking_destination
+    session[:booking_venue] = params[:id] if !current_user && params[:booking_invitation] == '1'
+  end
+
   def handle_slug_conflict(error)
     raise error unless error.code == 11_000
 
@@ -51,7 +56,8 @@ class VenuesController < ApplicationController
 
   def load_calendar
     @calendar = VenueCalendar.new(@venue, month: params[:month])
-    @can_book = @venue.model?(current_user)
+    @booking_access = ModelBookingAccess.new(@venue.memberships.models.where(user_id: current_user.id).first)
+    @can_book = @booking_access.allowed?
     @my_booking = @calendar.current_booking(current_user)
     @booking_history = @calendar.history_for(current_user)
   end
