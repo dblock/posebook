@@ -40,7 +40,8 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     image = response.parsed_body.at_css('.venue-photo img')
     expect(image.attributes.transform_values(&:value)).to include('width' => '400', 'height' => '400')
     expect(response.body).not_to include('Upload Venue Photo', 'Delete Venue Photo', admin.email)
-    expect(image.parent['target']).to eq('_blank')
+    expect(image.parent['data-photo-preview']).to eq('true')
+    expect(image.parent['target']).to be_nil
   end
 
   it 'serves full-size and square optimized WebP images publicly without persistent caching' do

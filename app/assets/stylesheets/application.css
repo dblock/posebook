@@ -594,3 +594,40 @@ tbody tr:last-child td {
   gap: 0.5rem;
   margin-top: 0.5rem;
 }
+
+.photo-preview {
+  width: fit-content;
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100dvh - 2rem);
+  padding: 1rem;
+  border: 1px solid var(--color-base-300);
+  border-radius: var(--radius-box);
+  background: var(--color-base-100);
+  color: var(--color-base-content);
+}
+
+.photo-preview::backdrop {
+  background: rgb(0 0 0 / 65%);
+}
+
+.photo-preview-heading {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+}
+
+.photo-preview button {
+  margin: 0 0 0.75rem;
+}
+
+.photo-preview img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: calc(100dvh - 10rem);
+  object-fit: contain;
+}
+
+.photo-preview [hidden] {
+  display: none;
+}

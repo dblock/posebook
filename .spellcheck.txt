@@ -147,3 +147,6 @@ macOS
 Caramellatte
 daisyUI
 CDN
+figcaption
+haspopup
+labelledby

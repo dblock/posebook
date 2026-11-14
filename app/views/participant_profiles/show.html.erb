@@ -20,9 +20,9 @@
   <div class="photo-gallery">
     <% @photos.each_with_index do |photo, index| %>
       <figure class="profile-photo" data-photo="<%= photo.id %>">
-        <%= link_to participant_photo_path(@user, photo), target: "_blank", rel: "noopener noreferrer" do %>
-          <%= image_tag participant_photo_path(@user, photo, thumbnail: 1), alt: "Profile photo #{index + 1}", width: 400, height: 400, loading: "lazy" %>
-        <% end %>
+        <%= render "shared/photo_thumbnail", full_url: participant_photo_path(@user, photo),
+                   thumbnail_url: participant_photo_path(@user, photo, thumbnail: 1),
+                   description: "Profile photo #{index + 1}" %>
         <% if @gallery.private_access? %>
           <figcaption><%= status_label(photo.public? ? "Public" : "Private") %></figcaption>
         <% end %>

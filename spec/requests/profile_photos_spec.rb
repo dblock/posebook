@@ -66,6 +66,36 @@ RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request 
     expect(saved.bytes.bytesize).to be < upload.tempfile.size
   end
 
+  it 'shows private photos on the owner profile with full-image popup links' do
+    photo
+    participant.update!(public_profile_private: true)
+    sign_in(participant)
+    get profile_path
+    link = response.parsed_body.at_css('.profile-photo [data-photo-preview]')
+    expect(link['href']).to eq(photo_url)
+    expect(link['target']).to be_nil
+    expect(link['aria-haspopup']).to eq('dialog')
+    expect(link.at_css('img')['src']).to include('thumbnail=1')
+    expect(response.parsed_body.at_css('.profile-photo figcaption').text).to eq('Private')
+    expect(response.parsed_body.at_css('dialog')['aria-labelledby']).to eq('photo-preview-heading')
+  end
+
+  it 'omits the photo section on an empty account profile' do
+    sign_in(participant)
+    get profile_path
+    expect(response.parsed_body.at_css('#profile-photos-heading')).to be_nil
+    expect(response.parsed_body.css('.profile-photo')).to be_empty
+  end
+
+  it 'uses the same popup links on public participant galleries' do
+    photo.change_visibility(participant, true)
+    get participant_path(participant)
+    link = response.parsed_body.at_css('[data-photo-preview]')
+    expect(link['href']).to eq(photo_url)
+    expect(link['target']).to be_nil
+    expect(response.parsed_body.at_css('[data-photo-dialog]')).not_to be_nil
+  end
+
   it 'accepts actual JPEG, PNG and WebP content rather than trusting filenames or supplied types' do
     %w[.jpg .png .webp].each do |format|
       saved = ProfilePhoto.add(participant.reload, photo_upload(format: format))
