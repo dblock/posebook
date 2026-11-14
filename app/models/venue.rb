@@ -17,6 +17,7 @@ class Venue
   field :instructions, type: String
   field :booking_horizon_months, type: Integer, default: 6
   field :available_weekdays, type: Array, default: ['1']
+  field :no_consecutive_genders, type: Array, default: []
   field :start_time, type: String, default: '18:30'
   field :schedule_revision, type: Integer, default: 0
 
@@ -25,7 +26,7 @@ class Venue
   end
 
   track_history on: %i[name custom_slug _slugs address time_zone model_pay instructions booking_horizon_months
-                       available_weekdays start_time],
+                       available_weekdays start_time no_consecutive_genders],
                 modifier_field_optional: true, modifier_field_inverse_of: nil, track_blank_changes: true
 
   has_many :memberships, class_name: 'VenueMembership', inverse_of: :venue, dependent: :restrict_with_error
@@ -39,6 +40,7 @@ class Venue
     self.custom_slug = custom_slug.to_s.strip.presence
     self.address = address.to_s.strip
     self.available_weekdays = Array(available_weekdays).map(&:to_s).compact_blank.uniq
+    self.no_consecutive_genders = Array(no_consecutive_genders).map(&:to_s).compact_blank.uniq
   end
   validates :name, presence: true, length: { maximum: 100 }
   validates :custom_slug, length: { maximum: 100 }
@@ -54,6 +56,9 @@ class Venue
   end
   validate do
     errors.add(:custom_slug, 'must include a letter or number') if (custom_slug.presence || name).to_url.blank?
+  end
+  validate do
+    errors.add(:no_consecutive_genders, :invalid) if (no_consecutive_genders - User::GENDERS).any?
   end
 
   def self.visible_to(user)

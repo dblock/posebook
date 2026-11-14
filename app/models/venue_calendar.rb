@@ -37,6 +37,13 @@ class VenueCalendar
     bookings.values.find { |booking| booking.user_id == user.id }
   end
 
+  def gender_blocked_reason(date, user, excluding: nil)
+    @gender_rule ||= BookingGenderRule.new(venue, excluding: excluding)
+    return unless @gender_rule.blocked_reason(date, user)
+
+    I18n.t(user.gender.blank? ? 'bookings.gender_needed' : 'bookings.gender_rule')
+  end
+
   def history_for(user)
     records = ModelBooking.where(venue_id: venue.id)
     records = records.where(user_id: user.id) unless venue.managed_by?(user)

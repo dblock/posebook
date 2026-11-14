@@ -20,9 +20,10 @@ class ModelBooking
   field :starts_at, type: Time
   field :time_changes, type: Array, default: []
   field :created_by_id, type: BSON::ObjectId
+  field :gender_override_reason, type: String
 
   attr_readonly :venue_id, :user_id, :date, :time_zone, :ends_at, :starts_at, :time_changes, :previous_booking_id,
-                :created_by_id
+                :created_by_id, :gender_override_reason
   index({ venue_id: 1, user_id: 1, date: -1 })
   index({ venue_id: 1, status: 1, ends_at: 1 })
   index({ venue_id: 1, date: -1, created_at: -1 })

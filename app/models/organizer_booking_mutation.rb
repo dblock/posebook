@@ -11,7 +11,7 @@ class OrganizerBookingMutation
 
   def create(attributes)
     run do |session|
-      @booking = create_record(available_date(attributes[:date]), user: model_for(attributes[:user_id]))
+      @booking = build_booking(attributes)
       ModelBookingClaim.create!(venue: @venue, user: @booking.user, model_booking: @booking,
                                 date: @booking.date, ends_at: @booking.ends_at)
       update_attendance(attributes, session)
@@ -60,6 +60,22 @@ class OrganizerBookingMutation
     ModelBooking.upcoming.where(venue_id: @venue.id).find(id)
   end
 
+  def build_booking(attributes, previous: nil)
+    date = available_date(attributes[:date])
+    model = previous ? replacement_model(previous, attributes[:user_id]) : model_for(attributes[:user_id])
+    reason = gender_override(date, model, attributes, excluding: previous&.id)
+    create_record(date, user: model, previous: previous, gender_override_reason: reason)
+  end
+
+  def gender_override(date, model, attributes, excluding:)
+    message = BookingGenderRule.new(@venue, excluding: excluding).blocked_reason(date, model)
+    return unless message
+
+    raise BookingMutation::Invalid, message if model.gender.blank? || attributes[:override_gender_rule] != '1'
+
+    explanation(attributes[:reason])
+  end
+
   def model_for(id)
     membership = @venue.memberships.models.where(user_id: id).first
     raise BookingMutation::Invalid, I18n.t('bookings.model_required') unless membership&.user&.active?
@@ -72,9 +88,7 @@ class OrganizerBookingMutation
     return original if attributes.values_at(:date, :user_id) == [original.date.iso8601, original.user_id.to_s]
 
     original.close!('rescheduled', explanation(attributes[:reason]), @user, session: session)
-    model = replacement_model(original, attributes[:user_id])
-    replacement = create_record(available_date(attributes[:date]), previous: original,
-                                                                   user: model)
+    replacement = build_booking(attributes, previous: original)
     replace_claim(original, replacement)
     replacement
   end

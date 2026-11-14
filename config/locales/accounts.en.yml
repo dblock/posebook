@@ -16,6 +16,10 @@ en:
     organizer_created: Booking created by an organizer.
     organizer_saved: Booking saved. Previous bookings and attendance changes remain in the history.
     model_required: Accept a model invitation for this venue before booking.
+    gender_required: Select a gender in the model's profile before booking.
+    gender_restricted: Unavailable under this venue's consecutive-gender rule.
+    gender_needed: Select gender
+    gender_rule: Gender rule
   invitations:
     created: Invitation created. Copy the personal link below.
     accepted: Invitation accepted. You are a model at this venue.

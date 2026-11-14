@@ -1,0 +1,5 @@
+<p>
+  <%= form.label :gender %><br>
+  <%= form.select :gender, User::GENDERS.map { |gender| [gender.capitalize, gender] }, include_blank: "Choose a gender" %><br>
+  <small>Used for venue booking rules, never shown publicly. Required before booking.</small>
+</p>

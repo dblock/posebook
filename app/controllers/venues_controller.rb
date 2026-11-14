@@ -74,6 +74,6 @@ class VenuesController < ApplicationController
   def venue_params
     params.expect(venue: [:name, :custom_slug, :address, :time_zone, :start_time, :model_pay, :instructions,
                           :booking_horizon_months,
-                          { available_weekdays: [] }])
+                          { available_weekdays: [], no_consecutive_genders: [] }])
   end
 end

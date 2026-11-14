@@ -16,7 +16,9 @@ class BookingMutation
     run do
       raise Invalid, I18n.t('bookings.already_scheduled') if claims.exists?
 
-      @booking = create_record(available_date(date))
+      selected = available_date(date)
+      check_gender!(selected)
+      @booking = create_record(selected)
       ModelBookingClaim.create!(venue: @venue, user: @user, model_booking: @booking,
                                 date: @booking.date, ends_at: @booking.ends_at)
     end
@@ -25,9 +27,7 @@ class BookingMutation
   def change(booking:, date:, reason:)
     run do |session|
       original = reschedulable_booking(booking.id)
-      selected = available_date(date)
-      raise Invalid, I18n.t('bookings.different_date') if selected == original.date
-
+      selected = rescheduling_date(original, date)
       original.close!('rescheduled', explanation(reason), @user, session: session)
       @booking = create_record(selected, previous: original)
       claim = claims.find_by(model_booking_id: original.id)
@@ -71,7 +71,20 @@ class BookingMutation
   end
 
   def verify_model!
-    raise Invalid, I18n.t('bookings.model_required') unless @user.active? && @venue.model?(@user)
+    raise Invalid, I18n.t('bookings.model_required') unless @user.reload.active? && @venue.model?(@user)
+  end
+
+  def check_gender!(date, excluding: nil)
+    reason = BookingGenderRule.new(@venue, excluding: excluding).blocked_reason(date, @user)
+    raise Invalid, reason if reason
+  end
+
+  def rescheduling_date(original, value)
+    date = available_date(value)
+    raise Invalid, I18n.t('bookings.different_date') if date == original.date
+
+    check_gender!(date, excluding: original.id)
+    date
   end
 
   def claims
