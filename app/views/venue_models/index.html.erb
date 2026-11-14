@@ -1,43 +1,64 @@
 <main>
   <h1>Models at <%= @venue.name %></h1>
   <%= render "venues/regular_schedule", venue: @venue %>
-  <p>Invite a model to choose one posing date. Cancellation and rescheduling keep that invitation valid until a drawing is completed. Finishing a drawing never automatically permits another booking.</p>
-  <p>Paused models keep their existing booking and can cancel it, but cannot book or reschedule until resumed. Resuming does not issue a new invitation. Pause explanations remain private to venue organizers and system admins.</p>
-  <%= button_to "Invite All Available Models", invite_all_venue_models_path(@venue) %>
-  <p>Sends email and enables booking now for active, unpaused models without an upcoming booking. Booked, paused, and inactive accounts are skipped. If email fails, access remains enabled so you can contact the model directly or retry.</p>
+  <p class="model-counts"><strong><%= @roster.counts[:total] %> total models</strong> &middot; <%= @roster.counts[:available] %> available &middot; <%= @roster.counts[:booked] %> booked &middot; <%= @roster.counts[:paused] %> paused &middot; <%= @roster.counts[:inactive] %> inactive</p>
+  <%= button_to "Invite All Available Models (#{@roster.counts[:available]})", invite_all_venue_models_path(@venue, page: @roster.page), disabled: @roster.counts[:available].zero? %>
+  <p>Invites available models across <strong>all pages</strong>, not just the models shown below.</p>
+  <details class="model-help">
+    <summary>How Invitations and Pauses Work</summary>
+    <p>Invite a model to choose one posing date. Cancellation and rescheduling keep that invitation valid until a drawing is completed. Finishing a drawing never automatically permits another booking.</p>
+    <p>Paused models keep their existing booking and can cancel it, but cannot book or reschedule until resumed. Resuming does not issue a new invitation. Pause explanations remain private to venue organizers and system admins.</p>
+    <p>Sends email and enables booking now for active, unpaused models without an upcoming booking. Booked, paused, and inactive accounts are skipped. If email fails, access remains enabled so you can contact the model directly or retry.</p>
+    <p>Counts group inactive accounts first, then paused models, then booked models. Available includes models already invited who have not booked yet. Availability is checked again when invitations are sent.</p>
+  </details>
   <% if @memberships.any? %>
-    <table>
+    <p>Showing <%= @roster.first_number %>&ndash;<%= @roster.last_number %> of <%= @roster.counts[:total] %> models</p>
+    <table class="model-roster">
       <thead><tr><th>Model</th><th>Booking Access</th><th>Actions</th></tr></thead>
       <tbody>
         <% @memberships.each do |membership| %>
           <% access = ModelBookingAccess.new(membership) %>
           <tr data-membership="<%= membership.id %>">
-            <td><%= membership.user.name %><br><%= membership.user.email %></td>
+            <td><strong><%= membership.user.name %></strong><br><span class="model-email"><%= membership.user.email %></span></td>
             <td>
               <%= access.status %>
-              <%= render "venues/attendance_status", booking: access.booking, private_view: true if access.booking %>
               <%= " at #{booking_time(access.booking)}" if access.booking && !access.paused? && membership.user.active? %>
+              <%= render "venues/attendance_status", booking: access.booking, private_view: true if access.booking %>
               <% if access.paused? && access.booking %><br>Booking retained: <%= access.booking.date.iso8601 %> at <%= booking_time(access.booking) %><% end %>
-              <% if membership.model_pause_reason.present? %><p>Last pause: <%= membership.model_pause_reason %></p><% end %>
+              <% if membership.model_pause_reason.present? %>
+                <details><summary>Pause note</summary><p>Last pause: <%= membership.model_pause_reason %></p></details>
+              <% end %>
             </td>
             <td>
-              <% if membership.user.active? && !access.paused? && !access.booking %>
-                <%= button_to "Invite to Book", invite_venue_model_path(@venue, membership) %>
-              <% end %>
-              <% if access.paused? %>
-                <%= button_to "Resume Model", resume_venue_model_path(@venue, membership) %>
-              <% else %>
-                <%= form_with url: pause_venue_model_path(@venue, membership) do |form| %>
-                  <%= form.label :reason, "Pause explanation", for: "pause-reason-#{membership.id}" %>
-                  <%= form.text_area :reason, id: "pause-reason-#{membership.id}", required: true, maxlength: 200, rows: 2 %>
-                  <%= form.submit "Pause Model" %>
+              <div class="model-actions">
+                <% if membership.user.active? && !access.paused? && !access.booking %>
+                  <%= button_to "Invite to Book", invite_venue_model_path(@venue, membership, page: @roster.page) %>
                 <% end %>
-              <% end %>
+                <% if access.paused? %>
+                  <%= button_to "Resume Model", resume_venue_model_path(@venue, membership, page: @roster.page) %>
+                <% else %>
+                  <details class="model-pause">
+                    <summary>Pause Model</summary>
+                    <%= form_with url: pause_venue_model_path(@venue, membership, page: @roster.page) do |form| %>
+                      <%= form.label :reason, "Pause explanation", for: "pause-reason-#{membership.id}" %>
+                      <%= form.text_area :reason, id: "pause-reason-#{membership.id}", required: true, maxlength: 200, rows: 2 %>
+                      <%= form.submit "Pause Model" %>
+                    <% end %>
+                  </details>
+                <% end %>
+              </div>
             </td>
           </tr>
         <% end %>
       </tbody>
     </table>
+    <% if @roster.total_pages > 1 %>
+      <nav class="model-pagination" aria-label="Model pages">
+        <% if @roster.page > 1 %><%= link_to "Previous", venue_models_path(@venue, page: @roster.page - 1), rel: "prev" %><% end %>
+        <span>Page <%= @roster.page %> of <%= @roster.total_pages %></span>
+        <% if @roster.page < @roster.total_pages %><%= link_to "Next", venue_models_path(@venue, page: @roster.page + 1), rel: "next" %><% end %>
+      </nav>
+    <% end %>
   <% else %>
     <p>No models assigned.</p>
   <% end %>
