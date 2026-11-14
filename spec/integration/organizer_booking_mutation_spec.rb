@@ -12,7 +12,8 @@ RSpec.describe OrganizerBookingMutation, :aggregate_failures, :database do
   let(:organizer) { create_user }
   let(:mutation) { described_class.new(venue: venue, user: organizer) }
   let(:attributes) do
-    { date: '2026-11-16', user_id: model.id.to_s, attendance: 'confirmed', reason: 'Confirmed by phone.' }
+    { date: '2026-11-16', user_id: model.id.to_s, attendance: 'confirmed', reason: 'Confirmed by phone.',
+      lock_version: 0 }
   end
 
   before do
@@ -33,6 +34,7 @@ RSpec.describe OrganizerBookingMutation, :aggregate_failures, :database do
       mutation.update(original.id, attributes.merge(date: '2026-11-23'))
     end.to raise_error(BookingMutation::Conflict, I18n.t('bookings.date_taken'))
     expect(original.reload.status).to eq('confirmed')
+    expect(original.lock_version).to eq(0)
     expect(original.attendance_changes).to be_empty
     expect(venue.model_bookings.count).to eq(2)
     expect(ModelBookingClaim.find_by(model_booking_id: original.id).date).to eq(original.date)
@@ -71,7 +73,8 @@ RSpec.describe OrganizerBookingMutation, :aggregate_failures, :database do
   it 'rolls back a retained cancellation if its claim cannot be released' do
     original = reserve
     ModelBookingClaim.where(model_booking_id: original.id).delete_all
-    expect { mutation.cancel(original.id, reason: 'Plans changed.') }.to raise_error(BookingMutation::Conflict)
+    expect { mutation.cancel(original.id, reason: 'Plans changed.', version: original.lock_version) }
+      .to raise_error(BookingMutation::Conflict)
     expect(original.reload.status).to eq('confirmed')
   end
 end

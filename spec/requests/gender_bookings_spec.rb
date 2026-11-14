@@ -23,7 +23,7 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
   end
 
   def organizer_booking(**overrides)
-    { date: '2026-11-23', user_id: model.id.to_s, attendance: 'unconfirmed' }.merge(overrides)
+    { date: '2026-11-23', user_id: model.id.to_s, attendance: 'unconfirmed', lock_version: 0 }.merge(overrides)
   end
 
   def calendar_day(date)

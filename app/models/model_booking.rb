@@ -21,9 +21,10 @@ class ModelBooking
   field :time_changes, type: Array, default: []
   field :created_by_id, type: BSON::ObjectId
   field :gender_override_reason, type: String
+  field :lock_version, type: Integer, default: 0
 
   attr_readonly :venue_id, :user_id, :date, :time_zone, :ends_at, :starts_at, :time_changes, :previous_booking_id,
-                :created_by_id, :gender_override_reason
+                :created_by_id, :gender_override_reason, :lock_version
   index({ venue_id: 1, user_id: 1, date: -1 })
   index({ venue_id: 1, status: 1, ends_at: 1 })
   index({ venue_id: 1, date: -1, created_at: -1 })
@@ -44,25 +45,28 @@ class ModelBooking
     starts_at || VenueSchedule.local_start(date, '18:30', time_zone)
   end
 
+  def assert_version!(version)
+    return if version.to_s == lock_version.to_s && status == 'confirmed' && ends_at > Time.current
+
+    raise BookingMutation::Stale, I18n.t('bookings.stale')
+  end
+
   def change_time!(start, explanation, actor, session:)
     return if scheduled_start == start
 
     change = { from: scheduled_start, to: start, reason: explanation, changed_at: Time.current,
                changed_by_id: actor.id }
-    result = self.class.collection.find(_id: id, status: 'confirmed', ends_at: { '$gt' => Time.current }).update_one(
+    atomic_change!(
       { '$set' => { starts_at: start, updated_at: Time.current },
         '$push' => { time_changes: change } }, session: session
     )
-    raise BookingMutation::Conflict, I18n.t('bookings.conflict') unless result.modified_count == 1
   end
 
   def close!(new_status, explanation, actor, session:)
-    result = self.class.collection.find(_id: id, status: 'confirmed', ends_at: { '$gt' => Time.current })
-                 .find_one_and_update(
-                   { '$set' => { status: new_status, reason: explanation, changed_at: Time.current,
-                                 changed_by_id: actor.id, updated_at: Time.current } }, session: session
-                 )
-    raise BookingMutation::Conflict, I18n.t('bookings.conflict') unless result
+    atomic_change!(
+      { '$set' => { status: new_status, reason: explanation, changed_at: Time.current,
+                    changed_by_id: actor.id, updated_at: Time.current } }, session: session
+    )
   end
 
   def delete(*)
@@ -71,5 +75,18 @@ class ModelBooking
 
   def self.delete_all(*)
     raise HistoryRetained, 'Booking history cannot be deleted.'
+  end
+
+  private
+
+  def atomic_change!(changes, session:)
+    version = lock_version.zero? ? { '$in' => [nil, 0] } : lock_version
+    selector = { _id: id, status: 'confirmed', ends_at: { '$gt' => Time.current }, lock_version: version }
+    result = self.class.collection.find(selector).update_one(
+      changes.merge('$inc' => { lock_version: 1 }), session: session
+    )
+    raise BookingMutation::Stale, I18n.t('bookings.stale') unless result.modified_count == 1
+
+    reload
   end
 end

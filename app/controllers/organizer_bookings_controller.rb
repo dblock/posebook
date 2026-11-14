@@ -5,6 +5,7 @@ class OrganizerBookingsController < ApplicationController
   before_action :find_venue
   before_action :find_booking, only: %i[edit update cancel]
   rescue_from BookingMutation::Invalid, BookingMutation::Conflict, with: :show_error
+  rescue_from BookingMutation::Stale, with: :show_stale_booking
 
   def new; end
   def edit; end
@@ -20,7 +21,7 @@ class OrganizerBookingsController < ApplicationController
   end
 
   def cancel
-    @booking = mutation.cancel(@booking.id, reason: booking_params[:reason])
+    @booking = mutation.cancel(@booking.id, reason: booking_params[:reason], version: booking_params[:lock_version])
     finish_booking
   end
 
@@ -33,12 +34,13 @@ class OrganizerBookingsController < ApplicationController
   end
 
   def find_booking
-    @booking = ModelBooking.upcoming.where(venue_id: @venue.id).find(params.expect(:id))
+    records = action_name == 'edit' ? ModelBooking.upcoming : ModelBooking.all
+    @booking = records.where(venue_id: @venue.id).find(params.expect(:id))
     @models << @booking.user unless @models.any? { |model| model.id == @booking.user_id }
   end
 
   def booking_params
-    params.expect(booking: %i[date user_id attendance reason override_gender_rule]).to_h.symbolize_keys
+    params.expect(booking: %i[date user_id attendance reason override_gender_rule lock_version]).to_h.symbolize_keys
   end
 
   def mutation
@@ -52,5 +54,9 @@ class OrganizerBookingsController < ApplicationController
   def show_error(error)
     flash.now[:alert] = error.message
     render(action_name == 'create' ? :new : :edit, status: :unprocessable_content)
+  end
+
+  def show_stale_booking(error)
+    redirect_to venue_path(@venue), alert: error.message
   end
 end

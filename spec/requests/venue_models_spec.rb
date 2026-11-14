@@ -175,7 +175,8 @@ RSpec.describe 'Venue model access', :aggregate_failures, :database, type: :requ
     expect(response.body).not_to include('Private organizer note.', 'Change Date')
     get edit_venue_model_booking_path(venue, original)
     expect(response).to redirect_to(venue_path(venue))
-    post cancel_venue_model_booking_path(venue, original), params: { reason: 'Travel.' }
+    post cancel_venue_model_booking_path(venue, original),
+         params: { reason: 'Travel.', booking_version: original.lock_version }
     expect(original.reload.status).to eq('canceled')
   end
 

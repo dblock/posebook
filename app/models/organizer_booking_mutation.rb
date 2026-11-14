@@ -20,15 +20,15 @@ class OrganizerBookingMutation
 
   def update(id, attributes)
     run do |session|
-      original = active_booking(id)
+      original = active_booking(id, version: attributes[:lock_version])
       @booking = replace_if_changed(original, attributes, session)
       update_attendance(attributes, session)
     end
   end
 
-  def cancel(id, reason:)
+  def cancel(id, reason:, version:)
     run do |session|
-      @booking = active_booking(id)
+      @booking = active_booking(id, version: version)
       @booking.close!('canceled', explanation(reason), @user, session: session)
       removed = ModelBookingClaim.collection.find(model_booking_id: @booking.id).delete_one(session: session)
       raise BookingMutation::Conflict, I18n.t('bookings.conflict') unless removed.deleted_count == 1
@@ -56,8 +56,10 @@ class OrganizerBookingMutation
     raise BookingMutation::Conflict, I18n.t('bookings.conflict')
   end
 
-  def active_booking(id)
-    ModelBooking.upcoming.where(venue_id: @venue.id).find(id)
+  def active_booking(id, version:)
+    booking = ModelBooking.where(venue_id: @venue.id).find(id)
+    booking.assert_version!(version)
+    booking
   end
 
   def build_booking(attributes, previous: nil)

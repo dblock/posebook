@@ -19,7 +19,9 @@ RSpec.describe 'Organizer bookings', :aggregate_failures, :database, type: :requ
 
   def booking_params(**overrides)
     { booking: { user_id: model.id.to_s, date: '2026-11-16', attendance: 'unconfirmed',
-                 reason: 'Agreed with the model.' }.merge(overrides) }
+                 reason: 'Agreed with the model.',
+                 lock_version: venue.model_bookings.upcoming.first&.lock_version || 0 }
+                 .merge(overrides) }
   end
 
   def reserve
@@ -95,7 +97,7 @@ RSpec.describe 'Organizer bookings', :aggregate_failures, :database, type: :requ
     get edit_venue_organizer_booking_path(venue, record)
     form = response.parsed_body.at_css('form[action$="/cancel"]')
     post form['action'], params: { authenticity_token: form.at_css('input[name="authenticity_token"]')['value'],
-                                   booking: { reason: 'Agreed cancellation.' } }
+                                   booking: { reason: 'Agreed cancellation.', lock_version: record.lock_version } }
     expect(response).to redirect_to(venue_path(venue, month: '2026-11'))
     expect(record.reload.status).to eq('canceled')
   ensure
@@ -111,6 +113,23 @@ RSpec.describe 'Organizer bookings', :aggregate_failures, :database, type: :requ
     expect(response).to have_http_status(:unprocessable_content)
     expect(record.reload.attendance_changes).to be_empty
     expect(record.status).to eq('confirmed')
+  end
+
+  it 'rejects an old organizer form instead of clearing a newer confirmation' do
+    record = reserve
+    get edit_venue_organizer_booking_path(venue, record)
+    version = response.parsed_body.at_css('input[name="booking[lock_version]"]')['value']
+    other = create_user
+    grant_schedule_access(venue, other)
+    OrganizerBookingMutation.new(venue: venue, user: other)
+                            .update(record.id, booking_params(attendance: 'confirmed')[:booking])
+    patch venue_organizer_booking_path(venue, record), params: booking_params(lock_version: version)
+    expect(response).to redirect_to(venue_path(venue))
+    follow_redirect!
+    expect(response.body).to include('changed while you were editing', 'Confirmed')
+    expect(record.reload.attendance_confirmed_by_id).to eq(other.id)
+    expect(record.attendance_changes.size).to eq(1)
+    expect(record.lock_version).to eq(1)
   end
 
   it 'rejects foreign models and venue bookings, including direct submissions from a model' do

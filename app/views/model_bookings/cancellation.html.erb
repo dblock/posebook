@@ -3,6 +3,7 @@
   <%= render "venues/regular_schedule", venue: @venue %>
   <p><%= @booking.date.to_fs(:long) %> at <%= booking_time(@booking) %>, <%= @venue.name %>. Your booking and explanation will remain in the history.</p>
   <%= form_with url: cancel_venue_model_booking_path(@venue, @booking) do %>
+    <%= hidden_field_tag :booking_version, request.get? ? @booking.lock_version : params[:booking_version] %>
     <p><%= label_tag :reason, "Explanation" %><br><%= text_area_tag :reason, params[:reason], required: true, maxlength: 2000, rows: 3 %></p>
     <%= submit_tag "Cancel Booking" %>
   <% end %>

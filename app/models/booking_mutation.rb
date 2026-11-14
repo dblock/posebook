@@ -6,6 +6,7 @@ class BookingMutation
 
   class Invalid < StandardError; end
   class Conflict < StandardError; end
+  class Stale < Conflict; end
 
   def initialize(venue:, user:)
     @venue = venue
@@ -24,9 +25,9 @@ class BookingMutation
     end
   end
 
-  def change(booking:, date:, reason:)
+  def change(booking:, date:, reason:, version: booking.lock_version)
     run do |session|
-      original = reschedulable_booking(booking.id)
+      original = reschedulable_booking(booking.id, version: version)
       selected = rescheduling_date(original, date)
       original.close!('rescheduled', explanation(reason), @user, session: session)
       @booking = create_record(selected, previous: original)
@@ -35,9 +36,9 @@ class BookingMutation
     end
   end
 
-  def cancel(booking:, reason:)
+  def cancel(booking:, reason:, version: booking.lock_version)
     run(booking_access: false) do |session|
-      original = active_booking(booking.id)
+      original = active_booking(booking.id, version: version)
       original.close!('canceled', explanation(reason), @user, session: session)
       removed = ModelBookingClaim.collection.find(model_booking_id: original.id).find_one_and_delete(session: session)
       raise Conflict, I18n.t('bookings.conflict') unless removed
@@ -91,12 +92,14 @@ class BookingMutation
     ModelBookingClaim.where(venue_id: @venue.id, user_id: @user.id)
   end
 
-  def active_booking(id)
-    ModelBooking.upcoming.where(venue_id: @venue.id, user_id: @user.id).find(id)
+  def active_booking(id, version:)
+    booking = ModelBooking.where(venue_id: @venue.id, user_id: @user.id).find(id)
+    booking.assert_version!(version)
+    booking
   end
 
-  def reschedulable_booking(id)
-    booking = active_booking(id)
+  def reschedulable_booking(id, version:)
+    booking = active_booking(id, version: version)
     raise Invalid, I18n.t('bookings.rescheduling_locked') if booking.rescheduling_locked?
 
     booking
