@@ -53,4 +53,15 @@ RSpec.describe InvitationAcceptance, :aggregate_failures, :database do
     expect(membership.roles).to eq(['venue_coordinator'])
     expect(invitation.reload.used_by_id).to eq(user.id)
   end
+
+  it 'rechecks the stored recipient email rather than accepting a stale account object' do
+    user = create_user
+    invitation = create_participant_invitation(create_program, create_user(roles: ['system_admin']), email: user.email)
+    User.find(user.id).update!(email: 'changed@example.test')
+    expect do
+      described_class.new(token: invitation.token, user: user).call
+    end.to raise_error(described_class::RecipientMismatch)
+    expect(invitation.reload.used_at).to be_nil
+    expect(invitation.program.memberships).to be_empty
+  end
 end

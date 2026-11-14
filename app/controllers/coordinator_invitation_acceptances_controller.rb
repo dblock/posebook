@@ -1,11 +1,6 @@
 # frozen_string_literal: true
 
 class CoordinatorInvitationAcceptancesController < InvitationAcceptancesController
-  def show
-    super
-    @user.assign_attributes(name: @invitation.name, email: @invitation.email)
-  end
-
   private
 
   def invitation_class

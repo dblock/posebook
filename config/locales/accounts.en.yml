@@ -28,6 +28,8 @@ en:
     revoked: Invitation revoked.
     not_pending: This invitation has already been accepted or revoked.
     conflict: Another request claimed this email or membership. Try again, or sign in with an existing account.
+    email_mismatch: must match the invited email address
+    wrong_account: "This invitation is for %{email}. Sign out and sign in using that email address, or register with it."
     delivery_unavailable: Email delivery needs an address and configured SMTP. Uncheck email delivery to share a link instead.
     delivery_failed: Email delivery failed. Copy the personal link and share it directly instead.
     subject: "You are invited as %{participant_article} %{participant_label} at %{program}"

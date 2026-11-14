@@ -35,7 +35,20 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     mail = ActionMailer::Base.deliveries.last
     expect(mail.to).to eq(['participant@example.test'])
     expect(mail.body.decoded).to include('http://example.com/invitation?token=',
-                                         'Tuesday at 7:15 PM (America/Los_Angeles)')
+                                         'Tuesday at 7:15 PM (America/Los_Angeles)', 'using participant@example.test')
+  end
+
+  it 'creates a link without email or SMTP even when email delivery is checked' do
+    sign_in(create_user(roles: ['system_admin']))
+    program = create_program
+    allow(Rails.configuration.x).to receive(:password_reset_delivery_enabled).and_return(false)
+    post program_participant_invitations_path(program),
+         params: { participant_invitation: { name: 'Invited Artist' }, send_email: '1' }
+    invitation = track_record(program.participant_invitations.first)
+    follow_redirect!
+    expect(response.parsed_body.at_css('#invitation_link')['value']).to include('/invitation?token=')
+    expect(invitation.email).to be_nil
+    expect(ActionMailer::Base.deliveries).to be_empty
   end
 
   it 'keeps a private link when email delivery fails' do

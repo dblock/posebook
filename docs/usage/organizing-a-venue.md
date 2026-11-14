@@ -4,7 +4,7 @@
 
 System administrators create physical venues, invite or promote **Venue Coordinators**, and manage accounts. Venue coordinators edit their location, photos, and Instagram, create recurring programs, manage every program there, and invite or promote **Program Coordinators**. Coordinator assignment does not expose a global user directory.
 
-On **Venue Coordinators** or **Program Coordinators**, enter the recipient's email and choose **Continue**. If they already have an active account, Posebook offers **Grant Coordinator Access** for confirmation instead of creating another account. Their other memberships and booking permissions are retained. If they are new, create a private registration link and optionally send it by email. The link can be accepted only with the invited email, expires in 30 days, and can be revoked from the coordinator list. Copy it when created; it is not displayed again.
+On **Venue Coordinators** or **Program Coordinators**, leave email blank and choose **Continue** to generate a private link for one person, or enter an email to restrict acceptance to that address. If that email already has an active account, Posebook offers **Grant Coordinator Access** for confirmation instead of creating another account. Their other memberships and booking permissions are retained. For a new account, create a private registration link and optionally send it by email. No email is sent when the address is blank. The link expires in 30 days and can be revoked from the coordinator list. Copy it when created; it is not displayed again.
 
 Venue coordinator access includes all programs at that venue; program coordinator access includes only that program. Neither promotion grants system admin access. An outstanding invitation stops working if its sender becomes inactive or loses the authority to delegate that venue/program.
 
@@ -14,6 +14,6 @@ Program settings include **Program Label** and **Participant Label**, defaulting
 
 Program coordinators can invite participants, review their program's roster and booking history, schedule or update bookings, confirm attendance, and manage dated schedule exceptions when a booking is added, moved, or closed.
 
-Invitations provide private, single-use registration links. A participant must accept an invitation to join a program. Joining grants an initial booking; coordinators can invite participants to book again after they complete a booking. A paused participant can keep an existing booking and cancel it, but cannot book or reschedule until resumed. Memberships and invitations are independent across programs.
+Invitations provide private, single-use registration links with the same optional-email policy for participants and coordinators. A specified email restricts acceptance to that account; leave it blank for a link one recipient can accept with any account. A participant must accept an invitation to join a program. Joining grants an initial booking; coordinators can invite participants to book again after they complete a booking. A paused participant can keep an existing booking and cancel it, but cannot book or reschedule until resumed. Memberships and invitations are independent across programs.
 
 Email is used for account recovery and optional invitation delivery. Posebook does not yet send automated booking reminders or booking notifications.

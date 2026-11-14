@@ -4,7 +4,7 @@
 
 Sign in with your email and password, or use the password-reset link if you cannot sign in. Registration is invitation-based after the first administrator account has been created.
 
-Venue/program coordinator invitations are restricted to the invited email address. Register with that address or sign in to the matching existing account, then accept the invitation. If signed in to a different account, use **Sign Out and Use the Invited Account** to switch without losing the invitation. Participant invitations retain their existing personal-link behavior and are not restricted to a specified email.
+Participant and venue/program coordinator invitations follow the same email rules. If the sender specified an email, register with that address or sign in to the matching existing account, then accept the invitation. If signed in to a different account, use **Sign Out and Use the Invited Account** to switch without losing the invitation. When no email was specified, one recipient can accept the private link with any account.
 
 Use **Profile** to edit your name, display name, phone, Instagram handle, and privacy preferences. Your display name defaults to your account name. Instagram appears on public calendars only when tagging is enabled; **Keep all my information private** hides your name and Instagram from public pages while retaining your preferences.
 

@@ -1,0 +1,2 @@
+<p role="alert">This invitation is for <%= @invitation.email %>. Sign out and sign in using that email address to accept it.</p>
+<%= button_to "Sign Out and Use the Invited Account", sign_out_path, method: :delete %>

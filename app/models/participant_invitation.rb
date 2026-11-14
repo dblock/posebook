@@ -14,10 +14,6 @@ class ParticipantInvitation
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, length: { maximum: 254 }, allow_nil: true
   before_validation { self.email = email.to_s.strip.downcase.presence }
 
-  def acceptable_by?(_user)
-    true
-  end
-
   def grant_access(user, session:)
     ProgramMembership.grant_participant_access(program, user, session: session)
   end

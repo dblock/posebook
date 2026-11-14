@@ -15,7 +15,7 @@ module CoordinatorInviting
     @invitation.assign_attributes(name: params[:name], email: invitee_email, invited_by: current_user)
     return render :index, status: :unprocessable_content unless @invitation.valid?
 
-    @existing_user = User.where(email: @invitation.email).first
+    @existing_user = find_existing_user
     return handle_existing_user if @existing_user
     return invitation_error('coordinator_invitations.account_changed') if params[:grant_access] == '1'
 
@@ -23,6 +23,10 @@ module CoordinatorInviting
   end
 
   private
+
+  def find_existing_user
+    User.where(email: @invitation.email).first if @invitation.email.present?
+  end
 
   def finish_invitation
     return invitation_error('invitations.delivery_unavailable') unless delivery_available?
@@ -41,7 +45,7 @@ module CoordinatorInviting
   end
 
   def invitee_email
-    params[:user_id] ? User.active.find(params.expect(:user_id)).email : params.expect(:email)
+    params[:user_id] ? User.active.find(params.expect(:user_id)).email : params[:email]
   end
 
   def handle_existing_user
@@ -59,11 +63,11 @@ module CoordinatorInviting
   end
 
   def delivery_available?
-    params[:send_email] != '1' || Rails.configuration.x.password_reset_delivery_enabled
+    @invitation.email.blank? || params[:send_email] != '1' || Rails.configuration.x.password_reset_delivery_enabled
   end
 
   def deliver_invitation
-    return unless params[:send_email] == '1'
+    return unless @invitation.email.present? && params[:send_email] == '1'
 
     CoordinatorInvitationMailer.invite(@invitation, @invitation.token).deliver_now
   rescue IOError, SystemCallError, Timeout::Error, Net::SMTPError => e

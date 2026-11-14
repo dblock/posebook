@@ -2,7 +2,7 @@
   <section>
     <h2>Coordinator Invitations</h2>
     <% @invitations.each do |invitation| %>
-      <p><%= copyable(invitation.email, label: "invited email") { link_to invitation.email, polymorphic_path([invitation.target, invitation]) } %> <%= status_label(invitation.status) %></p>
+      <p><% if invitation.email.present? %><%= copyable(invitation.email, label: "invited email") { link_to invitation.email, polymorphic_path([invitation.target, invitation]) } %><% else %><%= link_to invitation.name.presence || "Personal invitation", polymorphic_path([invitation.target, invitation]) %><% end %> <%= status_label(invitation.status) %></p>
       <% if invitation.status == "Pending" %>
         <%= button_to "Revoke Invitation", polymorphic_path([invitation.target, invitation]), method: :delete %>
       <% end %>

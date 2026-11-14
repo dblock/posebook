@@ -116,6 +116,20 @@ RSpec.describe 'Coordinator invitations', :aggregate_failures, :database, type: 
     expect(invitation.invited_by).to eq(manager)
   end
 
+  it 'creates venue and session links without email or SMTP even when email delivery is checked' do
+    sign_in(admin)
+    allow(Rails.configuration.x).to receive(:password_reset_delivery_enabled).and_return(false)
+    [venue_coordinators_path(venue), program_coordinators_path(program)].each do |path|
+      post path, params: { name: 'Invited Manager', send_email: '1' }
+      link = created_link
+      token = URI.decode_www_form(URI(link).query).to_h.fetch('token')
+      invitation = track_record(CoordinatorInvitation.available(token))
+      expect(invitation.email).to be_nil
+      expect(response.body).to include('No email restriction.')
+    end
+    expect(ActionMailer::Base.deliveries).to be_empty
+  end
+
   it 'registers a session coordinator without granting parent, sibling, or participant access' do
     invitation = create_coordinator_invitation(program, admin)
     user = register_recipient(invitation)
@@ -132,7 +146,7 @@ RSpec.describe 'Coordinator invitations', :aggregate_failures, :database, type: 
     invitation = create_coordinator_invitation(program, admin, email: recipient.email)
     wrong_attributes = user_attributes
     post coordinator_invited_registration_path, params: { token: invitation.token, user: wrong_attributes }
-    expect(response).to have_http_status(:gone)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(User.where(email: wrong_attributes[:email])).to be_empty
     expect(invitation.reload.used_at).to be_nil
   end
@@ -145,7 +159,7 @@ RSpec.describe 'Coordinator invitations', :aggregate_failures, :database, type: 
     expect(response.body).to include('Sign Out and Use the Invited Account')
     expect(response.body).not_to include('Accept Workshop Coordinator Invitation')
     post coordinator_invitation_path, params: { token: invitation.token }
-    expect(response).to have_http_status(:gone)
+    expect(response).to have_http_status(:forbidden)
     expect(invitation.reload.used_at).to be_nil
   end
 
