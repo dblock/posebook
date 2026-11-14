@@ -52,6 +52,8 @@ begin
   wait_until('MongoDB replica set did not elect a primary') do
     docker!('exec', database, 'mongosh', '--quiet', '--eval', 'db.hello().isWritablePrimary') == 'true'
   end
+  docker!('exec', database, 'mongosh', '--quiet', '--eval',
+          'db.getSiblingDB("posebook_package").venues.insertOne({name:"Legacy Package Venue",address:"Test"})')
   container = docker!(
     'run', '--detach', '--publish', '127.0.0.1::3000', '--network', network,
     '--env', "SECRET_KEY_BASE=#{SecureRandom.hex(64)}",
@@ -77,10 +79,11 @@ begin
   raise 'The packaged stylesheet is missing' unless stylesheet && request(port, stylesheet).code == '200'
 
   docker!('exec', container, 'bundle', 'exec', 'rails', 'runner',
+          'raise "Slug backfill failed" unless Venue.find("legacy-package-venue").name == "Legacy Package Venue"; ' \
           'Venue.transaction { Venue.create!(name: "Package Transaction", address: "Test"); ' \
           'raise Mongoid::Errors::Rollback }; ' \
           'raise "Rollback failed" if Venue.where(name: "Package Transaction").exists?')
-  puts 'Production image passed transaction rollback, MongoDB indexes, registration, stylesheet, and liveness checks.'
+  puts 'Production image passed slug setup, rollback, indexes, registration, stylesheet, and liveness checks.'
 ensure
   if container
     puts docker!('logs', container)

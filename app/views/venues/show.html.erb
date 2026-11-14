@@ -1,5 +1,6 @@
 <main>
   <h1><%= @venue.name %></h1>
+  <p>Shortcut: <%= link_to venue_shortcut_path(@venue), venue_shortcut_path(@venue) %></p>
   <%= simple_format(@venue.address) %>
   <dl>
     <dt>Time Zone</dt><dd><%= @venue.time_zone %></dd>

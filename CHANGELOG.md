@@ -12,4 +12,5 @@
 - [#10](https://github.com/dblock/posebook/pull/10): Invite models with personal links, optional email, and atomic account and venue registration - [@dblock](https://github.com/dblock).
 - [#11](https://github.com/dblock/posebook/pull/11): Book, change, and cancel venue posing dates with explanations, atomic claims, and retained model booking history - [@dblock](https://github.com/dblock).
 - [#13](https://github.com/dblock/posebook/pull/13): Move venue organizer management to a separate page linked beside Edit Venue - [@dblock](https://github.com/dblock).
+- [#14](https://github.com/dblock/posebook/pull/14): Add editable name-derived venue slugs, readable venue URLs, and root shortcuts while preserving existing links - [@dblock](https://github.com/dblock).
 - Your contribution here.

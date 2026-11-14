@@ -36,6 +36,8 @@ Use **Venues** to create a venue as a system admin, configure its address, IANA 
 
 Removing schedule access preserves the membership record and immediately removes access to that venue. Deactivated users retain their assignments and bookings but cannot sign in until reactivated. Only system admins see organizer contact details and the existing-user selector, on the **Organizers** page linked beside **Edit Venue**. Automated model reminders remain future work.
 
+Venues use `mongoid-slug` for readable URLs such as `/venues/enochs` and the shortcut `/enochs`. Slugs default to the venue name; admins can enter a **Slug** in venue settings or leave it blank to follow the name. Custom values are normalized, and duplicate/reserved values receive a numeric suffix. Previous slugs and existing `/venues/<database-id>` links keep working. Both URL forms require login and the same venue access; shortcuts do not make a venue public.
+
 Venue settings include one or more available weekdays, defaulting to Monday. The venue's month calendar shows availability in its time zone through its configured booking horizon, with past dates, other weekdays, occupied dates, and dates outside the window explicitly blocked. Models can book one available day per venue at a time; while scheduled, use **Change Date** or **Cancel Booking** instead of making a second reservation.
 
 Changing or canceling requires an explanation. Rescheduling retains the old date and reason and creates a linked new booking; cancellation retains the booking and frees the day. Booking another date creates another record, never overwriting or deleting prior bookings. Models see their own history; assigned organizers and system admins see venue history. Changes to venue weekday/time-zone settings do not rewrite or cancel existing reservations. Dates represent whole venue-local days; timed sessions and automated reminders are future work.
@@ -58,7 +60,7 @@ Export environment variables in your shell or configure them through DigitalOcea
 
 For DigitalOcean App Platform, use the Dockerfile, HTTP port 3000, and `/up` as the health-check path. Store `MONGODB_URI`, `SECRET_KEY_BASE`, and `SMTP_PASSWORD` as encrypted settings; generate the session secret with `bundle exec rails secret`. Set `APP_HOST` to the hostname without a scheme. The production database name comes from the URI; use `posebook` while retaining the provider's authentication and TLS options. The Dockerfile already sets `RAILS_ENV=production` and `PORT=3000`. SMTP configuration also enables email-change confirmation; no email provider or infrastructure is provisioned by this repository.
 
-`bin/setup` and the production Docker entry point create declared MongoDB indexes before serving requests. Configure the database user to permit index creation.
+`bin/setup` and the production Docker entry point create declared MongoDB indexes. The production entry point also runs `mongoid_slug:set[Venue]` before serving requests to generate missing slugs for existing venues without changing their IDs or existing slugs. Run `bundle exec rails 'mongoid_slug:set[Venue]'` manually for existing local data. Configure the database user to permit index creation and venue updates.
 
 ## Contributing
 

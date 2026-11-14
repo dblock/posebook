@@ -4,6 +4,7 @@ class VenuesController < ApplicationController
   before_action :require_authentication
   before_action :require_system_admin, only: %i[new create edit update]
   before_action :find_venue, only: %i[show edit update]
+  rescue_from Mongo::Error::OperationFailure, with: :handle_slug_conflict
 
   def index
     @venues = Venue.visible_to(current_user).order_by(name: :asc)
@@ -40,6 +41,13 @@ class VenuesController < ApplicationController
 
   private
 
+  def handle_slug_conflict(error)
+    raise error unless error.code == 11_000
+
+    @venue.errors.add(:custom_slug, :taken)
+    render(action_name == 'create' ? :new : :edit, status: :unprocessable_content)
+  end
+
   def load_calendar
     @calendar = VenueCalendar.new(@venue, month: params[:month])
     @can_book = @venue.model?(current_user)
@@ -52,7 +60,7 @@ class VenuesController < ApplicationController
   end
 
   def venue_params
-    params.expect(venue: [:name, :address, :time_zone, :model_pay, :instructions, :booking_horizon_months,
+    params.expect(venue: [:name, :custom_slug, :address, :time_zone, :model_pay, :instructions, :booking_horizon_months,
                           { available_weekdays: [] }])
   end
 end

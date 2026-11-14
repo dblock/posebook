@@ -3,6 +3,47 @@
 require 'rails_helper'
 
 RSpec.describe Venue, :aggregate_failures, :database do
+  it 'defaults slugs from names and retains history when changing or clearing a custom slug' do
+    venue = create_venue(name: "Enoch's Drawing")
+    expect(venue.slug).to eq('enochs-drawing')
+    venue.update!(custom_slug: ' Weekly Life Drawing ')
+    expect(venue.slug).to eq('weekly-life-drawing')
+    venue.update!(name: "Enoch's Renamed")
+    expect(venue.slug).to eq('weekly-life-drawing')
+    venue.update!(custom_slug: '')
+    expect(venue.slug).to eq('enochs-renamed')
+    %w[enochs-drawing weekly-life-drawing enochs-renamed].each do |slug|
+      expect(described_class.find(slug)).to eq(venue)
+    end
+    expect(described_class.find(venue.id)).to eq(venue)
+  end
+
+  it 'adds suffixes to duplicate, reserved, and database-ID-shaped slugs' do
+    first = create_venue(name: 'Shared Venue')
+    duplicate = create_venue(name: 'Shared Venue')
+    reserved = create_venue(custom_slug: 'venues')
+    id_shaped = create_venue(custom_slug: first.id.to_s)
+    expect([first.slug, duplicate.slug, reserved.slug]).to eq(%w[shared-venue shared-venue-1 venues-1])
+    expect(id_shaped.slug).to eq("#{first.id}-1")
+    expect(described_class.find(id_shaped.slug)).to eq(id_shaped)
+  end
+
+  it 'rejects sources that cannot produce a usable slug' do
+    venue = create_venue
+    expect(venue.update(custom_slug: '!!!')).to be(false)
+    expect(venue.errors[:custom_slug]).to include('must include a letter or number')
+    expect(venue.update(name: '!!!', custom_slug: '')).to be(false)
+    expect(venue.update(custom_slug: 'x' * 101)).to be(false)
+  end
+
+  it 'enforces uniqueness across slug history in MongoDB' do
+    venue = create_venue
+    other = create_venue
+    old_slug = venue.slug
+    venue.update!(custom_slug: 'new-unique-slug')
+    expect { other.set(_slugs: [old_slug]) }.to raise_error(Mongo::Error::OperationFailure)
+  end
+
   it 'validates venue configuration and stores model pay without floating-point rounding' do
     venue = create_venue(model_pay: '140.35', time_zone: 'America/New_York')
     expect(venue.reload.model_pay).to eq(BigDecimal('140.35'))

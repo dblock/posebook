@@ -9,6 +9,8 @@ RSpec.describe 'Venue management', :aggregate_failures, :database, type: :reques
     expect(response).to redirect_to(new_session_path)
     get venue_organizers_path(create_venue)
     expect(response).to redirect_to(new_session_path)
+    get venue_shortcut_path(create_venue)
+    expect(response).to redirect_to(new_session_path)
   end
 
   it 'lets a system admin create and update venue settings' do
@@ -135,5 +137,64 @@ RSpec.describe 'Venue management', :aggregate_failures, :database, type: :reques
     sign_in(user)
     get venue_organizers_path(venue)
     expect(response).to have_http_status(:forbidden)
+  end
+
+  it 'resolves venue slugs, root shortcuts, and legacy IDs without bypassing venue scope' do
+    venue = create_venue
+    user = create_user
+    grant_schedule_access(venue, user)
+    sign_in(user)
+    [venue_path(venue), venue_shortcut_path(venue), venue_path(venue.id)].each do |path|
+      get path
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(venue.name)
+    end
+    other = create_venue
+    [venue_path(other), venue_shortcut_path(other), '/missing-venue'].each do |path|
+      get path
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
+  it 'lets admins edit slugs while retaining old URLs and using slugs in nested management links' do
+    sign_in(create_user(roles: ['system_admin']))
+    venue = create_venue
+    previous = venue.slug
+    patch venue_path(venue), params: { venue: { custom_slug: 'Weekly Drawing' } }
+    expect(response).to redirect_to('/venues/weekly-drawing')
+    ["/venues/#{previous}", "/#{previous}", '/weekly-drawing'].each do |path|
+      get path
+      expect(response).to have_http_status(:ok)
+    end
+    get venue_organizers_path(venue.reload)
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body.at_css('main form')['action']).to eq('/venues/weekly-drawing/organizers')
+  end
+
+  it 'keeps built-in routes reachable when a venue requests a reserved slug' do
+    sign_in(create_user(roles: ['system_admin']))
+    venue = create_venue(custom_slug: 'venues')
+    get venues_path
+    expect(response.body).to include('Venues', venue.name)
+    get '/up'
+    expect(response).to have_http_status(:ok)
+    get venue_shortcut_path(venue)
+    expect(response.body).to include(venue.name)
+  end
+
+  it 'renders a friendly error if another request claims the slug before insertion' do
+    sign_in(create_user(roles: ['system_admin']))
+    other = create_venue
+    allow(Venue).to receive(:new).and_wrap_original do |constructor, *arguments|
+      constructor.call(*arguments).tap do |venue|
+        allow(venue).to receive(:find_unique_slug).and_wrap_original do |generate|
+          generate.call.tap { |slug| other.set(_slugs: [slug]) }
+        end
+      end
+    end
+    post venues_path, params: { venue: { name: 'Racing Venue', address: 'New York' } }
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include('has already been taken')
+    expect(Venue.where(name: 'Racing Venue')).to be_empty
   end
 end
