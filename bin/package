@@ -34,7 +34,7 @@ def check_photos(container)
     require "tempfile"
     Tempfile.create(["photo", ".png"]) do |file|
       Vips::Image.black(30, 60).new_from_image([100, 90, 80]).write_to_file(file.path)
-      user = User.find_by(email: "legacy@example.test")
+      user = User.find_by(email: "package@example.test")
       photo = ProfilePhoto.add(user, Struct.new(:tempfile).new(file))
       square = Vips::Image.new_from_buffer(photo.bytes(thumbnail: true), "")
       raise "Photo processing failed" unless [square.width, square.height] == [400, 400]
@@ -49,7 +49,7 @@ def check_venue_photos(container)
     require "tempfile"
     Tempfile.create(["photo", ".png"]) do |file|
       Vips::Image.black(30, 60).new_from_image([100, 90, 80]).write_to_file(file.path)
-      photo = VenuePhoto.add(Venue.find("legacy-package-venue"), Struct.new(:tempfile).new(file))
+      photo = VenuePhoto.add(Venue.find("package-venue"), Struct.new(:tempfile).new(file))
       square = Vips::Image.new_from_buffer(photo.bytes(thumbnail: true), "")
       raise "Venue photo processing failed" unless [square.width, square.height] == [400, 400]
       photo.destroy!
@@ -69,6 +69,34 @@ def check_monitoring(container)
     raise "Exception messages are not private" unless config[:'strip_exception_messages.enabled']
   RUBY
   docker!('exec', container, 'bundle', 'exec', 'rails', 'runner', source)
+end
+
+def create_current_records(container)
+  source = <<~RUBY
+    User.create!(name: "Package Participant", email: "package@example.test",
+                 password: "a sufficiently long package password", gender: "other",
+                 instagram_handle: "package.participant", instagram_tagging_allowed: true, public_profile_private: true)
+    venue = Venue.create!(name: "Package Venue", address: "Test")
+    Program.create!(name: "Package Session", venue: venue, pay: 150,
+                    program_label: "Workshop", participant_label: "Instructor", instructions: "Package instructions")
+    Program.transaction { Program.create!(name: "Package Transaction", venue: venue); raise Mongoid::Errors::Rollback }
+    raise "Rollback failed" if Program.where(name: "Package Transaction").exists?
+  RUBY
+  docker!('exec', container, 'bundle', 'exec', 'rails', 'runner', source)
+end
+
+def check_existing_records(container)
+  source = <<~RUBY
+    user = User.find_by(email: "package@example.test")
+    raise "Profile preferences changed" unless user.instagram_handle == "package.participant" &&
+      user.instagram_tagging_allowed? && user.public_profile_private?
+    venue = Venue.find("package-venue")
+    program = Program.find("package-session")
+    raise "Program settings changed" unless program.venue_id == venue.id && program.pay == 150 &&
+      program.program_label == "Workshop" && program.participant_label == "Instructor" &&
+      program.instructions == "Package instructions"
+  RUBY
+  docker!('exec', container, './bin/docker-entrypoint', 'bundle', 'exec', 'rails', 'runner', source)
 end
 
 options = {}
@@ -110,14 +138,6 @@ begin
   wait_until('MongoDB replica set did not elect a primary') do
     docker!('exec', database, 'mongosh', '--quiet', '--eval', 'db.hello().isWritablePrimary') == 'true'
   end
-  docker!('exec', database, 'mongosh', '--quiet', '--eval',
-          'let target=db.getSiblingDB("posebook_package"); ' \
-          'target.venues.insertOne({name:"Legacy Package Venue",address:"Test"}); ' \
-          'let venue={_id:ObjectId(),name:"Current Package Venue",address:"Test",session_schema_version:1}; ' \
-          'target.venues.insertOne(venue); ' \
-          'target.drawing_sessions.insertOne({name:"Existing Package Session",venue_id:venue._id,' \
-          'model_pay:150,available_weekdays:["1"],start_time:"19:00",time_zone:"America/New_York",' \
-          'booking_horizon_months:6,instructions:"Preserved instructions",schedule_revision:3})')
   container = docker!(
     'run', '--detach', '--publish', '127.0.0.1::3000', '--network', network,
     '--env', "SECRET_KEY_BASE=#{SecureRandom.hex(64)}",
@@ -159,34 +179,18 @@ begin
     end
   end
 
-  docker!('exec', database, 'mongosh', '--quiet', '--eval',
-          'db.getSiblingDB("posebook_package").users.insertOne({name:"Legacy Model",email:"legacy@example.test",' \
-          'instagram_url:"https://www.instagram.com/Legacy.Model/",instagram_tagging_allowed:true,' \
-          'public_profile_private:true})')
-  docker!('exec', container, './bin/docker-entrypoint', 'bundle', 'exec', 'rails', 'runner',
-          'user = User.find_by(email: "legacy@example.test"); ' \
-          'raise "Handle migration failed" unless user.instagram_handle == "legacy.model" && ' \
-          '!user.attributes.key?("instagram_url") && user.instagram_tagging_allowed? && user.public_profile_private?')
-  docker!(
-    'exec', container, 'bundle', 'exec', 'rails', 'runner',
-    'location = Venue.find("legacy-package-venue"); program = Program.find("legacy-package-venue"); ' \
-    'raise "Venue/session migration failed" unless program.venue_id == location.id && ' \
-    'program.name == "Legacy Package Venue"; ' \
-    'Program.transaction { Program.create!(name: "Package Transaction", venue: location); ' \
-    'raise Mongoid::Errors::Rollback }; ' \
-    'raise "Rollback failed" if Program.where(name: "Package Transaction").exists?; ' \
-    'existing = Program.find_by(name: "Existing Package Session"); ' \
-    'raise "Program schema conversion failed" unless existing.venue.name == "Current Package Venue" && ' \
-    'existing.pay == 150 && existing.program_label == "Session" && existing.participant_label == "Model" && ' \
-    'existing.schedule_revision == 3 && existing.instructions == "Preserved instructions" && ' \
-    '!existing.attributes.key?("model_pay") && ' \
-    '!Mongoid.default_client.database.collection_names.include?("drawing_sessions")'
-  )
+  create_current_records(container)
+  check_existing_records(container)
+  response = request(port, '/sessions/package-session')
+  unless response.code == '200' && response.body.include?('Workshop Calendar')
+    raise 'The current program did not render through its generated slug'
+  end
+
   check_photos(container)
   check_venue_photos(container)
   check_monitoring(container)
   puts 'Production image passed monitoring configuration, photo processing/storage/deletion, ' \
-       'handle migration, slug setup, rollback, ' \
+       'current records, repeated startup, slug generation, rollback, ' \
        'indexes, registration, ' \
        'stylesheet, logo/favicon, and liveness checks.'
 ensure

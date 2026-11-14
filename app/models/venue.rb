@@ -10,7 +10,6 @@ class Venue
   field :custom_slug, type: String
   field :address, type: String
   field :instagram_handle, type: String
-  field :program_schema_version, type: Integer, default: 1
 
   slug :name, :custom_slug, history: true, reserve: Program::RESERVED_SLUGS, max_length: 100 do |venue|
     (venue.custom_slug.presence || venue.name).to_url

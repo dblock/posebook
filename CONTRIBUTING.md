@@ -39,7 +39,7 @@ Account-settings tests cover profile permissions, verified email changes, confli
 
 Admin user-editing tests cover authorization, allowed contact fields, immediate email changes, session/challenge revocation, competing email claims, inactive accounts, self-edits, and preserving access controls. Admin email changes do not contact an email provider or mark an address verified.
 
-Public-profile tests cover name fallback, handle-only Instagram storage from handles/profile URLs, safe derived links, default-off tagging, audited preferences, admin preference editing, and paired handle/tagging writes across stale edits. Keep these tests free of Instagram network calls. Migration tests cover idempotent conversion of legacy URL fields without replacing current/cleared handles, saved preferences, or retained history; production packaging exercises the startup migration.
+Public-profile tests cover name fallback, handle-only Instagram storage from handles/profile URLs, safe derived links, default-off tagging, audited preferences, admin preference editing, and paired handle/tagging writes across stale edits. Keep these tests free of Instagram network calls. Normal profile input still accepts handles and profile URLs; no historical data conversion runs at startup.
 
 Photo request tests use real libvips processing and MongoDB GridFS. Cover square thumbnails, preserved proportions, orientation, metadata removal, actual file type/size/dimension validation, per-photo sharing and identity overrides, owner/admin/organizer boundaries, direct-image authorization, deletion, failed-write cleanup, and concurrent ten-photo admission. Synthetic images only; removing an owned test user also removes its owned photo files.
 
@@ -51,7 +51,7 @@ Audit-history tests cover user/session settings, original/modified values, actor
 
 Session tests cover configuration validation, decimal pay, cross-session isolation, scoped admin/coordinator mutations, inactive accounts, inherited permissions, revocation, and concurrent duplicate role grants against the real unique index. Track membership records before deleting their related fixtures. Do not grant global privileges to represent local schedule access.
 
-Slug tests cover name defaults, editable values, history, duplicate/reserved names, ID-shaped values, unique-index conflicts, scoped lookup, and nested management URLs. Production packaging seeds a legacy venue before boot and verifies the entry point splits it and backfills both slug domains. Run `bundle exec rails 'mongoid_slug:set[Venue,Program]'` to backfill existing local locations and sessions; it skips documents already containing slugs.
+Slug tests cover name defaults, editable values, history, duplicate/reserved names, ID-shaped values, unique-index conflicts, scoped lookup, and nested management URLs. Production packaging boots an empty database, creates current users, venues, and programs through normal saves, and checks generated slugs and preserved settings across repeat startup. No retired migrations or startup slug backfills are part of the current application.
 
 Invitation tests use a MongoDB 8.0 replica set and exercise single-use consumption, transaction rollback under competing account claims, scoped access, existing-account login returns, optional email delivery, expiry/revocation, and preserving membership roles. Track newly accepted accounts and memberships before fixture cleanup. No tests send external messages.
 

@@ -46,4 +46,5 @@
 - [#49](https://github.com/dblock/posebook/pull/49): Separate physical venues from recurring drawing sessions, inherit admin/venue/session coordinator permissions, and migrate existing schedules, bookings, invitations, and audit history - [@dblock](https://github.com/dblock).
 - [#50](https://github.com/dblock/posebook/pull/50): Use single-word status labels throughout the site and one combined booking/attendance label per entry, using Unconfirmed until acknowledgment and retaining private follow-up as plain text - [@dblock](https://github.com/dblock).
 - [#52](https://github.com/dblock/posebook/pull/52): Generalize programs, participants, bookings, and pay with session-specific terminology settings and automatic deployment-time schema conversion while preserving figure-drawing booking rules - [@dblock](https://github.com/dblock).
+- [#53](https://github.com/dblock/posebook/pull/53): Retire all historical schema and Instagram migrations, startup slug backfills, migration flags, and legacy packaging fixtures after the one-time conversion - [@dblock](https://github.com/dblock).
 - Your contribution here.
