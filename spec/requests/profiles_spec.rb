@@ -28,7 +28,7 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     expect(response.body).to include(user.name, user.email, 'Not provided')
     expect(response.parsed_body.css('main form')).to be_empty
     expect(response.parsed_body.css('main a').pluck('href'))
-      .to eq([edit_profile_path, edit_password_path, new_account_deactivation_path])
+      .to eq([edit_profile_path, model_path(user), edit_password_path, new_account_deactivation_path])
   end
 
   it 'provides one dedicated form per page with a cancel link to the profile' do

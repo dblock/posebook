@@ -5,6 +5,9 @@ Rails.application.routes.draw do
   resource :registration, only: %i[new create]
   resource :session, only: %i[new create destroy]
   resource :profile, only: %i[show edit update]
+  resources :models, only: :show, controller: 'model_profiles' do
+    resources :photos, only: %i[show create update destroy], controller: 'profile_photos'
+  end
   resource :password, only: %i[edit update]
   resource :account_deactivation, only: %i[new create]
   resource :email_change, only: %i[show update]

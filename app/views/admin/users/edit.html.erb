@@ -1,5 +1,6 @@
 <main>
   <h1>Edit User</h1>
+  <p><%= link_to "Manage Photos", model_path(@user) %></p>
   <%= render "shared/errors", record: @user %>
   <p>Email changes apply immediately, sign the user out of all sessions, and cancel outstanding recovery and email-change links. The new address is not marked verified. Changing your own email requires signing in again.</p>
   <% if @user.pending_email.present? %>

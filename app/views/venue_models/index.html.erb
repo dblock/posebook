@@ -31,6 +31,7 @@
             </td>
             <td>
               <div class="model-actions">
+                <% if membership.user.profile_photos.any? %><%= link_to "View Photos", model_path(membership.user) %><% end %>
                 <% if membership.user.active? && !access.paused? && !access.booking %>
                   <%= button_to "Invite to Book", invite_venue_model_path(@venue, membership, page: @roster.page) %>
                 <% end %>

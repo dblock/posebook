@@ -2,7 +2,7 @@
 
 ## Setup and Validation
 
-Install Ruby 4.0.9, Bundler, MongoDB 8.0, and Docker. Use only MongoDB 8.0 for tests to match the deployment target. No production service credentials are required.
+Install Ruby 4.0.9, Bundler, MongoDB 8.0, Docker, and libvips. Use only MongoDB 8.0 for tests to match the deployment target. No production service credentials are required. Install libvips with `brew install vips` on macOS or `sudo apt-get install libvips42t64` on Ubuntu 24.04/Debian 13; production Docker stages install it automatically.
 
 Use an existing local MongoDB server or start a dedicated development container on an unused port:
 
@@ -36,6 +36,8 @@ Account-settings tests cover profile permissions, verified email changes, confli
 Admin user-editing tests cover authorization, allowed contact fields, immediate email changes, session/challenge revocation, competing email claims, inactive accounts, self-edits, and preserving access controls. Admin email changes do not contact an email provider or mark an address verified.
 
 Public-profile tests cover name fallback, handle-only Instagram storage from handles/profile URLs, safe derived links, default-off tagging, audited preferences, admin preference editing, and paired handle/tagging writes across stale edits. Keep these tests free of Instagram network calls. Migration tests cover idempotent conversion of legacy URL fields without replacing current/cleared handles, saved preferences, or retained history; production packaging exercises the startup migration.
+
+Photo request tests use real libvips processing and MongoDB GridFS. Cover square thumbnails, preserved proportions, orientation, metadata removal, actual file type/size/dimension validation, per-photo sharing and identity overrides, owner/admin/organizer boundaries, direct-image authorization, deletion, failed-write cleanup, and concurrent ten-photo admission. Synthetic images only; removing an owned test user also removes its owned photo files.
 
 Identity-privacy tests cover registration/invited registration, audited user/admin changes, preserved sharing preferences, disabled controls, restoring public preferences, guest/other-model anonymity, private manager identity, and preservation of concurrent privacy choices when omitted from an edit. Privacy must override saved Instagram tagging on the server. Browser checks exercise live keyboard/checkbox toggling, submitted disabled fields, persistence, no-JavaScript saves, and public calendar output.
 

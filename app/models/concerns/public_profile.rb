@@ -6,6 +6,8 @@ module PublicProfile
   FIELDS = %i[display_name instagram_handle instagram_tagging_allowed public_profile_private].freeze
 
   included do
+    embeds_many :profile_photos
+    before_destroy :delete_profile_photo_files
     field :display_name, type: String
     field :instagram_handle, type: String
     field :instagram_tagging_allowed, type: Mongoid::Boolean, default: false
@@ -31,7 +33,17 @@ module PublicProfile
     InstagramProfile.normalize(instagram_handle) if instagram_tagging_allowed? && !public_profile_private?
   end
 
+  def public_photos
+    return [] unless active? && !public_profile_private?
+
+    profile_photos.select(&:public?)
+  end
+
   private
+
+  def delete_profile_photo_files
+    self.class.where(id: id).first&.profile_photos&.each(&:delete_files)
+  end
 
   def normalize_public_profile
     self.display_name = display_name.to_s.strip.presence

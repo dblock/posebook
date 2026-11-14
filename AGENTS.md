@@ -8,6 +8,8 @@ Posebook is an invitation-first Rails/Mongoid web application for figure drawing
 
 Runtime code lives in `app/`, configuration in `config/`, request tests in `spec/requests/`, database integration tests in `spec/integration/`, and the tested workflow display-name checker in `script/` and `spec/script/`. Ruby 4.0.9 within 4.0 and Rails 8.1 are supported; test only MongoDB 8.0 to match the deployment target. Use public Rails, Mongoid, and provider APIs. Verify and prefer current stable releases when selecting or updating dependencies while preserving compatibility.
 
+Profile galleries store only optimized WebP images and square thumbnails in MongoDB GridFS, never the application's ephemeral local disk. Bound uploads to ten per account with a conditional single-document write; validate actual JPEG/PNG/WebP content, byte size and pixel dimensions before processing. Strip metadata and preserve full-image proportions. New uploads are private; each photo has a public/private preference, overridden publicly by Private Identity and inactive accounts. Only owners and system admins modify photos; assigned organizers may view private photos for their venue models. Check authorization on every image request, including thumbnails, and prohibit browser/proxy caching so visibility changes take effect.
+
 ## Invariants
 
 MongoDB is the only application database. Do not introduce Active Record, SQL-backed queues, or Redis without agreement. The scaffold's in-process ActiveJob adapter is not a durable reminder scheduler. Do not enable automated model notifications/reminders until consent, opt-outs, retry behavior, and cancellation handling exist; explicitly requested transactional account/invitation email is separate.

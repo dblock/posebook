@@ -28,6 +28,21 @@ def wait_until(message)
   end
 end
 
+def check_photos(container)
+  source = <<~RUBY
+    require "tempfile"
+    Tempfile.create(["photo", ".png"]) do |file|
+      Vips::Image.black(30, 60).new_from_image([100, 90, 80]).write_to_file(file.path)
+      user = User.find_by(email: "legacy@example.test")
+      photo = ProfilePhoto.add(user, Struct.new(:tempfile).new(file))
+      square = Vips::Image.new_from_buffer(photo.bytes(thumbnail: true), "")
+      raise "Photo processing failed" unless [square.width, square.height] == [400, 400]
+      photo.remove(user)
+    end
+  RUBY
+  docker!('exec', container, 'bundle', 'exec', 'rails', 'runner', source)
+end
+
 suffix = SecureRandom.hex(6)
 image = "posebook-package:#{suffix}"
 network = nil
@@ -91,7 +106,9 @@ begin
           'Venue.transaction { Venue.create!(name: "Package Transaction", address: "Test"); ' \
           'raise Mongoid::Errors::Rollback }; ' \
           'raise "Rollback failed" if Venue.where(name: "Package Transaction").exists?')
-  puts 'Production image passed handle migration, slug setup, rollback, indexes, registration, ' \
+  check_photos(container)
+  puts 'Production image passed photo processing/storage/deletion, handle migration, slug setup, rollback, ' \
+       'indexes, registration, ' \
        'stylesheet, and liveness checks.'
 ensure
   if container

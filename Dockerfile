@@ -10,7 +10,7 @@ ENV BUNDLE_DEPLOYMENT=1 \
     RAILS_ENV=production
 
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential libyaml-dev pkg-config && \
+    apt-get install --no-install-recommends -y build-essential libyaml-dev pkg-config libvips42t64 && \
     rm -rf /var/lib/apt/lists/*
 
 COPY Gemfile Gemfile.lock ./
@@ -39,6 +39,10 @@ ENV BUNDLE_DEPLOYMENT=1 \
 
 COPY --from=build /usr/local/bundle /usr/local/bundle
 COPY --from=build /app /app
+
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y libvips42t64 && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN groupadd --system --gid 1000 rails && \
     useradd --uid 1000 --gid 1000 --create-home rails && \
