@@ -6,7 +6,8 @@ RSpec.describe InstagramProfile, :aggregate_failures do
   it 'accepts handles and profile links and removes tracking information' do
     [' @Artist.Name ', 'Artist.Name', 'instagram.com/Artist.Name', 'http://www.instagram.com/Artist.Name/',
      'https://INSTAGRAM.com/Artist.Name/?igsh=tracking#fragment'].each do |value|
-      expect(described_class.normalize(value)).to eq('https://www.instagram.com/artist.name/')
+      expect(described_class.normalize(value)).to eq('artist.name')
+      expect(described_class.url(value)).to eq('https://www.instagram.com/artist.name/')
     end
   end
 
@@ -18,6 +19,7 @@ RSpec.describe InstagramProfile, :aggregate_failures do
      'https://instagram.com/artist%2fother', 'https://[broken', 'artist name', '..', 'artist..name',
      'artist.', 'a' * 31, nil, ''].each do |value|
       expect(described_class.normalize(value)).to be_nil, value.inspect
+      expect(described_class.url(value)).to be_nil, value.inspect
     end
   end
 end

@@ -55,26 +55,29 @@ RSpec.describe 'Administrator user editing', :aggregate_failures, :database, typ
     expect(client.response.location).to end_with(root_path)
   end
 
-  it 'allows public profile edits but never accepts administrator-supplied tagging consent' do
+  it 'allows administrators to edit public profile and tagging preferences' do
     sign_in(create_user(roles: ['system_admin']))
     user = create_user
     get edit_admin_user_path(user)
-    expect(response.parsed_body.css('input[name="user[instagram_tagging_allowed]"]')).to be_empty
-    update_user(user, display_name: 'Alex Artist', instagram_url: '@Alex.Artist', instagram_tagging_allowed: '1')
+    expect(response.parsed_body.css('input[name="user[instagram_tagging_allowed]"]')).not_to be_empty
+    update_user(user, display_name: 'Alex Artist', instagram_handle: '@Alex.Artist', instagram_tagging_allowed: '1')
     expect(response).to redirect_to(admin_users_path)
     expect(user.reload.public_name).to eq('Alex Artist')
-    expect(user.instagram_url).to eq('https://www.instagram.com/alex.artist/')
-    expect(user.public_instagram_url).to be_nil
+    expect(user.instagram_handle).to eq('alex.artist')
+    expect(user.public_instagram_url).to eq('https://www.instagram.com/alex.artist/')
+    expect(user.history_tracks.last.modified).to include('instagram_tagging_allowed' => true)
   end
 
-  it 'preserves consent for equivalent links and revokes it when an administrator changes the account' do
+  it 'preserves tagging when an administrator changes handles and supports turning it off explicitly' do
     sign_in(create_user(roles: ['system_admin']))
-    user = create_user(instagram_url: '@Artist.Model', instagram_tagging_allowed: true)
-    update_user(user, name: 'Updated Artist', instagram_url: 'instagram.com/ARTIST.MODEL')
-    expect(user.reload.public_instagram_username).to eq('artist.model')
-    update_user(user, instagram_url: '@Another.Artist', instagram_tagging_allowed: '1')
-    expect(user.reload.instagram_url).to eq('https://www.instagram.com/another.artist/')
-    expect(user.public_instagram_url).to be_nil
+    user = create_user(instagram_handle: '@Artist.Model', instagram_tagging_allowed: true)
+    update_user(user, name: 'Updated Artist', instagram_handle: 'instagram.com/ARTIST.MODEL')
+    expect(user.reload.public_instagram_handle).to eq('artist.model')
+    update_user(user, instagram_handle: '@Another.Artist')
+    expect(user.reload.instagram_handle).to eq('another.artist')
+    expect(user.public_instagram_handle).to eq('another.artist')
+    update_user(user, instagram_tagging_allowed: '0')
+    expect(user.reload.public_instagram_url).to be_nil
     expect(user.history_tracks.last.modified).to include('instagram_tagging_allowed' => false)
   end
 

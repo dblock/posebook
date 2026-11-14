@@ -21,4 +21,5 @@
 - [#21](https://github.com/dblock/posebook/pull/21): Show regular venue weekdays, event times, and time zones throughout venue pages, calendars, and invitations while preserving actual booking times - [@dblock](https://github.com/dblock).
 - [#22](https://github.com/dblock/posebook/pull/22): Publish basic venue pages and calendars with booked models' public names and consented Instagram while retaining private booking and management boundaries - [@dblock](https://github.com/dblock).
 - [#23](https://github.com/dblock/posebook/pull/23): Add an owner-controlled private identity option with disabled sharing settings and anonymous public calendar bookings - [@dblock](https://github.com/dblock).
+- [#26](https://github.com/dblock/posebook/pull/26): Store Instagram handles from handles or URLs, display linked @handles, and let admins edit profile preferences - [@dblock](https://github.com/dblock).
 - Your contribution here.

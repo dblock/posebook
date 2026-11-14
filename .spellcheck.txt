@@ -7,6 +7,7 @@ adminCommand
 AGENTS
 API
 APIs
+alex
 async
 BCrypt
 BCrypt's
@@ -34,6 +35,7 @@ Enoch
 Enoch's
 Enochs
 env
+entrypoint
 eval
 fieldset
 fieldsets

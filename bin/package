@@ -78,12 +78,21 @@ begin
   stylesheet = response.body[/href="([^"]+\.css)"/, 1]
   raise 'The packaged stylesheet is missing' unless stylesheet && request(port, stylesheet).code == '200'
 
+  docker!('exec', database, 'mongosh', '--quiet', '--eval',
+          'db.getSiblingDB("posebook_package").users.insertOne({name:"Legacy Model",email:"legacy@example.test",' \
+          'instagram_url:"https://www.instagram.com/Legacy.Model/",instagram_tagging_allowed:true,' \
+          'public_profile_private:true})')
+  docker!('exec', container, './bin/docker-entrypoint', 'bundle', 'exec', 'rails', 'runner',
+          'user = User.find_by(email: "legacy@example.test"); ' \
+          'raise "Handle migration failed" unless user.instagram_handle == "legacy.model" && ' \
+          '!user.attributes.key?("instagram_url") && user.instagram_tagging_allowed? && user.public_profile_private?')
   docker!('exec', container, 'bundle', 'exec', 'rails', 'runner',
           'raise "Slug backfill failed" unless Venue.find("legacy-package-venue").name == "Legacy Package Venue"; ' \
           'Venue.transaction { Venue.create!(name: "Package Transaction", address: "Test"); ' \
           'raise Mongoid::Errors::Rollback }; ' \
           'raise "Rollback failed" if Venue.where(name: "Package Transaction").exists?')
-  puts 'Production image passed slug setup, rollback, indexes, registration, stylesheet, and liveness checks.'
+  puts 'Production image passed handle migration, slug setup, rollback, indexes, registration, ' \
+       'stylesheet, and liveness checks.'
 ensure
   if container
     puts docker!('logs', container)

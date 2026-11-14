@@ -23,7 +23,7 @@ class User
   field :password_reset_expires_at, type: Time
 
   track_history on: %i[name email phone roles active email_verified_at
-                       display_name instagram_url instagram_tagging_allowed public_profile_private],
+                       display_name instagram_handle instagram_tagging_allowed public_profile_private],
                 modifier_field_optional: true, modifier_field_inverse_of: nil, track_blank_changes: true
 
   index({ email: 1 }, unique: true)
@@ -66,8 +66,7 @@ class User
   end
 
   def update_by_admin(attributes)
-    assign_attributes(attributes.slice(:name, :email, :phone, :display_name, :instagram_url))
-    prepare_admin_public_profile
+    assign_attributes(attributes.slice(:name, :email, :phone, *PublicProfile::FIELDS))
     self.email = email.to_s.strip.downcase
     clear_email_authentication if email_changed?
     save
