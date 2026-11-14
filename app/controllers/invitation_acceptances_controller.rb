@@ -44,7 +44,7 @@ class InvitationAcceptancesController < ApplicationController
 
   def finish_acceptance
     @user = @acceptance.call
-    start_session(@user)
+    start_session(@user, remember_me: current_user == @user && session[:remember_me])
     redirect_to venue_path(@invitation.venue), notice: t('invitations.accepted')
   end
 

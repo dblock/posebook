@@ -25,7 +25,8 @@ RSpec.describe 'Password recovery', :aggregate_failures, :database, type: :reque
   it 'resets a password, rejects replay, and invalidates all existing sessions' do
     user = create_user
     other_client = ActionDispatch::Integration::Session.new(Rails.application)
-    sign_in(user, client: other_client)
+    other_client.post(session_path, params: { email: user.email, password: DatabaseHelpers::TEST_PASSWORD,
+                                              remember_me: '1' })
     token = reset_token(user)
     patch password_reset_path(token), params: { user: { password: 'a new sufficiently long password',
                                                         password_confirmation: 'a new sufficiently long password' } }

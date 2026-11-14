@@ -45,6 +45,7 @@ GitHub
 hostname
 href
 Hotwire
+httponly
 HTTPS
 IANA
 idempotency
@@ -106,6 +107,7 @@ RSpec
 RuboCop
 RubyGems
 runtime
+samesite
 setOnInsert
 SHA
 signup
