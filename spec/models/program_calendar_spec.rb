@@ -64,4 +64,17 @@ RSpec.describe ProgramCalendar, :aggregate_failures do
       expect(calendar.blocked_reason(Date.new(2027, 3, 14))).to eq('Not a scheduled day')
     end
   end
+
+  it 'blocks nonexistent end times and calculates actual elapsed time across daylight saving' do
+    travel_to Time.utc(2027, 3, 8, 15) do
+      program.available_weekdays = ['6']
+      program.start_time = '23:00'
+      program.end_time = '02:30'
+      calendar = described_class.new(program)
+      expect(calendar.blocked_reason(Date.new(2027, 3, 13))).to eq('End time unavailable because of daylight saving')
+      program.end_time = '03:30'
+      schedule = ProgramSchedule.new(program)
+      expect(schedule.ends_at(Date.new(2027, 3, 13)) - schedule.starts_at(Date.new(2027, 3, 13))).to eq(3.5.hours)
+    end
+  end
 end

@@ -35,7 +35,9 @@ class BookingGenderRule
   end
 
   def scheduled?(date)
-    @schedule.starts_at(date).present?
+    start = @schedule.starts_at(date)
+    @schedule.ends_at(date) if start
+    start.present?
   rescue ArgumentError
     false
   end

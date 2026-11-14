@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module ProgramCalendarHelper
+  include ScheduleTimeHelper
+
   def booking_participant_name(participant, manager: false)
     manager && participant.public_profile_private? ? participant.name : participant.public_name
   end
@@ -58,7 +60,7 @@ module ProgramCalendarHelper
 
   def program_schedule_summary(program)
     weekdays = program.available_weekdays.sort_by(&:to_i).map { |day| Date::DAYNAMES[day.to_i] }.to_sentence
-    "#{weekdays} at #{format_start_time(program.start_time)} (#{program.time_zone})"
+    "#{weekdays} at #{regular_time_range(program)} (#{program.time_zone})"
   end
 
   def format_start_time(clock)
@@ -66,15 +68,37 @@ module ProgramCalendarHelper
   end
 
   def booking_time(booking)
-    booking.scheduled_start.in_time_zone(booking.time_zone).strftime('%-I:%M %p %Z')
+    start = booking.scheduled_start.in_time_zone(booking.time_zone)
+    return start.strftime('%-I:%M %p %Z') unless booking.scheduled_ends_at
+
+    time_range(start, booking.scheduled_ends_at.in_time_zone(booking.time_zone), zone: true)
   end
 
   def calendar_time(calendar, date)
     booking = calendar.displayed_bookings[date]
-    return booking.scheduled_start.in_time_zone(calendar.program.time_zone).strftime('%-I:%M %p') if booking
+    return calendar_booking_time(booking) if booking
 
+    scheduled_calendar_time(calendar, date)
+  end
+
+  def scheduled_calendar_time(calendar, date)
     clock = calendar.schedule.time_for(date)
-    format_start_time(clock) if clock
+    return unless clock
+
+    start = calendar.schedule.starts_at(date)
+    ending = calendar.schedule.ends_at(date)
+    return format_start_time(clock) unless ending
+
+    time_range(start.in_time_zone(calendar.program.time_zone), ending.in_time_zone(calendar.program.time_zone))
+  rescue ArgumentError
+    nil
+  end
+
+  def calendar_booking_time(booking)
+    start = booking.scheduled_start.in_time_zone(booking.time_zone)
+    return start.strftime('%-I:%M %p') unless booking.scheduled_ends_at
+
+    time_range(start, booking.scheduled_ends_at.in_time_zone(booking.time_zone))
   end
 
   def calendar_month_path(calendar, month, changing_booking = nil)

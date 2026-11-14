@@ -85,4 +85,22 @@ RSpec.describe 'Booking schedules', :aggregate_failures, :database, type: :reque
     expect(response).to have_http_status(:unprocessable_content)
     expect(program.reload.start_time).to eq('19:15')
   end
+
+  it 'displays regular and dated overnight duration, and permits clearing the dated end time' do
+    sign_in(create_user(roles: ['system_admin']))
+    patch program_path(program), params: { program: { start_time: '23:00', end_time: '01:30' } }
+    expect(response).to redirect_to(program_path(program))
+    get program_path(program)
+    expect(response.body).to include('11:00 PM - 1:30 AM next day (2 hours 30 min)')
+    expect(response.parsed_body.at_css('[data-date="2026-11-16"]').text)
+      .to include('11:00 PM - 1:30 AM next day (2 hours 30 min)')
+    save_day(start_time: '22:00', end_time: '00:00')
+    get program_path(program)
+    expect(response.parsed_body.at_css('[data-date="2026-11-16"]').text)
+      .to include('10:00 PM - 12:00 AM next day (2 hours)')
+    save_day(start_time: '22:00', end_time: '')
+    get program_path(program)
+    expect(response.parsed_body.at_css('[data-date="2026-11-16"]').text).to include('10:00 PM')
+    expect(response.parsed_body.at_css('[data-date="2026-11-16"]').text).not_to include('hours')
+  end
 end

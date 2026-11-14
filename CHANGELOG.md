@@ -54,4 +54,5 @@
 - [#56](https://github.com/dblock/posebook/pull/56): Add compact clipboard buttons for private invitation links, contact details, Instagram handles, addresses, and venue/program sharing links with accessible success and failure feedback - [@dblock](https://github.com/dblock).
 - [#59](https://github.com/dblock/posebook/pull/59): Make recipient email optional for all invitation types, restrict emailed invitations to that address, and preserve links while mismatched signed-in accounts log out and switch - [@dblock](https://github.com/dblock).
 - [#60](https://github.com/dblock/posebook/pull/60): Establish structured booking-rule decisions with stable codes, localized messages, and rule-owned organizer override policy without changing booking behavior - [@dblock](https://github.com/dblock).
+- [#62](https://github.com/dblock/posebook/pull/62): Add optional regular and one-off session end times, overnight duration, and completion at the scheduled end - [@dblock](https://github.com/dblock).
 - Your contribution here.

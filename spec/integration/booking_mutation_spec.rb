@@ -96,6 +96,21 @@ RSpec.describe BookingMutation, :aggregate_failures, :database do
     expect(BookingClaim.where(program_id: program.id).count).to eq(1)
   end
 
+  it 'completes at the optional end instant and releases its claim without ending the prior day' do
+    program = create_program(time_zone: 'America/New_York', start_time: '23:00', end_time: '01:30')
+    user = create_user
+    grant_participant_access(program, user)
+    booking = track_booking(attempt(program, user, '2026-11-16'))
+    expect(booking.scheduled_ends_at).to eq(Time.utc(2026, 11, 17, 6, 30))
+    travel_to Time.utc(2026, 11, 17, 6, 29)
+    expect(booking.reload.display_status).not_to eq('Completed')
+    expect(BookingClaim.where(booking_id: booking.id)).to exist
+    travel_to Time.utc(2026, 11, 17, 6, 30)
+    expect(booking.reload.display_status).to eq('Completed')
+    expect(attempt(program, user, '2026-11-23')).to be_nil
+    expect(BookingClaim.where(booking_id: booking.id)).not_to exist
+  end
+
   it 'keeps the one-upcoming-booking rule program-local' do
     user = create_user
     programs = Array.new(2) { create_program }
