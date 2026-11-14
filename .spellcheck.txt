@@ -25,7 +25,6 @@ ProgramMembership
 ProgramRoster
 ProgramScheduleException
 ParticipantInvitation
-DrawingSessionMembership
 Doubrovkine
 Enochs
 env

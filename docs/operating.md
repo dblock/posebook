@@ -15,7 +15,7 @@ bin/setup --skip-server
 bin/dev
 ```
 
-`bin/setup` converts legacy drawing-session/model records to programs/participants/bookings, splits legacy venues into locations and recurring programs, creates MongoDB indexes, and backfills both slug domains. Set `MONGODB_URI` if the development database is not `mongodb://127.0.0.1:27017/posebook_development`. Set `MONGODB_TEST_URI` to a separate test database named `posebook_test` or beginning with `posebook_test_`. Rails does not load `.env` files automatically; `.env.example` contains local examples.
+`bin/setup` creates declared MongoDB indexes; it does not run historical migrations or slug backfills. Normal venue and program saves generate slugs. Set `MONGODB_URI` if the development database is not `mongodb://127.0.0.1:27017/posebook_development`. Set `MONGODB_TEST_URI` to a separate test database named `posebook_test` or beginning with `posebook_test_`. Rails does not load `.env` files automatically; `.env.example` contains local examples.
 
 ## Configuration
 
@@ -37,7 +37,7 @@ Production is continuously updated: each production update replaces the currentl
 
 Configure the Dockerfile, terminate TLS at the host's proxy, and store `MONGODB_URI`, `SECRET_KEY_BASE`, and any SMTP password as encrypted settings. The MongoDB user needs permission to create and remove indexes. The production image listens on port `3000`; `/up` checks application liveness, not database readiness.
 
-At startup, the production entry point runs `programs:migrate_schema`, splits legacy venues into locations and recurring programs, creates declared indexes, backfills venue/program slugs, and migrates legacy user Instagram URL fields to normalized handles. Conversion happens automatically before serving requests and stops startup on failure; no manual data step is needed. The database account needs permission to rename collections within its database and create/remove indexes. Follow [Upgrading](../UPGRADING.md), including stopping the old application before starting the new schema. Preserve MongoDB replica-set connection options from the provider and do not set `directConnection=true`, which disables transaction support.
+At startup, the production entry point creates declared indexes and then starts the HTTP server. It no longer converts collections, fields, roles, or Instagram data, and does not backfill slugs. Follow [Upgrading](../UPGRADING.md): the sole instance must finish the conversion from PR #52 before deploying this version. Normal profile edits still accept Instagram handles or profile URLs. Preserve MongoDB replica-set connection options from the provider and do not set `directConnection=true`, which disables transaction support.
 
 After a blank deployment, register the first account promptly; public registration closes once the first account exists. After each production update, verify the live site and relevant user flows. Coordinate database migrations with application compatibility; rolling back application code does not roll back data changes.
 
