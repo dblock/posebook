@@ -15,6 +15,7 @@ RSpec.configure do |config|
     User.create_indexes
     Venue.create_indexes
     HistoryTracker.create_indexes
+    VenueScheduleException.create_indexes
     VenueMembership.create_indexes
     ModelInvitation.create_indexes
     ModelBooking.create_indexes

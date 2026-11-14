@@ -123,6 +123,7 @@ USD
 UTC
 Venmo
 VenueMembership
+VenueScheduleException
 workflow
 workflows
 worktree

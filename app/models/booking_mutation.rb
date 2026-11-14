@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class BookingMutation
+  include VenueScheduleLock
+
   class Invalid < StandardError; end
   class Conflict < StandardError; end
 
@@ -45,12 +47,12 @@ class BookingMutation
 
   private
 
-  def run
+  def run(&)
     raise Invalid, I18n.t('bookings.model_required') unless @user.active? && @venue.model?(@user)
 
     # Only disposable claims expire; model booking history is never removed.
     ModelBookingClaim.collection.find(venue_id: @venue.id, ends_at: { '$lte' => Time.current }).delete_many
-    ModelBooking.with_session { |session| session.with_transaction { yield session } }
+    with_schedule_lock(&)
     @booking
   rescue Mongo::Error::OperationFailure => e
     raise unless e.code == 11_000
@@ -84,6 +86,7 @@ class BookingMutation
 
   def create_record(date, previous: nil)
     ModelBooking.create!(venue: @venue, user: @user, date: date, time_zone: @venue.time_zone,
+                         starts_at: VenueSchedule.new(@venue).starts_at(date),
                          ends_at: (date + 1).in_time_zone(@venue.time_zone).utc, previous_booking: previous)
   end
 end

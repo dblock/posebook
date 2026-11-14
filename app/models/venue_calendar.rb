@@ -1,13 +1,14 @@
 # frozen_string_literal: true
 
 class VenueCalendar
-  attr_reader :venue, :today, :last_date, :month
+  attr_reader :venue, :today, :last_date, :month, :schedule
 
   def initialize(venue, month: nil)
     @venue = venue
     @today = Time.current.in_time_zone(venue.time_zone).to_date
     @last_date = today.advance(months: venue.booking_horizon_months)
     @month = selected_month(month)
+    @schedule = VenueSchedule.new(venue)
   end
 
   def weeks
@@ -16,9 +17,13 @@ class VenueCalendar
 
   def blocked_reason(date)
     return 'Outside booking window' unless date.between?(today, last_date)
-    return 'Not a posing day' unless venue.available_weekdays.include?(date.wday.to_s)
+    return "Closed: #{schedule.exceptions[date].reason}" if schedule.exceptions[date]&.mode == 'closed'
+    return 'Not a posing day' unless schedule.time_for(date)
 
+    schedule.starts_at(date)
     nil
+  rescue ArgumentError
+    'Start time unavailable because of daylight saving'
   end
 
   def bookings
