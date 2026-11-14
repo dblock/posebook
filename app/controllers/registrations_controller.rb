@@ -9,7 +9,9 @@ class RegistrationsController < ApplicationController
   end
 
   def create
-    @user = User.bootstrap(params.expect(user: %i[name email password password_confirmation]))
+    attributes = params.expect(user: %i[name email password password_confirmation
+                                        display_name instagram_url instagram_tagging_allowed])
+    @user = User.bootstrap(attributes)
     if @user.persisted?
       start_session(@user)
       redirect_to root_path, notice: t('accounts.created')

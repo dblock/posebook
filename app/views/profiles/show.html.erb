@@ -4,6 +4,9 @@
     <dt>Name</dt><dd><%= @user.name %></dd>
     <dt>Email</dt><dd><%= @user.email %></dd>
     <dt>Phone (unverified)</dt><dd><%= @user.phone.presence || "Not provided" %></dd>
+    <dt>Public Display Name</dt><dd><%= @user.public_name %><%= " (using your name)" if @user.display_name.blank? %></dd>
+    <dt>Instagram</dt><dd><% if (url = InstagramProfile.normalize(@user.instagram_url)) %><%= link_to url, url, rel: "noopener noreferrer" %><% else %>Not provided<% end %></dd>
+    <dt>Public Instagram Tagging</dt><dd><%= @user.instagram_tagging_allowed? ? "Allowed: username and link may be public in announcements" : "Not allowed: Instagram stays private" %></dd>
   </dl>
   <% if @user.pending_email.present? %>
     <p>Verification pending for <%= @user.pending_email %>. Your current email is still <%= @user.email %>.</p>

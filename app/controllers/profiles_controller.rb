@@ -9,7 +9,8 @@ class ProfilesController < ApplicationController
   def edit; end
 
   def update
-    attributes = params.expect(user: %i[name email phone current_password]).to_h.symbolize_keys
+    attributes = params.expect(user: %i[name email phone current_password display_name instagram_url
+                                        instagram_tagging_allowed]).to_h.symbolize_keys
     if @user.update_profile(attributes)
       redirect_to profile_path, notice: t('profiles.updated')
     else

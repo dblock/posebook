@@ -90,12 +90,14 @@ RSpec.describe 'Model invitations', :aggregate_failures, :database, type: :reque
 
   it 'registers an invited user with model access only at the inviting venue' do
     invitation = create_model_invitation(create_venue, create_user(roles: ['system_admin']))
-    attributes = user_attributes(roles: ['system_admin'])
+    attributes = user_attributes(roles: ['system_admin'], display_name: 'Artist Model', instagram_url: '@Artist.Model',
+                                 instagram_tagging_allowed: '1')
     post invited_registration_path, params: { token: invitation.token, user: attributes }
     user = track_record(User.find_by(email: attributes[:email]))
     membership = track_model_membership(invitation.venue, user)
     expect(response).to redirect_to(venue_path(invitation.venue))
-    expect(user.roles).to be_empty
+    expect(user).to have_attributes(roles: [], display_name: 'Artist Model', instagram_tagging_allowed: true,
+                                    instagram_url: 'https://www.instagram.com/artist.model/')
     expect(membership.roles).to eq(['model'])
     expect(invitation.reload.used_by_id).to eq(user.id)
     get venue_path(invitation.venue)
