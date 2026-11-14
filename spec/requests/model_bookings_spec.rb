@@ -19,6 +19,30 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
     track_booking(BookingMutation.new(venue: at, user: user).book(date: date))
   end
 
+  it 'renders an independently navigable calendar without changing booking actions' do
+    prepare_model
+    get venue_path(venue, month: '2026-12')
+    calendar = response.parsed_body.at_css('[data-calendar]')
+    expect(calendar.at_css('[data-calendar-month]').text).to eq('December 2026')
+    expect(calendar.css('a[data-calendar-navigation]').pluck('href'))
+      .to eq([venue_path(venue, month: '2026-11'), venue_path(venue, month: '2027-01')])
+    expect(calendar.css('form').pluck('action').uniq).to eq([venue_model_bookings_path(venue)])
+    expect(response.parsed_body.at_css('script[defer]')).to be_present
+  end
+
+  it 'keeps enhanced month navigation and replacement dates scoped to the current change form' do
+    prepare_model
+    original = book
+    get edit_venue_model_booking_path(venue, original, month: '2026-12')
+    calendar = response.parsed_body.at_css('[data-calendar]')
+    expect(calendar.css('a[data-calendar-navigation]').pluck('href'))
+      .to eq([edit_venue_model_booking_path(venue, original, month: '2026-11'),
+              edit_venue_model_booking_path(venue, original, month: '2027-01')])
+    expect(calendar.css('button[form]').pluck('form').uniq).to eq(['booking-change-form'])
+    expect(calendar.css('form')).to be_empty
+    expect(response.parsed_body.at_css('#booking-change-form')).to be_present
+  end
+
   it 'requires authentication, venue access, and a model membership before booking' do
     create_user
     post venue_model_bookings_path(venue), params: { date: '2026-11-16' }
