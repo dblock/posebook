@@ -17,7 +17,9 @@ magick app/assets/images/posebook-logo.png -resize 64x64 -gravity center -backgr
 
 Inspect the full portrait, the header at its actual size, and the favicon at 16 and 32 pixels after artwork changes. Keep source artwork outside the public asset pipeline.
 
-Displayed states share compact status labels: green for positive states, sanguine for canceled/revoked/inactive states, amber for pending/paused/attention states, and warm gray for neutral states. Booking, calendar, invitation, roster, account, schedule, and photo-visibility displays use the same helper and styles. Color never replaces the visible status text. State logic, private attendance warnings, and showing Confirmed only once are unchanged; retained audit explanations and form options remain ordinary text rather than current-state labels.
+The interface uses the official daisyUI 5.8.0 Caramellatte theme, with cream surfaces, earthy brown text, rounded fields, serif headings, and sanguine primary controls matching the drawing. Its MIT-licensed theme CSS is stored locally with its license and source URL; semantic application styles use those variables without a Tailwind compiler, Node dependency, runtime CDN, or external fonts. The theme stays light regardless of the device's dark-mode preference. Calendars retain their existing pale-green/darker-green/gray meaning. Calendars and wide tables scroll inside labeled, keyboard-accessible regions on narrow screens rather than breaking status words into tiny columns.
+
+Displayed states share compact status labels: green for positive states, sanguine for canceled/revoked/inactive states, amber for pending/paused/attention states, and warm cream for neutral states. Booking, calendar, invitation, roster, account, schedule, and photo-visibility displays use the same helper and styles. Color never replaces the visible status text. State logic, private attendance warnings, and showing Confirmed only once are unchanged; retained audit explanations and form options remain ordinary text rather than current-state labels.
 
 ## Accounts and Recovery
 

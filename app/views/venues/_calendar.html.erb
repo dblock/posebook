@@ -21,16 +21,19 @@
     <% end %>
   </nav>
   <p>Dates and times use <%= calendar.venue.time_zone %>. Available days are pale green, booked days are darker green, and unavailable days are grey.</p>
-  <table class="calendar">
-    <thead><tr><% Date::ABBR_DAYNAMES.each do |day| %><th scope="col"><%= day %></th><% end %></tr></thead>
-    <tbody>
-      <% calendar.weeks.each do |week| %>
-        <tr>
-          <% week.each do |date| %>
-            <%= render "venues/calendar_day", calendar: calendar, date: date, public_view: public_view %>
-          <% end %>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
+  <p class="scroll-hint">Scroll horizontally to view all days.</p>
+  <div class="table-scroll" role="region" aria-label="Calendar dates" tabindex="0">
+    <table class="calendar">
+      <thead><tr><% Date::ABBR_DAYNAMES.each do |day| %><th scope="col"><%= day %></th><% end %></tr></thead>
+      <tbody>
+        <% calendar.weeks.each do |week| %>
+          <tr>
+            <% week.each do |date| %>
+              <%= render "venues/calendar_day", calendar: calendar, date: date, public_view: public_view %>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
 </section>

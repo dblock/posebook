@@ -1,11 +1,115 @@
+html[data-theme="caramellatte"] {
+  --color-primary: #984b3b;
+  --color-primary-content: #fffaf5;
+  --line: color-mix(in srgb, var(--color-secondary) 20%, var(--color-base-100));
+  --field-border: color-mix(in srgb, var(--color-secondary) 50%, var(--color-base-100));
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
-  margin: 4rem auto;
-  padding: 0 1.5rem;
-  max-width: 42rem;
+  margin: 0;
   font-family: system-ui, sans-serif;
   line-height: 1.6;
-  color: #242424;
-  background: #faf8f4;
+  color: var(--color-base-content);
+  background: var(--color-base-100);
+}
+
+.site-header {
+  border-bottom: 1px solid var(--line);
+  background: var(--color-base-200);
+}
+
+.site-nav,
+.page-shell {
+  width: min(100%, 74rem);
+  margin: 0 auto;
+  padding: 1.5rem 2rem;
+}
+
+.page-shell {
+  padding-top: 3rem;
+  padding-bottom: 5rem;
+}
+
+main {
+  min-width: 0;
+}
+
+main:has(> form:not(.button_to)):not(:has(table, .photo-gallery)) {
+  max-width: 42rem;
+  margin-inline: auto;
+}
+
+h1,
+h2,
+h3 {
+  font-family: Georgia, "Times New Roman", serif;
+  color: var(--color-secondary);
+  font-weight: 400;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+h1 {
+  margin: 0 0 1.5rem;
+  font-size: clamp(2.1rem, 4vw, 3.4rem);
+  letter-spacing: -0.035em;
+}
+
+h2 {
+  margin: 2rem 0 1rem;
+  font-size: 2rem;
+}
+
+h3 {
+  font-size: 1.4rem;
+}
+
+p,
+li,
+dd {
+  overflow-wrap: anywhere;
+}
+
+a {
+  color: var(--color-primary);
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 1px;
+}
+
+a:hover {
+  color: var(--color-secondary);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 4px;
+}
+
+section {
+  margin-block: 2.5rem;
+}
+
+dt,
+label {
+  font-weight: 600;
+  color: var(--color-secondary);
+}
+
+dl {
+  display: grid;
+  grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr);
+  gap: 0.6rem 1.5rem;
+  margin-block: 1.5rem;
+}
+
+dd {
+  margin: 0;
 }
 
 nav {
@@ -15,13 +119,49 @@ nav {
   gap: 0.75rem;
 }
 
+.site-nav {
+  gap: 1rem 2rem;
+}
+
+.nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  margin-left: auto;
+}
+
+.nav-links a {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.nav-links a:hover {
+  text-decoration: underline;
+}
+
+.nav-account {
+  font-size: 0.875rem;
+}
+
+.site-nav .button_to {
+  margin: 0;
+}
+
+.site-nav button {
+  background: transparent;
+  color: var(--color-secondary);
+  border-color: var(--field-border);
+  box-shadow: none;
+}
+
 .brand {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  color: inherit;
+  color: var(--color-secondary);
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 1.875rem;
+  font-size: 2.25rem;
   line-height: 1;
   letter-spacing: -0.04em;
   text-decoration: none;
@@ -38,9 +178,34 @@ nav {
   text-underline-offset: 0.15em;
 }
 
+.flash,
+.form-errors,
+.attendance-panel,
+.rescheduling-notice {
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-box);
+  background: var(--color-base-200);
+}
+
+.flash {
+  margin: 0 0 2rem;
+}
+
+.flash-alert,
+.form-errors {
+  background: #f4dfd9;
+  color: #7b3426;
+  border-color: #984b3b;
+}
+
+.form-errors ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
 .rescheduling-notice {
   margin: 1rem 0;
-  padding: 0.75rem 1rem;
   border: 1px solid #d6bd80;
   border-left-width: 4px;
   background: #fff3d4;
@@ -56,9 +221,6 @@ nav {
 
 .attendance-panel {
   margin: 1rem 0;
-  padding: 0.75rem 1rem;
-  border: 1px solid #ccc;
-  background: #fff;
 }
 
 .status-label {
@@ -67,7 +229,7 @@ nav {
   max-width: 100%;
   margin: 0.25rem 0;
   padding: 0.15rem 0.35rem;
-  border-radius: 0.2rem;
+  border-radius: var(--radius-selector);
   font-size: 0.85em;
   font-weight: 600;
   line-height: 1.35;
@@ -91,8 +253,8 @@ nav {
 }
 
 .status-label-neutral {
-  background: #e9e7e3;
-  color: #45413c;
+  background: var(--color-base-200);
+  color: var(--color-secondary);
 }
 
 .attendance-warning {
@@ -105,15 +267,86 @@ select {
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
-  padding: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius-field);
+  color: var(--color-secondary);
+  background: var(--color-base-100);
   font: inherit;
+}
+
+textarea {
+  resize: vertical;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-primary);
+  width: 1.1rem;
+  height: 1.1rem;
+  vertical-align: middle;
+}
+
+input::file-selector-button {
+  margin-right: 0.75rem;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius-field);
+  background: var(--color-base-200);
+  color: var(--color-secondary);
+  font: inherit;
+  cursor: pointer;
 }
 
 button,
 input[type="submit"] {
-  padding: 0.5rem 0.75rem;
+  min-height: 2.75rem;
+  max-width: 100%;
+  padding: 0.6rem 1.1rem;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-field);
+  background: var(--color-primary);
+  color: var(--color-primary-content);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--color-secondary) 25%, transparent);
   font: inherit;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: normal;
   cursor: pointer;
+}
+
+button:hover:not(:disabled),
+input[type="submit"]:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-primary) 85%, var(--color-secondary));
+  color: var(--color-primary-content);
+}
+
+button:disabled,
+input[type="submit"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+form:not(.button_to) > p {
+  margin-block: 1.25rem;
+}
+
+small,
+.model-email,
+.scroll-hint {
+  font-size: 0.85rem;
+}
+
+details {
+  margin-block: 0.75rem;
+}
+
+summary {
+  color: var(--color-secondary);
+  cursor: pointer;
+  font-weight: 600;
 }
 
 .public-sharing {
@@ -136,6 +369,17 @@ table {
 .table-scroll {
   max-width: 100%;
   overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-box);
+}
+
+.table-scroll table {
+  min-width: 42rem;
+}
+
+.scroll-hint {
+  display: none;
+  margin: 0.5rem 0;
 }
 
 .table-scroll .status-label {
@@ -144,8 +388,40 @@ table {
 
 th,
 td {
-  padding: 0.5rem;
-  border-bottom: 1px solid #ccc;
+  padding: 0.9rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+th {
+  background: var(--color-base-200);
+  color: var(--color-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+[data-calendar] {
+  padding: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-box);
+  background: var(--color-base-200);
+}
+
+[data-calendar] h2 {
+  margin-top: 0;
+}
+
+[data-calendar] nav {
+  gap: 1rem;
+  margin-block: 1.5rem;
+}
+
+[data-calendar-month] {
+  color: var(--color-secondary);
 }
 
 .calendar {
@@ -154,8 +430,25 @@ td {
 }
 
 .calendar td {
+  padding: 0.65rem;
   vertical-align: top;
   overflow-wrap: anywhere;
+  height: 7rem;
+  border-right: 1px solid var(--line);
+}
+
+.calendar td:last-child {
+  border-right: 0;
+}
+
+.calendar .status-label {
+  border-radius: 0.35rem;
+  font-size: 0.75rem;
+}
+
+.calendar a {
+  display: block;
+  margin-top: 0.4rem;
 }
 
 .calendar time,
@@ -179,17 +472,48 @@ td {
 
 .calendar button {
   font-size: inherit;
-  padding: 0.2rem;
+  min-height: 2rem;
+  margin-top: 0.4rem;
+  padding: 0.3rem 0.55rem;
 }
 
-@media (max-width: 30rem) {
-  .calendar th,
-  .calendar td {
-    padding: 0.4rem 0.2rem;
+@media (max-width: 40rem) {
+  .site-nav,
+  .page-shell {
+    padding-inline: 1.25rem;
   }
 
-  .calendar .status-label {
-    padding: 0.15rem;
+  .page-shell {
+    padding-top: 2rem;
+  }
+
+  .nav-links {
+    margin-left: 0;
+    width: 100%;
+    gap: 0.75rem 1.25rem;
+  }
+
+  .nav-account {
+    margin-left: auto;
+    max-width: 45%;
+    overflow-wrap: anywhere;
+  }
+
+  dl {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+
+  dd {
+    margin-bottom: 0.75rem;
+  }
+
+  [data-calendar] {
+    padding: 1rem;
+  }
+
+  .scroll-hint {
+    display: block;
   }
 }
 
@@ -206,7 +530,7 @@ td {
 
 .model-roster th,
 .model-roster td {
-  padding: 0.4rem;
+  padding: 0.9rem;
   vertical-align: top;
   overflow-wrap: anywhere;
 }
@@ -228,7 +552,8 @@ td {
 
 .model-actions button,
 .model-actions input[type="submit"] {
-  padding: 0.25rem 0.4rem;
+  min-height: 2.25rem;
+  padding: 0.4rem 0.7rem;
   font-size: inherit;
 }
 
@@ -259,8 +584,8 @@ td {
   height: auto;
   aspect-ratio: 1;
   object-fit: cover;
-  border-radius: 0.25rem;
-  background: #e9e7e3;
+  border-radius: var(--radius-box);
+  background: var(--color-base-200);
 }
 
 .photo-actions {

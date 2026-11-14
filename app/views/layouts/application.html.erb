@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="caramellatte">
   <head>
     <title><%= content_for(:title) || "Posebook" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -14,22 +14,28 @@
   </head>
 
   <body>
-    <nav aria-label="Account">
-      <%= link_to root_path, class: "brand" do %>
-        <%= image_tag "posebook-logo.png", alt: "", width: 64, height: 64 %>
-        <span>Posebook</span>
+    <header class="site-header">
+      <nav class="site-nav" aria-label="Account">
+        <%= link_to root_path, class: "brand" do %>
+          <%= image_tag "posebook-logo.png", alt: "", width: 64, height: 64 %>
+          <span>Posebook</span>
+        <% end %>
+        <% if current_user %>
+          <span class="nav-account"><%= current_user.name %></span>
+          <div class="nav-links">
+            <%= link_to "Profile", profile_path %>
+            <%= link_to "Venues", venues_path %>
+            <%= link_to "Users", admin_users_path if current_user.system_admin? %>
+            <%= button_to "Sign Out", session_path, method: :delete %>
+          </div>
+        <% end %>
+      </nav>
+    </header>
+    <div class="page-shell">
+      <% flash.each do |type, message| %>
+        <p class="flash <%= "flash-alert" if type == "alert" %>" role="<%= type == "alert" ? "alert" : "status" %>"><%= message %></p>
       <% end %>
-      <% if current_user %>
-        <span><%= current_user.name %></span>
-        <%= link_to "Profile", profile_path %>
-        <%= link_to "Venues", venues_path %>
-        <%= link_to "Users", admin_users_path if current_user.system_admin? %>
-        <%= button_to "Sign Out", session_path, method: :delete %>
-      <% end %>
-    </nav>
-    <% flash.each do |type, message| %>
-      <p role="<%= type == "alert" ? "alert" : "status" %>"><%= message %></p>
-    <% end %>
-    <%= yield %>
+      <%= yield %>
+    </div>
   </body>
 </html>
