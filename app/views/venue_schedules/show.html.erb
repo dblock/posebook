@@ -1,0 +1,33 @@
+<main>
+  <h1>Drawing Schedule</h1>
+  <p><%= link_to @venue.name, venue_path(@venue) %> normally meets at <%= drawing_time(@venue.start_time) %> in <%= @venue.time_zone %>.</p>
+  <p>Open an extra date, change one drawing's time, close a date, or restore its regular weekday schedule. A short explanation is required and retained. Closing a booked date cancels that booking; time changes keep the model booked. Automated notifications are not available yet.</p>
+  <%= render "shared/errors", record: @exception %>
+  <%= form_with model: @exception, scope: :schedule, url: venue_schedule_path(@venue), method: :patch do |form| %>
+    <p><%= form.label :date %><br><%= form.date_field :date, required: true, min: @calendar.today, max: @calendar.last_date %></p>
+    <p><%= form.label :mode, "Change" %><br><%= form.select :mode, [["Open / Change Time", "open"], ["Close Date", "closed"], ["Use Regular Schedule", "regular"]] %></p>
+    <p><%= form.label :start_time, "Start time" %><br><%= form.time_field :start_time, step: 60 %><br><small>Required for Open / Change Time; ignored for the other changes. Uses <%= @venue.time_zone %>.</small></p>
+    <p><%= form.label :reason, "Explanation" %><br><%= form.text_area :reason, required: true, maxlength: 200, rows: 2 %></p>
+    <%= form.submit "Save Schedule" %>
+    <%= link_to "Cancel", venue_path(@venue) %>
+  <% end %>
+  <h2>Upcoming Exceptions</h2>
+  <% if @exceptions.any? %>
+    <table>
+      <thead><tr><th>Date</th><th>Change</th><th>Time</th><th>Explanation</th><th></th></tr></thead>
+      <tbody>
+        <% @exceptions.each do |exception| %>
+          <tr>
+            <td><%= exception.date.iso8601 %></td>
+            <td><%= exception.mode == "regular" ? "Regular schedule restored" : exception.mode.humanize %></td>
+            <td><%= drawing_time(exception.start_time) if exception.start_time %></td>
+            <td><%= exception.reason %></td>
+            <td><%= link_to "Edit", venue_schedule_path(@venue, date: exception.date.iso8601) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>No schedule exceptions.</p>
+  <% end %>
+</main>

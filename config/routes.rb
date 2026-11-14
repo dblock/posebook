@@ -14,6 +14,7 @@ Rails.application.routes.draw do
     resources :users, only: %i[index edit update]
   end
   resources :venues, except: :destroy do
+    resource :schedule, controller: 'venue_schedules', only: %i[show update]
     resources :model_invitations, controller: 'venue_invitations', only: %i[new create show destroy]
     resources :model_bookings, only: %i[create edit update] do
       get :cancellation, on: :member

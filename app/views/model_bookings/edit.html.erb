@@ -1,6 +1,6 @@
 <main>
   <h1>Change Your Posing Date</h1>
-  <p>Your current booking is <%= @booking.date.to_fs(:long) %> at <%= @venue.name %>. It stays reserved unless your new date is successfully booked.</p>
+  <p>Your current booking is <%= @booking.date.to_fs(:long) %> at <%= booking_time(@booking) %>, <%= @venue.name %>. It stays reserved unless your new date is successfully booked.</p>
   <%= form_with url: venue_model_booking_path(@venue, @booking), method: :patch, id: "booking-change-form" do %>
     <p><%= label_tag :reason, "Explanation" %><br><%= text_area_tag :reason, params[:reason], required: true, maxlength: 2000, rows: 3 %></p>
     <p>Provide an explanation, then choose an available date below.</p>

@@ -14,4 +14,5 @@
 - [#13](https://github.com/dblock/posebook/pull/13): Move venue organizer management to a separate page linked beside Edit Venue - [@dblock](https://github.com/dblock).
 - [#14](https://github.com/dblock/posebook/pull/14): Add editable name-derived venue slugs, readable venue URLs, and root shortcuts while preserving existing links - [@dblock](https://github.com/dblock).
 - [#15](https://github.com/dblock/posebook/pull/15): Store user and venue audit history with actor attribution and authentication-secret exclusions using mongoid-history - [@dblock](https://github.com/dblock).
+- [#16](https://github.com/dblock/posebook/pull/16): Add editable drawing start times and reasoned one-off openings, holiday closures, and time changes with retained booking history - [@dblock](https://github.com/dblock).
 - Your contribution here.

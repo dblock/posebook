@@ -16,8 +16,10 @@ class ModelBooking
   field :reason, type: String
   field :changed_at, type: Time
   field :changed_by_id, type: BSON::ObjectId
+  field :starts_at, type: Time
+  field :time_changes, type: Array, default: []
 
-  attr_readonly :venue_id, :user_id, :date, :time_zone, :ends_at, :previous_booking_id
+  attr_readonly :venue_id, :user_id, :date, :time_zone, :ends_at, :starts_at, :time_changes, :previous_booking_id
   index({ venue_id: 1, user_id: 1, date: -1 })
   index({ venue_id: 1, status: 1, ends_at: 1 })
   index({ venue_id: 1, date: -1, created_at: -1 })
@@ -32,6 +34,22 @@ class ModelBooking
 
   def display_status
     status == 'confirmed' && ends_at <= Time.current ? 'Completed' : status.humanize
+  end
+
+  def scheduled_start
+    starts_at || VenueSchedule.local_start(date, '18:30', time_zone)
+  end
+
+  def change_time!(start, explanation, actor, session:)
+    return if scheduled_start == start
+
+    change = { from: scheduled_start, to: start, reason: explanation, changed_at: Time.current,
+               changed_by_id: actor.id }
+    result = self.class.collection.find(_id: id, status: 'confirmed', ends_at: { '$gt' => Time.current }).update_one(
+      { '$set' => { starts_at: start, updated_at: Time.current },
+        '$push' => { time_changes: change } }, session: session
+    )
+    raise BookingMutation::Conflict, I18n.t('bookings.conflict') unless result.modified_count == 1
   end
 
   def close!(new_status, explanation, actor, session:)

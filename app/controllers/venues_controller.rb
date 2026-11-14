@@ -32,7 +32,8 @@ class VenuesController < ApplicationController
   end
 
   def update
-    if @venue.update(venue_params)
+    @venue = VenueSettingsUpdate.new(venue: @venue, user: current_user).call(venue_params)
+    if @venue.errors.empty?
       redirect_to @venue, notice: t('venues.updated')
     else
       render :edit, status: :unprocessable_content
@@ -60,7 +61,8 @@ class VenuesController < ApplicationController
   end
 
   def venue_params
-    params.expect(venue: [:name, :custom_slug, :address, :time_zone, :model_pay, :instructions, :booking_horizon_months,
+    params.expect(venue: [:name, :custom_slug, :address, :time_zone, :start_time, :model_pay, :instructions,
+                          :booking_horizon_months,
                           { available_weekdays: [] }])
   end
 end
