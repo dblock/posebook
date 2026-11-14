@@ -2,6 +2,7 @@ ActionMailer
 ActiveJob
 ActiveJob's
 ActiveRecord
+addToSet
 adminCommand
 AGENTS
 API
@@ -37,6 +38,7 @@ GitHub
 hostname
 Hotwire
 HTTPS
+IANA
 idempotency
 inline
 Instagram
@@ -50,6 +52,7 @@ liveness
 localhost
 lockfile
 lockfiles
+lookups
 matchers
 md
 MERCHANTABILITY
@@ -82,6 +85,7 @@ RSpec
 RuboCop
 RubyGems
 runtime
+setOnInsert
 SHA
 signup
 SMS
@@ -104,8 +108,11 @@ ubuntu
 unmerged
 untracked
 URI
+upsert
+USD
 UTC
 Venmo
+VenueMembership
 workflow
 workflows
 worktree

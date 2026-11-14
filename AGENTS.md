@@ -4,7 +4,7 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) and [DESIGN.md](DESIGN.md) before making
 
 ## Scope and Layout
 
-Posebook is an invitation-first Rails/Mongoid web application for figure drawing models and organizers. Payments, artist registration, and public model directories are out of scope. Accounts and email recovery exist; model booking and reminders do not. Preserve that distinction in documentation.
+Posebook is an invitation-first Rails/Mongoid web application for figure drawing models and organizers. Payments, artist registration, and public model directories are out of scope. Accounts, email recovery, settings, venues, and scoped organizer access exist; model booking and reminders do not. Preserve that distinction in documentation.
 
 Runtime code lives in `app/`, configuration in `config/`, request tests in `spec/requests/`, database integration tests in `spec/integration/`, and the tested workflow display-name checker in `script/` and `spec/script/`. Ruby 4.0.9 within 4.0 and Rails 8.1 are supported; test only MongoDB 8.0 to match the deployment target. Use public Rails, Mongoid, and provider APIs. Verify and prefer current stable releases when selecting or updating dependencies while preserving compatibility.
 
@@ -15,6 +15,8 @@ MongoDB is the only application database. Do not introduce Active Record, SQL-ba
 Use one User model with roles. Only blank-installation registration grants `system_admin`; its fixed document ID makes competing claims atomic. Public registration must close afterward until invitations exist. Never accept role fields in public account forms. Keep password hashing and reset-token expiry/single-use behavior intact; password reset must atomically change the digest, remove the token, and invalidate all sessions. Provider messaging consent requirements apply to future model notifications, not explicitly requested account recovery.
 
 Every model roster and schedule belongs to a venue. Future booking mutations must atomically prevent duplicate session claims and multiple upcoming bookings for the same model at the same venue. Store instants in UTC and calculate recurring sessions in the venue's time zone, including daylight saving changes. Keep contacts and model rosters private; filter email, phone, and authentication tokens from logs.
+
+Only system admins configure venues or grant/revoke organizer access. `manage_schedule` belongs to a venue membership, never global user roles. Scope organizer-facing venue queries through `Venue.visible_to`; never trust a URL or role form parameter for authorization. Preserve the unique venue/user membership index and atomic role grants/revocation. Revocation and deactivation retain membership/history; invitation-based account creation remains deferred.
 
 Tests use `MONGODB_TEST_URI`, never the development or production connection. The test database guard requires `posebook_test` or a `posebook_test_` prefix. Delete only records owned by a test, not entire collections or databases. Keep real network-provider calls out of tests.
 

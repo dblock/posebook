@@ -11,6 +11,9 @@ Rails.application.routes.draw do
   namespace :admin do
     resources :users, only: %i[index update]
   end
+  resources :venues, except: :destroy do
+    resources :organizers, controller: 'venue_organizers', only: %i[create destroy]
+  end
   resources :password_resets, param: :token, only: %i[new create edit update]
   get 'up' => 'rails/health#show', as: :rails_health_check
 end

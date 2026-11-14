@@ -5,5 +5,6 @@
   <% if current_user.system_admin? %>
     <p>You have the system admin role.</p>
   <% end %>
-  <p>Model invitations and booking are not available yet.</p>
+  <p><%= link_to "View Venues", venues_path %> to see the locations where you have schedule access.</p>
+  <p>Model invitations, scheduling, booking, and reminders are not available yet.</p>
 </main>
