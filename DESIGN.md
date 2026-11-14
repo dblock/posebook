@@ -6,6 +6,17 @@ Posebook coordinates invitation-first model registration, scheduling, and remind
 
 The application currently provides first-user registration, role-bearing user accounts, email/password login, email password recovery, account settings, deactivation/reactivation, venue configuration, scoped organizer/model access, personal model invitations, calendar booking with drawing start times and dated schedule exceptions, retained booking history, and a Rails `/up` liveness endpoint. `/up` proves application boot, not MongoDB connectivity. Configurable session end times and automated reminders are not implemented yet.
 
+The shared header pairs a serif Posebook wordmark with an original AI-generated sanguine portrait supplied by @dblock: a tightly cropped woman's face with natural proportions and detailed pencil shading. Transparent PNG assets supply the 64-pixel-square header image and a separate 64-pixel-square favicon through the local asset pipeline. The visible wordmark names the home link, and the image is decorative for screen readers. No external font or image service is required.
+
+The artwork is covered by the project's MIT license. Preserve the supplied raster unchanged in `artwork/posebook-logo-source.png`; it is not made of editable vector paths. The source contains neutral checkerboard pixels as well as transparency. Display assets recover the pencil strokes from their red-versus-blue color difference and render them as translucent sanguine ink, removing the checkerboard without filling the portrait's highlights. Regenerate the display assets with ImageMagick:
+
+```sh
+magick artwork/posebook-logo-source.png -channel A -fx 'a*max(0,min(1,(r-b-0.008)/0.42))' +channel -channel RGB -fill '#a34c33' -colorize 100 +channel -resize 256x256 -strip app/assets/images/posebook-logo.png
+magick app/assets/images/posebook-logo.png -resize 64x64 -gravity center -background none -extent 64x64 -strip app/assets/images/posebook-favicon.png
+```
+
+Inspect the full portrait, the header at its actual size, and the favicon at 16 and 32 pixels after artwork changes. Keep source artwork outside the public asset pipeline.
+
 ## Accounts and Recovery
 
 There is one `User` model, not a separate admin account type. A blank installation allows anyone to register the first user without an installation secret, as explicitly requested. That account receives `system_admin` in its global roles. Public registration closes once any user exists; subsequent accounts require a personal venue invitation. A fixed bootstrap document ID uses MongoDB's built-in unique `_id` constraint to prevent two concurrent first-user claims, without requiring a transaction or replica set.
@@ -132,4 +143,4 @@ Single-use, 30-day personal venue invitations support private links and optional
 
 Invitation and booking transactions require a MongoDB replica set; development and CI use a single MongoDB 8.0 replica-set node. Production packaging verifies an actual transaction rollback. Optional invitation-email failure preserves the private link for manual delivery; missing SMTP never pretends email was sent. Normal public registration remains closed.
 
-Version one excludes payments, artist registration, and public model directories. No logo or other artwork has been selected or created.
+Version one excludes payments, artist registration, and public model directories.

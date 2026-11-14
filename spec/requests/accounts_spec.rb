@@ -72,6 +72,14 @@ RSpec.describe 'Accounts', :aggregate_failures, :database, type: :request do
     get new_session_path
     expect(response.body).to include('Sign In', 'Forgot your password?', 'Remember me')
     expect(response.parsed_body.at_css('input[type="checkbox"][name="remember_me"]')['checked']).to be_nil
+    brand = response.parsed_body.at_css('nav a.brand')
+    expect(brand['href']).to eq(root_path)
+    expect(brand.text.strip).to eq('Posebook')
+    expect(brand.at_css('img')['alt']).to eq('')
+    expect(brand.at_css('img')['src']).to include('posebook-logo')
+    favicon = response.parsed_body.at_css('link[rel="icon"]')
+    expect(favicon['href']).to include('posebook-favicon')
+    expect(favicon['type']).to eq('image/png')
   end
 
   it 'uses ordinary sessions and renews browser persistence only after explicit opt-in' do

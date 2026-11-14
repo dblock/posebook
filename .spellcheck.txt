@@ -37,6 +37,7 @@ Enochs
 env
 entrypoint
 eval
+favicon
 fieldset
 fieldsets
 Gemfile
@@ -48,6 +49,7 @@ Hotwire
 httponly
 HTTPS
 IANA
+ImageMagick
 idempotency
 inline
 Instagram
@@ -114,6 +116,7 @@ signup
 SMS
 SMTP
 SQL
+src
 STARTTLS
 stderr
 stylesheet
@@ -143,6 +146,7 @@ VenueModelRoster
 VenueScheduleException
 workflow
 workflows
+wordmark
 worktree
 worktrees
 YAML

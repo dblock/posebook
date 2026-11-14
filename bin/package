@@ -106,6 +106,18 @@ begin
   stylesheet = response.body[/href="([^"]+\.css)"/, 1]
   raise 'The packaged stylesheet is missing' unless stylesheet && request(port, stylesheet).code == '200'
 
+  logo = response.body[/src="([^"]*posebook-logo[^"]+\.png)"/, 1]
+  favicon = response.body[/href="([^"]*posebook-favicon[^"]+\.png)"/, 1]
+  raise 'The packaged logo and favicon are missing' unless logo && favicon
+
+  [logo, favicon].each do |asset|
+    image_response = request(port, asset)
+    unless image_response.code == '200' && image_response['Content-Type'].start_with?('image/png') &&
+           image_response.body.b.start_with?("\x89PNG\r\n\x1a\n".b)
+      raise 'The packaged logo or favicon is unavailable'
+    end
+  end
+
   docker!('exec', database, 'mongosh', '--quiet', '--eval',
           'db.getSiblingDB("posebook_package").users.insertOne({name:"Legacy Model",email:"legacy@example.test",' \
           'instagram_url:"https://www.instagram.com/Legacy.Model/",instagram_tagging_allowed:true,' \
@@ -124,7 +136,7 @@ begin
   puts 'Production image passed monitoring configuration, photo processing/storage/deletion, ' \
        'handle migration, slug setup, rollback, ' \
        'indexes, registration, ' \
-       'stylesheet, and liveness checks.'
+       'stylesheet, logo/favicon, and liveness checks.'
 ensure
   if container
     puts docker!('logs', container)
