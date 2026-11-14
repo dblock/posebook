@@ -23,7 +23,7 @@ class BookingMutation
 
   def change(booking:, date:, reason:)
     run do |session|
-      original = active_booking(booking.id)
+      original = reschedulable_booking(booking.id)
       selected = available_date(date)
       raise Invalid, I18n.t('bookings.different_date') if selected == original.date
 
@@ -84,6 +84,13 @@ class BookingMutation
 
   def active_booking(id)
     ModelBooking.upcoming.where(venue_id: @venue.id, user_id: @user.id).find(id)
+  end
+
+  def reschedulable_booking(id)
+    booking = active_booking(id)
+    raise Invalid, I18n.t('bookings.rescheduling_locked') if booking.rescheduling_locked?
+
+    booking
   end
 
   def available_date(value)

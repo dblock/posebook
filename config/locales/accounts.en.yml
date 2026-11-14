@@ -7,7 +7,8 @@ en:
     already_scheduled: You already have an upcoming booking at this venue. Change or cancel it first.
     different_date: Choose a different available date.
     invalid_date: Choose an available date within this venue's booking window.
-    reason_required: Provide an explanation of 1 to 2000 characters.
+    reason_required: Please tell us what changed (up to 2000 characters).
+    rescheduling_locked: Your drawing is less than a week away. Please contact an organizer before rescheduling.
     model_required: Accept a model invitation for this venue before booking.
   invitations:
     created: Invitation created. Copy the personal link below.

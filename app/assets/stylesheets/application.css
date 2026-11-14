@@ -15,6 +15,22 @@ nav {
   gap: 0.75rem;
 }
 
+.rescheduling-notice {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d6bd80;
+  border-left-width: 4px;
+  background: #fff3d4;
+}
+
+.rescheduling-notice h3 {
+  margin-top: 0;
+}
+
+.rescheduling-notice li {
+  overflow-wrap: anywhere;
+}
+
 input:not([type="hidden"]):not([type="submit"]):not([type="checkbox"]),
 textarea,
 select {

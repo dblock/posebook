@@ -45,7 +45,7 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
 
   it 'keeps enhanced month navigation and replacement dates scoped to the current change form' do
     prepare_model
-    original = book
+    original = book('2026-11-23')
     get edit_venue_model_booking_path(venue, original, month: '2026-12')
     calendar = response.parsed_body.at_css('[data-calendar]')
     expect(calendar.css('a[data-calendar-navigation]').pluck('href'))
@@ -69,14 +69,15 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
     expect(venue.model_bookings).to be_empty
   end
 
-  it 'books an available date and blocks further bookings while offering change and cancel' do
+  it 'books a nearby date and blocks further bookings while offering organizer contact and cancellation' do
     prepare_model
     post venue_model_bookings_path(venue), params: { date: '2026-11-16', user_id: create_user.id }
     booking = track_booking(venue.model_bookings.first)
     expect(booking.user_id).to eq(model.id)
     follow_redirect!
-    expect(response.body).to include('Your posing date is booked.', 'Your Upcoming Booking', 'Change Date',
-                                     'Cancel Booking')
+    expect(response.body).to include('Your posing date is booked.', 'Your Upcoming Booking',
+                                     'Contact an Organizer Before Rescheduling', 'Cancel Booking')
+    expect(response.body).not_to include('Change Date')
     expect(response.parsed_body.css('.calendar form')).to be_empty
     post venue_model_bookings_path(venue), params: { date: '2026-11-23' }
     follow_redirect!
@@ -96,25 +97,26 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
 
   it 'reschedules with an explanation while preserving and linking both records' do
     prepare_model
-    original = book
+    original = book('2026-11-23')
     get edit_venue_model_booking_path(venue, original)
-    expect(response.body).to include('Change Your Posing Date', 'booking-change-form')
-    patch venue_model_booking_path(venue, original), params: { date: '2026-11-23', reason: 'Travel plans changed.' }
+    expect(response.body).to include('Change Your Posing Date', 'booking-change-form',
+                                     'Plans changed? Not a problem. Tell us, then choose an available date below.')
+    patch venue_model_booking_path(venue, original), params: { date: '2026-11-30', reason: 'Travel plans changed.' }
     replacement = track_booking(venue.model_bookings.where(previous_booking_id: original.id).first)
-    expect(original.reload).to have_attributes(date: Date.new(2026, 11, 16), status: 'rescheduled',
+    expect(original.reload).to have_attributes(date: Date.new(2026, 11, 23), status: 'rescheduled',
                                                reason: 'Travel plans changed.', changed_by_id: model.id)
-    expect(replacement.date).to eq(Date.new(2026, 11, 23))
+    expect(replacement.date).to eq(Date.new(2026, 11, 30))
     follow_redirect!
-    expect(response.body).to include('Rescheduled', 'Moved from 2026-11-16', 'Travel plans changed.', 'Confirmed')
+    expect(response.body).to include('Rescheduled', 'Moved from 2026-11-23', 'Travel plans changed.', 'Confirmed')
   end
 
   it 'keeps the original booking if a requested replacement date is occupied' do
     prepare_model
-    original = book
+    original = book('2026-11-23')
     other = create_user
     grant_model_access(venue, other)
-    book('2026-11-23', user: other)
-    patch venue_model_booking_path(venue, original), params: { date: '2026-11-23', reason: 'Need another date.' }
+    book('2026-11-30', user: other)
+    patch venue_model_booking_path(venue, original), params: { date: '2026-11-30', reason: 'Need another date.' }
     expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include('just changed')
     expect(original.reload.status).to eq('confirmed')
@@ -124,10 +126,10 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
 
   it 'requires explanations and keeps month navigation on the change form after errors' do
     prepare_model
-    original = book
-    patch venue_model_booking_path(venue, original), params: { date: '2026-11-23', reason: ' ' }
+    original = book('2026-11-23')
+    patch venue_model_booking_path(venue, original), params: { date: '2026-11-30', reason: ' ' }
     expect(response).to have_http_status(:unprocessable_content)
-    expect(response.body).to include('Provide an explanation')
+    expect(response.body).to include('Please tell us what changed')
     expect(response.parsed_body.at_css('nav[aria-label="Calendar months"] a')['href'])
       .to start_with(edit_venue_model_booking_path(venue, original))
     post cancel_venue_model_booking_path(venue, original), params: { reason: '' }
@@ -184,13 +186,52 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
 
   it 'honors existing reservations after venue weekdays or horizon settings change' do
     prepare_model
-    original = book
+    original = book('2026-11-23')
     venue.update!(available_weekdays: ['2'])
     get venue_path(venue)
     expect(response.body).to include('Your Upcoming Booking', 'Change Date', 'Cancel Booking')
     expect(original.reload.status).to eq('confirmed')
-    patch venue_model_booking_path(venue, original), params: { date: '2026-11-17', reason: 'New venue weekday.' }
+    patch venue_model_booking_path(venue, original), params: { date: '2026-11-24', reason: 'New venue weekday.' }
     replacement = track_booking(venue.model_bookings.where(previous_booking_id: original.id).first)
-    expect(replacement.date).to eq(Date.new(2026, 11, 17))
+    expect(replacement.date).to eq(Date.new(2026, 11, 24))
+  end
+
+  context 'with a short-notice booking' do
+    let(:original) { book }
+    let(:organizer) { create_user(name: 'Drawing Organizer', phone: '+12125551234') }
+
+    before do
+      prepare_model
+      original
+      grant_schedule_access(venue, organizer)
+    end
+
+    it 'shows organizer contacts instead of the form and calendar and rejects direct submissions' do
+      get edit_venue_model_booking_path(venue, original, month: '2026-12')
+      expect(response.parsed_body.at_css('.rescheduling-notice').text).to include(organizer.name)
+      expect(response.parsed_body.at_css("a[href='mailto:#{organizer.email}']")).to be_present
+      expect(response.parsed_body.at_css('a[href="tel:+12125551234"]')).to be_present
+      expect(response.parsed_body.at_css('#booking-change-form')).to be_nil
+      expect(response.parsed_body.at_css('[data-calendar]')).to be_nil
+      patch venue_model_booking_path(venue, original), params: { date: '2026-11-23', reason: 'Plans changed.' }
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include('Please contact an organizer before rescheduling', organizer.email)
+      expect(original.reload.status).to eq('confirmed')
+      expect(venue.model_bookings.count).to eq(1)
+      expect(ModelBookingClaim.find_by(model_booking_id: original.id).date).to eq(original.date)
+    end
+
+    it 'keeps contact details private and excludes inactive and other venues organizers' do
+      inactive = create_user(active: false, phone: '+12125554321')
+      outsider = create_user(phone: '+12125555678')
+      grant_schedule_access(venue, inactive)
+      grant_schedule_access(create_venue, outsider)
+      get venue_path(venue)
+      expect(response.body).to include(organizer.email, organizer.phone)
+      expect(response.body).not_to include(inactive.email, inactive.phone, outsider.email, outsider.phone)
+      delete session_path
+      get venue_path(venue)
+      expect(response.body).not_to include(organizer.email, organizer.phone, 'rescheduling-notice')
+    end
   end
 end

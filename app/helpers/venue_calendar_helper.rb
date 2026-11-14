@@ -5,6 +5,11 @@ module VenueCalendarHelper
     manager && model.public_profile_private? ? model.name : model.public_name
   end
 
+  def venue_organizer_contacts(venue)
+    ids = venue.memberships.schedule_managers.distinct(:user_id)
+    User.active.where(:id.in => ids).order_by(name: :asc)
+  end
+
   def calendar_access_context(public_view, manager:)
     return "public:#{current_user&.id || 'guest'}" if public_view
 

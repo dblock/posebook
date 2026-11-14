@@ -17,6 +17,36 @@ RSpec.describe BookingMutation, :aggregate_failures, :database do
     venue.model_bookings.each { |booking| track_booking(booking) }
   end
 
+  it 'allows a date change at exactly one week before the saved one-off drawing start' do
+    venue = create_venue
+    user = create_user
+    grant_model_access(venue, user)
+    track_record(VenueScheduleException.create!(venue: venue, date: Date.new(2026, 11, 23), mode: 'open',
+                                                start_time: '20:00', reason: 'Later drawing.'))
+    original = track_booking(attempt(venue, user, '2026-11-23'))
+    travel_to original.scheduled_start - 1.week
+    replacement = track_booking(described_class.new(venue: venue, user: user)
+                                               .change(booking: original, date: '2026-11-30', reason: 'Travel.'))
+    expect(replacement.date).to eq(Date.new(2026, 11, 30))
+    expect(original.reload.status).to eq('rescheduled')
+  end
+
+  it 'rechecks the cutoff after a change page was opened and preserves the reservation inside the final week' do
+    venue = create_venue
+    user = create_user
+    grant_model_access(venue, user)
+    original = track_booking(attempt(venue, user, '2026-11-23'))
+    expect(original.rescheduling_locked?).to be(false)
+    travel_to original.scheduled_start - 1.week + 1.second
+    expect do
+      described_class.new(venue: venue, user: user)
+                     .change(booking: original, date: '2026-11-30', reason: 'Travel.')
+    end.to raise_error(described_class::Invalid, /contact an organizer/)
+    expect(original.reload.status).to eq('confirmed')
+    expect(venue.model_bookings.count).to eq(1)
+    expect(ModelBookingClaim.find_by(model_booking_id: original.id).date).to eq(original.date)
+  end
+
   it 'allows only one model to claim a day and rolls back losing ledger records' do
     venue = create_venue
     users = Array.new(2) { create_user }
