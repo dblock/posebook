@@ -48,13 +48,49 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
 
   it 'uses one-word labels and leaves past non-session cells entirely blank' do
     get program_path(program, section: 'calendar')
-    expect(day('2026-11-17').css('.status-label').text).to eq('Unavailable')
+    expect(day('2026-11-17').text.strip).to eq('17')
+    expect(day('2026-11-17').css('a, .status-label, small')).to be_empty
     expect(day('2026-11-09').css('.status-label').text).to eq('Past')
     expect(response.parsed_body.css('.status-label').map(&:text)).to all(match(/\A[[:alpha:]]+\z/))
     expect(day('2026-11-17').text).not_to include('Blocked', 'Not a scheduled day')
     expect(day('2026-11-10').children).to be_empty
     expect(day('2026-11-09').text).to include('6:30 PM', 'Past Program')
     expect(day('2026-11-09').css('form, button')).to be_empty
+  end
+
+  it 'links an unscheduled day to its editor only for an authorized organizer' do
+    participant = create_user
+    grant_participant_access(program, participant)
+    [nil, participant].each do |viewer|
+      sign_in(viewer) if viewer
+      get program_path(program, section: 'calendar')
+      expect(day('2026-11-17').text.strip).to eq('17')
+      expect(day('2026-11-17').css('a, .status-label, small')).to be_empty
+    end
+    sign_in(organizer_for)
+    get program_path(program, section: 'calendar')
+    link = day('2026-11-17').at_css('time a')
+    expect(link['aria-label']).to eq('Edit 2026-11-17')
+    expect(link['href']).to eq(program_schedule_path(program, date: '2026-11-17'))
+    expect(day('2026-11-17').css('.status-label, small')).to be_empty
+    expect(day('2026-11-17').text.strip).to eq('17')
+    get link['href']
+    expect(response.parsed_body.at_css('input[name="schedule[date]"]')['value']).to eq('2026-11-17')
+  end
+
+  it 'retains booked, closed, and future states rather than treating them as empty days' do
+    booking = reserve('2026-11-16')
+    program.update!(available_weekdays: ['2'])
+    track_record(ProgramScheduleException.create!(program: program, date: Date.new(2026, 11, 17),
+                                                  mode: 'closed', reason: 'Private closure.'))
+    sign_in(organizer_for)
+    get program_path(program, section: 'calendar')
+    expect(day('2026-11-16').text).to include('Unconfirmed', booking.user.public_name, 'Edit Day')
+    expect(day('2026-11-17').text).to include('Blocked', 'Private closure.', 'Edit Day')
+    program.update!(booking_horizon_months: 1)
+    get program_path(program, month: '2026-12')
+    expect(day('2026-12-14').text).to include('Future')
+    expect(day('2026-12-14').css('a')).to be_empty
   end
 
   it 'honors historical openings and closures without publishing their explanations' do

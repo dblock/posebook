@@ -56,4 +56,5 @@
 - [#60](https://github.com/dblock/posebook/pull/60): Establish structured booking-rule decisions with stable codes, localized messages, and rule-owned organizer override policy without changing booking behavior - [@dblock](https://github.com/dblock).
 - [#62](https://github.com/dblock/posebook/pull/62): Add optional regular and one-off session end times, overnight duration, and completion at the scheduled end - [@dblock](https://github.com/dblock).
 - [#63](https://github.com/dblock/posebook/pull/63): Separate program view, calendar, history, participants, and coordinators with breadcrumb navigation and compact invitation revocation - [@dblock](https://github.com/dblock).
+- [#65](https://github.com/dblock/posebook/pull/65): Simplify unscheduled calendar days and let organizers edit them by selecting the date - [@dblock](https://github.com/dblock).
 - Your contribution here.
