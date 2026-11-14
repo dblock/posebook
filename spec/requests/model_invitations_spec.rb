@@ -26,13 +26,14 @@ RSpec.describe 'Model invitations', :aggregate_failures, :database, type: :reque
   it 'sends optional invitation email using the configured mail host' do
     admin = create_user(roles: ['system_admin'])
     sign_in(admin)
-    venue = create_venue
+    venue = create_venue(start_time: '19:15', available_weekdays: ['2'], time_zone: 'America/Los_Angeles')
     post venue_model_invitations_path(venue),
          params: { model_invitation: { email: 'model@example.test' }, send_email: '1' }
     track_record(venue.model_invitations.first)
     mail = ActionMailer::Base.deliveries.last
     expect(mail.to).to eq(['model@example.test'])
-    expect(mail.body.decoded).to include('http://example.com/invitation?token=')
+    expect(mail.body.decoded).to include('http://example.com/invitation?token=',
+                                         'Tuesday at 7:15 PM (America/Los_Angeles)')
   end
 
   it 'keeps a private link when email delivery fails' do
@@ -78,6 +79,7 @@ RSpec.describe 'Model invitations', :aggregate_failures, :database, type: :reque
     invitation = create_model_invitation(create_venue, admin)
     get invitation_path(token: invitation.token)
     expect(response).to have_http_status(:ok)
+    expect(response.body).to include('Monday at 6:30 PM (America/New_York)')
     expect(invitation.reload.used_at).to be_nil
     [{ revoked_at: Time.current }, { expires_at: 1.minute.ago }, { used_at: Time.current }].each do |attributes|
       invalid = create_model_invitation(invitation.venue, admin, **attributes)

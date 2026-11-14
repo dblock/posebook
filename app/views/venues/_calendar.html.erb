@@ -3,6 +3,7 @@
 <% end %>
 <section aria-label="Posing calendar" data-calendar>
   <h2>Posing Calendar</h2>
+  <%= render "venues/regular_schedule", venue: calendar.venue %>
   <nav aria-label="Calendar months">
     <% if calendar.month > calendar.today.beginning_of_month %>
       <%= link_to "Previous Month", calendar_month_path(calendar, calendar.month - 1.month, @changing_booking), data: { calendar_navigation: true } %>

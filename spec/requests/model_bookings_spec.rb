@@ -19,6 +19,19 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
     track_booking(BookingMutation.new(venue: at, user: user).book(date: date))
   end
 
+  it 'distinguishes the usual venue time from the actual booking time on cancellation and model lists' do
+    prepare_model
+    venue.update!(start_time: '19:15')
+    track_record(VenueScheduleException.create!(venue: venue, date: Date.new(2026, 11, 16),
+                                                mode: 'open', start_time: '20:00', reason: 'Later drawing.'))
+    original = book
+    get cancellation_venue_model_booking_path(venue, original)
+    expect(response.body).to include('Monday at 7:15 PM (America/New_York)', '8:00 PM EST')
+    grant_schedule_access(venue, model)
+    get venue_models_path(venue)
+    expect(response.body).to include('Monday at 7:15 PM (America/New_York)', '8:00 PM EST')
+  end
+
   it 'renders an independently navigable calendar without changing booking actions' do
     prepare_model
     get venue_path(venue, month: '2026-12')

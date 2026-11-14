@@ -1,5 +1,6 @@
 <main>
   <h1>Pose at <%= @invitation.venue.name %></h1>
+  <%= render "venues/regular_schedule", venue: @invitation.venue %>
   <p>Accept this personal invitation to join the venue as a model. You can then view its calendar. One person can accept this link.</p>
   <% if current_user %>
     <p>Signed in as <%= current_user.name %> (<%= current_user.email %>).</p>
