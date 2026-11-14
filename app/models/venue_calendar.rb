@@ -8,11 +8,27 @@ class VenueCalendar
     @today = Time.current.in_time_zone(venue.time_zone).to_date
     @last_date = today.advance(months: venue.booking_horizon_months)
     @month = selected_month(month)
-    @schedule = VenueSchedule.new(venue)
+    @schedule = VenueSchedule.new(venue, from: date_range.begin)
   end
 
   def weeks
-    (month.beginning_of_week(:sunday)..month.end_of_month.end_of_week(:sunday)).to_a.each_slice(7)
+    date_range.to_a.each_slice(7)
+  end
+
+  def date_range
+    month.beginning_of_week(:sunday)..month.end_of_month.end_of_week(:sunday)
+  end
+
+  def session_on?(date)
+    schedule.starts_at(date).present?
+  rescue ArgumentError
+    false
+  end
+
+  def displayed_bookings
+    @displayed_bookings ||= ModelBooking.where(venue_id: venue.id, status: 'confirmed',
+                                               :date.gte => date_range.begin, :date.lte => date_range.end)
+                                        .includes(:user).index_by(&:date)
   end
 
   def blocked_reason(date)
