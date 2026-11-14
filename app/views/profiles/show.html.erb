@@ -6,8 +6,8 @@
     <dt>Phone (unverified)</dt><dd><%= @user.phone.presence || "Not provided" %></dd>
     <dt>Public Identity</dt><dd><%= @user.public_profile_private? ? "Private: To be announced on public calendars" : "Public" %></dd>
     <dt>Public Display Name</dt><dd><%= @user.public_name %><%= " (using your name)" if !@user.public_profile_private? && @user.display_name.blank? %></dd>
-    <dt>Instagram</dt><dd><% if (url = InstagramProfile.normalize(@user.instagram_url)) %><%= link_to url, url, rel: "noopener noreferrer" %><% else %>Not provided<% end %></dd>
-    <dt>Public Instagram Tagging</dt><dd><% if @user.public_profile_private? %>Hidden while your information is private<% else %><%= @user.instagram_tagging_allowed? ? "Allowed: username and link may be public in announcements and venue calendars" : "Not allowed: Instagram stays private" %><% end %></dd>
+    <dt>Instagram Handle</dt><dd><% if (url = InstagramProfile.url(@user.instagram_handle)) %><%= link_to "@#{@user.instagram_handle}", url, rel: "noopener noreferrer" %><% else %>Not provided<% end %></dd>
+    <dt>Instagram Tagging</dt><dd><% if @user.public_profile_private? %>Hidden while your information is private<% else %><%= @user.instagram_tagging_allowed? ? "Enabled: handle appears in announcements and venue calendars" : "Off: Instagram stays private" %><% end %></dd>
   </dl>
   <% if @user.pending_email.present? %>
     <p>Verification pending for <%= @user.pending_email %>. Your current email is still <%= @user.email %>.</p>

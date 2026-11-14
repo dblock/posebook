@@ -10,10 +10,10 @@ RSpec.describe 'Public venue calendars', :aggregate_failures, :database, type: :
   let(:venue) { create_venue(instructions: 'Private door instructions.', model_pay: 321) }
   let(:private_booking) do
     scheduled_booking('2026-11-16', name: 'Private Account Name', display_name: 'Public Artist',
-                                    phone: '+12125551234', instagram_url: '@private_model')
+                                    phone: '+12125551234', instagram_handle: '@private_model')
   end
   let(:tagged_booking) do
-    scheduled_booking('2026-11-23', name: 'Fallback Artist', instagram_url: '@public_model',
+    scheduled_booking('2026-11-23', name: 'Fallback Artist', instagram_handle: '@public_model',
                                     instagram_tagging_allowed: true)
   end
 
@@ -85,7 +85,7 @@ RSpec.describe 'Public venue calendars', :aggregate_failures, :database, type: :
 
   it 'announces private models anonymously to guests and other models' do
     booking = scheduled_booking('2026-11-16', name: 'Private Account', display_name: 'Hidden Alias',
-                                              instagram_url: '@private_model', instagram_tagging_allowed: true,
+                                              instagram_handle: '@private_model', instagram_tagging_allowed: true,
                                               public_profile_private: true)
     [nil, create_user].each do |viewer|
       grant_model_access(venue, viewer) if viewer
@@ -108,7 +108,7 @@ RSpec.describe 'Public venue calendars', :aggregate_failures, :database, type: :
     expect(response.body).not_to include('private_model')
   end
 
-  it 'uses current public preferences and removes Instagram immediately after consent is revoked' do
+  it 'uses current public preferences and removes Instagram immediately after tagging is turned off' do
     user = tagged_booking.user
     get venue_path(venue)
     expect(response.body).to include('https://www.instagram.com/public_model/')

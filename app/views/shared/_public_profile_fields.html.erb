@@ -1,27 +1,17 @@
-<% if self_service %>
-  <% content_for :head do %>
-    <%= javascript_include_tag "profile-privacy", defer: true %>
-  <% end %>
+<% content_for :head do %>
+  <%= javascript_include_tag "profile-privacy", defer: true %>
 <% end %>
 <fieldset data-profile-privacy>
   <legend>Public Profile Preferences</legend>
-  <% if self_service %>
-    <p><%= form.check_box :public_profile_private, data: { profile_privacy_toggle: true } %> <%= form.label :public_profile_private, "Keep all my information private" %></p>
-  <% else %>
-    <p>Identity privacy: <%= @user.public_profile_private? ? "Private" : "Public" %>. Only the user can change this preference.</p>
-  <% end %>
+  <p><%= form.check_box :public_profile_private, data: { profile_privacy_toggle: true } %> <%= form.label :public_profile_private, self_service ? "Keep all my information private" : "Keep this user's information private" %></p>
   <p><small>When private, public calendars at every venue show "To be announced" instead of your name or Instagram. Organizers can still access your account and booking details. Saved sharing preferences apply again when you turn this off.</small></p>
   <%= tag.fieldset class: "public-sharing", disabled: @user.public_profile_private?, data: { public_profile_fields: true }, aria: { label: "Public sharing settings" } do %>
     <p><%= form.label :display_name, "Display name (public, optional)" %><br><%= form.text_field :display_name, maxlength: 100 %><br>
       <small>This will be public in announcements and venue calendars. Leave blank to use your name, which will then be public instead.</small>
     </p>
-    <p><%= form.label :instagram_url, "Instagram profile (optional)" %><br><%= form.text_field :instagram_url, placeholder: "https://www.instagram.com/your_name/", maxlength: 500 %><br>
-      <small>Enter your profile link or @username. Kept private unless you allow public tagging below.</small>
+    <p><%= form.label :instagram_handle, "Instagram handle (optional)" %><br><%= form.text_field :instagram_handle, placeholder: "@your_name", maxlength: 500 %><br>
+      <small>Enter a handle or paste an Instagram profile URL; only the handle is saved. Shown publicly when tagging is enabled below.</small>
     </p>
-    <% if self_service %>
-      <p><%= form.check_box :instagram_tagging_allowed %> <%= form.label :instagram_tagging_allowed, "Allow tagging my Instagram in announcements and venue calendars (makes my Instagram username and link public)" %></p>
-    <% else %>
-      <p>Tagging consent: <%= @user.instagram_tagging_allowed? ? "Allowed" : "Not allowed" %>. Only the user can opt in. Changing their Instagram link turns tagging off until they confirm again.</p>
-    <% end %>
+    <p><%= form.check_box :instagram_tagging_allowed %> <%= form.label :instagram_tagging_allowed, "Tag Instagram in announcements and venue calendars" %></p>
   <% end %>
 </fieldset>

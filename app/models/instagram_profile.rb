@@ -8,7 +8,12 @@ class InstagramProfile
     username = extract_username(value.to_s.strip)
     return unless USERNAME.match?(username.to_s) && RESERVED.exclude?(username.downcase)
 
-    "https://www.instagram.com/#{username.downcase}/"
+    username.downcase
+  end
+
+  def self.url(value)
+    handle = normalize(value)
+    "https://www.instagram.com/#{handle}/" if handle
   end
 
   def self.extract_username(value)

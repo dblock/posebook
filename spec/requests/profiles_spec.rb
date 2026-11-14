@@ -67,43 +67,45 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     expect(user.reload.pending_email).to be_nil
   end
 
-  it 'saves a public display name but keeps Instagram private without explicit consent' do
+  it 'stores only the handle from a profile URL and keeps tagging off by default' do
     user = create_user
     sign_in(user)
-    update_profile(user, display_name: '  Alex Artist  ', instagram_url: '@Alex.Artist')
+    update_profile(user, display_name: '  Alex Artist  ',
+                         instagram_handle: 'https://www.instagram.com/Alex.Artist/?igsh=tracking')
     expect(response).to redirect_to(profile_path)
     follow_redirect!
-    expect(response.body).to include('Profile saved.', 'Alex Artist', 'Not allowed: Instagram stays private')
+    expect(response.body).to include('Profile saved.', 'Alex Artist', '@alex.artist', 'Off: Instagram stays private')
     expect(user.reload).to have_attributes(display_name: 'Alex Artist',
-                                           instagram_url: 'https://www.instagram.com/alex.artist/')
+                                           instagram_handle: 'alex.artist')
+    expect(User.collection.find(_id: user.id).first).not_to have_key('instagram_url')
     expect(user.public_name).to eq('Alex Artist')
     expect(user.public_instagram_url).to be_nil
-    expect(user.public_instagram_username).to be_nil
+    expect(user.public_instagram_handle).to be_nil
   end
 
-  it 'audits explicit tagging consent and lets the user revoke it and clear their display name' do
+  it 'audits tagging preferences and lets the user turn tagging off and clear their display name' do
     user = create_user
     sign_in(user)
-    update_profile(user, display_name: 'Alex', instagram_url: '@Artist.Model', instagram_tagging_allowed: '1')
-    expect(user.reload.public_instagram_username).to eq('artist.model')
+    update_profile(user, display_name: 'Alex', instagram_handle: '@Artist.Model', instagram_tagging_allowed: '1')
+    expect(user.reload.public_instagram_handle).to eq('artist.model')
     expect(user.public_instagram_url).to eq('https://www.instagram.com/artist.model/')
     expect(user.history_tracks.last.modified).to include('display_name' => 'Alex', 'instagram_tagging_allowed' => true,
-                                                         'instagram_url' => 'https://www.instagram.com/artist.model/')
+                                                         'instagram_handle' => 'artist.model')
     expect(user.history_tracks.last.modifier_id).to eq(user.id)
     update_profile(user, display_name: ' ', instagram_tagging_allowed: '0')
     expect(user.reload.public_name).to eq(user.name)
     expect(user.public_instagram_url).to be_nil
-    expect(user.instagram_url).to be_present
+    expect(user.instagram_handle).to be_present
   end
 
   it 'rejects invalid links, tagging without a profile, and excessively long public names without saving' do
     user = create_user
     sign_in(user)
-    [{ instagram_url: 'javascript:alert(1)' }, { instagram_tagging_allowed: '1' },
+    [{ instagram_handle: 'javascript:alert(1)' }, { instagram_tagging_allowed: '1' },
      { display_name: 'a' * 101 }].each do |attributes|
       update_profile(user, **attributes)
       expect(response).to have_http_status(:unprocessable_content)
-      expect(user.reload).to have_attributes(display_name: nil, instagram_url: nil, instagram_tagging_allowed: false)
+      expect(user.reload).to have_attributes(display_name: nil, instagram_handle: nil, instagram_tagging_allowed: false)
     end
   end
 

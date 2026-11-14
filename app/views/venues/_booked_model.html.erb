@@ -2,7 +2,7 @@
   <div class="booked-model">
     <%= booking_model_name(model, manager: local_assigns[:manager]) %>
     <% if (url = model.public_instagram_url) %>
-      <br><%= link_to "@#{model.public_instagram_username}", url, rel: "noopener noreferrer" %>
+      <br><%= link_to "@#{model.public_instagram_handle}", url, rel: "noopener noreferrer" %>
     <% end %>
   </div>
 <% end %>
