@@ -3,6 +3,35 @@
 require 'rails_helper'
 
 RSpec.describe 'Venue management', :aggregate_failures, :database, type: :request do
+  it 'normalizes venue Instagram handles and URLs and publishes safe external links without account preferences' do
+    venue = create_venue
+    sign_in(create_user(roles: ['system_admin']))
+    [' @ENOCHS.NYC ', 'https://www.instagram.com/Enochs.NYC/?source=profile'].each do |value|
+      patch venue_path(venue), params: { venue: { instagram_handle: value } }
+      expect(venue.reload.instagram_handle).to eq('enochs.nyc')
+    end
+    delete session_path
+    get venue_shortcut_path(venue)
+    link = response.parsed_body.at_css('a[href="https://www.instagram.com/enochs.nyc/"]')
+    expect(link.text).to eq('@enochs.nyc')
+    expect(link['target']).to eq('_blank')
+    expect(link['rel'].split).to include('noopener', 'noreferrer')
+  end
+
+  it 'rejects invalid venue Instagram accounts and removes the public link when cleared' do
+    venue = create_venue(instagram_handle: '@enochs.nyc')
+    sign_in(create_user(roles: ['system_admin']))
+    %w[https://example.test/account https://instagram.com/p/post/].each do |value|
+      patch venue_path(venue), params: { venue: { instagram_handle: value } }
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(venue.reload.instagram_handle).to eq('enochs.nyc')
+    end
+    patch venue_path(venue), params: { venue: { instagram_handle: '' } }
+    delete session_path
+    get venue_path(venue)
+    expect(response.body).not_to include('instagram.com/enochs.nyc')
+  end
+
   it 'shows the configured usual weekdays, event time, and time zone across venue pages' do
     venue = create_venue(start_time: '19:15', time_zone: 'America/Los_Angeles', available_weekdays: %w[3 1])
     sign_in(create_user(roles: ['system_admin']))

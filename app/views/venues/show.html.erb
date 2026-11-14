@@ -2,6 +2,9 @@
   <h1><%= @venue.name %></h1>
   <p>Shortcut: <%= link_to venue_shortcut_path(@venue), venue_shortcut_path(@venue) %></p>
   <%= simple_format(@venue.address) %>
+  <% if @venue.public_instagram_url %>
+    <p><%= link_to "@#{@venue.public_instagram_handle}", @venue.public_instagram_url, target: "_blank", rel: "noopener noreferrer" %></p>
+  <% end %>
   <dl>
     <dt>Time Zone</dt><dd><%= @venue.time_zone %></dd>
     <dt>Regular Schedule</dt><dd><%= venue_schedule_summary(@venue) %></dd>
@@ -37,4 +40,5 @@
   <% if current_user&.system_admin? %>
     <p><%= link_to "Edit Venue", edit_venue_path(@venue) %> | <%= link_to "Organizers", venue_organizers_path(@venue) %></p>
   <% end %>
+  <%= render "photos" %>
 </main>

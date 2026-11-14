@@ -169,4 +169,6 @@ xmlns
 tempfile
 Struct
 ProfilePhoto
+VenuePhoto
+nyc
 macOS

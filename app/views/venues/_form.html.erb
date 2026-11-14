@@ -5,6 +5,9 @@
     <small>Leave blank to generate from the venue name. Previous links keep working when the slug changes. <% if venue.persisted? %>Current link: <%= link_to venue_shortcut_url(venue), venue_shortcut_path(venue) %>.<% end %></small>
   </p>
   <p><%= form.label :address %><br><%= form.text_area :address, required: true, maxlength: 500 %></p>
+  <p><%= form.label :instagram_handle, "Instagram" %><br><%= form.text_field :instagram_handle, maxlength: 200, placeholder: "@enochs.nyc or an Instagram profile URL" %><br>
+    <small>Optional. Displayed publicly on the venue page as a linked @handle.</small>
+  </p>
   <p><%= form.label :time_zone, "Time zone" %><br><%= form.select :time_zone, Venue::TIME_ZONES, {}, required: true %></p>
   <p><%= form.label :start_time, "Regular start time" %><br><%= form.time_field :start_time, required: true, step: 60 %><br>
     <small>Usual event start in the venue's time zone. Use Manage Schedule to change a single date.</small>

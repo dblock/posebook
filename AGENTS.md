@@ -10,6 +10,8 @@ Runtime code lives in `app/`, configuration in `config/`, request tests in `spec
 
 Profile galleries store only optimized WebP images and square thumbnails in MongoDB GridFS, never the application's ephemeral local disk. Bound uploads to ten per account with a conditional single-document write; validate actual JPEG/PNG/WebP content, byte size and pixel dimensions before processing. Strip metadata and preserve full-image proportions. New uploads are private; each photo has a public/private preference, overridden publicly by Private Identity and inactive accounts. Only owners and system admins modify photos; assigned organizers may view private photos for their venue models. Check authorization on every image request, including thumbnails, and prohibit browser/proxy caching so visibility changes take effect.
 
+Venue photos use separate `VenuePhoto` documents and the same optimized GridFS image variants as user photos, with no application photo-count limit. All venue photos and optional normalized venue Instagram accounts are public; only system admins modify them, like other venue settings. Keep image reads scoped to the venue, delete both variants with their metadata, and preserve the independent ten-photo cap and privacy rules for users.
+
 ## Invariants
 
 MongoDB is the only application database. Do not introduce Active Record, SQL-backed queues, or Redis without agreement. The scaffold's in-process ActiveJob adapter is not a durable reminder scheduler. Do not enable automated model notifications/reminders until consent, opt-outs, retry behavior, and cancellation handling exist; explicitly requested transactional account/invitation email is separate.
