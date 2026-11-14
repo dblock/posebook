@@ -1,5 +1,6 @@
 <main>
   <h1>Invite a Model to <%= @venue.name %></h1>
+  <%= render "venues/regular_schedule", venue: @venue %>
   <%= render "shared/errors", record: @invitation %>
   <p>Create a single-use personal link to share by email or direct message. The recipient can register or sign in with any email address. Links expire in 30 days.</p>
   <%= form_with model: @invitation, url: venue_model_invitations_path(@venue) do |form| %>

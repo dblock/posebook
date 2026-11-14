@@ -18,12 +18,16 @@ RSpec.describe 'Venue model access', :aggregate_failures, :database, type: :requ
   end
 
   it 'sends an individual email and records who opened booking access' do
+    venue.update!(start_time: '19:15')
     membership
     manage_models
     post invite_venue_model_path(venue, membership)
     expect(response).to redirect_to(venue_models_path(venue))
     expect(ActionMailer::Base.deliveries.last.to).to eq([model.email])
     expect(ActionMailer::Base.deliveries.last.text_part.body.decoded).to include('booking_invitation=1', venue.slug)
+    [ActionMailer::Base.deliveries.last.text_part, ActionMailer::Base.deliveries.last.html_part].each do |part|
+      expect(part.body.decoded).to include('Monday at 7:15 PM (America/New_York)')
+    end
     expect(membership.reload.history_tracks.last.modifier_id).to eq(organizer.id)
   end
 

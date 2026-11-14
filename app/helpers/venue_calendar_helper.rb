@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 module VenueCalendarHelper
+  def venue_schedule_summary(venue)
+    weekdays = venue.available_weekdays.sort_by(&:to_i).map { |day| Date::DAYNAMES[day.to_i] }.to_sentence
+    "#{weekdays} at #{drawing_time(venue.start_time)} (#{venue.time_zone})"
+  end
+
   def drawing_time(clock)
     DateTime.strptime(clock, '%H:%M').strftime('%-I:%M %p')
   end

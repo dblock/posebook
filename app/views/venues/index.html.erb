@@ -6,7 +6,7 @@
   <% else %>
     <ul>
       <% @venues.each do |venue| %>
-        <li><%= link_to venue.name, venue %> - <%= venue.time_zone %></li>
+        <li><%= link_to venue.name, venue %> - <%= venue_schedule_summary(venue) %></li>
       <% end %>
     </ul>
   <% end %>

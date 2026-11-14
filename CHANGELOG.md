@@ -18,4 +18,5 @@
 - [#17](https://github.com/dblock/posebook/pull/17): Gate repeat model bookings with individual and bulk email invitations and add venue-local pause controls with retained explanations - [@dblock](https://github.com/dblock).
 - [#19](https://github.com/dblock/posebook/pull/19): Add public display names and optional Instagram profiles with explicit user-controlled tagging consent - [@dblock](https://github.com/dblock).
 - [#20](https://github.com/dblock/posebook/pull/20): Navigate calendar months without reloading the page or losing rescheduling explanations - [@dblock](https://github.com/dblock).
+- [#21](https://github.com/dblock/posebook/pull/21): Show regular venue weekdays, event times, and time zones throughout venue pages, calendars, and invitations while preserving actual booking times - [@dblock](https://github.com/dblock).
 - Your contribution here.

@@ -1,5 +1,6 @@
 <main>
   <h1>Models at <%= @venue.name %></h1>
+  <%= render "venues/regular_schedule", venue: @venue %>
   <p>Invite a model to choose one posing date. Cancellation and rescheduling keep that invitation valid until a drawing is completed. Finishing a drawing never automatically permits another booking.</p>
   <p>Paused models keep their existing booking and can cancel it, but cannot book or reschedule until resumed. Resuming does not issue a new invitation. Pause explanations remain private to venue organizers and system admins.</p>
   <%= button_to "Invite All Available Models", invite_all_venue_models_path(@venue) %>
@@ -14,7 +15,8 @@
             <td><%= membership.user.name %><br><%= membership.user.email %></td>
             <td>
               <%= access.status %>
-              <% if access.paused? && access.booking %><br>Booking retained: <%= access.booking.date.iso8601 %><% end %>
+              <%= " at #{booking_time(access.booking)}" if access.booking && !access.paused? && membership.user.active? %>
+              <% if access.paused? && access.booking %><br>Booking retained: <%= access.booking.date.iso8601 %> at <%= booking_time(access.booking) %><% end %>
               <% if membership.model_pause_reason.present? %><p>Last pause: <%= membership.model_pause_reason %></p><% end %>
             </td>
             <td>

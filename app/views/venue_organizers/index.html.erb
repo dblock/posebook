@@ -1,6 +1,7 @@
 <main>
   <h1>Organizers</h1>
   <p><%= @venue.name %></p>
+  <%= render "venues/regular_schedule", venue: @venue %>
   <% if @organizers.any? %>
     <ul>
       <% @organizers.each do |membership| %>

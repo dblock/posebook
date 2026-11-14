@@ -3,6 +3,19 @@
 require 'rails_helper'
 
 RSpec.describe 'Venue management', :aggregate_failures, :database, type: :request do
+  it 'shows the configured usual weekdays, event time, and time zone across venue pages' do
+    venue = create_venue(start_time: '19:15', time_zone: 'America/Los_Angeles', available_weekdays: %w[3 1])
+    sign_in(create_user(roles: ['system_admin']))
+    [venues_path, venue_path(venue), venue_models_path(venue), venue_organizers_path(venue),
+     new_venue_model_invitation_path(venue), venue_schedule_path(venue)].each do |path|
+      get path
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('Monday and Wednesday at 7:15 PM (America/Los_Angeles)')
+    end
+    get edit_venue_path(venue)
+    expect(response.parsed_body.at_css('input[name="venue[start_time]"]')['value']).to eq('19:15')
+  end
+
   it 'requires authentication' do
     create_user
     get venues_path

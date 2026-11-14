@@ -1,6 +1,7 @@
 <main>
   <h1>Drawing Schedule</h1>
-  <p><%= link_to @venue.name, venue_path(@venue) %> normally meets at <%= drawing_time(@venue.start_time) %> in <%= @venue.time_zone %>.</p>
+  <p><%= link_to @venue.name, venue_path(@venue) %></p>
+  <%= render "venues/regular_schedule", venue: @venue %>
   <p>Open an extra date, change one drawing's time, close a date, or restore its regular weekday schedule. A short explanation is required and retained. Closing a booked date cancels that booking; time changes keep the model booked. Automated notifications are not available yet.</p>
   <%= render "shared/errors", record: @exception %>
   <%= form_with model: @exception, scope: :schedule, url: venue_schedule_path(@venue), method: :patch do |form| %>
