@@ -23,4 +23,5 @@ Rails.application.routes.draw do
   end
   resources :password_resets, param: :token, only: %i[new create edit update]
   get 'up' => 'rails/health#show', as: :rails_health_check
+  get '/:id', to: 'venues#show', as: :venue_shortcut, constraints: { id: /[a-z0-9]+(?:-[a-z0-9]+)*/ }, format: false
 end

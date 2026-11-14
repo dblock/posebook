@@ -37,6 +37,8 @@ Admin user-editing tests cover authorization, allowed contact fields, immediate 
 
 Venue tests cover configuration validation, decimal pay, cross-venue isolation, administrator-only mutations, inactive accounts, scoped revocation, and concurrent duplicate role grants against the real unique index. Track membership records before deleting their related fixtures. Do not grant global privileges to represent local schedule access.
 
+Slug tests cover name defaults, editable values, history, duplicate/reserved names, ID-shaped values, unique-index conflicts, scoped shortcuts, and nested management URLs. Production packaging seeds a legacy venue before boot and verifies the entry point backfills its slug. Run `bundle exec rails 'mongoid_slug:set[Venue]'` to backfill existing local venues; it skips documents already containing slugs.
+
 Invitation tests use a MongoDB 8.0 replica set and exercise single-use consumption, transaction rollback under competing account claims, scoped access, existing-account login returns, optional email delivery, expiry/revocation, and preserving membership roles. Track newly accepted accounts and memberships before fixture cleanup. No tests send external messages.
 
 Booking tests exercise real unique claim indexes, competing models/dates, failed-reschedule rollback, required explanations, retained history, private venue/user scope, settings changes, time-zone snapshots, and expiry rollover. Track booking records and their disposable claims. Production code never deletes booking history; test cleanup uses exact owned booking IDs through the collection API because normal model deletion is guarded. Never purge the booking collection.

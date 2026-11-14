@@ -43,7 +43,7 @@ class InvitationAcceptancesController < ApplicationController
   def finish_acceptance
     @user = @acceptance.call
     start_session(@user)
-    redirect_to venue_path(@invitation.venue_id), notice: t('invitations.accepted')
+    redirect_to venue_path(@invitation.venue), notice: t('invitations.accepted')
   end
 
   def handle_database_error(error)

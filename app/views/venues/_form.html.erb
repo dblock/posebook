@@ -1,6 +1,9 @@
 <%= render "shared/errors", record: venue %>
 <%= form_with model: venue do |form| %>
   <p><%= form.label :name %><br><%= form.text_field :name, required: true, maxlength: 100 %></p>
+  <p><%= form.label :custom_slug, "Slug" %><br><%= form.text_field :custom_slug, maxlength: 100, placeholder: venue.name.to_s.to_url %><br>
+    <small>Leave blank to generate from the venue name. Previous links keep working when the slug changes.</small>
+  </p>
   <p><%= form.label :address %><br><%= form.text_area :address, required: true, maxlength: 500 %></p>
   <p><%= form.label :time_zone, "Time zone" %><br><%= form.select :time_zone, Venue::TIME_ZONES, {}, required: true %></p>
   <p><%= form.label :model_pay, "Model pay (USD)" %><br><%= form.number_field :model_pay, min: 0, step: "0.01", required: true %></p>

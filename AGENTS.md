@@ -18,6 +18,8 @@ Every model roster and schedule belongs to a venue. Booking mutations use replic
 
 Only system admins configure venues or grant/revoke organizer access. `manage_schedule` and `model` belong to venue memberships, never global user roles. Scope views through `Venue.visible_to` and invitation management through `Venue.managed_by`; never trust a URL or role form parameter for authorization. Preserve the unique venue/user membership index and atomic role grants/revocation. Revocation and deactivation retain membership/history. Personal model invitations are single-use bearer links; persist only their digests and atomically create accounts, consume invitations, and grant membership in a replica-set transaction.
 
+Venue URLs use `mongoid-slug` with name-derived defaults, optional custom values, and retained slug history. Preserve ID-based URLs and scope slug lookups through the same authorization criteria. The root shortcut route belongs last, after application routes; reserve conflicting path names. Production startup creates slug indexes and runs the gem's missing-slug task, never regenerating existing slugs as a migration.
+
 Tests use `MONGODB_TEST_URI`, never the development or production connection. The test database guard requires `posebook_test` or a `posebook_test_` prefix. Delete only records owned by a test, not entire collections or databases. Keep real network-provider calls out of tests.
 
 ## Validation and Documentation

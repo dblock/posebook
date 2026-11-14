@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-system('bin/rails', 'db:create_indexes', exception: true)
+system('bin/rails', 'db:create_indexes', 'mongoid_slug:set[Venue]', exception: true)
 exec(*ARGV)
