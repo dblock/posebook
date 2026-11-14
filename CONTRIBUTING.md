@@ -32,6 +32,8 @@ Account specs cover first-user races, closed public registration, hashed passwor
 
 Account-settings tests cover profile permissions, verified email changes, conflicting claims, password changes, session revocation, and inactive-account access. System admin accounts remain protected from deactivation. Tests for independent browser sessions inspect each client's own status and location; request redirect matchers use the default client.
 
+Admin user-editing tests cover authorization, allowed contact fields, immediate email changes, session/challenge revocation, competing email claims, inactive accounts, self-edits, and preserving access controls. Admin email changes do not contact an email provider or mark an address verified.
+
 Venue tests cover configuration validation, decimal pay, cross-venue isolation, administrator-only mutations, inactive accounts, scoped revocation, and concurrent duplicate role grants against the real unique index. Track membership records before deleting their related fixtures. Do not grant global privileges to represent local schedule access.
 
 Workflow checker specs exercise valid and invalid human-readable names, ignored identifiers, malformed YAML, and real command exit statuses. Keep fixtures isolated and never delete shared databases or collections. New implementation tests should cover meaningful behavior, authorization boundaries, concurrency, time zones, and errors; use fake delivery providers instead of sending real emails or texts.

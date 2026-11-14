@@ -1,11 +1,12 @@
 <main>
   <h1>Users</h1>
   <table>
-    <thead><tr><th>Name</th><th>Email</th><th>Global Roles</th><th>Status</th><th>Access</th></tr></thead>
+    <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Global Roles</th><th>Status</th><th>Access</th><th>Details</th></tr></thead>
     <tbody>
       <% @users.each do |user| %>
         <tr>
-          <td><%= user.name %></td><td><%= user.email %></td><td><%= user.roles.join(", ") %></td>
+          <td><%= user.name %></td><td><%= user.email %></td><td><%= user.phone.presence || "Not provided" %></td>
+          <td><%= user.roles.join(", ") %></td>
           <td><%= user.active? ? "Active" : "Inactive" %></td>
           <td>
             <% if !user.active? %>
@@ -16,6 +17,7 @@
               Protected
             <% end %>
           </td>
+          <td><%= link_to "Edit", edit_admin_user_path(user) %></td>
         </tr>
       <% end %>
     </tbody>

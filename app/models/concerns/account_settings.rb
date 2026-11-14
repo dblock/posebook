@@ -98,6 +98,11 @@ module AccountSettings
 
   private
 
+  def clear_email_authentication
+    assign_attributes(authentication_challenges.transform_values { nil }
+                        .merge(session_version: SecureRandom.hex(16), email_verified_at: nil))
+  end
+
   def email_available?
     return true unless self.class.exists?(email: pending_email)
 

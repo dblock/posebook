@@ -46,6 +46,11 @@ RSpec.describe 'Account access management', :aggregate_failures, :database, type
     sign_in(user)
     get admin_users_path
     expect(response).to have_http_status(:forbidden)
+    get edit_admin_user_path(user)
+    expect(response).to have_http_status(:forbidden)
+    patch admin_user_path(user), params: { user: { name: 'Forbidden' } }
+    expect(response).to have_http_status(:forbidden)
+    expect(user.reload.name).not_to eq('Forbidden')
     patch admin_user_path(user), params: { active: false }
     expect(response).to have_http_status(:forbidden)
     expect(user.reload).to be_active

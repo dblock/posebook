@@ -7,4 +7,5 @@
 - [#4](https://github.com/dblock/posebook/pull/4): Add account settings, verified email changes, password changes, and account deactivation and reactivation - [@dblock](https://github.com/dblock).
 - [#6](https://github.com/dblock/posebook/pull/6): Create and configure venues and manage venue-scoped organizer schedule access - [@dblock](https://github.com/dblock).
 - [#7](https://github.com/dblock/posebook/pull/7): Separate profile, password, and deactivation pages and return saved edits to a read-only profile - [@dblock](https://github.com/dblock).
+- [#8](https://github.com/dblock/posebook/pull/8): Let system admins edit existing users' contact information with immediate email changes and session revocation - [@dblock](https://github.com/dblock).
 - Your contribution here.
