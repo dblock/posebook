@@ -61,7 +61,7 @@ class OrganizerBookingMutation
   end
 
   def build_booking(attributes, previous: nil)
-    date = available_date(attributes[:date])
+    date = available_date(attributes[:date], excluding: previous&.id)
     model = previous ? replacement_model(previous, attributes[:user_id]) : model_for(attributes[:user_id])
     reason = gender_override(date, model, attributes, excluding: previous&.id)
     create_record(date, user: model, previous: previous, gender_override_reason: reason)

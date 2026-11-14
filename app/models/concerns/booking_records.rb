@@ -3,9 +3,13 @@
 module BookingRecords
   private
 
-  def available_date(value)
+  def available_date(value, excluding: nil)
     date = Date.iso8601(value.to_s)
     raise BookingMutation::Invalid, I18n.t('bookings.invalid_date') if VenueCalendar.new(@venue).blocked_reason(date)
+
+    claims = ModelBookingClaim.where(venue_id: @venue.id, date: date)
+    claims = claims.where(:model_booking_id.ne => excluding) if excluding
+    raise BookingMutation::Conflict, I18n.t('bookings.date_taken') if claims.exists?
 
     date
   rescue ArgumentError

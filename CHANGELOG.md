@@ -33,4 +33,5 @@
 - [#35](https://github.com/dblock/posebook/pull/35): Add web-optimized profile photos with per-photo privacy, square galleries, and a ten-photo limit in MongoDB GridFS - [@dblock](https://github.com/dblock).
 - [#36](https://github.com/dblock/posebook/pull/36): Add optional New Relic error reporting for Rails and handled delivery/storage failures with privacy-safe production configuration - [@dblock](https://github.com/dblock).
 - [#37](https://github.com/dblock/posebook/pull/37): Shorten the positive attendance label to "Confirmed" throughout calendars, booking history, and organizer controls - [@dblock](https://github.com/dblock).
+- [#38](https://github.com/dblock/posebook/pull/38): Explain when another model just booked a selected date, refresh the same calendar month, and preserve existing reservations and rescheduling explanations - [@dblock](https://github.com/dblock).
 - Your contribution here.

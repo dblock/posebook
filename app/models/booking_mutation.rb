@@ -80,7 +80,7 @@ class BookingMutation
   end
 
   def rescheduling_date(original, value)
-    date = available_date(value)
+    date = available_date(value, excluding: original.id)
     raise Invalid, I18n.t('bookings.different_date') if date == original.date
 
     check_gender!(date, excluding: original.id)

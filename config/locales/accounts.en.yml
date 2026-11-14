@@ -4,6 +4,7 @@ en:
     changed: Your posing date was changed. The previous booking remains in your history.
     canceled: Your booking was canceled. The date is available again and your explanation is saved.
     conflict: This booking or date just changed. Refresh the calendar and try again.
+    date_taken: Sorry, someone else just booked that date. Please choose another available date.
     already_scheduled: You already have an upcoming booking at this venue. Change or cancel it first.
     different_date: Choose a different available date.
     invalid_date: Choose an available date within this venue's booking window.

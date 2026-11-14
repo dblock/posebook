@@ -52,7 +52,7 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
     sign_in(model)
     post venue_model_bookings_path(venue),
          params: { date: '2026-11-23', override_gender_rule: '1', reason: 'Override.' }
-    expect(response).to redirect_to(venue_path(venue))
+    expect(response).to redirect_to(venue_path(venue, month: '2026-11'))
     expect(flash[:alert]).to include('consecutive-gender rule')
     expect(ModelBooking.where(user_id: model.id)).to be_empty
   end
