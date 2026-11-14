@@ -159,7 +159,8 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
     grant_model_access(venue, other)
     sign_in(other)
     get venue_path(venue)
-    expect(response.body).not_to include(model.email, model.name, 'Change Date')
+    expect(response.body).to include(model.public_name)
+    expect(response.body).not_to include(model.email, 'Change Date')
     get edit_venue_model_booking_path(venue, original)
     expect(response).to have_http_status(:not_found)
     post cancel_venue_model_booking_path(venue, original), params: { reason: 'Forbidden' }
@@ -177,7 +178,8 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
     expect(response.body).to include('Venue Booking History', model.name, original.date.iso8601)
     expect(response.parsed_body.css('.calendar form')).to be_empty
     get venue_path(create_venue)
-    expect(response).to have_http_status(:not_found)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).not_to include('Venue Booking History', 'Manage Schedule')
   end
 
   it 'honors existing reservations after venue weekdays or horizon settings change' do

@@ -5,26 +5,34 @@
   <dl>
     <dt>Time Zone</dt><dd><%= @venue.time_zone %></dd>
     <dt>Regular Schedule</dt><dd><%= venue_schedule_summary(@venue) %></dd>
-    <dt>Model Pay</dt><dd><%= number_to_currency(@venue.model_pay) %> USD</dd>
-    <dt>Booking Horizon</dt><dd><%= @venue.booking_horizon_months %> months</dd>
+    <% if @venue_member %>
+      <dt>Model Pay</dt><dd><%= number_to_currency(@venue.model_pay) %> USD</dd>
+      <dt>Booking Horizon</dt><dd><%= @venue.booking_horizon_months %> months</dd>
+    <% end %>
   </dl>
-  <h2>Instructions</h2>
-  <%= simple_format(@venue.instructions) %>
-  <% if @venue.model?(current_user) && !@can_book %><p role="status"><%= @booking_access.reason %></p><% end %>
+  <% if @venue_member %>
+    <h2>Instructions</h2>
+    <%= simple_format(@venue.instructions) %>
+  <% end %>
+  <% if @booking_access&.model? && !@can_book %><p role="status"><%= @booking_access.reason %></p><% end %>
   <% if @my_booking %>
     <h2>Your Upcoming Booking</h2>
     <p><%= @my_booking.date.to_fs(:long) %> at <%= booking_time(@my_booking) %>. You can have one upcoming booking at this venue.</p>
     <p><% if @can_book %><%= link_to "Change Date", edit_venue_model_booking_path(@venue, @my_booking) %> | <% end %><%= link_to "Cancel Booking", cancellation_venue_model_booking_path(@venue, @my_booking) %></p>
   <% end %>
-  <%= render "calendar", calendar: @calendar %>
-  <%= render "booking_history" %>
-  <p>Changes and cancellations require an explanation and retain every booking record. Automated reminders are not available yet.</p>
+  <%= render "calendar", calendar: @calendar, public_view: !@venue_member %>
+  <% if @venue_member %>
+    <%= render "booking_history" %>
+    <p>Changes and cancellations require an explanation and retain every booking record. Automated reminders are not available yet.</p>
+  <% else %>
+    <p>Booking is available to invited models. <%= link_to "Sign In", venue_path(@venue, booking_invitation: "1") unless current_user %></p>
+  <% end %>
   <%= render "invitations" if @manage_schedule %>
   <% if @manage_schedule %>
     <p><%= link_to "Manage Schedule", venue_schedule_path(@venue) %> | <%= link_to "Models", venue_models_path(@venue) %></p>
   <% end %>
 
-  <% if current_user.system_admin? %>
+  <% if current_user&.system_admin? %>
     <p><%= link_to "Edit Venue", edit_venue_path(@venue) %> | <%= link_to "Organizers", venue_organizers_path(@venue) %></p>
   <% end %>
 </main>

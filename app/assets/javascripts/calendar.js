@@ -26,6 +26,10 @@
       const replacement = html.querySelector(selector);
       if (!replacement) throw new Error("Calendar not found");
       if (request.signal.aborted) return;
+      if (replacement.dataset.calendarContext !== calendar.dataset.calendarContext) {
+        location.assign(url);
+        return;
+      }
 
       calendar.replaceWith(replacement);
       if (push) history.pushState({ ...history.state, calendar: true }, "", url);

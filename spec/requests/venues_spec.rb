@@ -16,14 +16,14 @@ RSpec.describe 'Venue management', :aggregate_failures, :database, type: :reques
     expect(response.parsed_body.at_css('input[name="venue[start_time]"]')['value']).to eq('19:15')
   end
 
-  it 'requires authentication' do
+  it 'requires authentication for management but allows public venue shortcuts' do
     create_user
     get venues_path
     expect(response).to redirect_to(new_session_path)
     get venue_organizers_path(create_venue)
     expect(response).to redirect_to(new_session_path)
     get venue_shortcut_path(create_venue)
-    expect(response).to redirect_to(new_session_path)
+    expect(response).to have_http_status(:ok)
   end
 
   it 'lets a system admin create and update venue settings' do
@@ -52,7 +52,7 @@ RSpec.describe 'Venue management', :aggregate_failures, :database, type: :reques
     expect(response).to have_http_status(:unprocessable_content)
   end
 
-  it 'limits organizers to their assigned venues and hides other users' do
+  it 'limits organizers to managing their assigned venues while allowing public information elsewhere' do
     venue = create_venue
     other = create_venue
     user = create_user
@@ -67,7 +67,8 @@ RSpec.describe 'Venue management', :aggregate_failures, :database, type: :reques
     get venue_organizers_path(venue)
     expect(response).to have_http_status(:forbidden)
     get venue_path(other)
-    expect(response).to have_http_status(:not_found)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).not_to include('Instructions', 'Model Pay', 'Edit Day', 'Booking History')
   end
 
   it 'does not allow schedule access to grant venue or user administration' do
@@ -152,7 +153,7 @@ RSpec.describe 'Venue management', :aggregate_failures, :database, type: :reques
     expect(response).to have_http_status(:forbidden)
   end
 
-  it 'resolves venue slugs, root shortcuts, and legacy IDs without bypassing venue scope' do
+  it 'resolves public venue slugs, root shortcuts, and legacy IDs without exposing management' do
     venue = create_venue
     user = create_user
     grant_schedule_access(venue, user)
@@ -163,10 +164,13 @@ RSpec.describe 'Venue management', :aggregate_failures, :database, type: :reques
       expect(response.body).to include(venue.name)
     end
     other = create_venue
-    [venue_path(other), venue_shortcut_path(other), '/missing-venue'].each do |path|
+    [venue_path(other), venue_shortcut_path(other)].each do |path|
       get path
-      expect(response).to have_http_status(:not_found)
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include('Edit Venue', 'Manage Schedule')
     end
+    get '/missing-venue'
+    expect(response).to have_http_status(:not_found)
   end
 
   it 'lets admins edit slugs while retaining old URLs and using slugs in nested management links' do

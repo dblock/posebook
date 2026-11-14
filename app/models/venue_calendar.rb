@@ -30,7 +30,7 @@ class VenueCalendar
   end
 
   def bookings
-    @bookings ||= ModelBooking.upcoming.where(venue_id: venue.id).index_by(&:date)
+    @bookings ||= ModelBooking.upcoming.where(venue_id: venue.id).includes(:user).index_by(&:date)
   end
 
   def current_booking(user)

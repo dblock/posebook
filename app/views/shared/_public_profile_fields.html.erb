@@ -1,13 +1,13 @@
 <fieldset>
   <legend>Public Profile Preferences</legend>
   <p><%= form.label :display_name, "Display name (public, optional)" %><br><%= form.text_field :display_name, maxlength: 100 %><br>
-    <small>This will be public in announcements. Leave blank to use your name, which will then be public instead.</small>
+    <small>This will be public in announcements and venue calendars. Leave blank to use your name, which will then be public instead.</small>
   </p>
   <p><%= form.label :instagram_url, "Instagram profile (optional)" %><br><%= form.text_field :instagram_url, placeholder: "https://www.instagram.com/your_name/", maxlength: 500 %><br>
     <small>Enter your profile link or @username. Kept private unless you allow public tagging below.</small>
   </p>
   <% if self_service %>
-    <p><%= form.check_box :instagram_tagging_allowed %> <%= form.label :instagram_tagging_allowed, "Allow tagging my Instagram in announcements (makes my Instagram username and link public)" %></p>
+    <p><%= form.check_box :instagram_tagging_allowed %> <%= form.label :instagram_tagging_allowed, "Allow tagging my Instagram in announcements and venue calendars (makes my Instagram username and link public)" %></p>
   <% else %>
     <p>Tagging consent: <%= @user.instagram_tagging_allowed? ? "Allowed" : "Not allowed" %>. Only the user can opt in. Changing their Instagram link turns tagging off until they confirm again.</p>
   <% end %>
