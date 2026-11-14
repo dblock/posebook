@@ -157,4 +157,49 @@ RSpec.describe ProgramScheduleMutation, :aggregate_failures, :database do
     expect(overridden.reload.starts_at).to eq(Time.utc(2026, 11, 24, 1))
     expect(overridden.time_changes).to be_empty
   end
+
+  it 'updates an upcoming booking and its claim when an overnight end time changes or is cleared' do
+    booking = reserve
+    result = ProgramSettingsUpdate.new(program: program, user: admin).call(end_time: '01:15')
+    expect(result.errors).to be_empty
+    expect(booking.reload).to have_attributes(scheduled_ends_at: Time.utc(2026, 11, 17, 6, 15),
+                                              ends_at: Time.utc(2026, 11, 17, 6, 15), lock_version: 1)
+    expect(BookingClaim.find_by(booking_id: booking.id).ends_at).to eq(booking.ends_at)
+    expect(booking.time_changes.last).to include('from_end' => nil, 'to_end' => booking.ends_at)
+    ProgramSettingsUpdate.new(program: program, user: admin).call(end_time: '')
+    expect(booking.reload.scheduled_ends_at).to be_nil
+    expect(booking.ends_at).to eq(Time.utc(2026, 11, 17, 5))
+    expect(BookingClaim.find_by(booking_id: booking.id).ends_at).to eq(booking.ends_at)
+  end
+
+  it 'uses per-date end times, preserves them across regular edits, and restores regular times' do
+    program.update!(end_time: '21:00')
+    booking = reserve
+    change_schedule(start_time: '22:30', end_time: '01:00')
+    expect(booking.reload).to have_attributes(starts_at: Time.utc(2026, 11, 17, 3, 30),
+                                              ends_at: Time.utc(2026, 11, 17, 6))
+    ProgramSettingsUpdate.new(program: program, user: admin).call(end_time: '22:00')
+    expect(booking.reload.ends_at).to eq(Time.utc(2026, 11, 17, 6))
+    change_schedule(mode: 'regular')
+    expect(booking.reload.ends_at).to eq(Time.utc(2026, 11, 17, 3))
+    expect(BookingClaim.find_by(booking_id: booking.id).ends_at).to eq(booking.ends_at)
+  end
+
+  it 'rejects equal and nonexistent end times and rolls back changes to booked dates' do
+    booking = reserve
+    expect(change_schedule(start_time: '19:30', end_time: '19:30').errors[:end_time]).not_to be_empty
+    invalid = change_schedule(date: '2027-03-13', start_time: '23:00', end_time: '02:30')
+    expect(invalid.errors[:end_time]).not_to be_empty
+    expect(booking.reload.scheduled_ends_at).to be_nil
+    expect(program.schedule_exceptions).to be_empty
+
+    program.update!(available_weekdays: ['0'], start_time: '01:00')
+    other = create_user
+    grant_participant_access(program, other)
+    spring_booking = track_booking(BookingMutation.new(program: program, user: other).book(date: '2027-03-14'))
+    result = ProgramSettingsUpdate.new(program: program, user: admin).call(end_time: '02:30')
+    expect(result.errors[:end_time]).not_to be_empty
+    expect(program.reload.end_time).to be_nil
+    expect(spring_booking.reload.scheduled_ends_at).to be_nil
+  end
 end

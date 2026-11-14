@@ -20,7 +20,12 @@
                   <p>Gender-rule override: <%= booking.gender_override_reason %></p>
                 <% end %>
                 <% booking.time_changes.each do |change| %>
-                  <p><%= change["from"].in_time_zone(booking.time_zone).strftime("%-I:%M %p %Z") %> to <%= change["to"].in_time_zone(booking.time_zone).strftime("%-I:%M %p %Z") %>: <%= change["reason"] %></p>
+                  <% if change["from"] != change["to"] || !change.key?("from_end") %>
+                    <p><%= change["from"].in_time_zone(booking.time_zone).strftime("%-I:%M %p %Z") %> to <%= change["to"].in_time_zone(booking.time_zone).strftime("%-I:%M %p %Z") %>: <%= change["reason"] %></p>
+                  <% end %>
+                  <% if change.key?("from_end") && change["from_end"] != change["to_end"] %>
+                    <p>End time: <%= change["from_end"] ? change["from_end"].in_time_zone(booking.time_zone).to_fs(:long) : "not set" %> to <%= change["to_end"] ? change["to_end"].in_time_zone(booking.time_zone).to_fs(:long) : "not set" %>: <%= change["reason"] %></p>
+                  <% end %>
                 <% end %>
                 <% booking.attendance_changes.each do |change| %>
                   <p><%= change["confirmed"] ? "Confirmed" : "Attendance confirmation cleared" %> on <%= change["changed_at"].in_time_zone(booking.time_zone).to_fs(:long) %>: <%= change["reason"] %></p>

@@ -90,7 +90,8 @@ class ProgramsController < ApplicationController
   end
 
   def program_params
-    params.expect(program: [:name, :program_label, :participant_label, :custom_slug, :time_zone, :start_time, :pay,
+    params.expect(program: [:name, :program_label, :participant_label, :custom_slug, :time_zone, :start_time, :end_time,
+                            :pay,
                             :instructions, :booking_horizon_months,
                             { available_weekdays: [], no_consecutive_genders: [] }])
   end

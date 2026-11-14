@@ -18,12 +18,13 @@ class Booking
   field :changed_at, type: Time
   field :changed_by_id, type: BSON::ObjectId
   field :starts_at, type: Time
+  field :scheduled_ends_at, type: Time
   field :time_changes, type: Array, default: []
   field :created_by_id, type: BSON::ObjectId
   field :gender_override_reason, type: String
   field :lock_version, type: Integer, default: 0
 
-  attr_readonly :program_id, :user_id, :date, :time_zone, :ends_at, :starts_at, :time_changes,
+  attr_readonly :program_id, :user_id, :date, :time_zone, :ends_at, :starts_at, :scheduled_ends_at, :time_changes,
                 :previous_booking_id,
                 :created_by_id, :gender_override_reason, :lock_version
   index({ program_id: 1, user_id: 1, date: -1 })
@@ -55,15 +56,17 @@ class Booking
     raise BookingMutation::Stale, program.message('bookings.stale')
   end
 
-  def change_time!(start, explanation, actor, session:)
-    return if scheduled_start == start
+  def change_time!(start, explanation, actor, session:, scheduled_end: scheduled_ends_at)
+    return if scheduled_start == start && scheduled_ends_at == scheduled_end
 
     change = { from: scheduled_start, to: start, reason: explanation, changed_at: Time.current,
-               changed_by_id: actor.id }
+               changed_by_id: actor.id, from_end: scheduled_ends_at, to_end: scheduled_end }
+    expiry = scheduled_end || (date + 1).in_time_zone(time_zone).utc
     atomic_change!(
-      { '$set' => { starts_at: start, updated_at: Time.current },
+      { '$set' => { starts_at: start, scheduled_ends_at: scheduled_end, ends_at: expiry, updated_at: Time.current },
         '$push' => { time_changes: change } }, session: session
     )
+    update_claim_expiry!(expiry, session)
   end
 
   def close!(new_status, explanation, actor, session:)
@@ -82,6 +85,12 @@ class Booking
   end
 
   private
+
+  def update_claim_expiry!(expiry, session)
+    result = BookingClaim.collection.find(booking_id: id).update_one({ '$set' => { ends_at: expiry } },
+                                                                     session: session)
+    raise BookingMutation::Conflict, program.message('bookings.conflict') unless result.matched_count == 1
+  end
 
   def atomic_change!(changes, session:)
     version = lock_version.zero? ? { '$in' => [nil, 0] } : lock_version

@@ -11,14 +11,15 @@ class ProgramSettingsUpdate
   def call(attributes)
     with_schedule_lock do |session|
       previous_time = @program.start_time
+      previous_end = @program.end_time
       @program.update!(attributes)
-      update_booking_times(session) if previous_time != @program.start_time
+      update_booking_times(session) if previous_time != @program.start_time || previous_end != @program.end_time
     end
     @program
   rescue Mongoid::Errors::Validations => e
     e.document
   rescue ArgumentError => e
-    @program.errors.add(:start_time, e.message)
+    @program.errors.add(e.message.start_with?('End time') ? :end_time : :start_time, e.message)
     @program
   end
 
@@ -30,8 +31,16 @@ class ProgramSettingsUpdate
     records.each do |booking|
       next if schedule.exceptions[booking.date]&.mode.in?(%w[open closed])
 
-      start = ProgramSchedule.local_start(booking.date, @program.start_time, booking.time_zone)
-      booking.change_time!(start, 'Regular start time changed.', @user, session: session)
+      update_booking_time(booking, session)
     end
+  end
+
+  def update_booking_time(booking, session)
+    start = ProgramSchedule.local_start(booking.date, @program.start_time, booking.time_zone)
+    ending = if @program.end_time
+               ProgramSchedule.local_end(booking.date, @program.start_time, @program.end_time, booking.time_zone)
+             end
+    reason = @program.saved_change_to_start_time? ? 'Regular start time changed.' : 'Regular end time changed.'
+    booking.change_time!(start, reason, @user, session: session, scheduled_end: ending)
   end
 end

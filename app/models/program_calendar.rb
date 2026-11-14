@@ -20,7 +20,9 @@ class ProgramCalendar
   end
 
   def session_on?(date)
-    schedule.starts_at(date).present?
+    start = schedule.starts_at(date)
+    schedule.ends_at(date) if start
+    start.present?
   rescue ArgumentError
     false
   end
@@ -38,11 +40,7 @@ class ProgramCalendar
     return "Closed: #{exception.reason}" if exception&.mode == 'closed'
     return 'Not a scheduled day' unless schedule.time_for(date)
 
-    return @program.message('programs.started') if schedule.starts_at(date) <= Time.current
-
-    nil
-  rescue ArgumentError
-    'Start time unavailable because of daylight saving'
+    schedule_blocked_reason(date)
   end
 
   def bookings
@@ -68,6 +66,18 @@ class ProgramCalendar
   end
 
   private
+
+  def schedule_blocked_reason(date)
+    @program.message('programs.started') if schedule_start(date) <= Time.current
+  rescue ArgumentError => e
+    "#{e.message.start_with?('End time') ? 'End' : 'Start'} time unavailable because of daylight saving"
+  end
+
+  def schedule_start(date)
+    start = schedule.starts_at(date)
+    schedule.ends_at(date)
+    start
+  end
 
   def selected_month(value)
     candidate = Date.iso8601("#{value}-01")

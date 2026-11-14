@@ -27,11 +27,13 @@ module BookingRecords
   end
 
   def create_record(date, previous: nil, user: @user, gender_override_reason: nil)
+    schedule = ProgramSchedule.new(@program)
+    scheduled_end = schedule.ends_at(date)
     Booking.create!(
       program: @program, user: user, created_by_id: @user.id,
       date: date, time_zone: @program.time_zone,
-      starts_at: ProgramSchedule.new(@program).starts_at(date),
-      ends_at: (date + 1).in_time_zone(@program.time_zone).utc, previous_booking: previous,
+      starts_at: schedule.starts_at(date), scheduled_ends_at: scheduled_end,
+      ends_at: scheduled_end || (date + 1).in_time_zone(@program.time_zone).utc, previous_booking: previous,
       gender_override_reason: gender_override_reason
     )
   end

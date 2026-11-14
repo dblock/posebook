@@ -8,6 +8,7 @@
     <p><%= form.label :date %><br><%= form.date_field :date, required: true, min: @calendar.today, max: @calendar.last_date %></p>
     <p><%= form.label :mode, "Change" %><br><%= form.select :mode, [["Open / Change Time", "open"], ["Close Date", "closed"], ["Use Regular Schedule", "regular"]] %></p>
     <p><%= form.label :start_time, "Start time" %><br><%= form.time_field :start_time, step: 60 %><br><small>Required for Open / Change Time; ignored for the other changes. Uses <%= @program.time_zone %>.</small></p>
+    <p><%= form.label :end_time, "End time (optional)" %><br><%= form.time_field :end_time, step: 60 %><br><small>An earlier end time means the next day. Leave blank for no end time; ignored unless opening or changing a date.</small></p>
     <p><%= form.label :reason, "Explanation" %><br><%= form.text_area :reason, required: true, maxlength: 200, rows: 2 %></p>
     <%= form.submit "Save Schedule" %>
     <%= link_to "Cancel", program_path(@program) %>
@@ -23,7 +24,7 @@
             <tr>
               <td><%= exception.date.iso8601 %></td>
               <td><%= status_label(exception.mode.humanize) %><%= " schedule restored" if exception.mode == "regular" %></td>
-              <td><%= format_start_time(exception.start_time) if exception.start_time %></td>
+              <td><%= format_start_time(exception.start_time) if exception.start_time %><% if exception.end_time %> - <%= format_start_time(exception.end_time) %><%= " next day" if exception.end_time < exception.start_time %><% end %></td>
               <td><%= exception.reason %></td>
               <td><%= link_to "Edit", program_schedule_path(@program, date: exception.date.iso8601) %></td>
             </tr>

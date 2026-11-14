@@ -4,7 +4,7 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) and [DESIGN.md](DESIGN.md) before making
 
 ## Scope and Layout
 
-Posebook is an invitation-first Rails/Mongoid web application for recurring programs, participants, and organizers. Payments, attendee registration, and public participant directories are out of scope. Accounts, email recovery, settings, programs, scoped organizer/participant access, personal invitations, calendar booking, start times, dated schedule exceptions, and retained history exist; configurable end times and automated reminders do not. Preserve that distinction in documentation.
+Posebook is an invitation-first Rails/Mongoid web application for recurring programs, participants, and organizers. Payments, attendee registration, and public participant directories are out of scope. Accounts, email recovery, settings, programs, scoped organizer/participant access, personal invitations, calendar booking, optional end times, dated schedule exceptions, and retained history exist; automated reminders do not. Preserve that distinction in documentation.
 
 Runtime code lives in `app/`, configuration in `config/`, request tests in `spec/requests/`, database integration tests in `spec/integration/`, and the tested workflow display-name checker in `script/` and `spec/script/`. Ruby 4.0.9 within 4.0 and Rails 8.1 are supported; test only MongoDB 8.0 to match the deployment target. Use public Rails, Mongoid, and provider APIs. Verify and prefer current stable releases when selecting or updating dependencies while preserving compatibility.
 

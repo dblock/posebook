@@ -11,6 +11,9 @@
   <p><%= form.label :start_time, "Regular start time" %><br><%= form.time_field :start_time, required: true, step: 60 %><br>
     <small>Usual event start in the <%= @program.program_label.downcase %>'s time zone. Use Manage Schedule to change a single date.</small>
   </p>
+  <p><%= form.label :end_time, "Regular end time (optional)" %><br><%= form.time_field :end_time, step: 60 %><br>
+    <small>An earlier end time means the next day. Leave blank if the end time is not known.</small>
+  </p>
   <p><%= form.label :pay, "Pay (USD)" %><br><%= form.number_field :pay, min: 0, step: "0.01", required: true %></p>
   <p><%= form.label :booking_horizon_months, "Booking horizon (months)" %><br><%= form.number_field :booking_horizon_months, min: 1, required: true %></p>
   <fieldset>
@@ -30,6 +33,6 @@
     <p>These rules apply to new bookings and replacements, not existing reservations. Organizers can explicitly override with an explanation.</p>
   </fieldset>
   <p><%= form.label :instructions %><br><%= form.text_area :instructions, maxlength: 5000, rows: 4 %></p>
-  <p>Changing the regular start time moves upcoming bookings that do not have a dated time exception, retaining each time change. Other settings do not rewrite existing bookings. Automated reminders are not available yet.</p>
+  <p>Changing regular times updates upcoming bookings without a dated time exception, retaining each time change. Other settings do not rewrite existing bookings. Automated reminders are not available yet.</p>
   <%= form.submit program.persisted? ? "Save #{@program.program_label.titleize}" : "Create #{@program.program_label.titleize}" %>
 <% end %>

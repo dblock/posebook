@@ -21,6 +21,7 @@ class Program
   field :available_weekdays, type: Array, default: ['1']
   field :no_consecutive_genders, type: Array, default: []
   field :start_time, type: String, default: '09:00'
+  field :end_time, type: String
   field :schedule_revision, type: Integer, default: 0
 
   slug :name, :custom_slug, history: true, reserve: RESERVED_SLUGS, max_length: 100 do |program|
@@ -28,7 +29,7 @@ class Program
   end
 
   track_history on: %i[name program_label participant_label custom_slug _slugs time_zone pay instructions
-                       booking_horizon_months available_weekdays start_time no_consecutive_genders],
+                       booking_horizon_months available_weekdays start_time end_time no_consecutive_genders],
                 modifier_field_optional: true, modifier_field_inverse_of: nil, track_blank_changes: true
 
   has_many :memberships, class_name: 'ProgramMembership', inverse_of: :program,
@@ -47,6 +48,7 @@ class Program
     self.custom_slug = custom_slug.to_s.strip.presence
     self.available_weekdays = Array(available_weekdays).map(&:to_s).compact_blank.uniq
     self.no_consecutive_genders = Array(no_consecutive_genders).map(&:to_s).compact_blank.uniq
+    self.end_time = end_time.to_s.strip.presence
   end
   validates :name, presence: true, length: { maximum: 100 }
   validates :program_label, :participant_label, presence: true, length: { maximum: 40 },
@@ -57,6 +59,10 @@ class Program
   validates :instructions, length: { maximum: 5000 }
   validates :booking_horizon_months, numericality: { only_integer: true, greater_than: 0 }
   validates :start_time, format: { with: ProgramSchedule::TIME_FORMAT }
+  validates :end_time, format: { with: ProgramSchedule::TIME_FORMAT }, allow_nil: true
+  validate do
+    errors.add(:end_time, 'must differ from the start time') if end_time.present? && end_time == start_time
+  end
   validate do
     errors.add(:available_weekdays, :invalid) if available_weekdays.empty? ||
                                                  (available_weekdays - %w[0 1 2 3 4 5 6]).any?

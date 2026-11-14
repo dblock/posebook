@@ -7,7 +7,8 @@ class ProgramSchedulesController < ApplicationController
 
   def show
     @exception = @program.schedule_exceptions.where(date: params[:date]).first ||
-                 @program.schedule_exceptions.new(date: params[:date], start_time: @program.start_time)
+                 @program.schedule_exceptions.new(date: params[:date], start_time: @program.start_time,
+                                                  end_time: @program.end_time)
     load_schedule
   end
 
@@ -30,7 +31,7 @@ class ProgramSchedulesController < ApplicationController
   end
 
   def schedule_params
-    params.expect(schedule: %i[date mode start_time reason]).to_h.symbolize_keys
+    params.expect(schedule: %i[date mode start_time end_time reason]).to_h.symbolize_keys
   end
 
   def load_schedule
