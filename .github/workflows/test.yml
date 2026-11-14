@@ -1,0 +1,47 @@
+name: Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test Ruby ${{ matrix.entry.ruby }} Against MongoDB ${{ matrix.entry.mongodb }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        entry:
+          - { ruby: '4.0.9', mongodb: '8.0' }
+          - { ruby: '4.0.9', mongodb: '9.0' }
+    services:
+      mongodb:
+        image: mongo:${{ matrix.entry.mongodb }}
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.adminCommand({ping: 1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Check Out Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set Up Ruby
+        uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199
+        with:
+          ruby-version: ${{ matrix.entry.ruby }}
+          bundler-cache: true
+      - name: Run Tests
+        run: bundle exec rake spec
+      - name: Upload Coverage to Coveralls
+        if: matrix.entry.mongodb == '9.0'
+        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
+        with:
+          file: coverage/lcov.info
+          format: lcov
+          fail-on-error: false

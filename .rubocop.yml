@@ -1,0 +1,40 @@
+plugins:
+  - rubocop-rails
+  - rubocop-rspec
+  - rubocop-rake
+  - rubocop-md
+  - rubocop-prose
+  - rubocop-spellcheck
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 4.0
+  Exclude:
+    - 'coverage/**/*'
+    - 'log/**/*'
+    - 'pkg/**/*'
+    - 'public/assets/**/*'
+    - 'tmp/**/*'
+    - 'vendor/**/*'
+
+Markdown/HeadingCapitalization:
+  Enabled: true
+  Style: title_case
+
+Prose/MaxLength:
+  Max: false
+  Exclude:
+    - LICENSE.txt
+    - .spellcheck.txt
+
+Spellcheck:
+  DictionaryFiles:
+    en:
+      - gem:rubocop-spellcheck/data/en/en.dic
+      - .spellcheck.txt
+
+Style/Documentation:
+  Exclude:
+    - 'app/**/*'
+    - 'config/application.rb'
+    - 'spec/support/**/*'
