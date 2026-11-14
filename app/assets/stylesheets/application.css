@@ -43,3 +43,27 @@ td {
   padding: 0.5rem;
   border-bottom: 1px solid #ccc;
 }
+
+.calendar {
+  table-layout: fixed;
+  font-size: 0.8rem;
+}
+
+.calendar td {
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.calendar time,
+.calendar small {
+  display: block;
+}
+
+.calendar .blocked {
+  background: #e9e7e3;
+  color: #555;
+}
+
+.calendar .available {
+  background: #e1efdf;
+}

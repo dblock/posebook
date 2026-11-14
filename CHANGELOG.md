@@ -8,4 +8,5 @@
 - [#6](https://github.com/dblock/posebook/pull/6): Create and configure venues and manage venue-scoped organizer schedule access - [@dblock](https://github.com/dblock).
 - [#7](https://github.com/dblock/posebook/pull/7): Separate profile, password, and deactivation pages and return saved edits to a read-only profile - [@dblock](https://github.com/dblock).
 - [#8](https://github.com/dblock/posebook/pull/8): Let system admins edit existing users' contact information with immediate email changes and session revocation - [@dblock](https://github.com/dblock).
+- [#9](https://github.com/dblock/posebook/pull/9): Configure available weekdays and preview venue-local posing calendars with blocked dates - [@dblock](https://github.com/dblock).
 - Your contribution here.

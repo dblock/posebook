@@ -5,7 +5,14 @@
   <p><%= form.label :time_zone, "Time zone" %><br><%= form.select :time_zone, Venue::TIME_ZONES, {}, required: true %></p>
   <p><%= form.label :model_pay, "Model pay (USD)" %><br><%= form.number_field :model_pay, min: 0, step: "0.01", required: true %></p>
   <p><%= form.label :booking_horizon_months, "Booking horizon (months)" %><br><%= form.number_field :booking_horizon_months, min: 1, required: true %></p>
+  <fieldset>
+    <legend>Available Weekdays</legend>
+    <%= hidden_field_tag "venue[available_weekdays][]", "" %>
+    <% Date::DAYNAMES.each_with_index do |day, index| %>
+      <label><%= check_box_tag "venue[available_weekdays][]", index, venue.available_weekdays.include?(index.to_s), id: "weekday-#{index}" %> <%= day %></label>
+    <% end %>
+  </fieldset>
   <p><%= form.label :instructions %><br><%= form.text_area :instructions, maxlength: 5000, rows: 4 %></p>
-  <p>These settings prepare this venue for booking. Schedule creation and reminders are not available yet.</p>
+  <p>The calendar previews available weekdays within the booking horizon. Model invitations, booking, and reminders are not available yet.</p>
   <%= form.submit venue.persisted? ? "Save Venue" : "Create Venue" %>
 <% end %>

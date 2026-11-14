@@ -19,9 +19,11 @@ RSpec.describe 'Venue management', :aggregate_failures, :database, type: :reques
     expect(response).to redirect_to(venue_path(venue))
     get edit_venue_path(venue)
     expect(response).to have_http_status(:ok)
-    patch venue_path(venue), params: { venue: { instructions: 'Please arrive at 6:15 PM.', booking_horizon_months: 9 } }
+    patch venue_path(venue), params: { venue: { instructions: 'Please arrive at 6:15 PM.', booking_horizon_months: 9,
+                                                available_weekdays: ['', '1', '3'] } }
     expect(venue.reload.booking_horizon_months).to eq(9)
     expect(venue.instructions).to eq('Please arrive at 6:15 PM.')
+    expect(venue.available_weekdays).to eq(%w[1 3])
   end
 
   it 'renders validation errors when creating or editing a venue' do

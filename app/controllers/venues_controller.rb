@@ -10,6 +10,7 @@ class VenuesController < ApplicationController
   end
 
   def show
+    @calendar = VenueCalendar.new(@venue, month: params[:month])
     return unless current_user.system_admin?
 
     @organizers = @venue.memberships.schedule_managers.includes(:user).to_a
@@ -46,6 +47,7 @@ class VenuesController < ApplicationController
   end
 
   def venue_params
-    params.expect(venue: %i[name address time_zone model_pay instructions booking_horizon_months])
+    params.expect(venue: [:name, :address, :time_zone, :model_pay, :instructions, :booking_horizon_months,
+                          { available_weekdays: [] }])
   end
 end

@@ -1,0 +1,30 @@
+<section aria-label="Posing calendar">
+  <h2>Posing Calendar</h2>
+  <nav aria-label="Calendar months">
+    <% if calendar.month > calendar.today.beginning_of_month %>
+      <%= link_to "Previous Month", venue_path(calendar.venue, month: (calendar.month - 1.month).strftime("%Y-%m")) %>
+    <% end %>
+    <strong><%= calendar.month.strftime("%B %Y") %></strong>
+    <% if calendar.month < calendar.last_date.beginning_of_month %>
+      <%= link_to "Next Month", venue_path(calendar.venue, month: (calendar.month + 1.month).strftime("%Y-%m")) %>
+    <% end %>
+  </nav>
+  <p>Dates use <%= calendar.venue.time_zone %>. Available days are shown in green; all other days are blocked.</p>
+  <table class="calendar">
+    <thead><tr><% Date::ABBR_DAYNAMES.each do |day| %><th scope="col"><%= day %></th><% end %></tr></thead>
+    <tbody>
+      <% calendar.weeks.each do |week| %>
+        <tr>
+          <% week.each do |date| %>
+            <% reason = date.beginning_of_month == calendar.month ? calendar.blocked_reason(date) : "Outside displayed month" %>
+            <td data-date="<%= date.iso8601 %>" class="<%= reason ? "blocked" : "available" %>">
+              <time datetime="<%= date.iso8601 %>"><%= date.day %></time>
+              <span><%= reason ? "Blocked" : "Available" %></span>
+              <% if reason %><small><%= reason %></small><% end %>
+            </td>
+          <% end %>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>
