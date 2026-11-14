@@ -29,6 +29,7 @@ RSpec.describe 'Organizer bookings', :aggregate_failures, :database, type: :requ
   it 'creates a booking for an assigned model without granting unrelated administrator permissions' do
     get new_venue_organizer_booking_path(venue)
     expect(response.body).to include('Schedule a Model', model.name)
+    expect(response.parsed_body.at_css('#booking_attendance option[value="confirmed"]').text).to eq('Confirmed')
     post venue_organizer_bookings_path(venue), params: booking_params
     record = track_booking(venue.model_bookings.first)
     expect(record).to have_attributes(user_id: model.id, created_by_id: organizer.id)
@@ -44,6 +45,8 @@ RSpec.describe 'Organizer bookings', :aggregate_failures, :database, type: :requ
     expect(response.body).to include('Edit Booking', 'Attendance not confirmed')
     patch venue_organizer_booking_path(venue, record), params: booking_params(attendance: 'confirmed')
     expect(record.reload.attendance_confirmed_by_id).to eq(organizer.id)
+    follow_redirect!
+    expect(response.body).to include('Confirmed on ')
     patch venue_organizer_booking_path(venue, record), params: booking_params
     expect(record.reload.attendance_confirmed?).to be(false)
     expect(record.attendance_changes.pluck('confirmed')).to eq([true, false])

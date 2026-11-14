@@ -1,5 +1,5 @@
 <% if booking.attendance_confirmed? %>
-  <strong class="attendance-confirmed">Attendance confirmed</strong>
+  <strong class="attendance-confirmed">Confirmed</strong>
 <% elsif local_assigns.fetch(:private_view, false) && booking.attendance_overdue? %>
   <strong class="attendance-warning" role="status">Attendance not confirmed - follow up ASAP</strong>
 <% end %>
