@@ -7,22 +7,22 @@ RSpec.describe ModelBookingAccess, :aggregate_failures, :database do
 
   around { |example| travel_to(Time.utc(2026, 11, 13, 15)) { example.run } }
 
-  let(:venue) { create_venue }
+  let(:drawing_session) { create_drawing_session }
   let(:model) { create_user }
   let(:admin) { create_user(roles: ['system_admin']) }
-  let(:membership) { grant_model_access(venue, model) }
+  let(:membership) { grant_model_access(drawing_session, model) }
 
   def booking(date = '2026-11-16')
     membership
-    track_booking(BookingMutation.new(venue: venue, user: model).book(date: date))
+    track_booking(BookingMutation.new(drawing_session: drawing_session, user: model).book(date: date))
   end
 
   def access_mutation
-    ModelAccessMutation.new(venue: venue, user: admin)
+    ModelAccessMutation.new(drawing_session: drawing_session, user: admin)
   end
 
   def roster_access
-    roster = VenueModelRoster.new(venue, page: 1)
+    roster = DrawingSessionModelRoster.new(drawing_session, page: 1)
     member = roster.memberships.find { |item| item.id == membership.id }
     roster.access_for(member)
   end
@@ -35,7 +35,7 @@ RSpec.describe ModelBookingAccess, :aggregate_failures, :database do
     original = booking
     membership.unset(:booking_invited_at)
     expect(access_state(roster_access)).to eq(access_state(described_class.new(membership.reload)))
-    BookingMutation.new(venue: venue, user: model).cancel(booking: original, reason: 'Travel.')
+    BookingMutation.new(drawing_session: drawing_session, user: model).cancel(booking: original, reason: 'Travel.')
     travel_to Time.utc(2026, 11, 17, 15)
     expect(access_state(roster_access)).to eq(access_state(described_class.new(membership.reload)))
     booking('2026-11-23')
@@ -53,12 +53,12 @@ RSpec.describe ModelBookingAccess, :aggregate_failures, :database do
     access_mutation.invite(membership.id)
     expect(booking('2026-11-23')).to be_persisted
     expect(original.reload.display_status).to eq('Completed')
-    expect(venue.model_bookings.count).to eq(2)
+    expect(drawing_session.model_bookings.count).to eq(2)
   end
 
   it 'retains permission across cancellation even after the canceled date has passed' do
     original = booking
-    BookingMutation.new(venue: venue, user: model).cancel(booking: original, reason: 'Travel.')
+    BookingMutation.new(drawing_session: drawing_session, user: model).cancel(booking: original, reason: 'Travel.')
     travel_to Time.utc(2026, 11, 17, 15)
     expect(booking('2026-11-23')).to be_persisted
     expect(original.reload.status).to eq('canceled')
@@ -68,7 +68,7 @@ RSpec.describe ModelBookingAccess, :aggregate_failures, :database do
     original = booking
     Current.set(user: admin) { access_mutation.pause(membership.id, 'Needs a break.') }
     expect(original.reload.status).to eq('confirmed')
-    mutation = BookingMutation.new(venue: venue, user: model)
+    mutation = BookingMutation.new(drawing_session: drawing_session, user: model)
     expect { mutation.change(booking: original, date: '2026-11-23', reason: 'Travel.') }
       .to raise_error(BookingMutation::Invalid, /paused/)
     mutation.cancel(booking: original, reason: 'Cannot attend.')
@@ -90,7 +90,9 @@ RSpec.describe ModelBookingAccess, :aggregate_failures, :database do
   it 'does not let a fresh registration invitation bypass a paused or completed model gate' do
     booking
     travel_to Time.utc(2026, 11, 17, 15)
-    ModelInvitation.with_session { |session| VenueMembership.grant_model_access(venue, model, session: session) }
+    ModelInvitation.with_session do |session|
+      DrawingSessionMembership.grant_model_access(drawing_session, model, session: session)
+    end
     expect(described_class.new(membership.reload).allowed?).to be(false)
     access_mutation.pause(membership.id, 'Organizer hold.')
     expect(access_mutation.invite(membership.id)).to be_nil
@@ -100,7 +102,7 @@ RSpec.describe ModelBookingAccess, :aggregate_failures, :database do
     original = booking
     membership.unset(:booking_invited_at)
     expect(described_class.new(membership.reload).allowed?).to be(true)
-    BookingMutation.new(venue: venue, user: model).cancel(booking: original, reason: 'Travel.')
+    BookingMutation.new(drawing_session: drawing_session, user: model).cancel(booking: original, reason: 'Travel.')
     travel_to Time.utc(2026, 11, 17, 15)
     replacement = booking('2026-11-23')
     travel_to Time.utc(2026, 11, 24, 15)
@@ -117,13 +119,13 @@ RSpec.describe ModelBookingAccess, :aggregate_failures, :database do
     expect(membership.reload.history_tracks.count).to eq(3)
   end
 
-  it 'isolates completed-cycle permission and pauses to their venue' do
+  it 'isolates completed-cycle permission and pauses to their drawing_session' do
     booking
-    other = create_venue
+    other = create_drawing_session
     other_membership = grant_model_access(other, model)
     travel_to Time.utc(2026, 11, 17, 15)
-    ModelAccessMutation.new(venue: other, user: admin).invite(other_membership.id)
-    access_mutation.pause(membership.id, 'Venue-local pause.')
+    ModelAccessMutation.new(drawing_session: other, user: admin).invite(other_membership.id)
+    access_mutation.pause(membership.id, 'Session-local pause.')
     expect(described_class.new(membership.reload).allowed?).to be(false)
     expect(described_class.new(other_membership.reload).allowed?).to be(true)
   end
@@ -140,7 +142,7 @@ RSpec.describe ModelBookingAccess, :aggregate_failures, :database do
     ]
     operations.each(&:value)
     expect(membership.reload.model_paused).to be(true)
-    expect(venue.model_bookings.count).to be <= 1
+    expect(drawing_session.model_bookings.count).to be <= 1
     expect { booking('2026-11-23') }.to raise_error(BookingMutation::Invalid, /paused/)
   end
 end

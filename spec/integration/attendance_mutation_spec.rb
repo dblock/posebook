@@ -7,15 +7,16 @@ RSpec.describe AttendanceMutation, :aggregate_failures, :database do
 
   around { |example| travel_to(Time.utc(2026, 11, 13, 15)) { example.run } }
 
-  let(:venue) { create_venue }
+  let(:drawing_session) { create_drawing_session }
   let(:model) { create_user }
   let(:booking) do
-    grant_model_access(venue, model)
-    track_booking(BookingMutation.new(venue: venue, user: model).book(date: '2026-11-23'))
+    grant_model_access(drawing_session, model)
+    track_booking(BookingMutation.new(drawing_session: drawing_session, user: model).book(date: '2026-11-23'))
   end
 
   def confirm
-    described_class.new(venue: venue, user: model).confirm(booking.id, version: booking.lock_version)
+    described_class.new(drawing_session: drawing_session, user: model).confirm(booking.id,
+                                                                               version: booking.lock_version)
   end
 
   def allow_stale
@@ -24,11 +25,11 @@ RSpec.describe AttendanceMutation, :aggregate_failures, :database do
     nil
   end
 
-  it 'uses saved local calendar dates across daylight saving and later venue time-zone changes' do
+  it 'uses saved local calendar dates across daylight saving and later session time-zone changes' do
     travel_to Time.utc(2026, 10, 24, 15)
-    grant_model_access(venue, model)
-    record = track_booking(BookingMutation.new(venue: venue, user: model).book(date: '2026-11-02'))
-    venue.update!(time_zone: 'America/Los_Angeles')
+    grant_model_access(drawing_session, model)
+    record = track_booking(BookingMutation.new(drawing_session: drawing_session, user: model).book(date: '2026-11-02'))
+    drawing_session.update!(time_zone: 'America/Los_Angeles')
     travel_to Time.utc(2026, 10, 26, 3, 59, 59)
     expect(record.confirmation_open?).to be(false)
     travel_to Time.utc(2026, 10, 26, 4)
@@ -49,7 +50,7 @@ RSpec.describe AttendanceMutation, :aggregate_failures, :database do
     record = booking
     travel_to Time.utc(2026, 11, 16, 15)
     confirm
-    replacement = track_booking(BookingMutation.new(venue: venue, user: model)
+    replacement = track_booking(BookingMutation.new(drawing_session: drawing_session, user: model)
                                                .change(booking: record.reload, date: '2026-11-30', reason: 'Travel.'))
     expect(record.reload.attendance_confirmed?).to be(false)
     expect(record.attendance_confirmed_at).to be_present
@@ -77,12 +78,12 @@ RSpec.describe AttendanceMutation, :aggregate_failures, :database do
     travel_to Time.utc(2026, 11, 16, 15)
     confirm
     organizer = create_user
-    grant_schedule_access(venue, organizer)
-    OrganizerBookingMutation.new(venue: venue, user: organizer).update(
+    grant_coordinator_access(drawing_session, organizer)
+    OrganizerBookingMutation.new(drawing_session: drawing_session, user: organizer).update(
       record.id, date: record.date.iso8601, user_id: model.id.to_s, attendance: 'unconfirmed',
                  reason: 'Rechecking availability.', lock_version: record.reload.lock_version
     )
-    expect { described_class.new(venue: venue, user: model).confirm(record.id, version: 0) }
+    expect { described_class.new(drawing_session: drawing_session, user: model).confirm(record.id, version: 0) }
       .to raise_error(BookingMutation::Stale)
     expect(record.reload.attendance_confirmed?).to be(false)
     expect(record.attendance_changes.size).to eq(2)
@@ -93,7 +94,8 @@ RSpec.describe AttendanceMutation, :aggregate_failures, :database do
     travel_to Time.utc(2026, 11, 16, 15)
     confirming = Thread.new { allow_stale { confirm } }
     replacement = allow_stale do
-      BookingMutation.new(venue: venue, user: model).change(booking: record, date: '2026-11-30', reason: 'Travel.')
+      BookingMutation.new(drawing_session: drawing_session, user: model).change(booking: record, date: '2026-11-30',
+                                                                                reason: 'Travel.')
     end
     track_booking(replacement) if replacement
     confirming.value

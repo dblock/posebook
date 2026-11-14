@@ -1,0 +1,13 @@
+<main>
+  <h1>Venue Coordinators at <%= @venue.name %></h1>
+  <% @coordinators.each do |membership| %>
+    <p><%= membership.user.name %> (<%= membership.user.email %>)</p>
+    <%= button_to "Remove Coordinator", venue_coordinator_path(@venue, membership), method: :delete %>
+  <% end %>
+  <%= form_with url: venue_coordinators_path(@venue) do |form| %>
+    <p><%= form.label :email, "Registered user's email" %><br><%= form.email_field :email, required: true %></p>
+    <%= form.submit "Add Venue Coordinator" %>
+  <% end %>
+  <p>Only system admins assign venue coordinators. Venue coordinators manage this venue and all its sessions.</p>
+  <p><%= link_to "Back to Venue", venue_path(@venue) %></p>
+</main>

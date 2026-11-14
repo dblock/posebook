@@ -13,10 +13,12 @@ RSpec.configure do |config|
     raise "Refusing to test against database #{database.inspect}" unless database.match?(/\Aposebook_test(?:_|\z)/)
 
     User.create_indexes
+    DrawingSession.create_indexes
     Venue.create_indexes
-    HistoryTracker.create_indexes
-    VenueScheduleException.create_indexes
     VenueMembership.create_indexes
+    HistoryTracker.create_indexes
+    DrawingSessionScheduleException.create_indexes
+    DrawingSessionMembership.create_indexes
     ModelInvitation.create_indexes
     ModelBooking.create_indexes
     ModelBookingClaim.create_indexes

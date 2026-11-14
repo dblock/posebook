@@ -161,11 +161,15 @@ begin
           'user = User.find_by(email: "legacy@example.test"); ' \
           'raise "Handle migration failed" unless user.instagram_handle == "legacy.model" && ' \
           '!user.attributes.key?("instagram_url") && user.instagram_tagging_allowed? && user.public_profile_private?')
-  docker!('exec', container, 'bundle', 'exec', 'rails', 'runner',
-          'raise "Slug backfill failed" unless Venue.find("legacy-package-venue").name == "Legacy Package Venue"; ' \
-          'Venue.transaction { Venue.create!(name: "Package Transaction", address: "Test"); ' \
-          'raise Mongoid::Errors::Rollback }; ' \
-          'raise "Rollback failed" if Venue.where(name: "Package Transaction").exists?')
+  docker!(
+    'exec', container, 'bundle', 'exec', 'rails', 'runner',
+    'location = Venue.find("legacy-package-venue"); program = DrawingSession.find("legacy-package-venue"); ' \
+    'raise "Venue/session migration failed" unless program.venue_id == location.id && ' \
+    'program.name == "Legacy Package Venue"; ' \
+    'DrawingSession.transaction { DrawingSession.create!(name: "Package Transaction", venue: location); ' \
+    'raise Mongoid::Errors::Rollback }; ' \
+    'raise "Rollback failed" if DrawingSession.where(name: "Package Transaction").exists?'
+  )
   check_photos(container)
   check_venue_photos(container)
   check_monitoring(container)

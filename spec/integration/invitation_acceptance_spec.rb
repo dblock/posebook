@@ -4,8 +4,8 @@ require 'rails_helper'
 
 RSpec.describe InvitationAcceptance, :aggregate_failures, :database do
   it 'atomically accepts a personal invitation once and rolls back a competing account' do
-    venue = create_venue
-    invitation = create_model_invitation(venue, create_user(roles: ['system_admin']))
+    drawing_session = create_drawing_session
+    invitation = create_model_invitation(drawing_session, create_user(roles: ['system_admin']))
     attributes = Array.new(2) { user_attributes }
     results = attributes.map do |values|
       Thread.new do
@@ -15,11 +15,11 @@ RSpec.describe InvitationAcceptance, :aggregate_failures, :database do
       end
     end.map(&:value)
     users = User.where(:email.in => attributes.pluck(:email)).to_a.each { |user| track_record(user) }
-    users.each { |user| track_model_membership(venue, user) }
+    users.each { |user| track_model_membership(drawing_session, user) }
     expect(results.compact.size).to eq(1)
     expect(users.size).to eq(1)
     expect(invitation.reload.used_by_id).to eq(users.first.id)
-    expect(venue.memberships.count).to eq(1)
+    expect(drawing_session.memberships.count).to eq(1)
     expect(HistoryTracker.where(:'modified.email'.in => attributes.pluck(:email)).count).to eq(1)
   end
 end

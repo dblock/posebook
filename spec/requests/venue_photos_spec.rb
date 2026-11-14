@@ -36,7 +36,7 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     expect(response).to redirect_to(venue_path(venue))
     expect(venue.photos.count).to eq(1)
     delete session_path
-    get venue_shortcut_path(venue)
+    get venue_path(venue)
     image = response.parsed_body.at_css('.venue-photo img')
     expect(image.attributes.transform_values(&:value)).to include('width' => '400', 'height' => '400')
     expect(response.body).not_to include('Upload Venue Photo', 'Delete Venue Photo', admin.email)
@@ -59,7 +59,7 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     owners = Array.new(2) { Venue.find(venue.id) }
     files = Array.new(2) { photo_upload }
     owners.zip(files).map { |owner, file| Thread.new { VenuePhoto.add(owner, file) } }.each(&:value)
-    VenueSettingsUpdate.new(venue: venue, user: admin).call(instagram_handle: '@venue.account')
+    venue.update!(instagram_handle: '@venue.account')
     expect(venue.photos.count).to eq(13)
     expect(stored_files.count).to eq(26)
     get venue_path(venue)
@@ -71,8 +71,9 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     post venue_photos_path(venue), params: { venue_photo: { file: photo_upload } }
     expect(response).to redirect_to(new_session_path)
     user = create_user
-    grant_schedule_access(venue, user)
-    grant_model_access(venue, user)
+    drawing_session = create_drawing_session(venue: venue)
+    grant_coordinator_access(drawing_session, user)
+    grant_model_access(drawing_session, user)
     sign_in(user)
     post venue_photos_path(venue), params: { venue_photo: { file: photo_upload } }
     expect(response).to have_http_status(:forbidden)

@@ -15,7 +15,7 @@ bin/setup --skip-server
 bin/dev
 ```
 
-`bin/setup` creates MongoDB indexes. Set `MONGODB_URI` if the development database is not `mongodb://127.0.0.1:27017/posebook_development`. Set `MONGODB_TEST_URI` to a separate test database named `posebook_test` or beginning with `posebook_test_`. Rails does not load `.env` files automatically; `.env.example` contains local examples.
+`bin/setup` migrates legacy venues into locations and recurring sessions, creates MongoDB indexes, and backfills both slug domains. Set `MONGODB_URI` if the development database is not `mongodb://127.0.0.1:27017/posebook_development`. Set `MONGODB_TEST_URI` to a separate test database named `posebook_test` or beginning with `posebook_test_`. Rails does not load `.env` files automatically; `.env.example` contains local examples.
 
 ## Configuration
 
@@ -35,9 +35,9 @@ Without SMTP configuration, account recovery reports that email is unavailable. 
 
 Production is continuously updated: each production update replaces the currently running application. There are no per-release versions, release tags, or registry publications. DigitalOcean App Platform hosts the linked instance; this repository's package workflow builds and smoke-tests a temporary image rather than publishing or deploying it.
 
-Configure the Dockerfile, terminate TLS at the host's proxy, and store `MONGODB_URI`, `SECRET_KEY_BASE`, and any SMTP password as encrypted settings. The MongoDB user needs permission to create indexes. The production image listens on port `3000`; `/up` checks application liveness, not database readiness.
+Configure the Dockerfile, terminate TLS at the host's proxy, and store `MONGODB_URI`, `SECRET_KEY_BASE`, and any SMTP password as encrypted settings. The MongoDB user needs permission to create and remove indexes. The production image listens on port `3000`; `/up` checks application liveness, not database readiness.
 
-At startup, the production entry point creates declared indexes, generates missing venue slugs, and migrates legacy Instagram URL fields to normalized handles. Run `bundle exec rails 'mongoid_slug:set[Venue]' users:migrate_instagram_handles` to apply those data tasks manually; both can be rerun safely. Preserve MongoDB replica-set connection options from the provider and do not set `directConnection=true`, which disables transaction support.
+At startup, the production entry point splits legacy venues into locations and recurring sessions before creating declared indexes, backfills both venue/session slugs, and migrates legacy user Instagram URL fields to normalized handles. Run `bundle exec rails venues:split_sessions db:create_indexes 'mongoid_slug:set[Venue,DrawingSession]' users:migrate_instagram_handles` to apply those data tasks manually; they can be rerun safely. Follow [Upgrading](../UPGRADING.md) for existing data, including stopping the old application before migration. Preserve MongoDB replica-set connection options from the provider and do not set `directConnection=true`, which disables transaction support.
 
 After a blank deployment, register the first account promptly; public registration closes once the first account exists. After each production update, verify the live site and relevant user flows. Coordinate database migrations with application compatibility; rolling back application code does not roll back data changes.
 

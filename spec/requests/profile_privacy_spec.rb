@@ -60,13 +60,13 @@ RSpec.describe 'Public identity privacy', :aggregate_failures, :database, type: 
   end
 
   it 'accepts privacy during invited registration even alongside public sharing fields' do
-    invitation = create_model_invitation(create_venue, create_user(roles: ['system_admin']))
+    invitation = create_model_invitation(create_drawing_session, create_user(roles: ['system_admin']))
     attributes = user_attributes(public_profile_private: '1', display_name: 'Hidden Public Name',
                                  instagram_handle: '@Artist.Model', instagram_tagging_allowed: '1')
     post invited_registration_path, params: { token: invitation.token, user: attributes }
     registered = track_record(User.find_by(email: attributes[:email]))
-    track_model_membership(invitation.venue, registered)
-    expect(response).to redirect_to(venue_path(invitation.venue))
+    track_model_membership(invitation.drawing_session, registered)
+    expect(response).to redirect_to(drawing_session_path(invitation.drawing_session))
     expect(registered).to have_attributes(public_name: 'To be announced', public_instagram_url: nil,
                                           display_name: 'Hidden Public Name', instagram_tagging_allowed: true)
   end

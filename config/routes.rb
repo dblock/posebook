@@ -16,20 +16,23 @@ Rails.application.routes.draw do
   namespace(:admin) { resources :users, only: %i[index edit update] }
   resources :venues, except: :destroy do
     resources :photos, only: %i[show create destroy], controller: 'venue_photos'
-    resource :schedule, controller: 'venue_schedules', only: %i[show update]
+    resources :coordinators, only: %i[index create destroy], controller: 'venue_coordinators'
+    resources :drawing_sessions, path: 'sessions', only: %i[new create]
+  end
+  resources :drawing_sessions, path: 'sessions', only: %i[index show edit update] do
+    resource :schedule, controller: 'drawing_session_schedules', only: %i[show update]
     resources(:organizer_bookings, only: %i[new create edit update]) { post :cancel, on: :member }
-    resources :models, controller: 'venue_models', only: :index do
+    resources :models, controller: 'drawing_session_models', only: :index do
       post :invite_all, on: :collection
       %i[invite pause resume].each { |action| post action, on: :member }
     end
-    resources :model_invitations, controller: 'venue_invitations', only: %i[new create show destroy]
+    resources :model_invitations, controller: 'drawing_session_invitations', only: %i[new create show destroy]
     resources :model_bookings, only: %i[create edit update] do
       get :cancellation, on: :member
       %i[cancel confirm].each { |action| post action, on: :member }
     end
-    resources :organizers, controller: 'venue_organizers', only: %i[index create destroy]
+    resources :coordinators, controller: 'drawing_session_coordinators', only: %i[index create destroy]
   end
   resources :password_resets, param: :token, only: %i[new create edit update]
   get 'up' => 'rails/health#show', as: :rails_health_check
-  get '/:id', to: 'venues#show', as: :venue_shortcut, constraints: { id: /[a-z0-9]+(?:-[a-z0-9]+)*/ }, format: false
 end

@@ -1,0 +1,37 @@
+<main>
+  <h1>Drawing Schedule</h1>
+  <p><%= link_to @drawing_session.name, drawing_session_path(@drawing_session) %></p>
+  <%= render "drawing_sessions/regular_schedule", drawing_session: @drawing_session %>
+  <p>Open an extra date, change one drawing's time, close a date, or restore its regular weekday schedule. A short explanation is required and retained. Closing a booked date cancels that booking; time changes keep the model booked. Automated notifications are not available yet.</p>
+  <%= render "shared/errors", record: @exception %>
+  <%= form_with model: @exception, scope: :schedule, url: drawing_session_schedule_path(@drawing_session), method: :patch do |form| %>
+    <p><%= form.label :date %><br><%= form.date_field :date, required: true, min: @calendar.today, max: @calendar.last_date %></p>
+    <p><%= form.label :mode, "Change" %><br><%= form.select :mode, [["Open / Change Time", "open"], ["Close Date", "closed"], ["Use Regular Schedule", "regular"]] %></p>
+    <p><%= form.label :start_time, "Start time" %><br><%= form.time_field :start_time, step: 60 %><br><small>Required for Open / Change Time; ignored for the other changes. Uses <%= @drawing_session.time_zone %>.</small></p>
+    <p><%= form.label :reason, "Explanation" %><br><%= form.text_area :reason, required: true, maxlength: 200, rows: 2 %></p>
+    <%= form.submit "Save Schedule" %>
+    <%= link_to "Cancel", drawing_session_path(@drawing_session) %>
+  <% end %>
+  <h2>Upcoming Exceptions</h2>
+  <% if @exceptions.any? %>
+    <p class="scroll-hint">Scroll horizontally to view all schedule details.</p>
+    <div class="table-scroll" role="region" aria-label="Schedule exceptions" tabindex="0">
+      <table>
+        <thead><tr><th>Date</th><th>Change</th><th>Time</th><th>Explanation</th><th></th></tr></thead>
+        <tbody>
+          <% @exceptions.each do |exception| %>
+            <tr>
+              <td><%= exception.date.iso8601 %></td>
+              <td><%= status_label(exception.mode == "regular" ? "Regular schedule restored" : exception.mode.humanize) %></td>
+              <td><%= drawing_time(exception.start_time) if exception.start_time %></td>
+              <td><%= exception.reason %></td>
+              <td><%= link_to "Edit", drawing_session_schedule_path(@drawing_session, date: exception.date.iso8601) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p>No schedule exceptions.</p>
+  <% end %>
+</main>

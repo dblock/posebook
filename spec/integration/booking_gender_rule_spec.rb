@@ -7,45 +7,47 @@ RSpec.describe BookingGenderRule, :aggregate_failures, :database do
 
   around { |example| travel_to(Time.utc(2026, 11, 13, 15)) { example.run } }
 
-  let(:venue) { create_venue(no_consecutive_genders: ['male']) }
+  let(:drawing_session) { create_drawing_session(no_consecutive_genders: ['male']) }
   let(:model) { create_user(gender: 'male') }
 
-  before { grant_model_access(venue, model) }
+  before { grant_model_access(drawing_session, model) }
 
-  def reserve(date, gender: 'male', at: venue)
+  def reserve(date, gender: 'male', at: drawing_session)
     user = create_user(gender: gender)
     grant_model_access(at, user)
-    track_booking(BookingMutation.new(venue: at, user: user).book(date: date))
+    track_booking(BookingMutation.new(drawing_session: at, user: user).book(date: date))
   end
 
   def book(date)
-    track_booking(BookingMutation.new(venue: venue, user: model).book(date: date))
+    track_booking(BookingMutation.new(drawing_session: drawing_session, user: model).book(date: date))
   end
 
   def change(original, date)
-    track_booking(BookingMutation.new(venue: venue, user: model)
+    track_booking(BookingMutation.new(drawing_session: drawing_session, user: model)
                                 .change(booking: original, date: date, reason: 'Travel changed.'))
   end
 
   def exception(date, mode)
-    track_record(VenueScheduleException.create!(venue: venue, date: Date.iso8601(date), mode: mode,
-                                                start_time: mode == 'open' ? '18:30' : nil, reason: 'Schedule change.'))
+    track_record(
+      DrawingSessionScheduleException.create!(drawing_session: drawing_session, date: Date.iso8601(date), mode: mode,
+                                              start_time: mode == 'open' ? '18:30' : nil, reason: 'Schedule change.')
+    )
   end
 
   def attempt(user, date)
-    BookingMutation.new(venue: venue, user: user).book(date: date)
+    BookingMutation.new(drawing_session: drawing_session, user: user).book(date: date)
   rescue BookingMutation::Invalid
     nil
   end
 
   User::GENDERS.each do |gender|
     it "independently restricts consecutive #{gender} models when that gender is selected" do
-      venue.update!(no_consecutive_genders: [gender])
+      drawing_session.update!(no_consecutive_genders: [gender])
       model.update!(gender: gender)
       reserve('2026-11-16', gender: gender)
       expect { book('2026-11-23') }.to raise_error(BookingMutation::Invalid, /consecutive-gender/)
-      expect(venue.model_bookings.count).to eq(1)
-      venue.update!(no_consecutive_genders: [])
+      expect(drawing_session.model_bookings.count).to eq(1)
+      drawing_session.update!(no_consecutive_genders: [])
       expect(book('2026-11-23')).to be_persisted
     end
   end
@@ -83,10 +85,11 @@ RSpec.describe BookingGenderRule, :aggregate_failures, :database do
     expect { book('2026-11-16') }.to raise_error(BookingMutation::Invalid, /consecutive-gender/)
   end
 
-  it 'ignores canceled bookings and bookings at other venues' do
+  it 'ignores canceled bookings and bookings at other sessions' do
     previous = reserve('2026-11-16')
-    BookingMutation.new(venue: venue, user: previous.user).cancel(booking: previous, reason: 'Travel changed.')
-    reserve('2026-11-16', at: create_venue)
+    BookingMutation.new(drawing_session: drawing_session, user: previous.user).cancel(booking: previous,
+                                                                                      reason: 'Travel changed.')
+    reserve('2026-11-16', at: create_drawing_session)
     expect(book('2026-11-23')).to be_persisted
   end
 
@@ -102,14 +105,14 @@ RSpec.describe BookingGenderRule, :aggregate_failures, :database do
     expect { change(original, '2026-11-23') }.to raise_error(BookingMutation::Invalid, /consecutive-gender/)
     expect(original.reload.status).to eq('confirmed')
     expect(ModelBookingClaim.find_by(model_booking_id: original.id).date).to eq(original.date)
-    expect(venue.model_bookings.count).to eq(2)
+    expect(drawing_session.model_bookings.count).to eq(2)
   end
 
-  it 'requires an actual gender selection even when the venue has no restrictions' do
-    venue.update!(no_consecutive_genders: [])
+  it 'requires an actual gender selection even when the session has no restrictions' do
+    drawing_session.update!(no_consecutive_genders: [])
     model.update!(gender: nil)
     expect { book('2026-11-16') }.to raise_error(BookingMutation::Invalid, /Select a gender/)
-    expect(venue.model_bookings).to be_empty
+    expect(drawing_session.model_bookings).to be_empty
   end
 
   it 'reloads the selected gender rather than trusting a stale profile' do
@@ -121,12 +124,12 @@ RSpec.describe BookingGenderRule, :aggregate_failures, :database do
 
   it 'serializes competing adjacent bookings so only one restricted model succeeds' do
     other = create_user(gender: 'male')
-    grant_model_access(venue, other)
+    grant_model_access(drawing_session, other)
     results = [model, other].zip(%w[2026-11-16 2026-11-23])
                             .map { |user, date| Thread.new { attempt(user, date) } }.map(&:value)
-    venue.model_bookings.each { |booking| track_booking(booking) }
+    drawing_session.model_bookings.each { |booking| track_booking(booking) }
     expect(results.compact.size).to eq(1)
-    expect(venue.model_bookings.count).to eq(1)
-    expect(ModelBookingClaim.where(venue_id: venue.id).count).to eq(1)
+    expect(drawing_session.model_bookings.count).to eq(1)
+    expect(ModelBookingClaim.where(drawing_session_id: drawing_session.id).count).to eq(1)
   end
 end

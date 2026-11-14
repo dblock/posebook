@@ -1,7 +1,7 @@
 <main>
   <h1><%= @gallery.private_access? ? @user.name : @user.public_name %> - Photos</h1>
   <% if @gallery.private_access? %>
-    <p><%= @photos.length %> of <%= ProfilePhoto::LIMIT %> photos. Private photos are visible only to the account owner, system admins, and their venue organizers.</p>
+    <p><%= @photos.length %> of <%= ProfilePhoto::LIMIT %> photos. Private photos are visible only to the account owner, system admins, and their drawing_session organizers.</p>
     <% if @user.public_profile_private? %>
       <p class="rescheduling-notice">Private Identity is on. All photos are hidden publicly, including photos marked Public.</p>
     <% end %>

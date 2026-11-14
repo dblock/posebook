@@ -1,0 +1,39 @@
+<% content_for :head do %>
+  <%= javascript_include_tag "calendar", defer: true %>
+<% end %>
+<% public_view = local_assigns.fetch(:public_view, true) %>
+<section aria-label="Posing calendar" data-calendar data-calendar-context="<%= calendar_access_context(public_view, manager: @session_coordinator, drawing_session: calendar.drawing_session, booking: @my_booking) %>">
+  <h2>Posing Calendar</h2>
+  <%= render "drawing_sessions/regular_schedule", drawing_session: calendar.drawing_session %>
+  <% if !public_view && calendar.drawing_session.no_consecutive_genders.any? %>
+    <p>Gender rules prevent repeats for each selected gender: <%= calendar.drawing_session.no_consecutive_genders.map(&:capitalize).to_sentence %>. Only immediately adjacent scheduled sessions count. An unbooked session breaks the sequence; closed dates are skipped.</p>
+  <% end %>
+  <% if @booking_access&.model? && current_user.gender.blank? %>
+    <p role="status">Choose male, female, or other in <%= link_to "Edit Profile", edit_profile_path %> before your next booking. Existing reservations are unchanged.</p>
+  <% end %>
+  <nav aria-label="Calendar months">
+    <% if calendar.month > calendar.today.beginning_of_month %>
+      <%= link_to "Previous Month", calendar_month_path(calendar, calendar.month - 1.month, @changing_booking), data: { calendar_navigation: true } %>
+    <% end %>
+    <strong data-calendar-month tabindex="-1"><%= calendar.month.strftime("%B %Y") %></strong>
+    <% if calendar.month < calendar.last_date.beginning_of_month %>
+      <%= link_to "Next Month", calendar_month_path(calendar, calendar.month + 1.month, @changing_booking), data: { calendar_navigation: true } %>
+    <% end %>
+  </nav>
+  <p>Dates and times use <%= calendar.drawing_session.time_zone %>. Available days are pale green, booked days are darker green, and unavailable days are grey.</p>
+  <p class="scroll-hint">Scroll horizontally to view all days.</p>
+  <div class="table-scroll" role="region" aria-label="Calendar dates" tabindex="0">
+    <table class="calendar">
+      <thead><tr><% Date::ABBR_DAYNAMES.each do |day| %><th scope="col"><%= day %></th><% end %></tr></thead>
+      <tbody>
+        <% calendar.weeks.each do |week| %>
+          <tr>
+            <% week.each do |date| %>
+              <%= render "drawing_sessions/calendar_day", calendar: calendar, date: date, public_view: public_view %>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</section>

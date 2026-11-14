@@ -21,27 +21,40 @@ module DatabaseHelpers
     track_record(User.create!(user_attributes(**overrides)))
   end
 
-  def create_venue(**overrides)
-    track_record(Venue.create!({ name: "Test Venue #{SecureRandom.hex(4)}", address: '480 10th Avenue, New York' }
+  def create_drawing_session(**overrides)
+    location = overrides.delete(:venue) || create_venue(**overrides.extract!(:address, :instagram_handle))
+    track_record(DrawingSession.create!({ name: "Test Session #{SecureRandom.hex(4)}", venue: location }
                                .merge(overrides)))
   end
 
-  def grant_schedule_access(venue, user)
-    VenueMembership.grant_schedule_access(venue, user)
+  def create_venue(**overrides)
+    track_record(Venue.create!({ name: "Test Venue #{SecureRandom.hex(4)}", address: '480 10th Avenue, New York' }
+                              .merge(overrides)))
+  end
+
+  def grant_venue_access(venue, user)
+    VenueMembership.grant_coordinator_access(venue, user)
     track_record(VenueMembership.find_by(venue_id: venue.id, user_id: user.id))
   end
 
-  def create_model_invitation(venue, inviter, **attributes)
-    track_record(ModelInvitation.create!(venue: venue, invited_by: inviter, **attributes))
+  def grant_coordinator_access(drawing_session, user)
+    DrawingSessionMembership.grant_coordinator_access(drawing_session, user)
+    track_record(DrawingSessionMembership.find_by(drawing_session_id: drawing_session.id, user_id: user.id))
   end
 
-  def track_model_membership(venue, user)
-    track_record(VenueMembership.find_by(venue_id: venue.id, user_id: user.id))
+  def create_model_invitation(drawing_session, inviter, **attributes)
+    track_record(ModelInvitation.create!(drawing_session: drawing_session, invited_by: inviter, **attributes))
   end
 
-  def grant_model_access(venue, user)
-    ModelInvitation.with_session { |session| VenueMembership.grant_model_access(venue, user, session: session) }
-    track_model_membership(venue, user)
+  def track_model_membership(drawing_session, user)
+    track_record(DrawingSessionMembership.find_by(drawing_session_id: drawing_session.id, user_id: user.id))
+  end
+
+  def grant_model_access(drawing_session, user)
+    ModelInvitation.with_session do |session|
+      DrawingSessionMembership.grant_model_access(drawing_session, user, session: session)
+    end
+    track_model_membership(drawing_session, user)
   end
 
   def track_booking(booking)

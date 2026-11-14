@@ -1,0 +1,15 @@
+<main>
+  <h1>Session Coordinators at <%= @drawing_session.name %></h1>
+  <%= render "drawing_sessions/regular_schedule", drawing_session: @drawing_session %>
+  <% @organizers.each do |membership| %>
+    <p><%= membership.user.name %> (<%= membership.user.email %>)</p>
+    <% unless membership.user.active? %><%= status_label("Inactive account") %><% end %>
+    <%= button_to "Remove Coordinator", drawing_session_coordinator_path(@drawing_session, membership), method: :delete %>
+  <% end %>
+  <%= form_with url: drawing_session_coordinators_path(@drawing_session) do |form| %>
+    <p><%= form.label :email, "Registered user's email" %><br><%= form.email_field :email, required: true %></p>
+    <%= form.submit "Add Session Coordinator" %>
+  <% end %>
+  <p>Venue coordinators inherit access to every session at their venue. Session coordinators cannot grant coordinator access.</p>
+  <p><%= link_to "Back to Session", drawing_session_path(@drawing_session) %></p>
+</main>

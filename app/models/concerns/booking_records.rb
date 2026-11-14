@@ -5,9 +5,12 @@ module BookingRecords
 
   def available_date(value, excluding: nil)
     date = Date.iso8601(value.to_s)
-    raise BookingMutation::Invalid, I18n.t('bookings.invalid_date') if VenueCalendar.new(@venue).blocked_reason(date)
+    if DrawingSessionCalendar.new(@drawing_session).blocked_reason(date)
+      raise BookingMutation::Invalid,
+            I18n.t('bookings.invalid_date')
+    end
 
-    claims = ModelBookingClaim.where(venue_id: @venue.id, date: date)
+    claims = ModelBookingClaim.where(drawing_session_id: @drawing_session.id, date: date)
     claims = claims.where(:model_booking_id.ne => excluding) if excluding
     raise BookingMutation::Conflict, I18n.t('bookings.date_taken') if claims.exists?
 
@@ -24,14 +27,18 @@ module BookingRecords
   end
 
   def create_record(date, previous: nil, user: @user, gender_override_reason: nil)
-    ModelBooking.create!(venue: @venue, user: user, created_by_id: @user.id, date: date, time_zone: @venue.time_zone,
-                         starts_at: VenueSchedule.new(@venue).starts_at(date),
-                         ends_at: (date + 1).in_time_zone(@venue.time_zone).utc, previous_booking: previous,
-                         gender_override_reason: gender_override_reason)
+    ModelBooking.create!(
+      drawing_session: @drawing_session, user: user, created_by_id: @user.id,
+      date: date, time_zone: @drawing_session.time_zone,
+      starts_at: DrawingSessionSchedule.new(@drawing_session).starts_at(date),
+      ends_at: (date + 1).in_time_zone(@drawing_session.time_zone).utc, previous_booking: previous,
+      gender_override_reason: gender_override_reason
+    )
   end
 
   def expire_claims
     # Only disposable claims expire; model booking history is never removed.
-    ModelBookingClaim.collection.find(venue_id: @venue.id, ends_at: { '$lte' => Time.current }).delete_many
+    ModelBookingClaim.collection.find(drawing_session_id: @drawing_session.id,
+                                      ends_at: { '$lte' => Time.current }).delete_many
   end
 end

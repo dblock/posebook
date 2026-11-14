@@ -2,7 +2,7 @@
   <h3 id="rescheduling-notice-title">Contact an Organizer Before Rescheduling</h3>
   <% if local_assigns.fetch(:urgent, false) %><p><strong>Please contact an organizer ASAP. Your attendance has not been confirmed.</strong></p><% end %>
   <p>Your drawing is five days away or sooner. Please contact an organizer so we can work out a new date together. Online rescheduling is unavailable.</p>
-  <% organizers = venue_organizer_contacts(venue) %>
+  <% organizers = drawing_session_organizer_contacts(drawing_session) %>
   <% if organizers.any? %>
     <ul>
       <% organizers.each do |organizer| %>
@@ -10,6 +10,6 @@
       <% end %>
     </ul>
   <% else %>
-    <p>No organizer contact details are listed. Please contact the venue directly.</p>
+    <p>No organizer contact details are listed. Please contact the session directly.</p>
   <% end %>
 </aside>

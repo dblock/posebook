@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
 class BookingMutation
-  include VenueScheduleLock
+  include DrawingSessionScheduleLock
   include BookingRecords
 
   class Invalid < StandardError; end
   class Conflict < StandardError; end
   class Stale < Conflict; end
 
-  def initialize(venue:, user:)
-    @venue = venue
+  def initialize(drawing_session:, user:)
+    @drawing_session = drawing_session
     @user = user
   end
 
@@ -20,7 +20,7 @@ class BookingMutation
       selected = available_date(date)
       check_gender!(selected)
       @booking = create_record(selected)
-      ModelBookingClaim.create!(venue: @venue, user: @user, model_booking: @booking,
+      ModelBookingClaim.create!(drawing_session: @drawing_session, user: @user, model_booking: @booking,
                                 date: @booking.date, ends_at: @booking.ends_at)
     end
   end
@@ -67,16 +67,16 @@ class BookingMutation
     verify_model!
     return unless required
 
-    access = ModelBookingAccess.new(@venue.memberships.models.where(user_id: @user.id).first)
+    access = ModelBookingAccess.new(@drawing_session.memberships.models.where(user_id: @user.id).first)
     raise Invalid, access.reason unless access.allowed?
   end
 
   def verify_model!
-    raise Invalid, I18n.t('bookings.model_required') unless @user.reload.active? && @venue.model?(@user)
+    raise Invalid, I18n.t('bookings.model_required') unless @user.reload.active? && @drawing_session.model?(@user)
   end
 
   def check_gender!(date, excluding: nil)
-    reason = BookingGenderRule.new(@venue, excluding: excluding).blocked_reason(date, @user)
+    reason = BookingGenderRule.new(@drawing_session, excluding: excluding).blocked_reason(date, @user)
     raise Invalid, reason if reason
   end
 
@@ -89,11 +89,11 @@ class BookingMutation
   end
 
   def claims
-    ModelBookingClaim.where(venue_id: @venue.id, user_id: @user.id)
+    ModelBookingClaim.where(drawing_session_id: @drawing_session.id, user_id: @user.id)
   end
 
   def active_booking(id, version:)
-    booking = ModelBooking.where(venue_id: @venue.id, user_id: @user.id).find(id)
+    booking = ModelBooking.where(drawing_session_id: @drawing_session.id, user_id: @user.id).find(id)
     booking.assert_version!(version)
     booking
   end

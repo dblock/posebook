@@ -24,13 +24,15 @@ class SessionsController < ApplicationController
 
   def finish_sign_in(user)
     invitation_token = session[:invitation_token]
-    booking_venue = session[:booking_venue]
+    booking_drawing_session = session[:booking_drawing_session]
     start_session(user, remember_me: params[:remember_me] == '1')
-    redirect_to(invitation_token ? invitation_path(token: invitation_token) : booking_return_path(booking_venue, user))
+    redirect_to(invitation_token ? invitation_path(token: invitation_token) : booking_return_path(
+      booking_drawing_session, user
+    ))
   end
 
   def booking_return_path(id, user)
-    id ? venue_path(Venue.visible_to(user).find(id)) : root_path
+    id ? drawing_session_path(DrawingSession.visible_to(user).find(id)) : root_path
   rescue Mongoid::Errors::DocumentNotFound
     root_path
   end

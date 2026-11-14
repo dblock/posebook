@@ -30,10 +30,10 @@ RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request 
   end
 
   def organizer_for(user)
-    venue = create_venue
-    grant_model_access(venue, user)
+    drawing_session = create_drawing_session
+    grant_model_access(drawing_session, user)
     organizer = create_user
-    grant_schedule_access(venue, organizer)
+    grant_coordinator_access(drawing_session, organizer)
     organizer
   end
 
@@ -138,11 +138,11 @@ RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request 
 
   it 'denies unrelated organizers and removes private access when the organizer role is revoked' do
     organizer = organizer_for(model)
-    membership = VenueMembership.schedule_managers.where(user_id: organizer.id).first
+    membership = DrawingSessionMembership.coordinators.where(user_id: organizer.id).first
     sign_in(organizer)
     get photo_url
     expect(response).to have_http_status(:ok)
-    membership.revoke_schedule_access
+    membership.revoke_coordinator_access
     get photo_url
     expect(response).to have_http_status(:not_found)
     get model_path(model)

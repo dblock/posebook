@@ -1,18 +1,18 @@
 # frozen_string_literal: true
 
 class OrganizerBookingMutation
-  include VenueScheduleLock
+  include DrawingSessionScheduleLock
   include BookingRecords
 
-  def initialize(venue:, user:)
-    @venue = venue
+  def initialize(drawing_session:, user:)
+    @drawing_session = drawing_session
     @user = user
   end
 
   def create(attributes)
     run do |session|
       @booking = build_booking(attributes)
-      ModelBookingClaim.create!(venue: @venue, user: @booking.user, model_booking: @booking,
+      ModelBookingClaim.create!(drawing_session: @drawing_session, user: @booking.user, model_booking: @booking,
                                 date: @booking.date, ends_at: @booking.ends_at)
       update_attendance(attributes, session)
     end
@@ -42,7 +42,7 @@ class OrganizerBookingMutation
   def run
     expire_claims
     with_schedule_lock do |session|
-      unless @user.reload.active? && @venue.managed_by?(@user)
+      unless @user.reload.active? && @drawing_session.managed_by?(@user)
         raise BookingMutation::Invalid,
               I18n.t('bookings.manager_required')
       end
@@ -57,7 +57,7 @@ class OrganizerBookingMutation
   end
 
   def active_booking(id, version:)
-    booking = ModelBooking.where(venue_id: @venue.id).find(id)
+    booking = ModelBooking.where(drawing_session_id: @drawing_session.id).find(id)
     booking.assert_version!(version)
     booking
   end
@@ -70,7 +70,7 @@ class OrganizerBookingMutation
   end
 
   def gender_override(date, model, attributes, excluding:)
-    message = BookingGenderRule.new(@venue, excluding: excluding).blocked_reason(date, model)
+    message = BookingGenderRule.new(@drawing_session, excluding: excluding).blocked_reason(date, model)
     return unless message
 
     raise BookingMutation::Invalid, message if model.gender.blank? || attributes[:override_gender_rule] != '1'
@@ -79,7 +79,7 @@ class OrganizerBookingMutation
   end
 
   def model_for(id)
-    membership = @venue.memberships.models.where(user_id: id).first
+    membership = @drawing_session.memberships.models.where(user_id: id).first
     raise BookingMutation::Invalid, I18n.t('bookings.model_required') unless membership&.user&.active?
 
     membership.user
