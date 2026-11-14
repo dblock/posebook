@@ -1,0 +1,12 @@
+<main>
+  <h1>Change Password</h1>
+  <%= render "shared/errors", record: @user %>
+  <p>Changing your password signs out other sessions and revokes outstanding recovery and email-change links.</p>
+  <%= form_with url: password_path, scope: :user, method: :patch, id: "password-form" do |form| %>
+    <p><%= form.label :current_password, for: "change-current-password" %><br><%= form.password_field :current_password, id: "change-current-password", required: true, autocomplete: "current-password" %></p>
+    <p><%= form.label :password, "New password" %><br><%= form.password_field :password, required: true, minlength: 12, autocomplete: "new-password" %></p>
+    <p><%= form.label :password_confirmation %><br><%= form.password_field :password_confirmation, required: true, autocomplete: "new-password" %></p>
+    <%= form.submit "Change Password" %>
+  <% end %>
+  <p><%= link_to "Cancel", profile_path %></p>
+</main>

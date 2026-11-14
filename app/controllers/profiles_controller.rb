@@ -4,12 +4,14 @@ class ProfilesController < ApplicationController
   before_action :require_authentication
   before_action -> { @user = current_user }
 
+  def show; end
+
   def edit; end
 
   def update
     attributes = params.expect(user: %i[name email phone current_password]).to_h.symbolize_keys
     if @user.update_profile(attributes)
-      redirect_to edit_profile_path, notice: t('profiles.updated')
+      redirect_to profile_path, notice: t('profiles.updated')
     else
       render :edit, status: :unprocessable_content
     end

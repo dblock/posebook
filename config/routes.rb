@@ -4,9 +4,9 @@ Rails.application.routes.draw do
   root 'pages#home'
   resource :registration, only: %i[new create]
   resource :session, only: %i[new create destroy]
-  resource :profile, only: %i[edit update]
-  resource :password, only: :update
-  resource :account_deactivation, only: :create
+  resource :profile, only: %i[show edit update]
+  resource :password, only: %i[edit update]
+  resource :account_deactivation, only: %i[new create]
   resource :email_change, only: %i[show update]
   namespace :admin do
     resources :users, only: %i[index update]

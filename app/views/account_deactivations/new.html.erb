@@ -1,0 +1,14 @@
+<main>
+  <h1>Deactivate Account</h1>
+  <%= render "shared/errors", record: @user %>
+  <% if @user.system_admin? %>
+    <p>System admin accounts stay active until role transfer is available, so administrator access cannot be lost.</p>
+  <% else %>
+    <p>Deactivation signs you out and revokes access but keeps your history. A system admin can reactivate your account.</p>
+    <%= form_with url: account_deactivation_path, id: "deactivation-form" do |form| %>
+      <p><%= form.label :current_password, for: "deactivate-current-password" %><br><%= form.password_field :current_password, id: "deactivate-current-password", required: true, autocomplete: "current-password" %></p>
+      <%= form.submit "Deactivate My Account" %>
+    <% end %>
+  <% end %>
+  <p><%= link_to "Cancel", profile_path %></p>
+</main>

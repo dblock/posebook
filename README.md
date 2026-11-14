@@ -24,7 +24,9 @@ Open [localhost:3000](http://localhost:3000) and create the first user with a na
 
 Development reset emails are written to `tmp/mail/`. Reset links expire after 30 minutes, can be used once, and invalidate existing sessions when used. Model registration, booking, and reminders are not implemented yet. `/up` checks application liveness, not database readiness.
 
-Use **Account Settings** to edit your name, optional international-format phone number, or password. Changing email requires your current password and confirmation at the new address; the old email remains your login and recovery address until confirmed. Phone numbers are stored but are not verified or used for recovery or messaging. Password changes retain the current browser session and revoke other sessions and outstanding recovery or email-change links.
+Open **Profile** to view your account information. **Edit Profile**, **Change Password**, and **Deactivate Account** each have their own page, with a cancel link back to the profile. Successful profile and password edits return to the read-only profile with a confirmation message. Deactivation signs you out and confirms the result on the sign-in page.
+
+Edit your name and optional international-format phone number from **Edit Profile**. Changing email requires your current password and confirmation at the new address; the old email remains your login and recovery address until confirmed, with the pending address shown on your profile. Phone numbers are stored but are not verified or used for recovery or messaging. Password changes retain the current browser session and revoke other sessions and outstanding recovery or email-change links.
 
 Non-admin users can deactivate their accounts with their current password; history is retained. System admins can deactivate or reactivate users from **Users**. System admin accounts cannot be deactivated until role transfer is available, so administrator access cannot be lost. Deactivation revokes sessions and recovery links and prevents login and recovery. Public registration stays closed even when accounts are inactive.
 
