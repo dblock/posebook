@@ -121,6 +121,11 @@ td {
   background: #e1efdf;
 }
 
+.calendar .booked {
+  background: #c2ddbc;
+  color: #24472a;
+}
+
 .calendar button {
   font-size: inherit;
   padding: 0.2rem;

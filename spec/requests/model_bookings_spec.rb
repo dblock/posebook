@@ -19,6 +19,24 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
     track_booking(BookingMutation.new(venue: at, user: user).book(date: date))
   end
 
+  it 'distinguishes booked, available, and blocked dates for guests and venue managers' do
+    prepare_model
+    book
+    organizer = create_user
+    grant_schedule_access(venue, organizer)
+    delete session_path
+    [nil, organizer].each do |viewer|
+      sign_in(viewer) if viewer
+      get venue_path(venue)
+      booked = response.parsed_body.at_css('[data-date="2026-11-16"]')
+      expect(booked['class']).to eq('booked')
+      expect(booked.text).to include('Booked')
+      expect(booked.css('form')).to be_empty
+      expect(response.parsed_body.at_css('[data-date="2026-11-23"]')['class']).to eq('available')
+      expect(response.parsed_body.at_css('[data-date="2026-11-17"]')['class']).to eq('blocked')
+    end
+  end
+
   it 'distinguishes the usual venue time from the actual booking time on cancellation and model lists' do
     prepare_model
     venue.update!(start_time: '19:15')
