@@ -24,6 +24,12 @@ module VenueCalendarHelper
     reason
   end
 
+  def calendar_day_class(booking, reason)
+    return 'booked' if booking
+
+    reason ? 'blocked' : 'available'
+  end
+
   def venue_schedule_summary(venue)
     weekdays = venue.available_weekdays.sort_by(&:to_i).map { |day| Date::DAYNAMES[day.to_i] }.to_sentence
     "#{weekdays} at #{drawing_time(venue.start_time)} (#{venue.time_zone})"

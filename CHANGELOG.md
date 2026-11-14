@@ -25,4 +25,5 @@
 - [#24](https://github.com/dblock/posebook/pull/24): Link to the current venue URL beneath the slug in venue settings - [@dblock](https://github.com/dblock).
 - [#27](https://github.com/dblock/posebook/pull/27): Make rescheduling friendlier and require organizer contact within a week of the booked drawing - [@dblock](https://github.com/dblock).
 - [#28](https://github.com/dblock/posebook/pull/28): Add seven-day attendance confirmation, five-day rescheduling deadlines, private overdue warnings, and venue-scoped organizer booking controls with retained history - [@dblock](https://github.com/dblock).
+- [#30](https://github.com/dblock/posebook/pull/30): Distinguish booked calendar dates with a darker green while keeping available dates pale green and unavailable dates gray - [@dblock](https://github.com/dblock).
 - Your contribution here.

@@ -14,7 +14,7 @@
       <%= link_to "Next Month", calendar_month_path(calendar, calendar.month + 1.month, @changing_booking), data: { calendar_navigation: true } %>
     <% end %>
   </nav>
-  <p>Dates and times use <%= calendar.venue.time_zone %>. Available days are shown in green; all other days are blocked.</p>
+  <p>Dates and times use <%= calendar.venue.time_zone %>. Available days are pale green, booked days are darker green, and unavailable days are grey.</p>
   <table class="calendar">
     <thead><tr><% Date::ABBR_DAYNAMES.each do |day| %><th scope="col"><%= day %></th><% end %></tr></thead>
     <tbody>
@@ -26,10 +26,10 @@
             <% reason ||= booking.user_id == current_user&.id ? "Your booking" : "Already booked" if booking %>
             <% reason ||= "You are already scheduled" if @my_booking && !@changing_booking %>
             <% reason ||= @booking_access.paused? ? "Posing paused" : "Invitation required" if @booking_access&.model? && !@can_book %>
-            <td data-date="<%= date.iso8601 %>" class="<%= reason ? "blocked" : "available" %>">
+            <td data-date="<%= date.iso8601 %>" class="<%= calendar_day_class(booking, reason) %>">
               <time datetime="<%= date.iso8601 %>"><%= date.day %></time>
               <% if (clock = calendar_time(calendar, date)) %><strong><%= clock %></strong><br><% end %>
-              <% if booking && public_view %><span>Booked</span><% else %><span><%= reason ? "Blocked" : "Available" %></span><% end %>
+              <% if booking %><span>Booked</span><% else %><span><%= reason ? "Blocked" : "Available" %></span><% end %>
               <%= render "venues/booked_model", booking: booking, manager: @manage_schedule if booking %>
               <%= render "venues/attendance_status", booking: booking, private_view: !public_view && (@manage_schedule || booking.user_id == current_user&.id) if booking %>
               <% if booking && @manage_schedule %><%= link_to "Edit Booking", edit_venue_organizer_booking_path(calendar.venue, booking) %><% end %>
