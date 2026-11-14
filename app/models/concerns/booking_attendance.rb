@@ -11,7 +11,7 @@ module BookingAttendance
   end
 
   def attendance_confirmed?
-    attendance_confirmed_at.present?
+    status == 'confirmed' && attendance_confirmed_at.present?
   end
 
   def confirmation_opens_on

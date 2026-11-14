@@ -9,7 +9,7 @@
             <td><%= booking.date.iso8601 %><br><%= booking_time(booking) %><% if booking.previous_booking %><br>Moved from <%= booking.previous_booking.date.iso8601 %><% end %></td>
             <% if @manage_schedule %><td><%= booking_model_name(booking.user, manager: true) %></td><% end %>
             <td>
-              <%= booking.display_status %>
+              <%= booking.display_status unless booking.attendance_confirmed? && booking.display_status == "Confirmed" %>
               <%= render "venues/attendance_status", booking: booking, private_view: true %>
               <% if @manage_schedule && booking.status == "confirmed" && booking.ends_at > Time.current %><%= link_to "Edit Booking", edit_venue_organizer_booking_path(@venue, booking) %><% end %>
             </td>

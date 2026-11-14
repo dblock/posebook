@@ -45,13 +45,14 @@ RSpec.describe AttendanceMutation, :aggregate_failures, :database do
     expect(record.reload.attendance_confirmed?).to be(false)
   end
 
-  it 'retains a model confirmation on the old date and starts a rescheduled booking unconfirmed' do
+  it 'retains prior confirmation metadata without marking the old date or its replacement confirmed' do
     record = booking
     travel_to Time.utc(2026, 11, 16, 15)
     confirm
     replacement = track_booking(BookingMutation.new(venue: venue, user: model)
                                                .change(booking: record.reload, date: '2026-11-30', reason: 'Travel.'))
-    expect(record.reload.attendance_confirmed?).to be(true)
+    expect(record.reload.attendance_confirmed?).to be(false)
+    expect(record.attendance_confirmed_at).to be_present
     expect(record.attendance_changes.last['changed_by_id']).to eq(model.id)
     expect(replacement.attendance_confirmed?).to be(false)
   end
