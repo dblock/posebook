@@ -22,6 +22,8 @@ Deactivation retains the user and history while revoking sessions, email-change 
 
 Development emails are written to `tmp/mail`; tests use the in-memory mail adapter. Production account email uses configurable SMTP, requires `SMTP_ADDRESS` and `MAIL_FROM`, and reports unavailable delivery rather than pretending to send email. Links use configured mailer hosts, not incoming request hosts. Phone recovery and account invitations remain future work.
 
+System admins can edit any existing user's name, email, and phone, including inactive accounts, without changing roles, passwords, or active status. Successful edits return to the user list with confirmation; invalid edits stay on the form. Admin email changes apply immediately without verification or the target user's password, clear previous verification, revoke all sessions and outstanding authentication challenges, and handle competing unique email claims. Name/phone-only edits preserve sessions and pending email changes. An admin changing their own email is signed out with confirmation and must sign in again. Account access still has separate explicit controls; missing edits or invalid access values never default to deactivation.
+
 ## Agreed Model Workflow
 
 An organizer first connects with a model by email, Instagram, or text. The organizer adds them to the appropriate venue, possibly with only a name or social handle, then sends a private registration link by email or through the existing conversation.

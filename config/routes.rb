@@ -9,7 +9,7 @@ Rails.application.routes.draw do
   resource :account_deactivation, only: %i[new create]
   resource :email_change, only: %i[show update]
   namespace :admin do
-    resources :users, only: %i[index update]
+    resources :users, only: %i[index edit update]
   end
   resources :venues, except: :destroy do
     resources :organizers, controller: 'venue_organizers', only: %i[create destroy]

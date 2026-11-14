@@ -59,6 +59,18 @@ class User
     roles.include?('system_admin')
   end
 
+  def update_by_admin(attributes)
+    assign_attributes(attributes.slice(:name, :email, :phone))
+    self.email = email.to_s.strip.downcase
+    clear_email_authentication if email_changed?
+    save
+  rescue Mongo::Error::OperationFailure => e
+    raise unless e.code == 11_000
+
+    errors.add(:email, :taken)
+    false
+  end
+
   def self.with_email(email)
     active.where(email: email.to_s.strip.downcase).first
   end
