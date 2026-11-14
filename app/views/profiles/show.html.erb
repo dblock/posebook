@@ -14,6 +14,7 @@
     <p>Verification pending for <%= @user.pending_email %>. Your current email is still <%= @user.email %>.</p>
   <% end %>
   <p><%= link_to "Edit Profile", edit_profile_path %></p>
+  <p><%= link_to "Manage Photos (#{@user.profile_photos.length}/#{ProfilePhoto::LIMIT})", model_path(@user) %></p>
   <p><%= link_to "Change Password", edit_password_path %></p>
   <p><%= link_to "Deactivate Account", new_account_deactivation_path %></p>
 </main>

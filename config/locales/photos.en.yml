@@ -1,0 +1,6 @@
+en:
+  photos:
+    uploaded: "Photo uploaded. It is private until you choose Make Public."
+    updated: "Photo visibility updated."
+    deleted: "Photo deleted."
+    unavailable: "Photo storage is temporarily unavailable. Please try again."

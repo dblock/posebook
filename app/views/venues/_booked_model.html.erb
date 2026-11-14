@@ -1,6 +1,10 @@
 <% if (model = booking.user)&.active? %>
   <div class="booked-model">
-    <%= booking_model_name(model, manager: local_assigns[:manager]) %>
+    <% if model.public_photos.any? || (local_assigns[:manager] && model.profile_photos.any?) %>
+      <%= link_to booking_model_name(model, manager: local_assigns[:manager]), model_path(model) %>
+    <% else %>
+      <%= booking_model_name(model, manager: local_assigns[:manager]) %>
+    <% end %>
     <% if (url = model.public_instagram_url) %>
       <br><%= link_to "@#{model.public_instagram_handle}", url, target: "_blank", rel: "noopener noreferrer" %>
     <% end %>

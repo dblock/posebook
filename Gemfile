@@ -6,11 +6,13 @@ ruby '~> 4.0.9'
 
 gem 'bcrypt', '~> 3.1', '>= 3.1.22'
 gem 'mongoid', '~> 9.1', '>= 9.1.2'
+gem 'mongoid-grid_fs', '~> 2.6', require: 'mongoid/grid_fs'
 gem 'mongoid-history', '~> 0.9'
 gem 'mongoid-slug', '~> 7.1'
 gem 'propshaft', '~> 1.3', '>= 1.3.2'
 gem 'puma', '~> 8.0', '>= 8.0.3'
 gem 'rails', '~> 8.1.4', '>= 8.1.4.1'
+gem 'ruby-vips', '~> 2.3', require: false
 
 group :development, :test do
   gem 'danger', '~> 9.6', '>= 9.6.2', require: false

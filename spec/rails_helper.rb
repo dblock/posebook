@@ -20,6 +20,8 @@ RSpec.configure do |config|
     ModelInvitation.create_indexes
     ModelBooking.create_indexes
     ModelBookingClaim.create_indexes
+    ProfilePhoto.storage.file_model.create_indexes
+    ProfilePhoto.storage.chunk_model.create_indexes
     ActiveModel::SecurePassword.min_cost = true
   end
   config.before(:each, :database) { ActionMailer::Base.deliveries.clear }

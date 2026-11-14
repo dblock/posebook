@@ -178,3 +178,32 @@ td {
 .model-pause[open] {
   flex-basis: 100%;
 }
+
+.photo-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 10rem), 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.profile-photo {
+  margin: 0;
+  min-width: 0;
+}
+
+.profile-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 0.25rem;
+  background: #e9e7e3;
+}
+
+.photo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
