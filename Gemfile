@@ -4,6 +4,7 @@ source 'https://rubygems.org'
 
 ruby '~> 4.0.9'
 
+gem 'bcrypt', '~> 3.1', '>= 3.1.22'
 gem 'mongoid', '~> 9.1', '>= 9.1.2'
 gem 'propshaft', '~> 1.3', '>= 1.3.2'
 gem 'puma', '~> 8.0', '>= 8.0.3'

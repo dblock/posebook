@@ -13,6 +13,16 @@
   </head>
 
   <body>
+    <nav aria-label="Account">
+      <%= link_to "Posebook", root_path %>
+      <% if current_user %>
+        <span><%= current_user.name %></span>
+        <%= button_to "Sign Out", session_path, method: :delete %>
+      <% end %>
+    </nav>
+    <% flash.each do |type, message| %>
+      <p role="<%= type == "alert" ? "alert" : "status" %>"><%= message %></p>
+    <% end %>
     <%= yield %>
   </body>
 </html>

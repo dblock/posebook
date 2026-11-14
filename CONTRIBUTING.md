@@ -18,7 +18,7 @@ If port 27017 is occupied, use your existing server or select a different local 
 
 Run tests and lint before every development push, including amendments. Run packaging validation before committing packaging, runtime dependency, configuration, or HTTP entry-point changes. Passing final checks can be reused for a push only while the validated content and configuration are unchanged.
 
-`bundle exec rake spec` writes HTML line/branch coverage to `coverage/index.html` and LCOV to `coverage/lcov.info`. `bundle exec rake package` builds the production Docker image, runs it, checks the home page, compiled stylesheet, and `/up`, and removes its own image and container. This is application packaging, not gem publication.
+`bundle exec rake spec` writes HTML line/branch coverage to `coverage/index.html` and LCOV to `coverage/lcov.info`. `bundle exec rake package` builds the production Docker image, runs it against an isolated MongoDB 8.0 container, checks index setup, first-user registration, compiled stylesheet, and `/up`, then removes its own image, containers, and network. This is application packaging, not gem publication.
 
 `bundle exec rake lint` includes RuboCop, prose, embedded Ruby in Markdown, spelling, and a YAML-aware workflow display-name checker. Use Title Case headings and workflow/job/step names, preserve proper names and identifiers, and keep Markdown paragraphs on one source line. Add only reviewed domain terms to `.spellcheck.txt`.
 
@@ -27,6 +27,8 @@ For Ruby lint failures, run `bundle exec rubocop -a` and review safe corrections
 ## Tests
 
 Request specs exercise the actual Rails routes and views. The Mongoid integration spec writes and reads a real document against `MONGODB_TEST_URI`; it removes only its own record. The test helper rejects database names other than `posebook_test` or names beginning with `posebook_test_`, and never uses `MONGODB_URI` as the test fallback.
+
+Account specs cover first-user races, closed public registration, hashed passwords, login/logout, recovery, expired/replayed reset links, concurrent consumption, and session revocation. Test records are explicitly tracked and removed, never globally purged. Setup and test commands create model indexes. Tests lower BCrypt's cost; production keeps the default. Development email is written to `tmp/mail`, and tests never contact SMTP.
 
 Workflow checker specs exercise valid and invalid human-readable names, ignored identifiers, malformed YAML, and real command exit statuses. Keep fixtures isolated and never delete shared databases or collections. New implementation tests should cover meaningful behavior, authorization boundaries, concurrency, time zones, and errors; use fake delivery providers instead of sending real emails or texts.
 

@@ -1,5 +1,9 @@
 <main>
   <h1>Posebook</h1>
   <p>Model registration, scheduling, and reminders for figure drawing venues.</p>
-  <p>This is the application scaffold. Registration and booking are not available yet.</p>
+  <p>Welcome, <%= current_user.name %>.</p>
+  <% if current_user.system_admin? %>
+    <p>You have the system admin role.</p>
+  <% end %>
+  <p>Model invitations and booking are not available yet.</p>
 </main>

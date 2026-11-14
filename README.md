@@ -20,7 +20,9 @@ bin/setup --skip-server
 bin/dev
 ```
 
-Open [localhost:3000](http://localhost:3000). This scaffold serves a placeholder page and `/up` liveness endpoint. Model invitations, registration, booking, and reminders are not implemented yet.
+Open [localhost:3000](http://localhost:3000) and create the first user with a name, email, and password of at least 12 characters. That user receives the global `system_admin` role. Public registration then closes; later accounts will require invitations, which are not implemented yet. Sign in with email/password and use "Forgot your password?" for email recovery. Passwordless access and phone recovery are deferred.
+
+Development reset emails are written to `tmp/mail/`. Reset links expire after 30 minutes, can be used once, and invalidate existing sessions when used. Model registration, booking, and reminders are not implemented yet. `/up` checks application liveness, not database readiness.
 
 ## Configuration
 
@@ -32,7 +34,9 @@ Open [localhost:3000](http://localhost:3000). This scaffold serves a placeholder
 | `SECRET_KEY_BASE`  | Rails development default                                       | Required production secret, supplied through deployment settings.                                |
 | `PORT`             | `3000`                                                          | HTTP listen port behind an HTTPS-terminating proxy.                                              |
 
-Export environment variables in your shell or configure them through DigitalOcean. `.env.example` documents local examples; Rails does not load `.env` files automatically. Production email delivery is disabled until notification functionality is implemented. No email or SMS credentials are needed for the scaffold.
+Export environment variables in your shell or configure them through DigitalOcean. `.env.example` documents local examples; Rails does not load `.env` files automatically. Production password recovery requires `SMTP_ADDRESS` and `MAIL_FROM`. Optional SMTP settings are `SMTP_PORT` (587), `SMTP_USERNAME`, and `SMTP_PASSWORD`; STARTTLS is enabled automatically. Without email configuration, registration/login work but password recovery explicitly reports that email is unavailable. SMS is not implemented.
+
+`bin/setup` and the production Docker entry point create declared MongoDB indexes before serving requests. Configure the database user to permit index creation.
 
 ## Contributing
 

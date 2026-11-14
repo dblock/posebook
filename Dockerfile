@@ -18,6 +18,7 @@ RUN bundle install
 
 COPY app app
 COPY bin/rails bin/rails
+COPY bin/docker-entrypoint bin/docker-entrypoint
 COPY config config
 COPY lib lib
 COPY public public
@@ -45,4 +46,5 @@ RUN groupadd --system --gid 1000 rails && \
 
 USER rails
 EXPOSE 3000
+ENTRYPOINT ["./bin/docker-entrypoint"]
 CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]
