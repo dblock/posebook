@@ -7,6 +7,7 @@ class User
   include Mongoid::Timestamps
   include ActiveModel::SecurePassword
   include AccountSettings
+  include PublicProfile
   include HistoryTracking
 
   # MongoDB's built-in unique ID makes competing first-user registrations atomic.
@@ -21,7 +22,8 @@ class User
   field :password_reset_digest, type: String
   field :password_reset_expires_at, type: Time
 
-  track_history on: %i[name email phone roles active email_verified_at],
+  track_history on: %i[name email phone roles active email_verified_at
+                       display_name instagram_url instagram_tagging_allowed],
                 modifier_field_optional: true, modifier_field_inverse_of: nil, track_blank_changes: true
 
   index({ email: 1 }, unique: true)
@@ -64,7 +66,8 @@ class User
   end
 
   def update_by_admin(attributes)
-    assign_attributes(attributes.slice(:name, :email, :phone))
+    assign_attributes(attributes.slice(:name, :email, :phone, :display_name, :instagram_url))
+    prepare_admin_public_profile
     self.email = email.to_s.strip.downcase
     clear_email_authentication if email_changed?
     save

@@ -15,7 +15,7 @@ module Admin
     def update
       return update_access if params.key?(:active)
 
-      if @user.update_by_admin(params.expect(user: %i[name email phone]).to_h.symbolize_keys)
+      if @user.update_by_admin(params.expect(user: %i[name email phone display_name instagram_url]).to_h.symbolize_keys)
         redirect_after_update
       else
         render :edit, status: :unprocessable_content
