@@ -3,6 +3,7 @@
 class ModelBooking
   include Mongoid::Document
   include Mongoid::Timestamps
+  include BookingAttendance
 
   class HistoryRetained < StandardError; end
 
@@ -18,8 +19,10 @@ class ModelBooking
   field :changed_by_id, type: BSON::ObjectId
   field :starts_at, type: Time
   field :time_changes, type: Array, default: []
+  field :created_by_id, type: BSON::ObjectId
 
-  attr_readonly :venue_id, :user_id, :date, :time_zone, :ends_at, :starts_at, :time_changes, :previous_booking_id
+  attr_readonly :venue_id, :user_id, :date, :time_zone, :ends_at, :starts_at, :time_changes, :previous_booking_id,
+                :created_by_id
   index({ venue_id: 1, user_id: 1, date: -1 })
   index({ venue_id: 1, status: 1, ends_at: 1 })
   index({ venue_id: 1, date: -1, created_at: -1 })
@@ -38,10 +41,6 @@ class ModelBooking
 
   def scheduled_start
     starts_at || VenueSchedule.local_start(date, '18:30', time_zone)
-  end
-
-  def rescheduling_locked?
-    scheduled_start < 1.week.from_now
   end
 
   def change_time!(start, explanation, actor, session:)

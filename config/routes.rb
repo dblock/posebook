@@ -13,6 +13,7 @@ Rails.application.routes.draw do
   namespace(:admin) { resources :users, only: %i[index edit update] }
   resources :venues, except: :destroy do
     resource :schedule, controller: 'venue_schedules', only: %i[show update]
+    resources(:organizer_bookings, only: %i[new create edit update]) { post :cancel, on: :member }
     resources :models, controller: 'venue_models', only: :index do
       post :invite_all, on: :collection
       %i[invite pause resume].each { |action| post action, on: :member }
@@ -20,7 +21,7 @@ Rails.application.routes.draw do
     resources :model_invitations, controller: 'venue_invitations', only: %i[new create show destroy]
     resources :model_bookings, only: %i[create edit update] do
       get :cancellation, on: :member
-      post :cancel, on: :member
+      %i[cancel confirm].each { |action| post action, on: :member }
     end
     resources :organizers, controller: 'venue_organizers', only: %i[index create destroy]
   end

@@ -17,27 +17,27 @@ RSpec.describe BookingMutation, :aggregate_failures, :database do
     venue.model_bookings.each { |booking| track_booking(booking) }
   end
 
-  it 'allows a date change at exactly one week before the saved one-off drawing start' do
+  it 'allows a date change six local calendar days before the saved one-off drawing' do
     venue = create_venue
     user = create_user
     grant_model_access(venue, user)
     track_record(VenueScheduleException.create!(venue: venue, date: Date.new(2026, 11, 23), mode: 'open',
                                                 start_time: '20:00', reason: 'Later drawing.'))
     original = track_booking(attempt(venue, user, '2026-11-23'))
-    travel_to original.scheduled_start - 1.week
+    travel_to Time.utc(2026, 11, 18, 4, 59, 59)
     replacement = track_booking(described_class.new(venue: venue, user: user)
                                                .change(booking: original, date: '2026-11-30', reason: 'Travel.'))
     expect(replacement.date).to eq(Date.new(2026, 11, 30))
     expect(original.reload.status).to eq('rescheduled')
   end
 
-  it 'rechecks the cutoff after a change page was opened and preserves the reservation inside the final week' do
+  it 'rechecks the five-day cutoff at venue-local midnight after a change page was opened' do
     venue = create_venue
     user = create_user
     grant_model_access(venue, user)
     original = track_booking(attempt(venue, user, '2026-11-23'))
     expect(original.rescheduling_locked?).to be(false)
-    travel_to original.scheduled_start - 1.week + 1.second
+    travel_to Time.utc(2026, 11, 18, 5)
     expect do
       described_class.new(venue: venue, user: user)
                      .change(booking: original, date: '2026-11-30', reason: 'Travel.')

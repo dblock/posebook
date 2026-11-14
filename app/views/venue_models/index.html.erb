@@ -15,6 +15,7 @@
             <td><%= membership.user.name %><br><%= membership.user.email %></td>
             <td>
               <%= access.status %>
+              <%= render "venues/attendance_status", booking: access.booking, private_view: true if access.booking %>
               <%= " at #{booking_time(access.booking)}" if access.booking && !access.paused? && membership.user.active? %>
               <% if access.paused? && access.booking %><br>Booking retained: <%= access.booking.date.iso8601 %> at <%= booking_time(access.booking) %><% end %>
               <% if membership.model_pause_reason.present? %><p>Last pause: <%= membership.model_pause_reason %></p><% end %>

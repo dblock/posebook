@@ -2,7 +2,7 @@
   <%= javascript_include_tag "calendar", defer: true %>
 <% end %>
 <% public_view = local_assigns.fetch(:public_view, true) %>
-<section aria-label="Posing calendar" data-calendar data-calendar-context="<%= calendar_access_context(public_view, manager: @manage_schedule) %>">
+<section aria-label="Posing calendar" data-calendar data-calendar-context="<%= calendar_access_context(public_view, manager: @manage_schedule, venue: calendar.venue, booking: @my_booking) %>">
   <h2>Posing Calendar</h2>
   <%= render "venues/regular_schedule", venue: calendar.venue %>
   <nav aria-label="Calendar months">
@@ -31,6 +31,8 @@
               <% if (clock = calendar_time(calendar, date)) %><strong><%= clock %></strong><br><% end %>
               <% if booking && public_view %><span>Booked</span><% else %><span><%= reason ? "Blocked" : "Available" %></span><% end %>
               <%= render "venues/booked_model", booking: booking, manager: @manage_schedule if booking %>
+              <%= render "venues/attendance_status", booking: booking, private_view: !public_view && (@manage_schedule || booking.user_id == current_user&.id) if booking %>
+              <% if booking && @manage_schedule %><%= link_to "Edit Booking", edit_venue_organizer_booking_path(calendar.venue, booking) %><% end %>
               <% if reason && !(public_view && booking) %><small><%= reason %></small><% end %>
               <% if !public_view && calendar.schedule.exceptions[date]&.mode == "open" %><small><%= calendar.schedule.exceptions[date].reason %></small><% end %>
               <% if !reason && @changing_booking %>

@@ -1,0 +1,14 @@
+<section class="attendance-panel" aria-label="Attendance confirmation">
+  <%= render "venues/attendance_status", booking: booking, private_view: true %>
+  <% if booking.attendance_confirmed? %>
+    <p>You're confirmed. See you there! Contact an organizer if your plans change.</p>
+  <% elsif booking.confirmation_open? %>
+    <%= button_to "I'll be there!", confirm_venue_model_booking_path(venue, booking) %>
+    <p>Please confirm that you will be there for your drawing.</p>
+  <% elsif Time.current < booking.scheduled_start %>
+    <p>Confirmation opens on <%= booking.confirmation_opens_on.to_fs(:long) %> in <%= booking.time_zone %>, seven calendar days before your drawing.</p>
+  <% end %>
+  <% if @can_book && booking.confirmation_open? && !booking.rescheduling_locked? %>
+    <p><%= link_to "I can no longer make it.", edit_venue_model_booking_path(venue, booking) %></p>
+  <% end %>
+</section>

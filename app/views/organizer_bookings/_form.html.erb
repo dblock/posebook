@@ -1,0 +1,23 @@
+<%= render "venues/regular_schedule", venue: @venue %>
+<p>Organizers can change bookings and attendance at this venue without the model's five-day restriction. Changing the date or model retains the original booking and its confirmation history. Choose the attendance status for the resulting booking.</p>
+<% values = params[:booking] || { user_id: @booking&.user_id, date: @booking&.date&.iso8601 || params[:date], attendance: @booking&.attendance_confirmed? ? "confirmed" : "unconfirmed" } %>
+<%= form_with url: @booking ? venue_organizer_booking_path(@venue, @booking) : venue_organizer_bookings_path(@venue), method: @booking ? :patch : :post, scope: :booking do |form| %>
+  <%= form.label :user_id, "Model" %>
+  <%= form.select :user_id, @models.map { |model| [model.name, model.id] }, selected: values[:user_id], include_blank: "Choose a model" %>
+  <%= form.label :date, "Posing date" %>
+  <%= form.date_field :date, value: values[:date], required: true %>
+  <%= form.label :attendance, "Attendance" %>
+  <%= form.select :attendance, [["Not confirmed", "unconfirmed"], ["Attendance confirmed", "confirmed"]], selected: values[:attendance] %>
+  <%= form.label :reason, "Explanation" %>
+  <%= form.text_area :reason, value: values[:reason], required: @booking.present?, maxlength: 2000, rows: 2 %>
+  <%= form.submit "Save Booking" %>
+<% end %>
+<% if @booking %>
+  <h2>Cancel Booking</h2>
+  <%= form_with url: cancel_venue_organizer_booking_path(@venue, @booking), scope: :booking do |form| %>
+    <%= form.label :reason, "Cancellation explanation", for: "booking-cancellation-reason" %>
+    <%= form.text_area :reason, id: "booking-cancellation-reason", required: true, maxlength: 2000, rows: 2 %>
+    <%= form.submit "Cancel Booking" %>
+  <% end %>
+<% end %>
+<p><%= link_to "Back to Venue", venue_path(@venue) %></p>

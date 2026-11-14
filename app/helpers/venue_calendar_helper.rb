@@ -10,10 +10,11 @@ module VenueCalendarHelper
     User.active.where(:id.in => ids).order_by(name: :asc)
   end
 
-  def calendar_access_context(public_view, manager:)
+  def calendar_access_context(public_view, manager:, venue:, booking:)
     return "public:#{current_user&.id || 'guest'}" if public_view
 
-    "#{manager ? 'manager' : 'model'}:#{current_user.id}:#{current_user.system_admin?}"
+    "#{manager ? 'manager' : 'model'}:#{current_user.id}:#{current_user.system_admin?}:" \
+      "#{venue.schedule_revision}:#{booking&.confirmation_open?}:#{booking&.rescheduling_locked?}"
   end
 
   def calendar_day_reason(calendar, date, public_view:)

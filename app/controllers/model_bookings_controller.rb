@@ -24,6 +24,11 @@ class ModelBookingsController < ApplicationController
 
   def cancellation; end
 
+  def confirm
+    @booking = AttendanceMutation.new(venue: @venue, user: current_user).confirm(@booking.id)
+    finish_booking('bookings.attendance_confirmed')
+  end
+
   def cancel
     @booking = mutation.cancel(booking: @booking, reason: params[:reason])
     finish_booking('bookings.canceled')
@@ -65,7 +70,7 @@ class ModelBookingsController < ApplicationController
   end
 
   def show_error(error)
-    return redirect_to venue_path(@venue), alert: error.message if action_name == 'create'
+    return redirect_to venue_path(@venue), alert: error.message if %w[create confirm].include?(action_name)
 
     load_calendar
     flash.now[:alert] = error.message
