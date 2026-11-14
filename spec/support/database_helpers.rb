@@ -46,6 +46,12 @@ module DatabaseHelpers
     track_record(ParticipantInvitation.create!(program: program, invited_by: inviter, **attributes))
   end
 
+  def create_coordinator_invitation(target, inviter, **attributes)
+    scope = target.is_a?(Venue) ? { venue: target } : { program: target }
+    attributes = { email: user_attributes[:email] }.merge(attributes)
+    track_record(CoordinatorInvitation.create!(**scope, invited_by: inviter, **attributes))
+  end
+
   def track_participant_membership(program, user)
     track_record(ProgramMembership.find_by(program_id: program.id, user_id: user.id))
   end

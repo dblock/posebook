@@ -2,7 +2,11 @@
 
 [Back to Posebook](../../README.md)
 
-System administrators create physical venues, assign **Venue Coordinators**, and manage accounts. Venue coordinators edit their location, photos, and Instagram, create recurring sessions, manage every session there, and assign **Session Coordinators** using a registered user's email. Coordinator assignment does not expose a global user directory.
+System administrators create physical venues, invite or promote **Venue Coordinators**, and manage accounts. Venue coordinators edit their location, photos, and Instagram, create recurring sessions, manage every session there, and invite or promote **Session Coordinators**. Coordinator assignment does not expose a global user directory.
+
+On **Venue Coordinators** or **Session Coordinators**, enter the recipient's email and choose **Continue**. If they already have an active account, Posebook offers **Grant Coordinator Access** for confirmation instead of creating another account. Their other memberships and booking permissions are retained. If they are new, create a private registration link and optionally send it by email. The link can be accepted only with the invited email, expires in 30 days, and can be revoked from the coordinator list. Copy it when created; it is not displayed again.
+
+Venue coordinator access includes all sessions at that venue; session coordinator access includes only that session. Neither promotion grants system admin access. An outstanding invitation stops working if its sender becomes inactive or loses the authority to delegate that venue/session.
 
 Use **Create Session** on a venue for a recurring program such as Mondays at 6:30 PM. Each session has separate weekdays, start time, time zone, pay, instructions, rules, invitations, roster, and calendar. Session coordinators edit only their assigned sessions and cannot edit the venue, manage siblings, or assign coordinator roles. Venue coordinators inherit those capabilities across all sessions at their venue.
 
