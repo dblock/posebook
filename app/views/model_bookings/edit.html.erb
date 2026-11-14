@@ -6,6 +6,6 @@
     <p><%= label_tag :reason, "Explanation" %><br><%= text_area_tag :reason, params[:reason], required: true, maxlength: 2000, rows: 3 %></p>
     <p>Provide an explanation, then choose an available date below.</p>
   <% end %>
-  <%= render "venues/calendar", calendar: @calendar %>
+  <%= render "venues/calendar", calendar: @calendar, public_view: false %>
   <p><%= link_to "Keep Current Date", venue_path(@venue) %></p>
 </main>

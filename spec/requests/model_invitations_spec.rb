@@ -105,7 +105,8 @@ RSpec.describe 'Model invitations', :aggregate_failures, :database, type: :reque
     get venue_path(invitation.venue)
     expect(response.body).not_to include('Invite a Model', 'Existing user', 'Edit Venue')
     get venue_path(create_venue)
-    expect(response).to have_http_status(:not_found)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).not_to include('Instructions', 'Model Pay', 'Manage Schedule')
   end
 
   it 'returns an existing account to its invitation after login' do
