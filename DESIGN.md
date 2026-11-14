@@ -28,7 +28,7 @@ Calculate weekly sessions and the one-week reminder in the venue's local calenda
 
 ## Architecture and Deployment
 
-Use Rails 8.1 with server-rendered views, Mongoid 9.1, and MongoDB. Ruby 4.0.9 is the current stable runtime at scaffold creation. MongoDB 9.0 is current stable; test 8.0 as well for compatibility with existing deployments. Commit `Gemfile.lock` because this is an application, not a published gem.
+Use Rails 8.1 with server-rendered views, Mongoid 9.1, and MongoDB 8.0. Ruby 4.0.9 is the stable runtime selected at scaffold creation. Test one MongoDB version, 8.0, to match the deployment target rather than maintaining a server-version compatibility matrix. Commit `Gemfile.lock` because this is an application, not a published gem.
 
 Use Rails and Mongoid public APIs. Do not configure Active Record, Solid Queue, or another SQL-backed component. The scaffold retains ActiveJob's in-process adapter solely as framework setup; a durable MongoDB-compatible worker and notification providers will be selected and tested in the implementation phase. No background reminders are promised by this scaffold.
 

@@ -2,12 +2,12 @@
 
 ## Setup and Validation
 
-Install Ruby 4.0.9, Bundler, MongoDB, and Docker. MongoDB 9.0 is the current stable server; CI also covers 8.0 for compatibility with existing deployments. No production service credentials are required.
+Install Ruby 4.0.9, Bundler, MongoDB 8.0, and Docker. Use only MongoDB 8.0 for tests to match the deployment target. No production service credentials are required.
 
 Use an existing local MongoDB server or start a dedicated development container on an unused port:
 
 ```sh
-docker run --detach --name posebook-mongo --publish 127.0.0.1:27017:27017 mongo:9.0
+docker run --detach --name posebook-mongo --publish 127.0.0.1:27017:27017 mongo:8.0
 bin/setup --skip-server
 bundle exec rake spec
 bundle exec rake lint
@@ -36,7 +36,7 @@ Danger runs in PR CI, not as a routine local validation command. Inspect its act
 
 ## Pull Requests
 
-Read [DESIGN.md](DESIGN.md) and [AGENTS.md](AGENTS.md). Verify current stable versions and compatibility when adding or updating tools. Work on `<username>/<topic>` branches from `master` in the existing checkout; create separate worktrees only for parallel tasks. Inspect status and worktrees before switching and preserve unrelated changes.
+Read [DESIGN.md](DESIGN.md) and [AGENTS.md](AGENTS.md). Verify current stable versions and compatibility when adding or updating tools. Work on `<username>/<topic>` branches from `master` in the existing checkout; create separate worktrees only for parallel tasks. For dependent work, branch from the preceding PR, target that branch, and link PRs bottom to top using native GitHub stacks. Inspect status and worktrees before switching and preserve unrelated changes.
 
 Prefer one coherent commit per PR, allowing multiple commits when independently reviewable. AI-assisted commits include the Copilot co-author trailer, and AI-authored PRs/comments disclose AI authorship on behalf of `@dblock`. Squash-merge PRs and never use merge commits. No direct default-branch development pushes or force-pushes to `master`.
 
