@@ -490,6 +490,11 @@ tbody tr:last-child td {
   margin-top: 0.4rem;
 }
 
+.calendar time a {
+  display: inline;
+  margin: 0;
+}
+
 .calendar time,
 .calendar small {
   display: block;
