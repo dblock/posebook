@@ -19,7 +19,7 @@
         <thead><tr><th>Model</th><th>Booking Access</th><th>Actions</th></tr></thead>
         <tbody>
           <% @memberships.each do |membership| %>
-            <% access = ModelBookingAccess.new(membership) %>
+            <% access = @roster.access_for(membership) %>
             <tr data-membership="<%= membership.id %>">
               <td><strong><%= membership.user.name %></strong><br><span class="model-email"><%= membership.user.email %></span></td>
               <td>

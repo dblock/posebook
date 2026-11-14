@@ -29,6 +29,39 @@ RSpec.describe 'Public venue calendars', :aggregate_failures, :database, type: :
     expect(response.parsed_body.css('.calendar form, .calendar button')).to be_empty
   end
 
+  it 'renders only the calendar for a matching public navigation context' do
+    private_booking
+    get venue_path(venue)
+    context = response.parsed_body.at_css('[data-calendar]')['data-calendar-context']
+    get venue_path(venue), params: { month: '2026-12' },
+                           headers: { 'X-Posebook-Calendar-Context' => context }
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body.at_css('[data-calendar-month]').text).to eq('December 2026')
+    expect(response.parsed_body.at_css('header, main')).to be_nil
+    expect(response.headers['Vary']).to include('X-Posebook-Calendar-Context')
+    expect_public_only
+  end
+
+  it 'returns the full authorized page when a manager context becomes stale or is forged' do
+    private_booking
+    organizer = create_user
+    access = grant_schedule_access(venue, organizer)
+    sign_in(organizer)
+    get venue_path(venue)
+    context = response.parsed_body.at_css('[data-calendar]')['data-calendar-context']
+    get venue_path(venue), headers: { 'X-Posebook-Calendar-Context' => context }
+    expect(response.parsed_body.at_css('header, main')).to be_nil
+    expect(response.body).to include('Schedule Model')
+    access.pull(roles: 'manage_schedule')
+    get venue_path(venue), headers: { 'X-Posebook-Calendar-Context' => context }
+    expect(response.parsed_body.at_css('header.site-header')).to be_present
+    expect_public_only
+    delete session_path
+    get venue_path(venue), headers: { 'X-Posebook-Calendar-Context' => context }
+    expect(response.parsed_body.at_css('header.site-header')).to be_present
+    expect_public_only
+  end
+
   it 'allows guests through slugs, shortcuts, and IDs while exposing only public model identity' do
     hidden = private_booking.user
     tagged_booking

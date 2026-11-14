@@ -11,7 +11,15 @@ class VenueModelRoster
   end
 
   def memberships
-    models.includes(:user).order_by(created_at: :asc, id: :asc).skip(offset).limit(PER_PAGE)
+    @memberships ||= models.includes(:user).order_by(created_at: :asc, id: :asc).skip(offset).limit(PER_PAGE).to_a
+  end
+
+  def access_for(membership)
+    @access ||= memberships.index_with do |member|
+      ModelBookingAccess.new(member, booking: upcoming_bookings[member.user_id]&.first,
+                                     allowed: booking_allowed?(member))
+    end
+    @access.fetch(membership)
   end
 
   def counts
@@ -38,6 +46,37 @@ class VenueModelRoster
   end
 
   private
+
+  def upcoming_bookings
+    @upcoming_bookings ||= begin
+      records = ModelBooking.where(venue_id: @venue.id, :user_id.in => memberships.map(&:user_id))
+      records.upcoming.order_by(id: :asc).to_a.group_by(&:user_id)
+    end
+  end
+
+  def booking_history
+    @booking_history ||= ModelBooking.collection.aggregate(history_pipeline).index_by { |record| record['_id'] }
+  end
+
+  def history_pipeline
+    completed = { '$and' => [{ '$eq' => ['$status', 'confirmed'] }, { '$lte' => ['$ends_at', Time.current] }] }
+    [
+      { '$match' => { 'venue_id' => @venue.id, 'user_id' => { '$in' => memberships.map(&:user_id) } } },
+      { '$group' => {
+        '_id' => '$user_id',
+        'created_at' => { '$max' => '$created_at' },
+        'completed_at' => { '$max' => { '$cond' => [completed, '$ends_at', nil] } }
+      } }
+    ]
+  end
+
+  def booking_allowed?(member)
+    return false unless member.user.active? && !member.model_paused
+
+    previous = booking_history.fetch(member.user_id, {})
+    invited_at = member.booking_invited_at || previous['created_at']
+    invited_at.present? && (previous['completed_at'].nil? || previous['completed_at'] <= invited_at)
+  end
 
   def models
     @venue.memberships.models

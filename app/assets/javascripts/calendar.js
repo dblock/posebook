@@ -15,7 +15,10 @@
     try {
       const response = await fetch(url, {
         signal: request.signal,
-        headers: { Accept: "text/html" }
+        headers: {
+          Accept: "text/html",
+          "X-Posebook-Calendar-Context": calendar.dataset.calendarContext
+        }
       });
       if (response.redirected) {
         location.assign(response.url);

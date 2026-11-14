@@ -21,6 +21,8 @@ Run tests and lint before every development push, including amendments. Run pack
 
 `bundle exec rake spec` writes HTML line/branch coverage to `coverage/index.html` and LCOV to `coverage/lcov.info`. `bundle exec rake package` builds the production Docker image, runs it against an isolated MongoDB 8.0 container, checks index setup, first-user registration, compiled stylesheet, and `/up`, then removes its own image, containers, and network. This is application packaging, not gem publication.
 
+CI builds the production image with Docker layer caching, then runs the same checks using `ruby bin/package --image posebook-package:TAG`. This mode requires an already built local image, skips only the build, and preserves the supplied image; it still creates and removes its own database, application container, and network. Test setup overlaps the MongoDB image download with image-processing library installation. Superseded PR test/lint/package runs are canceled, but default-branch runs are not.
+
 `bundle exec rake lint` includes RuboCop, prose, embedded Ruby in Markdown, spelling, and a YAML-aware workflow display-name checker. Use Title Case headings and workflow/job/step names, preserve proper names and identifiers, and keep Markdown paragraphs on one source line. Add only reviewed domain terms to `.spellcheck.txt`.
 
 For Ruby lint failures, run `bundle exec rubocop -a` and review safe corrections. Fix remaining offenses when practical; otherwise use `bundle exec rubocop --auto-gen-config`, review its output and inheritance, and avoid broad handwritten cop exclusions.

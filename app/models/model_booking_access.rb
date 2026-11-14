@@ -1,8 +1,13 @@
 # frozen_string_literal: true
 
 class ModelBookingAccess
-  def initialize(membership)
+  def initialize(membership, booking: nil, allowed: nil)
     @membership = membership
+    return if allowed.nil?
+
+    # Roster rendering supplies a request-local snapshot; mutations still query live state.
+    @booking = booking
+    @allowed = allowed
   end
 
   def paused?
@@ -14,6 +19,8 @@ class ModelBookingAccess
   end
 
   def allowed?
+    return @allowed if defined?(@allowed)
+
     return false unless @membership&.user&.active? && !paused?
 
     granted_at = invitation_time

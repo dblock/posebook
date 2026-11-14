@@ -41,4 +41,5 @@
 - [#44](https://github.com/dblock/posebook/pull/44): Add public venue photos without a photo-count limit and normalized public Instagram links, with administrator-only editing and optimized GridFS storage - [@dblock](https://github.com/dblock).
 - [#45](https://github.com/dblock/posebook/pull/45): Use consistent colored status labels across bookings, calendars, invitations, model access, accounts, and photo visibility without changing their state or privacy rules - [@dblock](https://github.com/dblock).
 - [#46](https://github.com/dblock/posebook/pull/46): Apply the warm Caramellatte theme with sanguine accents, serif headings, styled forms, and readable scrolling calendars and tables on mobile - [@dblock](https://github.com/dblock).
+- [#47](https://github.com/dblock/posebook/pull/47): Batch roster booking reads, send smaller authorized calendar navigation responses, load venue photos once, and speed CI with Docker layer caching and overlapping setup - [@dblock](https://github.com/dblock).
 - Your contribution here.

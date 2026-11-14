@@ -17,6 +17,23 @@ RSpec.describe 'Venue model access', :aggregate_failures, :database, type: :requ
     sign_in(organizer)
   end
 
+  it 'loads booking state in a bounded number of database commands instead of querying each row' do
+    8.times { grant_model_access(venue, create_user) }
+    manage_models
+    queries = []
+    monitor = double(succeeded: nil, failed: nil)
+    allow(monitor).to receive(:started) do |event|
+      queries << event.command_name if event.command[event.command_name] == 'model_bookings'
+    end
+    Mongoid.default_client.subscribe(Mongo::Monitoring::COMMAND, monitor)
+    get venue_models_path(venue)
+    expect(response.parsed_body.css('tr[data-membership]').size).to eq(8)
+    expect(response.parsed_body.css('td .status-label').map(&:text)).to eq(['Invited to book'] * 8)
+    expect(queries.size).to be <= 3
+  ensure
+    Mongoid.default_client.unsubscribe(Mongo::Monitoring::COMMAND, monitor) if monitor
+  end
+
   it 'sends an individual email and records who opened booking access' do
     venue.update!(start_time: '19:15')
     membership

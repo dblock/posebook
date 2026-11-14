@@ -3,6 +3,7 @@
 
 require 'net/http'
 require 'open3'
+require 'optparse'
 require 'securerandom'
 
 def docker!(*)
@@ -70,15 +71,30 @@ def check_monitoring(container)
   docker!('exec', container, 'bundle', 'exec', 'rails', 'runner', source)
 end
 
+options = {}
+OptionParser.new do |parser|
+  parser.on('--image IMAGE', 'Test an existing local image') { |value| options[:image] = value }
+end.parse!
+raise ArgumentError, 'Unexpected arguments' unless ARGV.empty?
+
 suffix = SecureRandom.hex(6)
-image = "posebook-package:#{suffix}"
+image = options[:image] || "posebook-package:#{suffix}"
+unless image.match?(%r{\A[a-z0-9][a-z0-9._/-]*(?::[A-Za-z0-9._-]+)?\z})
+  raise ArgumentError, 'Provide a local image name or tag'
+end
+
 network = nil
 database = nil
 container = nil
 
 begin
-  puts 'Building the production image...'
-  puts docker!('build', '--tag', image, '.')
+  if options[:image]
+    docker!('image', 'inspect', image)
+    puts "Testing the existing image #{image}..."
+  else
+    puts 'Building the production image...'
+    puts docker!('build', '--tag', image, '.')
+  end
   network = docker!('network', 'create', "posebook-package-#{suffix}")
   database = docker!(
     'run', '--detach', '--network', network, '--network-alias', 'mongodb',
@@ -164,5 +180,7 @@ ensure
   end
   docker!('rm', '--force', database) if database
   docker!('network', 'rm', network) if network
-  docker!('image', 'rm', image) if system('docker', 'image', 'inspect', image, out: File::NULL, err: File::NULL)
+  if !options[:image] && system('docker', 'image', 'inspect', image, out: File::NULL, err: File::NULL)
+    docker!('image', 'rm', image)
+  end
 end

@@ -16,6 +16,10 @@ class VenuesController < ApplicationController
     @manage_schedule = current_user && @venue.managed_by?(current_user)
     @venue_member = @manage_schedule || (current_user && @venue.model?(current_user))
     load_calendar if @venue_member
+    if calendar_navigation?
+      return render partial: 'venues/calendar', locals: { calendar: @calendar, public_view: !@venue_member }
+    end
+
     @invitations = @venue.model_invitations.order_by(created_at: :desc) if @manage_schedule
   end
 
@@ -44,6 +48,14 @@ class VenuesController < ApplicationController
   end
 
   private
+
+  def calendar_navigation?
+    response.headers['Vary'] = [response.headers['Vary'], 'X-Posebook-Calendar-Context'].compact.join(', ')
+    supplied = request.headers['X-Posebook-Calendar-Context']
+    supplied.present? && supplied == helpers.calendar_access_context(
+      !@venue_member, manager: @manage_schedule, venue: @venue, booking: @my_booking
+    )
+  end
 
   def remember_booking_destination
     return if current_user || params[:booking_invitation] != '1'
