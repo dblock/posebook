@@ -25,8 +25,8 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     expect(response.body).to include('I&#39;ll be there!', 'I can no longer make it.')
     post confirm_venue_model_booking_path(venue, booking)
     follow_redirect!
-    expect(response.body).to include('You&#39;re confirmed', 'Attendance confirmed')
-    expect(response.parsed_body.at_css('.calendar .attendance-confirmed')).to be_present
+    expect(response.body).to include('You&#39;re confirmed')
+    expect(response.parsed_body.at_css('.calendar .attendance-confirmed').text).to eq('Confirmed')
     expect(response.parsed_body.at_css('form[action$="/confirm"]')).to be_nil
     expect(booking.reload.attendance_confirmed_by_id).to eq(model.id)
   end
@@ -74,7 +74,8 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     post confirm_venue_model_booking_path(venue, booking)
     delete session_path
     get venue_path(venue)
-    expect(response.body).to include('To be announced', 'Attendance confirmed')
+    expect(response.body).to include('To be announced')
+    expect(response.parsed_body.at_css('.calendar .attendance-confirmed').text).to eq('Confirmed')
     expect(response.body).not_to include(model.name, model.email, 'Venue Booking History', 'I&#39;ll be there!')
   end
 

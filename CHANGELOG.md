@@ -32,4 +32,5 @@
 - [#33](https://github.com/dblock/posebook/pull/33): Open Instagram profile and calendar links in a new tab while preserving privacy and external-link protections - [@dblock](https://github.com/dblock).
 - [#35](https://github.com/dblock/posebook/pull/35): Add web-optimized profile photos with per-photo privacy, square galleries, and a ten-photo limit in MongoDB GridFS - [@dblock](https://github.com/dblock).
 - [#36](https://github.com/dblock/posebook/pull/36): Add optional New Relic error reporting for Rails and handled delivery/storage failures with privacy-safe production configuration - [@dblock](https://github.com/dblock).
+- [#37](https://github.com/dblock/posebook/pull/37): Shorten the positive attendance label to "Confirmed" throughout calendars, booking history, and organizer controls - [@dblock](https://github.com/dblock).
 - Your contribution here.
