@@ -21,6 +21,30 @@ RSpec.describe ModelBookingAccess, :aggregate_failures, :database do
     ModelAccessMutation.new(venue: venue, user: admin)
   end
 
+  def roster_access
+    roster = VenueModelRoster.new(venue, page: 1)
+    member = roster.memberships.find { |item| item.id == membership.id }
+    roster.access_for(member)
+  end
+
+  def access_state(access)
+    [access.allowed?, access.status, access.booking&.id]
+  end
+
+  it 'matches live roster access for legacy, canceled, completed, and renewed booking cycles' do
+    original = booking
+    membership.unset(:booking_invited_at)
+    expect(access_state(roster_access)).to eq(access_state(described_class.new(membership.reload)))
+    BookingMutation.new(venue: venue, user: model).cancel(booking: original, reason: 'Travel.')
+    travel_to Time.utc(2026, 11, 17, 15)
+    expect(access_state(roster_access)).to eq(access_state(described_class.new(membership.reload)))
+    booking('2026-11-23')
+    travel_to Time.utc(2026, 11, 24, 15)
+    expect(access_state(roster_access)).to eq(access_state(described_class.new(membership.reload)))
+    access_mutation.invite(membership.id)
+    expect(access_state(roster_access)).to eq(access_state(described_class.new(membership.reload)))
+  end
+
   it 'ends permission at completion and requires an explicit new invitation to book again' do
     original = booking
     travel_to Time.utc(2026, 11, 17, 15)

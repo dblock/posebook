@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   test:
     name: Test Ruby ${{ matrix.entry.ruby }} Against MongoDB ${{ matrix.entry.mongodb }}
@@ -25,17 +29,19 @@ jobs:
         with:
           ruby-version: ${{ matrix.entry.ruby }}
           bundler-cache: true
-      - name: Start MongoDB Replica Set
+      - name: Set Up Database and Image Processing
         run: |
-          docker run --detach --name posebook-mongodb --publish 27017:27017 mongo:${{ matrix.entry.mongodb }} --replSet rs0 --bind_ip_all
+          docker run --detach --name posebook-mongodb --publish 27017:27017 mongo:${{ matrix.entry.mongodb }} --replSet rs0 --bind_ip_all &
+          database_pid=$!
+          sudo apt-get update -qq
+          sudo apt-get install --no-install-recommends -y libvips42t64
+          wait "$database_pid"
           for attempt in {1..30}; do
             if docker exec posebook-mongodb mongosh --quiet --eval 'db.adminCommand({ping: 1})'; then break; fi
             sleep 1
           done
           docker exec posebook-mongodb mongosh --quiet --eval 'rs.initiate({_id:"rs0",members:[{_id:0,host:"127.0.0.1:27017"}]})'
           docker exec posebook-mongodb mongosh --quiet --eval 'const deadline=Date.now()+30000; while(!db.hello().isWritablePrimary && Date.now()<deadline) sleep(100); if(!db.hello().isWritablePrimary) throw new Error("Replica set not writable")'
-      - name: Install Image Processing Library
-        run: sudo apt-get update -qq && sudo apt-get install --no-install-recommends -y libvips42t64
       - name: Run Tests
         env:
           MONGODB_TEST_URI: mongodb://127.0.0.1:27017/posebook_test?replicaSet=rs0

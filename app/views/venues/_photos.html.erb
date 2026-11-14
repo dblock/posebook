@@ -1,4 +1,4 @@
-<% photos = @venue.photos.order_by(created_at: :asc) %>
+<% photos = @venue.photos.order_by(created_at: :asc).to_a %>
 <% editable = current_user&.system_admin? %>
 <% if photos.any? || editable %>
   <section aria-labelledby="venue-photos-heading">
