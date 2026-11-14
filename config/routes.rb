@@ -15,6 +15,10 @@ Rails.application.routes.draw do
   end
   resources :venues, except: :destroy do
     resources :model_invitations, controller: 'venue_invitations', only: %i[new create show destroy]
+    resources :model_bookings, only: %i[create edit update] do
+      get :cancellation, on: :member
+      post :cancel, on: :member
+    end
     resources :organizers, controller: 'venue_organizers', only: %i[create destroy]
   end
   resources :password_resets, param: :token, only: %i[new create edit update]

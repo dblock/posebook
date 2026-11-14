@@ -61,8 +61,11 @@ MERCHANTABILITY
 mongo
 MongoDB
 Mongoid
+ModelBooking
 mongosh
 ne
+nav
+lte
 non
 NONINFRINGEMENT
 npm

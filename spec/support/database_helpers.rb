@@ -39,6 +39,27 @@ module DatabaseHelpers
     track_record(VenueMembership.find_by(venue_id: venue.id, user_id: user.id))
   end
 
+  def grant_model_access(venue, user)
+    ModelInvitation.with_session { |session| VenueMembership.grant_model_access(venue, user, session: session) }
+    track_model_membership(venue, user)
+  end
+
+  def track_booking(booking)
+    track_record(booking)
+    track_record(ModelBookingClaim.where(model_booking_id: booking.id).first)
+    booking
+  end
+
+  def cleanup_records
+    tracked_records.reverse_each do |record|
+      if record.is_a?(ModelBooking)
+        ModelBooking.collection.find(_id: record.id).delete_one
+      elsif record.persisted?
+        record.destroy
+      end
+    end
+  end
+
   def sign_in(user, client: self)
     client.post(session_path, params: { email: user.email, password: TEST_PASSWORD })
   end

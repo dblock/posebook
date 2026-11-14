@@ -10,4 +10,5 @@
 - [#8](https://github.com/dblock/posebook/pull/8): Let system admins edit existing users' contact information with immediate email changes and session revocation - [@dblock](https://github.com/dblock).
 - [#9](https://github.com/dblock/posebook/pull/9): Configure available weekdays and preview venue-local posing calendars with blocked dates - [@dblock](https://github.com/dblock).
 - [#10](https://github.com/dblock/posebook/pull/10): Invite models with personal links, optional email, and atomic account and venue registration - [@dblock](https://github.com/dblock).
+- [#11](https://github.com/dblock/posebook/pull/11): Book, change, and cancel venue posing dates with explanations, atomic claims, and retained model booking history - [@dblock](https://github.com/dblock).
 - Your contribution here.

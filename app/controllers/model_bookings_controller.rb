@@ -1,0 +1,67 @@
+# frozen_string_literal: true
+
+class ModelBookingsController < ApplicationController
+  before_action :require_authentication
+  before_action :find_venue
+  before_action :require_model
+  before_action :find_booking, except: :create
+  rescue_from BookingMutation::Invalid, BookingMutation::Conflict, with: :show_error
+
+  def edit
+    load_calendar
+  end
+
+  def create
+    @booking = mutation.book(date: params[:date])
+    finish_booking('bookings.created')
+  end
+
+  def update
+    @booking = mutation.change(booking: @booking, date: params[:date], reason: params[:reason])
+    finish_booking('bookings.changed')
+  end
+
+  def cancellation; end
+
+  def cancel
+    @booking = mutation.cancel(booking: @booking, reason: params[:reason])
+    finish_booking('bookings.canceled')
+  end
+
+  private
+
+  def find_venue
+    @venue = Venue.visible_to(current_user).find(params.expect(:venue_id))
+  end
+
+  def require_model
+    @can_book = @venue.model?(current_user)
+    head :forbidden unless @can_book
+  end
+
+  def find_booking
+    @booking = ModelBooking.upcoming.where(venue_id: @venue.id, user_id: current_user.id).find(params.expect(:id))
+  end
+
+  def mutation
+    BookingMutation.new(venue: @venue, user: current_user)
+  end
+
+  def finish_booking(message)
+    redirect_to venue_path(@venue, month: @booking.date.strftime('%Y-%m')), notice: t(message)
+  end
+
+  def load_calendar
+    @calendar = VenueCalendar.new(@venue, month: params[:month] || @booking.date.strftime('%Y-%m'))
+    @my_booking = @booking
+    @changing_booking = @booking
+  end
+
+  def show_error(error)
+    return redirect_to venue_path(@venue), alert: error.message if action_name == 'create'
+
+    load_calendar
+    flash.now[:alert] = error.message
+    render(action_name == 'cancel' ? :cancellation : :edit, status: :unprocessable_content)
+  end
+end

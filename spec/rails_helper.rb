@@ -15,8 +15,10 @@ RSpec.configure do |config|
     User.create_indexes
     VenueMembership.create_indexes
     ModelInvitation.create_indexes
+    ModelBooking.create_indexes
+    ModelBookingClaim.create_indexes
     ActiveModel::SecurePassword.min_cost = true
   end
   config.before(:each, :database) { ActionMailer::Base.deliveries.clear }
-  config.after(:each, :database) { tracked_records.reverse_each { |record| record.destroy if record.persisted? } }
+  config.after(:each, :database) { cleanup_records }
 end

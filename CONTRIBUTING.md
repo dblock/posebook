@@ -39,6 +39,8 @@ Venue tests cover configuration validation, decimal pay, cross-venue isolation, 
 
 Invitation tests use a MongoDB 8.0 replica set and exercise single-use consumption, transaction rollback under competing account claims, scoped access, existing-account login returns, optional email delivery, expiry/revocation, and preserving membership roles. Track newly accepted accounts and memberships before fixture cleanup. No tests send external messages.
 
+Booking tests exercise real unique claim indexes, competing models/dates, failed-reschedule rollback, required explanations, retained history, private venue/user scope, settings changes, time-zone snapshots, and expiry rollover. Track booking records and their disposable claims. Production code never deletes booking history; test cleanup uses exact owned booking IDs through the collection API because normal model deletion is guarded. Never purge the booking collection.
+
 Workflow checker specs exercise valid and invalid human-readable names, ignored identifiers, malformed YAML, and real command exit statuses. Keep fixtures isolated and never delete shared databases or collections. New implementation tests should cover meaningful behavior, authorization boundaries, concurrency, time zones, and errors; use fake delivery providers instead of sending real emails or texts.
 
 Prefer focused tests during development, then final checks before committing. Aim for close to complete line and branch coverage of project-owned runtime code during initial implementation, without trivial tests or excluding meaningful logic. Report remaining gaps. CI keeps Test, Lint, and Package separate, uses explicit `matrix.entry` inline combinations, and reports coverage to Coveralls when the service is available.

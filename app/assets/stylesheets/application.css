@@ -67,3 +67,8 @@ td {
 .calendar .available {
   background: #e1efdf;
 }
+
+.calendar button {
+  font-size: inherit;
+  padding: 0.2rem;
+}
