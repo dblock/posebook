@@ -128,12 +128,15 @@ RSpec.describe 'Venue model access', :aggregate_failures, :database, type: :requ
   it 'keeps granted permission and reports failed email rather than claiming delivery succeeded' do
     membership
     manage_models
-    allow(BookingInvitationMailer).to receive(:invite).and_raise(IOError, 'SMTP failed')
+    error = IOError.new('SMTP failed')
+    allow(BookingInvitationMailer).to receive(:invite).and_raise(error)
+    allow(NewRelic::Agent).to receive(:notice_error)
     post invite_venue_model_path(venue, membership)
     follow_redirect!
     expect(response.body).to include('Booking enabled, but invitation email could not be sent')
     expect(ModelBookingAccess.new(membership.reload).allowed?).to be(true)
     expect(ActionMailer::Base.deliveries).to be_empty
+    expect(NewRelic::Agent).to have_received(:notice_error).with(error).once
   end
 
   it 'reports unavailable email configuration while preserving the explicit booking grant' do

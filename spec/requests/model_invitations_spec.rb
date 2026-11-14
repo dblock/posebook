@@ -39,13 +39,16 @@ RSpec.describe 'Model invitations', :aggregate_failures, :database, type: :reque
   it 'keeps a private link when email delivery fails' do
     sign_in(create_user(roles: ['system_admin']))
     venue = create_venue
-    allow(ModelInvitationMailer).to receive(:invite).and_raise(IOError)
+    error = IOError.new('Unavailable')
+    allow(ModelInvitationMailer).to receive(:invite).and_raise(error)
+    allow(NewRelic::Agent).to receive(:notice_error)
     post venue_model_invitations_path(venue),
          params: { model_invitation: { email: 'model@example.test' }, send_email: '1' }
     track_record(venue.model_invitations.first)
     follow_redirect!
     expect(response.body).to include('Email delivery failed.')
     expect(response.parsed_body.at_css('#invitation_link')).to be_present
+    expect(NewRelic::Agent).to have_received(:notice_error).with(error).once
   end
 
   it 'rejects invalid addresses and unavailable delivery without persisting an invitation' do

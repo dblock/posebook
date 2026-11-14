@@ -114,6 +114,8 @@ The Dockerfile explicitly selects runtime files, installs production dependencie
 
 Production requires `MONGODB_URI` and a deployment-supplied `SECRET_KEY_BASE`. `APP_HOST` defaults to `enochs.dblock.org`; production requests are host-restricted except for `/up`. Local test configuration uses a separate URI and a test-only database-name guard. Filter email, phone, passwords, and authentication tokens from logs. Email password recovery uses SMTP; model notifications remain unimplemented.
 
+Optional `newrelic_rpm` monitoring uses `NEW_RELIC_LICENSE_KEY` and `NEW_RELIC_APP_NAME` (default `Posebook`), following the Slack bots' environment-variable setup. Production starts the agent only with a license; development and tests disable it. Rails instrumentation reports unhandled failures, and explicit `NewRelic::Agent.notice_error` calls report handled SMTP and photo-storage failures without changing their existing responses or booking grants. Disable request/custom attributes, MongoDB query capture, exception messages, log forwarding, and browser injection; report exception classes and stack traces, not contacts, authentication links, profile fields, uploaded images, or private database values. No additional service credentials are required to build, test, or boot without monitoring.
+
 ## Delivery Scope
 
 Implementation proceeds through focused stacked PRs: account bootstrap and recovery, account settings and lifecycle, venue/organizer setup, recurring sessions, invitations, then bookings and email/SMS reminders. SMS consent, phone verification, opt-outs, invitation expiry, and adult-model expectations are required before the corresponding public functionality launches.

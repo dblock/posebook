@@ -228,4 +228,15 @@ RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request 
     ids = [saved.image_id, saved.thumbnail_id]
     expect(ProfilePhoto.storage.chunk_model.where(:files_id.in => ids).count).to eq(0)
   end
+
+  it 'reports storage errors without exposing private details or claiming upload success' do
+    sign_in(model)
+    error = Mongo::Error.new('Private database details')
+    allow(ProfilePhoto).to receive(:add).and_raise(error)
+    allow(NewRelic::Agent).to receive(:notice_error)
+    post model_photos_path(model), params: { profile_photo: { file: photo_upload } }
+    expect(response).to have_http_status(:service_unavailable)
+    expect(response.body).not_to include(error.message)
+    expect(NewRelic::Agent).to have_received(:notice_error).with(error).once
+  end
 end

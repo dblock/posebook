@@ -14,7 +14,8 @@ class BookingInvitationDelivery
 
     BookingInvitationMailer.invite(membership).deliver_now
     :sent
-  rescue IOError, SystemCallError, Timeout::Error, Net::SMTPError
+  rescue IOError, SystemCallError, Timeout::Error, Net::SMTPError => e
+    NewRelic::Agent.notice_error(e)
     :failed
   end
 end

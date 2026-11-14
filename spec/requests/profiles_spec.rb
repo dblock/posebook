@@ -154,10 +154,13 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
   it 'handles verification mail delivery errors' do
     user = create_user
     sign_in(user)
-    allow(EmailChangeMailer).to receive(:confirm).and_raise(IOError, 'Unavailable')
+    error = IOError.new('Unavailable')
+    allow(EmailChangeMailer).to receive(:confirm).and_raise(error)
+    allow(NewRelic::Agent).to receive(:notice_error)
     update_profile(user, email: 'new@example.test', current_password: DatabaseHelpers::TEST_PASSWORD)
     expect(response).to have_http_status(:service_unavailable)
     expect(response.body).to include('could not be sent')
+    expect(NewRelic::Agent).to have_received(:notice_error).with(error).once
   end
 
   it 'rejects expired and missing email confirmation links' do

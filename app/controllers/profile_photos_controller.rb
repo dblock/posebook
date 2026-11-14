@@ -7,7 +7,7 @@ class ProfilePhotosController < ApplicationController
   before_action :find_photo, except: :create
 
   rescue_from ProfileImage::Invalid, with: :invalid_upload
-  rescue_from Mongo::Error, with: -> { render plain: I18n.t('photos.unavailable'), status: :service_unavailable }
+  rescue_from Mongo::Error, with: :storage_unavailable
 
   def show
     send_data @photo.bytes(thumbnail: params[:thumbnail] == '1'),
@@ -51,5 +51,10 @@ class ProfilePhotosController < ApplicationController
 
   def invalid_upload(error)
     redirect_to model_path(@user), alert: error.message, status: :see_other
+  end
+
+  def storage_unavailable(error)
+    NewRelic::Agent.notice_error(error)
+    render plain: I18n.t('photos.unavailable'), status: :service_unavailable
   end
 end

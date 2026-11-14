@@ -16,7 +16,8 @@ class ProfilesController < ApplicationController
     else
       render :edit, status: :unprocessable_content
     end
-  rescue IOError, SystemCallError, Timeout::Error, Net::SMTPError
+  rescue IOError, SystemCallError, Timeout::Error, Net::SMTPError => e
+    NewRelic::Agent.notice_error(e)
     @user.errors.add(:base, t('password_resets.failed'))
     render :edit, status: :service_unavailable
   end
