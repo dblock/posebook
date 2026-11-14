@@ -70,7 +70,9 @@ class ModelBookingsController < ApplicationController
   end
 
   def show_error(error)
-    return redirect_to venue_path(@venue), alert: error.message if %w[create confirm].include?(action_name)
+    if %w[create confirm].include?(action_name)
+      return redirect_to venue_path(@venue, month: params[:date]&.to_s&.first(7)), alert: error.message
+    end
 
     load_calendar
     flash.now[:alert] = error.message

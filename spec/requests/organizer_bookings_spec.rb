@@ -54,6 +54,18 @@ RSpec.describe 'Organizer bookings', :aggregate_failures, :database, type: :requ
                                                       'reason' => 'Agreed with the model.')
   end
 
+  it 'explains a date claimed after the organizer opened the form without creating a second booking' do
+    get new_venue_organizer_booking_path(venue)
+    other = create_user
+    grant_model_access(venue, other)
+    track_booking(BookingMutation.new(venue: venue, user: other).book(date: '2026-11-16'))
+    post venue_organizer_bookings_path(venue), params: booking_params
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include('someone else just booked that date', 'Please choose another available date.')
+    expect(response.parsed_body.at_css('#booking_date')['value']).to eq('2026-11-16')
+    expect(venue.model_bookings.count).to eq(1)
+  end
+
   it 'reassigns the model and date after the cutoff with linked history and a single updated claim' do
     record = reserve
     other = create_user

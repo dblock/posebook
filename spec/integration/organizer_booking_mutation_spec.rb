@@ -31,7 +31,7 @@ RSpec.describe OrganizerBookingMutation, :aggregate_failures, :database do
     track_booking(BookingMutation.new(venue: venue, user: other).book(date: '2026-11-23'))
     expect do
       mutation.update(original.id, attributes.merge(date: '2026-11-23'))
-    end.to raise_error(BookingMutation::Conflict)
+    end.to raise_error(BookingMutation::Conflict, I18n.t('bookings.date_taken'))
     expect(original.reload.status).to eq('confirmed')
     expect(original.attendance_changes).to be_empty
     expect(venue.model_bookings.count).to eq(2)

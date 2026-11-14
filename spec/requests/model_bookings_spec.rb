@@ -113,6 +113,22 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
     end
   end
 
+  it 'explains a date taken after the calendar loaded and refreshes the same month without a second booking' do
+    prepare_model
+    get venue_path(venue, month: '2026-12')
+    expect(response.parsed_body.at_css('[data-date="2026-12-07"]')['class']).to eq('available')
+    other = create_user
+    grant_model_access(venue, other)
+    winner = book('2026-12-07', user: other)
+    post venue_model_bookings_path(venue), params: { date: '2026-12-07' }
+    expect(response).to redirect_to(venue_path(venue, month: '2026-12'))
+    follow_redirect!
+    expect(response.body).to include('someone else just booked that date', 'Please choose another available date.')
+    expect(response.parsed_body.at_css('[data-date="2026-12-07"]')['class']).to eq('booked')
+    expect(venue.model_bookings.pluck(:id)).to eq([winner.id])
+    expect(ModelBookingClaim.where(venue_id: venue.id).pluck(:model_booking_id)).to eq([winner.id])
+  end
+
   it 'reschedules with an explanation while preserving and linking both records' do
     prepare_model
     original = book('2026-11-23')
@@ -136,7 +152,8 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
     book('2026-11-30', user: other)
     patch venue_model_booking_path(venue, original), params: { date: '2026-11-30', reason: 'Need another date.' }
     expect(response).to have_http_status(:unprocessable_content)
-    expect(response.body).to include('just changed')
+    expect(response.body).to include('someone else just booked that date')
+    expect(response.parsed_body.at_css('#reason').text.strip).to eq('Need another date.')
     expect(original.reload.status).to eq('confirmed')
     expect(venue.model_bookings.count).to eq(2)
     expect(ModelBookingClaim.find_by(user_id: model.id).model_booking_id).to eq(original.id)

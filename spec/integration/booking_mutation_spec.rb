@@ -51,9 +51,16 @@ RSpec.describe BookingMutation, :aggregate_failures, :database do
     venue = create_venue
     users = Array.new(2) { create_user }
     users.each { |user| grant_model_access(venue, user) }
-    results = users.map { |user| Thread.new { attempt(venue, user, '2026-11-16') } }.map(&:value)
+    results = users.map do |user|
+      Thread.new do
+        described_class.new(venue: venue, user: user).book(date: '2026-11-16')
+      rescue described_class::Conflict => e
+        e
+      end
+    end.map(&:value)
     track_venue_bookings(venue)
-    expect(results.compact.size).to eq(1)
+    expect(results.grep(ModelBooking).size).to eq(1)
+    expect(results.grep(described_class::Conflict).map(&:message)).to eq([I18n.t('bookings.date_taken')])
     expect(venue.model_bookings.count).to eq(1)
     expect(ModelBookingClaim.where(venue_id: venue.id).count).to eq(1)
   end
