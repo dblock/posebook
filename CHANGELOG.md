@@ -50,4 +50,5 @@
 - [#54](https://github.com/dblock/posebook/pull/54): Invite new venue/program coordinators or confirm promotions of registered accounts, with email-bound single-use links and scoped management roles - [@dblock](https://github.com/dblock).
 - [#55](https://github.com/dblock/posebook/pull/55): Show uploaded photos on account profiles and preview larger images in accessible popups across profile and venue galleries while preserving photo privacy - [@dblock](https://github.com/dblock).
 - [#58](https://github.com/dblock/posebook/pull/58): Use neutral program/participant, scheduling, pay, and hostname defaults; keep gender rules optional and remove domain-specific wording outside the README use case - [@dblock](https://github.com/dblock).
+- [#57](https://github.com/dblock/posebook/pull/57): Compact secondary actions and simplify calendar and roster text - [@dblock](https://github.com/dblock).
 - Your contribution here.

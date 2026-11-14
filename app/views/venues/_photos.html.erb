@@ -15,7 +15,7 @@
           <%= render "shared/photo_thumbnail", full_url: venue_photo_path(venue, photo),
                      thumbnail_url: venue_photo_path(venue, photo, thumbnail: 1),
                      description: "#{venue.name} photo #{index + 1}" %>
-          <% if editable %><%= button_to "Delete Venue Photo", venue_photo_path(venue, photo), method: :delete %><% end %>
+          <% if editable %><%= button_to "Delete Photo", venue_photo_path(venue, photo), method: :delete, class: "secondary-action" %><% end %>
         </figure>
       <% end %>
     </div>

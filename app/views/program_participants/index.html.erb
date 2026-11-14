@@ -4,13 +4,6 @@
   <p class="participant-counts"><strong><%= @roster.counts[:total] %> total <%= @program.participant_label.pluralize.downcase %></strong> &middot; <%= @roster.counts[:available] %> <%= status_label("available") %> &middot; <%= @roster.counts[:booked] %> <%= status_label("booked") %> &middot; <%= @roster.counts[:paused] %> <%= status_label("paused") %> &middot; <%= @roster.counts[:inactive] %> <%= status_label("inactive") %></p>
   <%= button_to "Invite All Available #{@program.participant_label.pluralize.titleize} (#{@roster.counts[:available]})", invite_all_program_participants_path(@program, page: @roster.page), disabled: @roster.counts[:available].zero? %>
   <p>Invites available <%= @program.participant_label.pluralize.downcase %> across <strong>all pages</strong>, not just the <%= @program.participant_label.pluralize.downcase %> shown below.</p>
-  <details class="participant-help">
-    <summary>How Invitations and Pauses Work</summary>
-    <p>Invite <%= @program.participant_article %> <%= @program.participant_label.downcase %> to choose one booking date. Cancellation and rescheduling keep that invitation valid until a <%= @program.program_label.downcase %> is completed. Finishing a <%= @program.program_label.downcase %> never automatically permits another booking.</p>
-    <p>Paused <%= @program.participant_label.pluralize.downcase %> keep their existing booking and can cancel it, but cannot book or reschedule until resumed. Resuming does not issue a new invitation. Pause explanations remain private to <%= @program.program_label.downcase %> organizers and system admins.</p>
-    <p>Sends email and enables booking now for active, unpaused <%= @program.participant_label.pluralize.downcase %> without an upcoming booking. Booked, paused, and inactive accounts are skipped. If email fails, access remains enabled so you can contact the <%= @program.participant_label.downcase %> directly or retry.</p>
-    <p>Counts group inactive accounts first, then paused <%= @program.participant_label.pluralize.downcase %>, then booked <%= @program.participant_label.pluralize.downcase %>. Available includes <%= @program.participant_label.pluralize.downcase %> already invited who have not booked yet. Availability is checked again when invitations are sent.</p>
-  </details>
   <% if @memberships.any? %>
     <p>Showing <%= @roster.first_number %>&ndash;<%= @roster.last_number %> of <%= @roster.counts[:total] %> <%= @program.participant_label.pluralize.downcase %></p>
     <p class="scroll-hint">Scroll horizontally to view <%= @program.participant_label.downcase %> access and actions.</p>
@@ -39,17 +32,17 @@
                 <div class="participant-actions">
                   <% if membership.user.profile_photos.any? %><%= link_to "View Photos", participant_path(membership.user) %><% end %>
                   <% if membership.user.active? && !access.paused? && !access.booking %>
-                    <%= button_to "Invite to Book", invite_program_participant_path(@program, membership, page: @roster.page) %>
+                    <%= button_to "Invite to Book", invite_program_participant_path(@program, membership, page: @roster.page), class: "secondary-action" %>
                   <% end %>
                   <% if access.paused? %>
-                    <%= button_to "Resume #{@program.participant_label.titleize}", resume_program_participant_path(@program, membership, page: @roster.page) %>
+                    <%= button_to "Resume #{@program.participant_label.titleize}", resume_program_participant_path(@program, membership, page: @roster.page), class: "secondary-action" %>
                   <% else %>
                     <details class="participant-pause">
                       <summary>Pause <%= @program.participant_label.titleize %></summary>
                       <%= form_with url: pause_program_participant_path(@program, membership, page: @roster.page) do |form| %>
                         <%= form.label :reason, "Pause explanation", for: "pause-reason-#{membership.id}" %>
                         <%= form.text_area :reason, id: "pause-reason-#{membership.id}", required: true, maxlength: 200, rows: 2 %>
-                        <%= form.submit "Pause #{@program.participant_label.titleize}" %>
+                        <%= form.submit "Pause #{@program.participant_label.titleize}", class: "secondary-action" %>
                       <% end %>
                     </details>
                   <% end %>
