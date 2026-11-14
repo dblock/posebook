@@ -39,7 +39,10 @@ class ModelBooking
   end
 
   def display_status
-    status == 'confirmed' && ends_at <= Time.current ? 'Completed' : status.humanize
+    return status.humanize unless status == 'confirmed'
+    return 'Completed' if ends_at <= Time.current
+
+    attendance_confirmed? ? 'Confirmed' : 'Unconfirmed'
   end
 
   def scheduled_start

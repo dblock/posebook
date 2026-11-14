@@ -44,7 +44,7 @@ RSpec.describe 'Organizer bookings', :aggregate_failures, :database, type: :requ
   it 'edits and clears attendance after the model cutoff while retaining attributed changes' do
     record = reserve
     get edit_drawing_session_organizer_booking_path(drawing_session, record)
-    expect(response.body).to include('Edit Booking', 'Attendance not confirmed')
+    expect(response.body).to include('Edit Booking', 'Unconfirmed')
     patch drawing_session_organizer_booking_path(drawing_session, record),
           params: booking_params(attendance: 'confirmed')
     expect(record.reload.attendance_confirmed_by_id).to eq(organizer.id)

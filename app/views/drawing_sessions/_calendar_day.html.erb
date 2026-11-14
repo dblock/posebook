@@ -11,9 +11,12 @@
   <td data-date="<%= date.iso8601 %>" class="<%= calendar_day_class(booking, reason) %>">
     <time datetime="<%= date.iso8601 %>"><%= date.day %></time>
     <% if reason != "Future" && (clock = calendar_time(calendar, date)) %><strong><%= clock %></strong><br><% end %>
-    <%= status_label(label) %>
+    <% if booking %>
+      <%= render "drawing_sessions/booking_status", booking: booking, private_view: !public_view && (@session_coordinator || booking.user_id == current_user&.id) %>
+    <% else %>
+      <%= status_label(label) %>
+    <% end %>
     <%= render "drawing_sessions/booked_model", booking: booking, manager: @session_coordinator if booking %>
-    <%= render "drawing_sessions/attendance_status", booking: booking, private_view: !public_view && (@session_coordinator || booking.user_id == current_user&.id) if booking %>
     <% if booking && @session_coordinator && booking.ends_at > Time.current %><%= link_to "Edit Booking", edit_drawing_session_organizer_booking_path(calendar.drawing_session, booking) %><% end %>
     <% if reason && reason != label && !(public_view && booking) %><small><%= reason %></small><% end %>
     <% if reason != "Future" && !public_view && calendar.schedule.exceptions[date]&.mode == "open" %><small><%= calendar.schedule.exceptions[date].reason %></small><% end %>

@@ -28,7 +28,7 @@ RSpec.describe 'Session model access', :aggregate_failures, :database, type: :re
     Mongoid.default_client.subscribe(Mongo::Monitoring::COMMAND, monitor)
     get drawing_session_models_path(drawing_session)
     expect(response.parsed_body.css('tr[data-membership]').size).to eq(8)
-    expect(response.parsed_body.css('td .status-label').map(&:text)).to eq(['Invited to book'] * 8)
+    expect(response.parsed_body.css('td .status-label').map(&:text)).to eq(['Invited'] * 8)
     expect(queries.size).to be <= 3
   ensure
     Mongoid.default_client.unsubscribe(Mongo::Monitoring::COMMAND, monitor) if monitor
@@ -46,7 +46,21 @@ RSpec.describe 'Session model access', :aggregate_failures, :database, type: :re
     [ActionMailer::Base.deliveries.last.text_part, ActionMailer::Base.deliveries.last.html_part].each do |part|
       expect(part.body.decoded).to include('Monday at 7:15 PM (America/New_York)')
     end
+
     expect(membership.reload.history_tracks.last.modifier_id).to eq(organizer.id)
+  end
+
+  it 'shows only paused for a paused model while retaining the booking details as plain text' do
+    membership
+    booking = track_booking(BookingMutation.new(drawing_session: drawing_session,
+                                                user: model).book(date: '2026-11-16'))
+    membership.update!(model_paused: true, model_pause_reason: 'Private explanation.')
+    manage_models
+    get drawing_session_models_path(drawing_session)
+    cell = response.parsed_body.at_css("tr[data-membership='#{membership.id}'] td:nth-child(2)")
+    expect(cell.css('.status-label').map(&:text)).to eq(['Paused'])
+    expect(cell.text).to include('Booking retained', booking.date.iso8601, 'Unconfirmed')
+    expect(cell.at_css('.attendance-warning')['role']).to eq('status')
   end
 
   it 'bulk invites only active models at this session without upcoming bookings or pauses' do
@@ -148,7 +162,17 @@ RSpec.describe 'Session model access', :aggregate_failures, :database, type: :re
     expect(response.parsed_body.at_css('.model-counts').text.squish)
       .to eq("3 total models \u00b7 2 available \u00b7 0 booked \u00b7 0 paused \u00b7 1 inactive")
     expect(response.parsed_body.at_css("tr[data-membership='#{completed.id}']").text)
-      .to include('Invitation required', 'Invite to Book')
+      .to include('Uninvited', 'Invite to Book')
+  end
+
+  it 'uses one-word uninvited and inactive access labels with their existing warning and danger tones' do
+    membership.update!(booking_invited_at: nil)
+    grant_model_access(drawing_session, create_user(active: false))
+    manage_models
+    get drawing_session_models_path(drawing_session)
+    expect(response.parsed_body.css('td .status-label').map(&:text)).to match_array(%w[Uninvited Inactive])
+    expect(response.parsed_body.at_css('td .status-label-warning').text).to eq('Uninvited')
+    expect(response.parsed_body.at_css('td .status-label-danger').text).to eq('Inactive')
   end
 
   it 'keeps granted permission and reports failed email rather than claiming delivery succeeded' do

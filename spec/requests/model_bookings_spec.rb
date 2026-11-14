@@ -30,8 +30,8 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
       get drawing_session_path(drawing_session)
       booked = response.parsed_body.at_css('[data-date="2026-11-16"]')
       expect(booked['class']).to eq('booked')
-      expect(booked.text).to include('Booked')
-      expect(booked.at_css('.status-label-neutral').text).to eq('Booked')
+      expect(booked.css('.status-label').map(&:text)).to eq(['Unconfirmed'])
+      expect(booked.at_css('.status-label-warning').text).to eq('Unconfirmed')
       expect(booked.css('form')).to be_empty
       expect(response.parsed_body.at_css('[data-date="2026-11-23"]')['class']).to eq('available')
       expect(response.parsed_body.at_css('[data-date="2026-11-23"] .status-label-success').text).to eq('Available')
@@ -145,7 +145,7 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
                                                reason: 'Travel plans changed.', changed_by_id: model.id)
     expect(replacement.date).to eq(Date.new(2026, 11, 30))
     follow_redirect!
-    expect(response.body).to include('Rescheduled', 'Moved from 2026-11-23', 'Travel plans changed.', 'Confirmed')
+    expect(response.body).to include('Rescheduled', 'Moved from 2026-11-23', 'Travel plans changed.', 'Unconfirmed')
   end
 
   it 'keeps the original booking if a requested replacement date is occupied' do
@@ -204,7 +204,7 @@ RSpec.describe 'Model bookings', :aggregate_failures, :database, type: :request 
     replacement = track_booking(drawing_session.model_bookings.where(status: 'confirmed').first)
     expect(replacement.id).not_to eq(original.id)
     follow_redirect!
-    expect(response.body).to include('2026-11-16', 'Canceled', 'A family commitment.', '2026-11-23', 'Confirmed')
+    expect(response.body).to include('2026-11-16', 'Canceled', 'A family commitment.', '2026-11-23', 'Unconfirmed')
     post cancel_drawing_session_model_booking_path(drawing_session, original),
          params: { reason: 'Overwrite history', booking_version: original.lock_version }
     expect(response).to redirect_to(drawing_session_path(drawing_session))

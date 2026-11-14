@@ -11,8 +11,7 @@
               <td><%= booking.date.iso8601 %><br><%= booking_time(booking) %><% if booking.previous_booking %><br>Moved from <%= booking.previous_booking.date.iso8601 %><% end %></td>
               <% if @session_coordinator %><td><%= booking_model_name(booking.user, manager: true) %></td><% end %>
               <td>
-                <%= status_label(booking.display_status) unless booking.attendance_confirmed? && booking.display_status == "Confirmed" %>
-                <%= render "drawing_sessions/attendance_status", booking: booking, private_view: true %>
+                <%= render "drawing_sessions/booking_status", booking: booking, private_view: true %>
                 <% if @session_coordinator && booking.status == "confirmed" && booking.ends_at > Time.current %><%= link_to "Edit Booking", edit_drawing_session_organizer_booking_path(@drawing_session, booking) %><% end %>
               </td>
               <td>

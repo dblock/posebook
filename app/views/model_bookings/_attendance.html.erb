@@ -1,5 +1,5 @@
 <section class="attendance-panel" aria-label="Attendance confirmation">
-  <%= render "drawing_sessions/attendance_status", booking: booking, private_view: true %>
+  <%= render "drawing_sessions/booking_status", booking: booking, private_view: true %>
   <% if booking.attendance_confirmed? %>
     <p>You're confirmed. See you there! Contact an organizer if your plans change.</p>
   <% elsif booking.confirmation_open? %>

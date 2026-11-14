@@ -55,6 +55,14 @@ RSpec.describe 'Drawing schedules', :aggregate_failures, :database, type: :reque
     expect(response.body).to include('Manage Schedule', 'Edit Day')
   end
 
+  it 'shows restored schedules with one word in the badge and explanations outside it' do
+    sign_in(create_user(roles: ['system_admin']))
+    save_day(mode: 'regular')
+    get drawing_session_schedule_path(drawing_session)
+    expect(response.parsed_body.css('.status-label').map(&:text)).to eq(['Regular'])
+    expect(response.parsed_body.text).to include('schedule restored', 'Later start.')
+  end
+
   it 'shows form errors without persisting malformed dates or missing reasons' do
     sign_in(create_user(roles: ['system_admin']))
     save_day(reason: ' ')

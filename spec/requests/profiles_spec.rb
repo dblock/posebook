@@ -120,8 +120,8 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     update_profile(user, email: 'verified@example.test', current_password: DatabaseHelpers::TEST_PASSWORD)
     token = confirmation_token
     follow_redirect!
-    expect(response.parsed_body.text).to include('Profile saved.', 'Verification pending for verified@example.test.',
-                                                 old_email)
+    expect(response.parsed_body.text).to include('Profile saved.', old_email,
+                                                 'Pending email verification for verified@example.test.')
     get email_change_path(token: token)
     expect(response.body).to include('Confirm Email Change')
     expect(user.reload.email).to eq(old_email)
@@ -131,6 +131,15 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     expect(User.with_email(old_email)).to be_nil
     patch email_change_path, params: { token: token }
     expect(response).to redirect_to(new_session_path)
+  end
+
+  it 'uses a one-word pending email badge without losing the verification explanation' do
+    user = create_user
+    sign_in(user)
+    update_profile(user, email: 'pending@example.test', current_password: DatabaseHelpers::TEST_PASSWORD)
+    follow_redirect!
+    expect(response.parsed_body.at_css('.status-label-warning').text).to eq('Pending')
+    expect(response.parsed_body.text).to include('email verification for pending@example.test.', user.email)
   end
 
   it 'rejects blank, malformed, and already registered email changes' do
