@@ -34,7 +34,7 @@ System admins can use **Users > Edit** to change an existing user's name, email,
 
 Use **Venues** to create a venue as a system admin, configure its address, IANA time zone, informational model pay in USD, instructions, and booking horizon, then grant `manage_schedule` to existing active users. Defaults are `America/New_York`, $140, and six months; each venue can have different settings. Organizers see only their assigned venues and cannot edit venue settings, manage other users, or assign organizers. System admins can manage all venues.
 
-Removing schedule access preserves the membership record and immediately removes access to that venue. Deactivated users retain their assignments and bookings but cannot sign in until reactivated. Only system admins see organizer contact details and the existing-user selector. Automated model reminders remain future work.
+Removing schedule access preserves the membership record and immediately removes access to that venue. Deactivated users retain their assignments and bookings but cannot sign in until reactivated. Only system admins see organizer contact details and the existing-user selector, on the **Organizers** page linked beside **Edit Venue**. Automated model reminders remain future work.
 
 Venue settings include one or more available weekdays, defaulting to Monday. The venue's month calendar shows availability in its time zone through its configured booking horizon, with past dates, other weekdays, occupied dates, and dates outside the window explicitly blocked. Models can book one available day per venue at a time; while scheduled, use **Change Date** or **Cancel Booking** instead of making a second reservation.
 

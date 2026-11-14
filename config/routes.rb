@@ -19,7 +19,7 @@ Rails.application.routes.draw do
       get :cancellation, on: :member
       post :cancel, on: :member
     end
-    resources :organizers, controller: 'venue_organizers', only: %i[create destroy]
+    resources :organizers, controller: 'venue_organizers', only: %i[index create destroy]
   end
   resources :password_resets, param: :token, only: %i[new create edit update]
   get 'up' => 'rails/health#show', as: :rails_health_check
