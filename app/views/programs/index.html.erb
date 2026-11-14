@@ -1,0 +1,13 @@
+<main>
+  <h1>Sessions</h1>
+  <p><%= link_to "Venues", venues_path %></p>
+  <% if @programs.empty? %>
+    <p>No sessions assigned. Visit Venues to create a session or contact a coordinator for access.</p>
+  <% else %>
+    <ul>
+      <% @programs.each do |program| %>
+        <li><%= link_to program.name, program %> - <%= program_schedule_summary(program) %></li>
+      <% end %>
+    </ul>
+  <% end %>
+</main>

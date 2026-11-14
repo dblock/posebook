@@ -1,0 +1,8 @@
+en:
+  programs:
+    started: "%{program_title} has already started."
+    created: "%{program_title} created."
+    updated: "%{program_title} settings saved."
+    schedule_saved: "%{program_title} schedule saved."
+    organizer_added: "%{program_title} coordinator added."
+    organizer_removed: "%{program_title} coordinator removed."

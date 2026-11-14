@@ -21,9 +21,9 @@ module DatabaseHelpers
     track_record(User.create!(user_attributes(**overrides)))
   end
 
-  def create_drawing_session(**overrides)
+  def create_program(**overrides)
     location = overrides.delete(:venue) || create_venue(**overrides.extract!(:address, :instagram_handle))
-    track_record(DrawingSession.create!({ name: "Test Session #{SecureRandom.hex(4)}", venue: location }
+    track_record(Program.create!({ name: "Test Session #{SecureRandom.hex(4)}", venue: location }
                                .merge(overrides)))
   end
 
@@ -37,37 +37,37 @@ module DatabaseHelpers
     track_record(VenueMembership.find_by(venue_id: venue.id, user_id: user.id))
   end
 
-  def grant_coordinator_access(drawing_session, user)
-    DrawingSessionMembership.grant_coordinator_access(drawing_session, user)
-    track_record(DrawingSessionMembership.find_by(drawing_session_id: drawing_session.id, user_id: user.id))
+  def grant_coordinator_access(program, user)
+    ProgramMembership.grant_coordinator_access(program, user)
+    track_record(ProgramMembership.find_by(program_id: program.id, user_id: user.id))
   end
 
-  def create_model_invitation(drawing_session, inviter, **attributes)
-    track_record(ModelInvitation.create!(drawing_session: drawing_session, invited_by: inviter, **attributes))
+  def create_participant_invitation(program, inviter, **attributes)
+    track_record(ParticipantInvitation.create!(program: program, invited_by: inviter, **attributes))
   end
 
-  def track_model_membership(drawing_session, user)
-    track_record(DrawingSessionMembership.find_by(drawing_session_id: drawing_session.id, user_id: user.id))
+  def track_participant_membership(program, user)
+    track_record(ProgramMembership.find_by(program_id: program.id, user_id: user.id))
   end
 
-  def grant_model_access(drawing_session, user)
-    ModelInvitation.with_session do |session|
-      DrawingSessionMembership.grant_model_access(drawing_session, user, session: session)
+  def grant_participant_access(program, user)
+    ParticipantInvitation.with_session do |session|
+      ProgramMembership.grant_participant_access(program, user, session: session)
     end
-    track_model_membership(drawing_session, user)
+    track_participant_membership(program, user)
   end
 
   def track_booking(booking)
     track_record(booking)
-    track_record(ModelBookingClaim.where(model_booking_id: booking.id).first)
+    track_record(BookingClaim.where(booking_id: booking.id).first)
     booking
   end
 
   def cleanup_records
     Mongoid::History.disable do
       tracked_records.reverse_each do |record|
-        if record.is_a?(ModelBooking)
-          ModelBooking.collection.find(_id: record.id).delete_one
+        if record.is_a?(Booking)
+          Booking.collection.find(_id: record.id).delete_one
         elsif record.persisted?
           record.destroy
         end

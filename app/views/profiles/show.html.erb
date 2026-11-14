@@ -8,13 +8,13 @@
     <dt>Public Identity</dt><dd><%= status_label(@user.public_profile_private? ? "Private" : "Public") %><% if @user.public_profile_private? %>: To be announced on public calendars<% end %></dd>
     <dt>Public Display Name</dt><dd><%= @user.public_name %><%= " (using your name)" if !@user.public_profile_private? && @user.display_name.blank? %></dd>
     <dt>Instagram Handle</dt><dd><% if (url = InstagramProfile.url(@user.instagram_handle)) %><%= link_to "@#{@user.instagram_handle}", url, target: "_blank", rel: "noopener noreferrer" %><% else %>Not provided<% end %></dd>
-    <dt>Instagram Tagging</dt><dd><% if @user.public_profile_private? %><%= status_label("Hidden") %> while your information is private<% elsif @user.instagram_tagging_allowed? %><%= status_label("Enabled") %>: handle appears in announcements and drawing_session calendars<% else %><%= status_label("Off") %>: Instagram stays private<% end %></dd>
+    <dt>Instagram Tagging</dt><dd><% if @user.public_profile_private? %><%= status_label("Hidden") %> while your information is private<% elsif @user.instagram_tagging_allowed? %><%= status_label("Enabled") %>: handle appears in announcements and program calendars<% else %><%= status_label("Off") %>: Instagram stays private<% end %></dd>
   </dl>
   <% if @user.pending_email.present? %>
     <p><%= status_label("Pending") %> email verification for <%= @user.pending_email %>. Your current email is still <%= @user.email %>.</p>
   <% end %>
   <p><%= link_to "Edit Profile", edit_profile_path %></p>
-  <p><%= link_to "Manage Photos (#{@user.profile_photos.length}/#{ProfilePhoto::LIMIT})", model_path(@user) %></p>
+  <p><%= link_to "Manage Photos (#{@user.profile_photos.length}/#{ProfilePhoto::LIMIT})", participant_path(@user) %></p>
   <p><%= link_to "Change Password", edit_password_path %></p>
   <p><%= link_to "Deactivate Account", new_account_deactivation_path %></p>
 </main>

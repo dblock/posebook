@@ -334,7 +334,7 @@ form:not(.button_to) > p {
 }
 
 small,
-.model-email,
+.participant-email,
 .scroll-hint {
   font-size: 0.85rem;
 }
@@ -517,52 +517,52 @@ tbody tr:last-child td {
   }
 }
 
-.model-help,
-.model-pagination {
+.participant-help,
+.participant-pagination {
   margin: 0.75rem 0;
 }
 
-.model-roster {
+.participant-roster {
   table-layout: fixed;
   font-size: 0.875rem;
   line-height: 1.4;
 }
 
-.model-roster th,
-.model-roster td {
+.participant-roster th,
+.participant-roster td {
   padding: 0.9rem;
   vertical-align: top;
   overflow-wrap: anywhere;
 }
 
-.model-email {
+.participant-email {
   font-size: 0.8rem;
 }
 
-.model-actions {
+.participant-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.4rem;
 }
 
-.model-actions form {
+.participant-actions form {
   margin: 0;
 }
 
-.model-actions button,
-.model-actions input[type="submit"] {
+.participant-actions button,
+.participant-actions input[type="submit"] {
   min-height: 2.25rem;
   padding: 0.4rem 0.7rem;
   font-size: inherit;
 }
 
-.model-roster summary,
-.model-help summary {
+.participant-roster summary,
+.participant-help summary {
   cursor: pointer;
 }
 
-.model-pause[open] {
+.participant-pause[open] {
   flex-basis: 100%;
 }
 

@@ -1,21 +1,21 @@
 # frozen_string_literal: true
 
 class AttendanceMutation
-  include DrawingSessionScheduleLock
+  include ProgramScheduleLock
 
-  def initialize(drawing_session:, user:)
-    @drawing_session = drawing_session
+  def initialize(program:, user:)
+    @program = program
     @user = user
   end
 
   def confirm(id, version:)
     with_schedule_lock do |session|
-      unless @user.reload.active? && @drawing_session.model?(@user)
+      unless @user.reload.active? && @program.participant?(@user)
         raise BookingMutation::Invalid,
-              I18n.t('bookings.model_required')
+              @program.message('bookings.participant_required')
       end
 
-      @booking = ModelBooking.where(drawing_session_id: @drawing_session.id, user_id: @user.id).find(id)
+      @booking = Booking.where(program_id: @program.id, user_id: @user.id).find(id)
       confirm_booking(session, version)
     end
     @booking
@@ -28,7 +28,10 @@ class AttendanceMutation
     @booking.assert_version!(@booking.attendance_confirmed? ? @booking.lock_version : version)
     return if @booking.attendance_confirmed?
 
-    raise BookingMutation::Invalid, I18n.t('bookings.confirmation_unavailable') unless @booking.confirmation_open?
+    unless @booking.confirmation_open?
+      raise BookingMutation::Invalid,
+            @program.message('bookings.confirmation_unavailable')
+    end
 
     @booking.record_attendance!(true, @user, "I'll be there!", session: session)
   end

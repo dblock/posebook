@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-system('bin/rails', 'venues:split_sessions', 'db:create_indexes', 'mongoid_slug:set[Venue,DrawingSession]',
+system('bin/rails', 'programs:migrate_schema', 'venues:split_programs', 'db:create_indexes',
+       'mongoid_slug:set[Venue,Program]',
        'users:migrate_instagram_handles', exception: true)
 exec(*ARGV)

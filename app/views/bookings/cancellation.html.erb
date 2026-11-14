@@ -1,0 +1,11 @@
+<main>
+  <h1>Cancel Your Booking</h1>
+  <%= render "programs/regular_schedule", program: @program %>
+  <p><%= @booking.date.to_fs(:long) %> at <%= booking_time(@booking) %>, <%= @program.name %>. Your booking and explanation will remain in the history.</p>
+  <%= form_with url: cancel_program_booking_path(@program, @booking) do %>
+    <%= hidden_field_tag :booking_version, request.get? ? @booking.lock_version : params[:booking_version] %>
+    <p><%= label_tag :reason, "Explanation" %><br><%= text_area_tag :reason, params[:reason], required: true, maxlength: 2000, rows: 3 %></p>
+    <%= submit_tag "Cancel Booking" %>
+  <% end %>
+  <p><%= link_to "Keep My Booking", program_path(@program) %></p>
+</main>

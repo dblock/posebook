@@ -7,54 +7,54 @@ RSpec.describe BookingGenderRule, :aggregate_failures, :database do
 
   around { |example| travel_to(Time.utc(2026, 11, 13, 15)) { example.run } }
 
-  let(:drawing_session) { create_drawing_session(no_consecutive_genders: ['male']) }
-  let(:model) { create_user(gender: 'male') }
+  let(:program) { create_program(no_consecutive_genders: ['male']) }
+  let(:participant) { create_user(gender: 'male') }
 
-  before { grant_model_access(drawing_session, model) }
+  before { grant_participant_access(program, participant) }
 
-  def reserve(date, gender: 'male', at: drawing_session)
+  def reserve(date, gender: 'male', at: program)
     user = create_user(gender: gender)
-    grant_model_access(at, user)
-    track_booking(BookingMutation.new(drawing_session: at, user: user).book(date: date))
+    grant_participant_access(at, user)
+    track_booking(BookingMutation.new(program: at, user: user).book(date: date))
   end
 
   def book(date)
-    track_booking(BookingMutation.new(drawing_session: drawing_session, user: model).book(date: date))
+    track_booking(BookingMutation.new(program: program, user: participant).book(date: date))
   end
 
   def change(original, date)
-    track_booking(BookingMutation.new(drawing_session: drawing_session, user: model)
+    track_booking(BookingMutation.new(program: program, user: participant)
                                 .change(booking: original, date: date, reason: 'Travel changed.'))
   end
 
   def exception(date, mode)
     track_record(
-      DrawingSessionScheduleException.create!(drawing_session: drawing_session, date: Date.iso8601(date), mode: mode,
-                                              start_time: mode == 'open' ? '18:30' : nil, reason: 'Schedule change.')
+      ProgramScheduleException.create!(program: program, date: Date.iso8601(date), mode: mode,
+                                       start_time: mode == 'open' ? '18:30' : nil, reason: 'Schedule change.')
     )
   end
 
   def attempt(user, date)
-    BookingMutation.new(drawing_session: drawing_session, user: user).book(date: date)
+    BookingMutation.new(program: program, user: user).book(date: date)
   rescue BookingMutation::Invalid
     nil
   end
 
   User::GENDERS.each do |gender|
-    it "independently restricts consecutive #{gender} models when that gender is selected" do
-      drawing_session.update!(no_consecutive_genders: [gender])
-      model.update!(gender: gender)
+    it "independently restricts consecutive #{gender} participants when that gender is selected" do
+      program.update!(no_consecutive_genders: [gender])
+      participant.update!(gender: gender)
       reserve('2026-11-16', gender: gender)
       expect { book('2026-11-23') }.to raise_error(BookingMutation::Invalid, /consecutive-gender/)
-      expect(drawing_session.model_bookings.count).to eq(1)
-      drawing_session.update!(no_consecutive_genders: [])
+      expect(program.bookings.count).to eq(1)
+      program.update!(no_consecutive_genders: [])
       expect(book('2026-11-23')).to be_persisted
     end
   end
 
-  it 'allows consecutive female models when only male repeats are restricted' do
+  it 'allows consecutive female participants when only male repeats are restricted' do
     reserve('2026-11-16', gender: 'female')
-    model.update!(gender: 'female')
+    participant.update!(gender: 'female')
     expect(book('2026-11-23')).to be_persisted
   end
 
@@ -63,7 +63,7 @@ RSpec.describe BookingGenderRule, :aggregate_failures, :database do
     expect { book('2026-11-30') }.to raise_error(BookingMutation::Invalid, /consecutive-gender/)
   end
 
-  it 'does not skip an unbooked session when looking for the preceding model' do
+  it 'does not skip an unbooked session when looking for the preceding participant' do
     reserve('2026-11-16')
     expect(book('2026-11-30')).to be_persisted
   end
@@ -87,9 +87,9 @@ RSpec.describe BookingGenderRule, :aggregate_failures, :database do
 
   it 'ignores canceled bookings and bookings at other sessions' do
     previous = reserve('2026-11-16')
-    BookingMutation.new(drawing_session: drawing_session, user: previous.user).cancel(booking: previous,
-                                                                                      reason: 'Travel changed.')
-    reserve('2026-11-16', at: create_drawing_session)
+    BookingMutation.new(program: program, user: previous.user).cancel(booking: previous,
+                                                                      reason: 'Travel changed.')
+    reserve('2026-11-16', at: create_program)
     expect(book('2026-11-23')).to be_persisted
   end
 
@@ -104,32 +104,32 @@ RSpec.describe BookingGenderRule, :aggregate_failures, :database do
     original = book('2026-11-30')
     expect { change(original, '2026-11-23') }.to raise_error(BookingMutation::Invalid, /consecutive-gender/)
     expect(original.reload.status).to eq('confirmed')
-    expect(ModelBookingClaim.find_by(model_booking_id: original.id).date).to eq(original.date)
-    expect(drawing_session.model_bookings.count).to eq(2)
+    expect(BookingClaim.find_by(booking_id: original.id).date).to eq(original.date)
+    expect(program.bookings.count).to eq(2)
   end
 
   it 'requires an actual gender selection even when the session has no restrictions' do
-    drawing_session.update!(no_consecutive_genders: [])
-    model.update!(gender: nil)
+    program.update!(no_consecutive_genders: [])
+    participant.update!(gender: nil)
     expect { book('2026-11-16') }.to raise_error(BookingMutation::Invalid, /Select a gender/)
-    expect(drawing_session.model_bookings).to be_empty
+    expect(program.bookings).to be_empty
   end
 
   it 'reloads the selected gender rather than trusting a stale profile' do
     reserve('2026-11-16')
-    model.update!(gender: 'female')
-    User.find(model.id).update!(gender: 'male')
+    participant.update!(gender: 'female')
+    User.find(participant.id).update!(gender: 'male')
     expect { book('2026-11-23') }.to raise_error(BookingMutation::Invalid, /consecutive-gender/)
   end
 
-  it 'serializes competing adjacent bookings so only one restricted model succeeds' do
+  it 'serializes competing adjacent bookings so only one restricted participant succeeds' do
     other = create_user(gender: 'male')
-    grant_model_access(drawing_session, other)
-    results = [model, other].zip(%w[2026-11-16 2026-11-23])
-                            .map { |user, date| Thread.new { attempt(user, date) } }.map(&:value)
-    drawing_session.model_bookings.each { |booking| track_booking(booking) }
+    grant_participant_access(program, other)
+    results = [participant, other].zip(%w[2026-11-16 2026-11-23])
+                                  .map { |user, date| Thread.new { attempt(user, date) } }.map(&:value)
+    program.bookings.each { |booking| track_booking(booking) }
     expect(results.compact.size).to eq(1)
-    expect(drawing_session.model_bookings.count).to eq(1)
-    expect(ModelBookingClaim.where(drawing_session_id: drawing_session.id).count).to eq(1)
+    expect(program.bookings.count).to eq(1)
+    expect(BookingClaim.where(program_id: program.id).count).to eq(1)
   end
 end

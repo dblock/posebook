@@ -2,7 +2,7 @@
 
 namespace :venues do
   desc 'Split legacy venue schedules into recurring drawing sessions'
-  task split_sessions: :environment do
-    VenueSessionMigration.call
+  task split_programs: :environment do
+    VenueProgramMigration.call
   end
 end

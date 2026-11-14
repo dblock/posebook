@@ -16,7 +16,7 @@ class ProfilePhotosController < ApplicationController
 
   def create
     ProfilePhoto.add(@user, params.expect(profile_photo: [:file]).fetch(:file))
-    redirect_to model_path(@user), notice: t('photos.uploaded'), status: :see_other
+    redirect_to participant_path(@user), notice: t('photos.uploaded'), status: :see_other
   end
 
   def update
@@ -24,19 +24,19 @@ class ProfilePhotosController < ApplicationController
     raise ActionController::BadRequest unless %w[0 1].include?(value)
 
     @photo.change_visibility(@user, value == '1')
-    redirect_to model_path(@user), notice: t('photos.updated'), status: :see_other
+    redirect_to participant_path(@user), notice: t('photos.updated'), status: :see_other
   end
 
   def destroy
     @photo.remove(@user)
-    redirect_to model_path(@user), notice: t('photos.deleted'), status: :see_other
+    redirect_to participant_path(@user), notice: t('photos.deleted'), status: :see_other
   end
 
   private
 
   def find_gallery
     response.headers['Cache-Control'] = 'private, no-store'
-    @user = User.find(params.expect(:model_id))
+    @user = User.find(params.expect(:participant_id))
     @gallery = PhotoGallery.new(@user, current_user)
   end
 
@@ -50,7 +50,7 @@ class ProfilePhotosController < ApplicationController
   end
 
   def invalid_upload(error)
-    redirect_to model_path(@user), alert: error.message, status: :see_other
+    redirect_to participant_path(@user), alert: error.message, status: :see_other
   end
 
   def storage_unavailable(error)

@@ -2,9 +2,9 @@
 
 class BookingInvitationMailer < ApplicationMailer
   def invite(membership)
-    @drawing_session = membership.drawing_session
+    @program = membership.program
     @user = membership.user
-    @booking_url = drawing_session_url(@drawing_session, booking_invitation: '1')
-    mail(to: @user.email, subject: t('model_access.subject', drawing_session: @drawing_session.name))
+    @booking_url = program_url(@program, booking_invitation: '1')
+    mail(to: @user.email, subject: @program.message('participant_access.subject', program: @program.name))
   end
 end

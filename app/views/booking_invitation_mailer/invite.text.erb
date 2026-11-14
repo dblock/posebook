@@ -1,10 +1,10 @@
 Hi <%= @user.name %>,
 
-You are invited to choose your next posing date at <%= @drawing_session.name %>.
+You are invited to choose your next booking date at <%= @program.name %>.
 
-Regular schedule: <%= drawing_session_schedule_summary(@drawing_session) %>.
+Regular schedule: <%= program_schedule_summary(@program) %>.
 
 Sign in to your existing account and choose an available future date:
 <%= @booking_url %>
 
-You may cancel or reschedule with an explanation. After you finish posing, an organizer must invite you again before you can make another booking.
+You may cancel or reschedule with an explanation. After you complete your booking, an organizer must invite you again before you can make another booking.

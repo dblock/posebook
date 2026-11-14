@@ -5,7 +5,7 @@ Rails.application.routes.draw do
   resource :registration, only: %i[new create]
   resource :session, only: %i[new create destroy]
   resource :profile, only: %i[show edit update]
-  resources :models, only: :show, controller: 'model_profiles' do
+  resources :participants, only: :show, controller: 'participant_profiles' do
     resources :photos, only: %i[show create update destroy], controller: 'profile_photos'
   end
   resource :password, only: %i[edit update]
@@ -17,21 +17,21 @@ Rails.application.routes.draw do
   resources :venues, except: :destroy do
     resources :photos, only: %i[show create destroy], controller: 'venue_photos'
     resources :coordinators, only: %i[index create destroy], controller: 'venue_coordinators'
-    resources :drawing_sessions, path: 'sessions', only: %i[new create]
+    resources :programs, path: 'sessions', only: %i[new create]
   end
-  resources :drawing_sessions, path: 'sessions', only: %i[index show edit update] do
-    resource :schedule, controller: 'drawing_session_schedules', only: %i[show update]
+  resources :programs, path: 'sessions', only: %i[index show edit update] do
+    resource :schedule, controller: 'program_schedules', only: %i[show update]
     resources(:organizer_bookings, only: %i[new create edit update]) { post :cancel, on: :member }
-    resources :models, controller: 'drawing_session_models', only: :index do
+    resources :participants, controller: 'program_participants', only: :index do
       post :invite_all, on: :collection
       %i[invite pause resume].each { |action| post action, on: :member }
     end
-    resources :model_invitations, controller: 'drawing_session_invitations', only: %i[new create show destroy]
-    resources :model_bookings, only: %i[create edit update] do
+    resources :participant_invitations, controller: 'program_invitations', only: %i[new create show destroy]
+    resources :bookings, only: %i[create edit update] do
       get :cancellation, on: :member
       %i[cancel confirm].each { |action| post action, on: :member }
     end
-    resources :coordinators, controller: 'drawing_session_coordinators', only: %i[index create destroy]
+    resources :coordinators, controller: 'program_coordinators', only: %i[index create destroy]
   end
   resources :password_resets, param: :token, only: %i[new create edit update]
   get 'up' => 'rails/health#show', as: :rails_health_check

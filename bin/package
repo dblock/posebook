@@ -111,7 +111,13 @@ begin
     docker!('exec', database, 'mongosh', '--quiet', '--eval', 'db.hello().isWritablePrimary') == 'true'
   end
   docker!('exec', database, 'mongosh', '--quiet', '--eval',
-          'db.getSiblingDB("posebook_package").venues.insertOne({name:"Legacy Package Venue",address:"Test"})')
+          'let target=db.getSiblingDB("posebook_package"); ' \
+          'target.venues.insertOne({name:"Legacy Package Venue",address:"Test"}); ' \
+          'let venue={_id:ObjectId(),name:"Current Package Venue",address:"Test",session_schema_version:1}; ' \
+          'target.venues.insertOne(venue); ' \
+          'target.drawing_sessions.insertOne({name:"Existing Package Session",venue_id:venue._id,' \
+          'model_pay:150,available_weekdays:["1"],start_time:"19:00",time_zone:"America/New_York",' \
+          'booking_horizon_months:6,instructions:"Preserved instructions",schedule_revision:3})')
   container = docker!(
     'run', '--detach', '--publish', '127.0.0.1::3000', '--network', network,
     '--env', "SECRET_KEY_BASE=#{SecureRandom.hex(64)}",
@@ -163,12 +169,18 @@ begin
           '!user.attributes.key?("instagram_url") && user.instagram_tagging_allowed? && user.public_profile_private?')
   docker!(
     'exec', container, 'bundle', 'exec', 'rails', 'runner',
-    'location = Venue.find("legacy-package-venue"); program = DrawingSession.find("legacy-package-venue"); ' \
+    'location = Venue.find("legacy-package-venue"); program = Program.find("legacy-package-venue"); ' \
     'raise "Venue/session migration failed" unless program.venue_id == location.id && ' \
     'program.name == "Legacy Package Venue"; ' \
-    'DrawingSession.transaction { DrawingSession.create!(name: "Package Transaction", venue: location); ' \
+    'Program.transaction { Program.create!(name: "Package Transaction", venue: location); ' \
     'raise Mongoid::Errors::Rollback }; ' \
-    'raise "Rollback failed" if DrawingSession.where(name: "Package Transaction").exists?'
+    'raise "Rollback failed" if Program.where(name: "Package Transaction").exists?; ' \
+    'existing = Program.find_by(name: "Existing Package Session"); ' \
+    'raise "Program schema conversion failed" unless existing.venue.name == "Current Package Venue" && ' \
+    'existing.pay == 150 && existing.program_label == "Session" && existing.participant_label == "Model" && ' \
+    'existing.schedule_revision == 3 && existing.instructions == "Preserved instructions" && ' \
+    '!existing.attributes.key?("model_pay") && ' \
+    '!Mongoid.default_client.database.collection_names.include?("drawing_sessions")'
   )
   check_photos(container)
   check_venue_photos(container)

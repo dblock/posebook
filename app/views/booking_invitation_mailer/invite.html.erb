@@ -1,5 +1,5 @@
 <p>Hi <%= @user.name %>,</p>
-<p>You are invited to choose your next posing date at <%= @drawing_session.name %>.</p>
-<%= render "drawing_sessions/regular_schedule", drawing_session: @drawing_session %>
-<p><%= link_to "Choose Your Posing Date", @booking_url %>. Sign in to your existing account, then choose an available future date.</p>
-<p>You may cancel or reschedule with an explanation. After you finish posing, an organizer must invite you again before you can make another booking.</p>
+<p>You are invited to choose your next booking date at <%= @program.name %>.</p>
+<%= render "programs/regular_schedule", program: @program %>
+<p><%= link_to "Choose Your Booking Date", @booking_url %>. Sign in to your existing account, then choose an available future date.</p>
+<p>You may cancel or reschedule with an explanation. After you complete your booking, an organizer must invite you again before you can make another booking.</p>

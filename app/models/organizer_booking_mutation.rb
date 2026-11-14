@@ -1,19 +1,19 @@
 # frozen_string_literal: true
 
 class OrganizerBookingMutation
-  include DrawingSessionScheduleLock
+  include ProgramScheduleLock
   include BookingRecords
 
-  def initialize(drawing_session:, user:)
-    @drawing_session = drawing_session
+  def initialize(program:, user:)
+    @program = program
     @user = user
   end
 
   def create(attributes)
     run do |session|
       @booking = build_booking(attributes)
-      ModelBookingClaim.create!(drawing_session: @drawing_session, user: @booking.user, model_booking: @booking,
-                                date: @booking.date, ends_at: @booking.ends_at)
+      BookingClaim.create!(program: @program, user: @booking.user, booking: @booking,
+                           date: @booking.date, ends_at: @booking.ends_at)
       update_attendance(attributes, session)
     end
   end
@@ -30,8 +30,8 @@ class OrganizerBookingMutation
     run do |session|
       @booking = active_booking(id, version: version)
       @booking.close!('canceled', explanation(reason), @user, session: session)
-      removed = ModelBookingClaim.collection.find(model_booking_id: @booking.id).delete_one(session: session)
-      raise BookingMutation::Conflict, I18n.t('bookings.conflict') unless removed.deleted_count == 1
+      removed = BookingClaim.collection.find(booking_id: @booking.id).delete_one(session: session)
+      raise BookingMutation::Conflict, @program.message('bookings.conflict') unless removed.deleted_count == 1
 
       @booking.reload
     end
@@ -42,9 +42,9 @@ class OrganizerBookingMutation
   def run
     expire_claims
     with_schedule_lock do |session|
-      unless @user.reload.active? && @drawing_session.managed_by?(@user)
+      unless @user.reload.active? && @program.managed_by?(@user)
         raise BookingMutation::Invalid,
-              I18n.t('bookings.manager_required')
+              @program.message('bookings.manager_required')
       end
 
       yield session
@@ -53,34 +53,39 @@ class OrganizerBookingMutation
   rescue Mongo::Error::OperationFailure => e
     raise unless e.code == 11_000
 
-    raise BookingMutation::Conflict, I18n.t('bookings.conflict')
+    raise BookingMutation::Conflict, @program.message('bookings.conflict')
   end
 
   def active_booking(id, version:)
-    booking = ModelBooking.where(drawing_session_id: @drawing_session.id).find(id)
+    booking = Booking.where(program_id: @program.id).find(id)
     booking.assert_version!(version)
     booking
   end
 
   def build_booking(attributes, previous: nil)
     date = available_date(attributes[:date], excluding: previous&.id)
-    model = previous ? replacement_model(previous, attributes[:user_id]) : model_for(attributes[:user_id])
-    reason = gender_override(date, model, attributes, excluding: previous&.id)
-    create_record(date, user: model, previous: previous, gender_override_reason: reason)
+    participant = if previous
+                    replacement_participant(previous,
+                                            attributes[:user_id])
+                  else
+                    participant_for(attributes[:user_id])
+                  end
+    reason = gender_override(date, participant, attributes, excluding: previous&.id)
+    create_record(date, user: participant, previous: previous, gender_override_reason: reason)
   end
 
-  def gender_override(date, model, attributes, excluding:)
-    message = BookingGenderRule.new(@drawing_session, excluding: excluding).blocked_reason(date, model)
+  def gender_override(date, participant, attributes, excluding:)
+    message = BookingGenderRule.new(@program, excluding: excluding).blocked_reason(date, participant)
     return unless message
 
-    raise BookingMutation::Invalid, message if model.gender.blank? || attributes[:override_gender_rule] != '1'
+    raise BookingMutation::Invalid, message if participant.gender.blank? || attributes[:override_gender_rule] != '1'
 
     explanation(attributes[:reason])
   end
 
-  def model_for(id)
-    membership = @drawing_session.memberships.models.where(user_id: id).first
-    raise BookingMutation::Invalid, I18n.t('bookings.model_required') unless membership&.user&.active?
+  def participant_for(id)
+    membership = @program.memberships.participants.where(user_id: id).first
+    raise BookingMutation::Invalid, @program.message('bookings.participant_required') unless membership&.user&.active?
 
     membership.user
   end
@@ -95,23 +100,23 @@ class OrganizerBookingMutation
     replacement
   end
 
-  def replacement_model(original, id)
-    id == original.user_id.to_s ? original.user : model_for(id)
+  def replacement_participant(original, id)
+    id == original.user_id.to_s ? original.user : participant_for(id)
   end
 
   def replace_claim(original, replacement)
-    ModelBookingClaim.find_by(model_booking_id: original.id).update!(
-      user_id: replacement.user_id, model_booking: replacement, date: replacement.date, ends_at: replacement.ends_at
+    BookingClaim.find_by(booking_id: original.id).update!(
+      user_id: replacement.user_id, booking: replacement, date: replacement.date, ends_at: replacement.ends_at
     )
   end
 
   def update_attendance(attributes, session)
     value = attributes[:attendance]
     unless %w[confirmed unconfirmed].include?(value)
-      raise BookingMutation::Invalid, I18n.t('bookings.attendance_required')
+      raise BookingMutation::Invalid, @program.message('bookings.attendance_required')
     end
 
-    reason = attributes[:reason].presence || I18n.t('bookings.organizer_created')
+    reason = attributes[:reason].presence || @program.message('bookings.organizer_created')
     @booking.record_attendance!(value == 'confirmed', @user, explanation(reason), session: session)
   end
 end

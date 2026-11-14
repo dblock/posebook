@@ -21,18 +21,18 @@ RSpec.describe HistoryTracking, :aggregate_failures, :database do
   end
 
   it 'records all session settings including slug history and blank changes' do
-    drawing_session = create_drawing_session
-    previous_slug = drawing_session.slug
-    drawing_session.update!(
+    program = create_program
+    previous_slug = program.slug
+    program.update!(
       name: 'Drawing Session', custom_slug: 'drawing', time_zone: 'America/Los_Angeles',
-      model_pay: 150, instructions: 'Arrive early.', booking_horizon_months: 9, available_weekdays: ['3']
+      pay: 150, instructions: 'Arrive early.', booking_horizon_months: 9, available_weekdays: ['3']
     )
-    change = drawing_session.history_tracks.last
-    expect(change.modified.keys).to include('name', 'custom_slug', '_slugs', 'time_zone', 'model_pay',
+    change = program.history_tracks.last
+    expect(change.modified.keys).to include('name', 'custom_slug', '_slugs', 'time_zone', 'pay',
                                             'instructions', 'booking_horizon_months', 'available_weekdays')
     expect(change.original['_slugs']).to eq([previous_slug])
-    drawing_session.update!(instructions: '')
-    expect(drawing_session.history_tracks.last.modified).to include('instructions' => '')
+    program.update!(instructions: '')
+    expect(program.history_tracks.last.modified).to include('instructions' => '')
   end
 
   it 'does not add history for failed, unchanged, or authentication-only saves' do
@@ -46,11 +46,11 @@ RSpec.describe HistoryTracking, :aggregate_failures, :database do
 
   it 'stores actor changes without reusing a previous actor for later system writes' do
     actor = create_user
-    drawing_session = create_drawing_session
-    Current.set(user: actor) { drawing_session.update!(instructions: 'Changed by an organizer.') }
-    expect(drawing_session.history_tracks.last.modifier_id).to eq(actor.id)
-    drawing_session.update!(instructions: 'Changed by a system task.')
-    expect(drawing_session.history_tracks.last.modifier_id).to be_nil
+    program = create_program
+    Current.set(user: actor) { program.update!(instructions: 'Changed by an organizer.') }
+    expect(program.history_tracks.last.modifier_id).to eq(actor.id)
+    program.update!(instructions: 'Changed by a system task.')
+    expect(program.history_tracks.last.modifier_id).to be_nil
   end
 
   it 'retains a deletion entry with the actor while keeping secrets out of the snapshot' do

@@ -38,14 +38,15 @@ class InvitationAcceptancesController < ApplicationController
 
   def find_invitation
     @token = params[:token]
-    @invitation = ModelInvitation.available(@token)
+    @invitation = ParticipantInvitation.available(@token)
+    @program = @invitation&.program
     render :unavailable, status: :gone unless @invitation
   end
 
   def finish_acceptance
     @user = @acceptance.call
     start_session(@user, remember_me: current_user == @user && session[:remember_me])
-    redirect_to drawing_session_path(@invitation.drawing_session), notice: t('invitations.accepted')
+    redirect_to program_path(@program), notice: @program.message('invitations.accepted')
   end
 
   def handle_database_error(error)
