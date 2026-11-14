@@ -18,8 +18,9 @@
   <% if @my_booking %>
     <h2>Your Upcoming Booking</h2>
     <p><%= @my_booking.date.to_fs(:long) %> at <%= booking_time(@my_booking) %>. You can have one upcoming booking at this venue.</p>
-    <% if @my_booking.rescheduling_locked? %><%= render "model_bookings/rescheduling_notice", venue: @venue %><% end %>
-    <p><% if @can_book && !@my_booking.rescheduling_locked? %><%= link_to "Change Date", edit_venue_model_booking_path(@venue, @my_booking) %> | <% end %><%= link_to "Cancel Booking", cancellation_venue_model_booking_path(@venue, @my_booking) %></p>
+    <%= render "model_bookings/attendance", venue: @venue, booking: @my_booking %>
+    <% if @my_booking.rescheduling_locked? %><%= render "model_bookings/rescheduling_notice", venue: @venue, urgent: @my_booking.attendance_overdue? %><% end %>
+    <p><% if @can_book && !@my_booking.confirmation_open? && !@my_booking.rescheduling_locked? %><%= link_to "Change Date", edit_venue_model_booking_path(@venue, @my_booking) %> | <% end %><%= link_to "Cancel Booking", cancellation_venue_model_booking_path(@venue, @my_booking) %></p>
   <% end %>
   <%= render "calendar", calendar: @calendar, public_view: !@venue_member %>
   <% if @venue_member %>
@@ -30,7 +31,7 @@
   <% end %>
   <%= render "invitations" if @manage_schedule %>
   <% if @manage_schedule %>
-    <p><%= link_to "Manage Schedule", venue_schedule_path(@venue) %> | <%= link_to "Models", venue_models_path(@venue) %></p>
+    <p><%= link_to "Schedule a Model", new_venue_organizer_booking_path(@venue) %> | <%= link_to "Manage Schedule", venue_schedule_path(@venue) %> | <%= link_to "Models", venue_models_path(@venue) %></p>
   <% end %>
 
   <% if current_user&.system_admin? %>

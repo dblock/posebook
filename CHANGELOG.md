@@ -24,4 +24,5 @@
 - [#26](https://github.com/dblock/posebook/pull/26): Store Instagram handles from handles or URLs, display linked @handles, and let admins edit profile preferences - [@dblock](https://github.com/dblock).
 - [#24](https://github.com/dblock/posebook/pull/24): Link to the current venue URL beneath the slug in venue settings - [@dblock](https://github.com/dblock).
 - [#27](https://github.com/dblock/posebook/pull/27): Make rescheduling friendlier and require organizer contact within a week of the booked drawing - [@dblock](https://github.com/dblock).
+- [#28](https://github.com/dblock/posebook/pull/28): Add seven-day attendance confirmation, five-day rescheduling deadlines, private overdue warnings, and venue-scoped organizer booking controls with retained history - [@dblock](https://github.com/dblock).
 - Your contribution here.

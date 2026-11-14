@@ -36,6 +36,8 @@ Tests use `MONGODB_TEST_URI`, never the development or production connection. Th
 
 Run `bundle exec rake spec` and `bundle exec rake lint` before every development push. Run `bundle exec rake package` before committing changes to packaging, runtime dependencies, configuration, or HTTP entry points. Reuse passing results only if the tested content and configuration have not changed. The package check builds and runs the actual production Docker image and cleans up its own container and image.
 
+For user-facing interface changes, verify the real browser flows and capture screenshots of meaningful states, including mobile layouts when affected. Embed the screenshots as GitHub-hosted attachments in the PR description and refresh them when the interface changes. Use synthetic data, keep local captures and browser scripts out of the repository, and verify that the published PR contains the images rather than local file paths.
+
 Prefer focused behavior tests while developing, followed by final validation before committing. `bundle exec rake spec` produces line and branch coverage in `coverage/index.html` and `coverage/lcov.info`. During implementation, aim for close to complete project-owned runtime coverage without trivial assertions or excluding real logic; report meaningful remaining gaps.
 
 `bundle exec rake lint` checks Ruby, Markdown prose, embedded Ruby, spelling, and YAML workflow/job/step display names. Use Title Case for human-readable Markdown headings and workflow display names, preserving proper names, acronyms, and machine identifiers. Keep prose paragraphs on one source line. Fix Ruby offenses with `bundle exec rubocop -a` first and review corrections; if necessary, use `bundle exec rubocop --auto-gen-config` and review generated configuration rather than broadly disabling cops. Review `.spellcheck.txt` additions and fix typos instead of accepting them.
@@ -48,7 +50,7 @@ Maintain README links to every project Markdown document. Keep DESIGN focused on
 
 Start topic branches from `master` with `git switch -c dblock/<topic> master`, using the actual contributor login in place of `dblock`. Use the existing checkout unless parallel tasks require separate worktrees. Preserve unrelated tracked and untracked changes; inspect status and worktrees before switching. Never develop directly on or force-push `master`.
 
-Stack dependent PRs sequentially: branch from the preceding PR's pushed tip, target its branch, and register bottom-to-top native GitHub stack membership. Do not mix independent changes into a stack or recreate partially merged stack metadata.
+Keep related dependent work in stacked PRs rather than restarting each feature from `master`. Build layers sequentially: validate and push the lower layer before branching from its pushed tip, target that branch, and register bottom-to-top native GitHub stack membership. When a lower layer merges, preserve the existing stack and its complete membership while you rebase the remaining layers. Do not mix independent changes into a stack or recreate partially merged stack metadata.
 
 Prefer one coherent commit per PR; independently reviewable commits are acceptable. Task-owned PR commits may be amended or squashed without another approval: verify ownership, record the remote tip, reconcile remote changes, validate, and push only with `--force-with-lease` against the recorded SHA. Never rewrite another contributor's work. Squash-merge PRs; merge commits are prohibited.
 

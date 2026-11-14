@@ -2,6 +2,7 @@
 
 class BookingMutation
   include VenueScheduleLock
+  include BookingRecords
 
   class Invalid < StandardError; end
   class Conflict < StandardError; end
@@ -73,11 +74,6 @@ class BookingMutation
     raise Invalid, I18n.t('bookings.model_required') unless @user.active? && @venue.model?(@user)
   end
 
-  def expire_claims
-    # Only disposable claims expire; model booking history is never removed.
-    ModelBookingClaim.collection.find(venue_id: @venue.id, ends_at: { '$lte' => Time.current }).delete_many
-  end
-
   def claims
     ModelBookingClaim.where(venue_id: @venue.id, user_id: @user.id)
   end
@@ -91,27 +87,5 @@ class BookingMutation
     raise Invalid, I18n.t('bookings.rescheduling_locked') if booking.rescheduling_locked?
 
     booking
-  end
-
-  def available_date(value)
-    date = Date.iso8601(value.to_s)
-    raise Invalid, I18n.t('bookings.invalid_date') if VenueCalendar.new(@venue).blocked_reason(date)
-
-    date
-  rescue ArgumentError
-    raise Invalid, I18n.t('bookings.invalid_date')
-  end
-
-  def explanation(value)
-    text = value.is_a?(String) ? value.strip : ''
-    raise Invalid, I18n.t('bookings.reason_required') if text.empty? || text.length > 2000
-
-    text
-  end
-
-  def create_record(date, previous: nil)
-    ModelBooking.create!(venue: @venue, user: @user, date: date, time_zone: @venue.time_zone,
-                         starts_at: VenueSchedule.new(@venue).starts_at(date),
-                         ends_at: (date + 1).in_time_zone(@venue.time_zone).utc, previous_booking: previous)
   end
 end

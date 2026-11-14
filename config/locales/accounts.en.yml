@@ -8,7 +8,13 @@ en:
     different_date: Choose a different available date.
     invalid_date: Choose an available date within this venue's booking window.
     reason_required: Please tell us what changed (up to 2000 characters).
-    rescheduling_locked: Your drawing is less than a week away. Please contact an organizer before rescheduling.
+    rescheduling_locked: Your drawing is five days away or sooner. Please contact an organizer before rescheduling.
+    confirmation_unavailable: Attendance confirmation opens seven calendar days before your drawing and closes when it starts.
+    attendance_confirmed: You're confirmed. See you there!
+    manager_required: Schedule access is required.
+    attendance_required: Choose whether attendance is confirmed.
+    organizer_created: Booking created by an organizer.
+    organizer_saved: Booking saved. Previous bookings and attendance changes remain in the history.
     model_required: Accept a model invitation for this venue before booking.
   invitations:
     created: Invitation created. Copy the personal link below.

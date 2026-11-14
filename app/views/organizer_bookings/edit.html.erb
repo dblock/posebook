@@ -1,0 +1,6 @@
+<main>
+  <h1>Edit Booking at <%= @venue.name %></h1>
+  <p><%= @booking.user.name %>: <%= @booking.date.to_fs(:long) %> at <%= booking_time(@booking) %></p>
+  <%= render "venues/attendance_status", booking: @booking, private_view: true %>
+  <%= render "form" %>
+</main>
