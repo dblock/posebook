@@ -25,6 +25,23 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
          params: { booking_version: booking.lock_version }.merge(attributes)
   end
 
+  def history_status(viewer, heading, column)
+    sign_in(viewer)
+    get venue_path(venue)
+    history = response.parsed_body.at_xpath("//section[h2='#{heading}']")
+    row = history.css('tbody tr').find { |entry| entry.at_css('td').text.start_with?(booking.date.iso8601) }
+    row.at_css("td:nth-child(#{column})")
+  end
+
+  def close_confirmed_booking(status)
+    confirm_booking
+    mutation = BookingMutation.new(venue: venue, user: model)
+    attributes = { booking: booking.reload, reason: 'Travel plans changed.' }
+    return mutation.cancel(**attributes) if status == 'canceled'
+
+    track_booking(mutation.change(**attributes, date: '2026-11-30'))
+  end
+
   it 'offers confirmation and the usual rescheduling workflow seven days before posing' do
     get venue_path(venue)
     expect(response.body).to include('I&#39;ll be there!', 'I can no longer make it.')
@@ -34,6 +51,39 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     expect(response.parsed_body.at_css('.calendar .attendance-confirmed').text).to eq('Confirmed')
     expect(response.parsed_body.at_css('form[action$="/confirm"]')).to be_nil
     expect(booking.reload.attendance_confirmed_by_id).to eq(model.id)
+  end
+
+  it 'shows confirmed only once in the status cell of both model and venue history' do
+    confirm_booking
+    organizer = create_user
+    grant_schedule_access(venue, organizer)
+    [[model, 'Your Booking History', 2], [organizer, 'Venue Booking History', 3]].each do |viewer, heading, column|
+      status = history_status(viewer, heading, column)
+      expect(status.at_css('.attendance-confirmed').text).to eq('Confirmed')
+      expect(status.text.scan(/\bConfirmed\b/).size).to eq(1)
+    end
+  end
+
+  %w[canceled rescheduled].each do |state|
+    it "does not show attendance confirmation on #{state} history for either viewer" do
+      close_confirmed_booking(state)
+      organizer = create_user
+      grant_schedule_access(venue, organizer)
+      [[model, 'Your Booking History', 2], [organizer, 'Venue Booking History', 3]].each do |viewer, heading, column|
+        status = history_status(viewer, heading, column)
+        expect(status.text.strip).to eq(state.humanize)
+        expect(status.at_css('.attendance-confirmed')).to be_nil
+        expect(response.body).to include('Confirmed on ')
+      end
+    end
+  end
+
+  it 'keeps the historical confirmation badge on completed sessions' do
+    confirm_booking
+    travel_to booking.ends_at
+    status = history_status(model, 'Your Booking History', 2)
+    expect(status.text).to include('Completed', 'Confirmed')
+    expect(status.at_css('.attendance-confirmed').text).to eq('Confirmed')
   end
 
   it 'rejects early confirmation and makes a repeated or forged request to clear confirmation harmless' do

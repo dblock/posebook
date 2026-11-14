@@ -86,8 +86,15 @@ RSpec.describe 'Organizer bookings', :aggregate_failures, :database, type: :requ
     patch venue_organizer_booking_path(venue, record), params: booking_params(attendance: 'confirmed')
     post cancel_venue_organizer_booking_path(venue, record), params: booking_params(reason: 'Model is ill.')
     expect(record.reload).to have_attributes(status: 'canceled', reason: 'Model is ill.', changed_by_id: organizer.id)
-    expect(record.attendance_confirmed?).to be(true)
+    expect(record.attendance_confirmed?).to be(false)
+    expect(record.attendance_confirmed_at).to be_present
+    expect(record.attendance_changes.pluck('confirmed')).to eq([true])
     expect(ModelBookingClaim.where(model_booking_id: record.id)).to be_empty
+    get venue_path(venue)
+    history = response.parsed_body.at_xpath('//section[h2="Venue Booking History"]')
+    status = history.at_css('tbody tr td:nth-child(3)')
+    expect(status.text.strip).to eq('Canceled')
+    expect(status.at_css('.attendance-confirmed')).to be_nil
   end
 
   it 'submits the organizer cancellation form successfully with forgery protection enabled' do
