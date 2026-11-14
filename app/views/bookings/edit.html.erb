@@ -1,4 +1,5 @@
 <main>
+  <%= render "programs/navigation", program: @program, active: "calendar", detail: "Change Booking" %>
   <h1>Change Your Booking Date</h1>
   <%= render "programs/regular_schedule", program: @program %>
   <p>Your current booking is <%= @booking.date.to_fs(:long) %> at <%= booking_time(@booking) %>, <%= @program.name %>. It stays reserved unless your new date is successfully booked.</p>
@@ -12,5 +13,5 @@
     <% end %>
     <%= render "programs/calendar", calendar: @calendar, public_view: false %>
   <% end %>
-  <p><%= link_to "Keep Current Date", program_path(@program) %></p>
+  <p><%= link_to "Keep Current Date", program_path(@program, section: "calendar") %></p>
 </main>

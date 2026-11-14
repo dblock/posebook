@@ -117,7 +117,7 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     post invited_registration_path, params: { token: invitation.token, user: attributes }
     user = track_record(User.find_by(email: attributes[:email]))
     membership = track_participant_membership(invitation.program, user)
-    expect(response).to redirect_to(program_path(invitation.program))
+    expect(response).to redirect_to(program_path(invitation.program, section: 'calendar'))
     expect(user).to have_attributes(roles: [], display_name: 'Public Participant', instagram_tagging_allowed: true,
                                     instagram_handle: 'public.participant')
     expect(membership.roles).to eq(['participant'])
@@ -137,7 +137,7 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     expect(response).to redirect_to(invitation_path(token: invitation.token))
     post invitation_path, params: { token: invitation.token }
     membership = track_participant_membership(invitation.program, user)
-    expect(response).to redirect_to(program_path(invitation.program))
+    expect(response).to redirect_to(program_path(invitation.program, section: 'calendar'))
     expect(membership.roles).to eq(['participant'])
     post invitation_path, params: { token: invitation.token }
     expect(response).to have_http_status(:gone)
@@ -169,12 +169,17 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     admin = create_user(roles: ['system_admin'])
     invitation = create_participant_invitation(create_program, admin)
     sign_in(admin)
+    get program_participants_path(invitation.program)
+    status = response.parsed_body.at_css('.invitation-status')
+    expect(status.at_css('.status-label').text).to eq('Pending')
+    expect(status.at_css('form button.secondary-action').text).to eq('Revoke')
+    expect(status.at_css('form')['action']).to eq(program_participant_invitation_path(invitation.program, invitation))
     delete program_participant_invitation_path(invitation.program, invitation)
-    expect(response).to redirect_to(program_path(invitation.program))
+    expect(response).to redirect_to(program_participants_path(invitation.program))
     expect(invitation.reload.status).to eq('Revoked')
     expect(ParticipantInvitation.available(invitation.token)).to be_nil
     follow_redirect!
-    expect(response.parsed_body.at_css('.status-label-danger').text).to eq('Revoked')
+    expect(response.parsed_body.at_css('.invitation-status .status-label-danger').text).to eq('Revoked')
   end
 
   it 'labels accepted and expired invitations on the private session list' do
@@ -183,7 +188,7 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     create_participant_invitation(program, admin, used_at: Time.current)
     create_participant_invitation(program, admin, expires_at: 1.minute.ago)
     sign_in(admin)
-    get program_path(program)
+    get program_participants_path(program)
     invitations = response.parsed_body.at_xpath("//section[h2='Participant Invitations']")
     expect(invitations.at_css('.status-label-success').text).to eq('Accepted')
     expect(invitations.at_css('.status-label-neutral').text).to eq('Expired')

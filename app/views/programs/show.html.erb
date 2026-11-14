@@ -1,5 +1,7 @@
 <main>
+  <%= render "navigation", program: @program, active: @section, detail: (@section.titleize unless @section == "view") %>
   <h1><%= @program.name %></h1>
+  <% if @section == "view" %>
   <p><%= copyable(program_url(@program), label: "#{@program.program_label.downcase} link") { link_to "#{@program.program_label.titleize} Link", program_path(@program) } %></p>
   <p>Venue: <%= link_to @program.venue.name, venue_path(@program.venue) %></p>
   <%= simple_format(@program.address) %><%= copy_button(value: @program.address, label: "address") %>
@@ -18,27 +20,20 @@
     <h2>Instructions</h2>
     <%= simple_format(@program.instructions) %>
   <% end %>
-  <% if @booking_access&.participant? && !@can_book %><p role="status"><%= @booking_access.reason %></p><% end %>
-  <% if @my_booking %>
-    <h2>Your Upcoming Booking</h2>
-    <p><%= @my_booking.date.to_fs(:long) %> at <%= booking_time(@my_booking) %>. You can have one upcoming booking at this <%= @program.program_label.downcase %>.</p>
-    <%= render "bookings/attendance", program: @program, booking: @my_booking %>
-    <% if @my_booking.rescheduling_locked? %><%= render "bookings/rescheduling_notice", program: @program, urgent: @my_booking.attendance_overdue? %><% end %>
-    <p><% if @can_book && !@my_booking.confirmation_open? && !@my_booking.rescheduling_locked? %><%= link_to "Change Date", edit_program_booking_path(@program, @my_booking) %> | <% end %><%= link_to "Cancel Booking", cancellation_program_booking_path(@program, @my_booking) %></p>
-  <% end %>
+  <%= render "upcoming_booking" %>
+  <% if @program_coordinator %><p><%= link_to "Edit #{@program.program_label.titleize}", edit_program_path(@program) %></p><% end %>
+  <%= render "venues/photos", venue: @program.venue, editable: false %>
+  <% elsif @section == "calendar" %>
+  <%= render "upcoming_booking" %>
   <%= render "calendar", calendar: @calendar, public_view: !@program_member %>
-  <% if @program_member %>
-    <%= render "booking_history" %>
-    <p>Changes and cancellations require an explanation and retain every booking record. Automated reminders are not available yet.</p>
-  <% else %>
+  <% if @program_coordinator %>
+    <p><%= link_to "Schedule #{@program.participant_article} #{@program.participant_label.titleize}", new_program_organizer_booking_path(@program) %> | <%= link_to "Manage Schedule", program_schedule_path(@program) %></p>
+  <% end %>
+  <% unless @program_member %>
     <p>Booking is available to invited <%= @program.participant_label.pluralize.downcase %>. <%= link_to "Sign In", program_path(@program, booking_invitation: "1") unless current_user %></p>
   <% end %>
-  <%= render "invitations" if @program_coordinator %>
-  <% if @program_coordinator %>
-    <p><%= link_to "Schedule #{@program.participant_article} #{@program.participant_label.titleize}", new_program_organizer_booking_path(@program) %> | <%= link_to "Manage Schedule", program_schedule_path(@program) %> | <%= link_to @program.participant_label.pluralize.titleize, program_participants_path(@program) %></p>
+  <% else %>
+    <%= render "booking_history" %>
+    <p>Changes and cancellations require an explanation and retain every booking record. Automated reminders are not available yet.</p>
   <% end %>
-
-  <% if @program_coordinator %><p><%= link_to "Edit #{@program.program_label.titleize}", edit_program_path(@program) %></p><% end %>
-  <% if @program.venue.coordinated_by?(current_user) %><p><%= link_to "#{@program.program_label.titleize} Coordinators", program_coordinators_path(@program) %></p><% end %>
-  <%= render "venues/photos", venue: @program.venue, editable: false %>
 </main>

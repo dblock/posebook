@@ -1,4 +1,5 @@
 <main>
+  <%= render "programs/navigation", program: @program, active: "coordinators", detail: "Coordinators" %>
   <h1><%= @program.program_label.titleize %> Coordinators at <%= @program.name %></h1>
   <%= render "programs/regular_schedule", program: @program %>
   <%= render "coordinator_invitations/form" %>
@@ -10,5 +11,4 @@
   <% end %>
   <%= render "coordinator_invitations/history" %>
   <p>Venue coordinators inherit access to every <%= @program.program_label.downcase %> at their venue. <%= @program.program_label.titleize %> coordinators cannot grant coordinator access.</p>
-  <p><%= link_to "Back to #{@program.program_label.titleize}", program_path(@program) %></p>
 </main>

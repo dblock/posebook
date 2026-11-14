@@ -67,7 +67,7 @@ RSpec.describe 'Public identity privacy', :aggregate_failures, :database, type: 
     post invited_registration_path, params: { token: invitation.token, user: attributes }
     registered = track_record(User.find_by(email: attributes[:email]))
     track_participant_membership(invitation.program, registered)
-    expect(response).to redirect_to(program_path(invitation.program))
+    expect(response).to redirect_to(program_path(invitation.program, section: 'calendar'))
     expect(registered).to have_attributes(public_name: 'To be announced', public_instagram_url: nil,
                                           display_name: 'Hidden Public Name', instagram_tagging_allowed: true)
   end

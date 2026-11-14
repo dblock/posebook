@@ -1,4 +1,5 @@
 <main>
+  <%= render "programs/navigation", program: @program, active: "calendar", detail: "Schedule #{@program.participant_label.titleize}" %>
   <h1>Schedule <%= @program.participant_article %> <%= @program.participant_label.titleize %> at <%= @program.name %></h1>
   <%= render "form" %>
 </main>

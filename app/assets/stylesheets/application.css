@@ -119,6 +119,45 @@ nav {
   gap: 0.75rem;
 }
 
+.breadcrumbs {
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.program-tabs {
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.program-tabs a {
+  padding: 0.55rem 0.8rem;
+  border-bottom: 3px solid transparent;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.program-tabs a[aria-current="page"] {
+  border-bottom-color: var(--color-primary);
+  color: var(--color-secondary);
+}
+
+.invitation-status {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.invitation-status form {
+  display: inline-block;
+  margin: 0;
+}
+
+.invitation-status .secondary-action {
+  width: auto;
+}
+
 .site-nav {
   gap: 1rem 2rem;
 }

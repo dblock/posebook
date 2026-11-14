@@ -182,8 +182,13 @@ begin
   create_current_records(container)
   check_existing_records(container)
   response = request(port, '/sessions/package-program')
+  unless response.code == '200' && response.body.include?('Regular Schedule')
+    raise 'The current program details did not render through its generated slug'
+  end
+
+  response = request(port, '/sessions/package-program?section=calendar')
   unless response.code == '200' && response.body.include?('Workshop Calendar')
-    raise 'The current program did not render through its generated slug'
+    raise 'The current program calendar did not render through its generated slug'
   end
 
   check_photos(container)

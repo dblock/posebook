@@ -34,7 +34,7 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
 
   it 'renders only the calendar for a matching public navigation context' do
     private_booking
-    get program_path(program)
+    get program_path(program, section: 'calendar')
     context = response.parsed_body.at_css('[data-calendar]')['data-calendar-context']
     get program_path(program), params: { month: '2026-12' },
                                headers: { 'X-Posebook-Calendar-Context' => context }
@@ -50,7 +50,7 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
     organizer = create_user
     access = grant_coordinator_access(program, organizer)
     sign_in(organizer)
-    get program_path(program)
+    get program_path(program, section: 'calendar')
     context = response.parsed_body.at_css('[data-calendar]')['data-calendar-context']
     get program_path(program), headers: { 'X-Posebook-Calendar-Context' => context }
     expect(response.parsed_body.at_css('header, main')).to be_nil
@@ -68,11 +68,10 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
   it 'allows guests through slugs, shortcuts, and IDs while exposing only public participant identity' do
     hidden = private_booking.user
     tagged_booking
-    [program_path(program), program_path(program),
-     program_path(program.id)].each do |path|
+    [program_path(program, section: 'calendar'), program_path(program.id, section: 'calendar')].each do |path|
       get path
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include(program.name, program.address, 'Monday at 6:30 PM',
+      expect(response.body).to include(program.name, 'Monday at 6:30 PM',
                                        'Public Participant', 'Fallback Participant')
       expect(response.body).not_to include(hidden.name, hidden.email, hidden.phone, hidden.id.to_s,
                                            'private_participant')
@@ -112,7 +111,7 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
       ProgramScheduleException.create!(program: program, date: Date.new(2026, 11, 17),
                                        mode: 'open', start_time: '20:00', reason: 'Private extra booking.')
     )
-    get program_path(program)
+    get program_path(program, section: 'calendar')
     expect(response.body).not_to include('Canceled Participant', 'Other Program Participant', 'Private cancellation.',
                                          'Private closure explanation.', 'Private extra booking.')
     expect(response.parsed_body.at_css('[data-date="2026-11-30"]').text).to include('Closed')
@@ -122,7 +121,7 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
 
   it 'keeps inactive accounts reserved without publishing their identity or Instagram' do
     tagged_booking.user.update!(active: false)
-    get program_path(program)
+    get program_path(program, section: 'calendar')
     expect(response.parsed_body.at_css('[data-date="2026-11-23"]').text).to include('Unconfirmed')
     expect(response.body).not_to include('Fallback Participant', 'public_participant')
   end
@@ -134,7 +133,7 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
     [nil, create_user].each do |viewer|
       grant_participant_access(program, viewer) if viewer
       sign_in(viewer) if viewer
-      get program_path(program)
+      get program_path(program, section: 'calendar')
       expect(response.parsed_body.at_css('[data-date="2026-11-16"]').text).to include('To be announced')
       expect(response.body).not_to include(booking.user.name, 'Hidden Alias', 'private_participant',
                                            booking.user.email, booking.user.id.to_s)
@@ -145,8 +144,9 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
     participant = private_booking.user
     participant.update!(public_profile_private: true, instagram_tagging_allowed: true)
     sign_in(create_user(roles: ['system_admin']))
-    get program_path(program)
+    get program_path(program, section: 'calendar')
     expect(response.parsed_body.at_css('[data-date="2026-11-16"]').text).to include(participant.name)
+    get program_path(program, section: 'history')
     history = response.parsed_body.at_xpath('//section[h2="Program Booking History"]')
     expect(history.text).to include(participant.name)
     expect(response.body).not_to include('private_participant')
@@ -154,7 +154,7 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
 
   it 'uses current public preferences and removes Instagram immediately after tagging is turned off' do
     user = tagged_booking.user
-    get program_path(program)
+    get program_path(program, section: 'calendar')
     expect(response.body).to include('https://www.instagram.com/public_participant/')
     user.update!(display_name: 'New Public Name', instagram_tagging_allowed: false)
     get program_path(program, month: '2026-11')
@@ -165,14 +165,19 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
   it 'retains personal booking information for members and management only for managers' do
     sign_in(private_booking.user)
     get program_path(program)
-    expect(response.body).to include(program.instructions, 'Pay', 'Your Booking History',
-                                     'Your Upcoming Booking')
+    expect(response.body).to include(program.instructions, 'Pay', 'Your Upcoming Booking')
     expect(response.body).not_to include('Program Booking History', 'Manage Schedule')
+    get program_path(program, section: 'history')
+    expect(response.body).to include('Your Booking History')
+    get program_path(program, section: 'calendar')
     member_context = response.parsed_body.at_css('[data-calendar]')['data-calendar-context']
     sign_in(create_user(roles: ['system_admin']))
     get program_path(program)
-    expect(response.body).to include(program.instructions, 'Pay', 'Program Booking History',
-                                     'Manage Schedule')
+    expect(response.body).to include(program.instructions, 'Pay')
+    get program_path(program, section: 'history')
+    expect(response.body).to include('Program Booking History')
+    get program_path(program, section: 'calendar')
+    expect(response.body).to include('Manage Schedule')
     expect(response.parsed_body.at_css('[data-calendar]')['data-calendar-context']).not_to eq(member_context)
   end
 end
