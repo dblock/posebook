@@ -3,12 +3,13 @@
 module PublicProfile
   extend ActiveSupport::Concern
 
-  FIELDS = %i[display_name instagram_url instagram_tagging_allowed].freeze
+  FIELDS = %i[display_name instagram_url instagram_tagging_allowed public_profile_private].freeze
 
   included do
     field :display_name, type: String
     field :instagram_url, type: String
     field :instagram_tagging_allowed, type: Mongoid::Boolean, default: false
+    field :public_profile_private, type: Mongoid::Boolean, default: false
     before_validation :normalize_public_profile
     before_save :synchronize_instagram_consent
     validates :display_name, length: { maximum: 100 }, allow_nil: true
@@ -17,11 +18,13 @@ module PublicProfile
   end
 
   def public_name
+    return 'To be announced' if public_profile_private?
+
     display_name.presence || name
   end
 
   def public_instagram_url
-    InstagramProfile.normalize(instagram_url) if instagram_tagging_allowed?
+    InstagramProfile.normalize(instagram_url) if instagram_tagging_allowed? && !public_profile_private?
   end
 
   def public_instagram_username

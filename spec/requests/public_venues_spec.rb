@@ -83,6 +83,31 @@ RSpec.describe 'Public venue calendars', :aggregate_failures, :database, type: :
     expect(response.body).not_to include('Fallback Artist', 'public_model')
   end
 
+  it 'announces private models anonymously to guests and other models' do
+    booking = scheduled_booking('2026-11-16', name: 'Private Account', display_name: 'Hidden Alias',
+                                              instagram_url: '@private_model', instagram_tagging_allowed: true,
+                                              public_profile_private: true)
+    [nil, create_user].each do |viewer|
+      grant_model_access(venue, viewer) if viewer
+      sign_in(viewer) if viewer
+      get venue_path(venue)
+      expect(response.parsed_body.at_css('[data-date="2026-11-16"]').text).to include('To be announced')
+      expect(response.body).not_to include(booking.user.name, 'Hidden Alias', 'private_model',
+                                           booking.user.email, booking.user.id.to_s)
+    end
+  end
+
+  it 'lets authorized managers identify private models in the calendar and retained history' do
+    model = private_booking.user
+    model.update!(public_profile_private: true, instagram_tagging_allowed: true)
+    sign_in(create_user(roles: ['system_admin']))
+    get venue_path(venue)
+    expect(response.parsed_body.at_css('[data-date="2026-11-16"]').text).to include(model.name)
+    history = response.parsed_body.at_xpath('//section[h2="Venue Booking History"]')
+    expect(history.text).to include(model.name)
+    expect(response.body).not_to include('private_model')
+  end
+
   it 'uses current public preferences and removes Instagram immediately after consent is revoked' do
     user = tagged_booking.user
     get venue_path(venue)
