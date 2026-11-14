@@ -24,7 +24,14 @@ class SessionsController < ApplicationController
 
   def finish_sign_in(user)
     invitation_token = session[:invitation_token]
+    booking_venue = session[:booking_venue]
     start_session(user)
-    redirect_to(invitation_token ? invitation_path(token: invitation_token) : root_path)
+    redirect_to(invitation_token ? invitation_path(token: invitation_token) : booking_return_path(booking_venue, user))
+  end
+
+  def booking_return_path(id, user)
+    id ? venue_path(Venue.visible_to(user).find(id)) : root_path
+  rescue Mongoid::Errors::DocumentNotFound
+    root_path
   end
 end

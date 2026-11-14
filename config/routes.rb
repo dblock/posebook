@@ -10,11 +10,13 @@ Rails.application.routes.draw do
   resource :email_change, only: %i[show update]
   resource :invitation, only: %i[show create], controller: 'invitation_acceptances'
   post 'invitation/register', to: 'invitation_acceptances#register', as: :invited_registration
-  namespace :admin do
-    resources :users, only: %i[index edit update]
-  end
+  namespace(:admin) { resources :users, only: %i[index edit update] }
   resources :venues, except: :destroy do
     resource :schedule, controller: 'venue_schedules', only: %i[show update]
+    resources :models, controller: 'venue_models', only: :index do
+      post :invite_all, on: :collection
+      %i[invite pause resume].each { |action| post action, on: :member }
+    end
     resources :model_invitations, controller: 'venue_invitations', only: %i[new create show destroy]
     resources :model_bookings, only: %i[create edit update] do
       get :cancellation, on: :member

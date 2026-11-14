@@ -45,6 +45,8 @@ RSpec.describe BookingMutation, :aggregate_failures, :database do
     grant_model_access(venue, user)
     first = track_booking(attempt(venue, user, '2026-11-16'))
     travel_to Time.utc(2026, 11, 17, 15)
+    expect(attempt(venue, user, '2026-11-23')).to be_nil
+    VenueMembership.find_by(venue_id: venue.id, user_id: user.id).update!(booking_invited_at: Time.current)
     second = track_booking(attempt(venue, user, '2026-11-23'))
     expect(first.reload.display_status).to eq('Completed')
     expect(second.date).to eq(Date.new(2026, 11, 23))

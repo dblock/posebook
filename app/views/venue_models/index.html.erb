@@ -1,0 +1,42 @@
+<main>
+  <h1>Models at <%= @venue.name %></h1>
+  <p>Invite a model to choose one posing date. Cancellation and rescheduling keep that invitation valid until a drawing is completed. Finishing a drawing never automatically permits another booking.</p>
+  <p>Paused models keep their existing booking and can cancel it, but cannot book or reschedule until resumed. Resuming does not issue a new invitation. Pause explanations remain private to venue organizers and system admins.</p>
+  <%= button_to "Invite All Available Models", invite_all_venue_models_path(@venue) %>
+  <p>Sends email and enables booking now for active, unpaused models without an upcoming booking. Booked, paused, and inactive accounts are skipped. If email fails, access remains enabled so you can contact the model directly or retry.</p>
+  <% if @memberships.any? %>
+    <table>
+      <thead><tr><th>Model</th><th>Booking Access</th><th>Actions</th></tr></thead>
+      <tbody>
+        <% @memberships.each do |membership| %>
+          <% access = ModelBookingAccess.new(membership) %>
+          <tr data-membership="<%= membership.id %>">
+            <td><%= membership.user.name %><br><%= membership.user.email %></td>
+            <td>
+              <%= access.status %>
+              <% if access.paused? && access.booking %><br>Booking retained: <%= access.booking.date.iso8601 %><% end %>
+              <% if membership.model_pause_reason.present? %><p>Last pause: <%= membership.model_pause_reason %></p><% end %>
+            </td>
+            <td>
+              <% if membership.user.active? && !access.paused? && !access.booking %>
+                <%= button_to "Invite to Book", invite_venue_model_path(@venue, membership) %>
+              <% end %>
+              <% if access.paused? %>
+                <%= button_to "Resume Model", resume_venue_model_path(@venue, membership) %>
+              <% else %>
+                <%= form_with url: pause_venue_model_path(@venue, membership) do |form| %>
+                  <%= form.label :reason, "Pause explanation", for: "pause-reason-#{membership.id}" %>
+                  <%= form.text_area :reason, id: "pause-reason-#{membership.id}", required: true, maxlength: 200, rows: 2 %>
+                  <%= form.submit "Pause Model" %>
+                <% end %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>No models assigned.</p>
+  <% end %>
+  <p><%= link_to "Invite a New Model", new_venue_model_invitation_path(@venue) %> | <%= link_to "Back to Venue", venue_path(@venue) %></p>
+</main>
