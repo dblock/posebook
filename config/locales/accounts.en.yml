@@ -1,0 +1,12 @@
+en:
+  accounts:
+    created: Your account has the system admin role.
+    invitation_required: Registration requires an invitation.
+    invalid_credentials: Invalid email or password.
+  password_resets:
+    unavailable: Password reset email is not configured. Contact the organizer.
+    sent: If that account exists, we sent a password reset email.
+    failed: Password reset email could not be sent. Please try again later.
+    updated: Password updated. Sign in with your new password.
+    invalid: This reset link is invalid or expired.
+    subject: Reset your Posebook password

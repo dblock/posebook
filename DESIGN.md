@@ -4,13 +4,23 @@
 
 Posebook coordinates invitation-first model registration, scheduling, and reminders across figure drawing venues. The first venue is Figure Drawing at Enoch's, intended for `enochs.dblock.org`. The repository and application are named Posebook, not after a single venue.
 
-The current scaffold provides a server-rendered placeholder page, a Rails `/up` liveness endpoint, Mongoid configuration, tests, linting, and production Docker packaging. `/up` proves application boot, not MongoDB connectivity. No invitations, registration, bookings, provider integrations, or durable reminders are implemented.
+The application currently provides first-user registration, role-bearing user accounts, email/password login, email password recovery, a protected home page, and a Rails `/up` liveness endpoint. `/up` proves application boot, not MongoDB connectivity. Model invitations, venue scheduling, bookings, and durable reminders are not implemented yet.
+
+## Accounts and Recovery
+
+There is one `User` model, not a separate admin account type. A blank installation allows anyone to register the first user without an installation secret, as explicitly requested. That account receives `system_admin` in its global roles. Public registration closes once any user exists; subsequent accounts must come through a future invitation flow. A fixed bootstrap document ID uses MongoDB's built-in unique `_id` constraint to prevent two concurrent first-user claims, without requiring a transaction or replica set.
+
+Use email/password authentication initially, with BCrypt password hashing, a 12-character minimum, and the library's 72-byte maximum. Passwordless access is deferred. Public forms never accept role assignment. Sessions use encrypted, HTTP-only, same-site cookies, rotate on login/logout, expire after seven days, and include a per-user session version.
+
+Email recovery links use random tokens, store only their SHA-256 digests, expire after 30 minutes, and are consumed atomically with the password update. Resetting rotates the session version, invalidating every existing session. A newer reset request supersedes older links. Requests use the same success message for known and unknown emails. Login, signup, and reset requests use Rails rate limits backed by the application's cache; these limits are per process with the current memory cache, not distributed across instances.
+
+Development emails are written to `tmp/mail`; tests use the in-memory mail adapter. Production recovery uses configurable SMTP, requires `SMTP_ADDRESS` and `MAIL_FROM`, and reports unavailable delivery rather than pretending to send email. Reset URLs use configured mailer hosts, not incoming request hosts. Phone recovery, email changes/verification, and account invitations remain future work.
 
 ## Agreed Model Workflow
 
 An organizer first connects with a model by email, Instagram, or text. The organizer adds them to the appropriate venue, possibly with only a name or social handle, then sends a private registration link by email or through the existing conversation.
 
-The model registers with name, email, and phone number, verifies their contact information, and provides explicit consent for automated SMS. Returning access uses emailed sign-in links, never passwords. Declining SMS must not prevent email-based registration or booking.
+The planned model invitation flow collects name, email, and phone number, verifies contact information, and obtains explicit consent for automated SMS. Initial accounts use passwords; passwordless access can follow later. Declining SMS must not prevent email-based registration or booking.
 
 After registering, the model chooses an available session at the inviting venue. The invitation has no preselected date; the selection immediately confirms the booking. Send confirmation by email and, with consent, SMS, plus a calendar invitation. Models can cancel or reschedule and organizers are notified.
 
@@ -32,12 +42,12 @@ Use Rails 8.1 with server-rendered views, Mongoid 9.1, and MongoDB 8.0. Ruby 4.0
 
 Use Rails and Mongoid public APIs. Do not configure Active Record, Solid Queue, or another SQL-backed component. The scaffold retains ActiveJob's in-process adapter solely as framework setup; a durable MongoDB-compatible worker and notification providers will be selected and tested in the implementation phase. No background reminders are promised by this scaffold.
 
-The Dockerfile explicitly selects runtime files, installs production dependencies, precompiles assets without live services, and runs Puma as a non-root user. The package check executes the built image and verifies actual HTTP responses and compiled CSS. Application tests separately exercise real MongoDB persistence. Deployment is intended for DigitalOcean App Platform with managed MongoDB and an HTTPS-terminating proxy, but no infrastructure or credentials are provisioned.
+The Dockerfile explicitly selects runtime files, installs production dependencies, precompiles assets without live services, creates declared indexes at container startup, and runs Puma as a non-root user. The package check runs the built image against its own MongoDB 8.0 container and verifies first-user registration, compiled CSS, and liveness. Application tests exercise real MongoDB persistence and concurrent first-user/reset claims. Deployment is intended for DigitalOcean App Platform with managed MongoDB and an HTTPS-terminating proxy, but no infrastructure or credentials are provisioned.
 
-Production requires `MONGODB_URI` and a deployment-supplied `SECRET_KEY_BASE`. `APP_HOST` defaults to `enochs.dblock.org`; production requests are host-restricted except for `/up`. Local test configuration uses a separate URI and a test-only database-name guard. Filter email, phone, and authentication tokens from logs. Email delivery remains disabled until its implementation.
+Production requires `MONGODB_URI` and a deployment-supplied `SECRET_KEY_BASE`. `APP_HOST` defaults to `enochs.dblock.org`; production requests are host-restricted except for `/up`. Local test configuration uses a separate URI and a test-only database-name guard. Filter email, phone, passwords, and authentication tokens from logs. Email password recovery uses SMTP; model notifications remain unimplemented.
 
 ## Delivery Scope
 
-The scaffold is reviewed before implementation. Implementation follows in focused PRs: venue/organizer setup and recurring sessions, invitations and registration, then bookings and email/SMS reminders. SMS consent, phone verification, opt-outs, expiring authentication links, rate limits, and adult-model expectations are required before the corresponding public functionality launches.
+Implementation proceeds through focused stacked PRs: account bootstrap and recovery, venue/organizer setup, recurring sessions, invitations, then bookings and email/SMS reminders. SMS consent, phone verification, opt-outs, invitation expiry, and adult-model expectations are required before the corresponding public functionality launches.
 
 Version one excludes payments, artist registration, public model directories, and photo uploads. No logo or other artwork has been selected or created.

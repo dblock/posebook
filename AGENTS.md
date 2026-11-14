@@ -4,13 +4,15 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) and [DESIGN.md](DESIGN.md) before making
 
 ## Scope and Layout
 
-Posebook is an invitation-first Rails/Mongoid web application for figure drawing models and organizers. Payments, artist registration, and public model directories are out of scope. The scaffold has no booking or notification functionality; preserve that distinction in documentation.
+Posebook is an invitation-first Rails/Mongoid web application for figure drawing models and organizers. Payments, artist registration, and public model directories are out of scope. Accounts and email recovery exist; model booking and reminders do not. Preserve that distinction in documentation.
 
 Runtime code lives in `app/`, configuration in `config/`, request tests in `spec/requests/`, database integration tests in `spec/integration/`, and the tested workflow display-name checker in `script/` and `spec/script/`. Ruby 4.0.9 within 4.0 and Rails 8.1 are supported; test only MongoDB 8.0 to match the deployment target. Use public Rails, Mongoid, and provider APIs. Verify and prefer current stable releases when selecting or updating dependencies while preserving compatibility.
 
 ## Invariants
 
 MongoDB is the only application database. Do not introduce Active Record, SQL-backed queues, or Redis without agreement. The scaffold's in-process ActiveJob adapter is not a durable reminder scheduler. Do not enable actual message delivery until consent, opt-outs, retry behavior, and cancellation handling exist.
+
+Use one User model with roles. Only blank-installation registration grants `system_admin`; its fixed document ID makes competing claims atomic. Public registration must close afterward until invitations exist. Never accept role fields in public account forms. Keep password hashing and reset-token expiry/single-use behavior intact; password reset must atomically change the digest, remove the token, and invalidate all sessions. Provider messaging consent requirements apply to future model notifications, not explicitly requested account recovery.
 
 Every model roster and schedule belongs to a venue. Future booking mutations must atomically prevent duplicate session claims and multiple upcoming bookings for the same model at the same venue. Store instants in UTC and calculate recurring sessions in the venue's time zone, including daylight saving changes. Keep contacts and model rosters private; filter email, phone, and authentication tokens from logs.
 

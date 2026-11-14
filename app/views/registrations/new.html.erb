@@ -1,0 +1,12 @@
+<main>
+  <h1>Create Your Account</h1>
+  <p>The first registered user receives the system admin role. Later accounts require invitations.</p>
+  <%= render "shared/errors", record: @user %>
+  <%= form_with model: @user, url: registration_path do |form| %>
+    <p><%= form.label :name %><br><%= form.text_field :name, required: true, autocomplete: "name", maxlength: 100 %></p>
+    <p><%= form.label :email %><br><%= form.email_field :email, required: true, autocomplete: "email" %></p>
+    <p><%= form.label :password %> (at least 12 characters)<br><%= form.password_field :password, required: true, minlength: 12, autocomplete: "new-password" %></p>
+    <p><%= form.label :password_confirmation %><br><%= form.password_field :password_confirmation, required: true, autocomplete: "new-password" %></p>
+    <%= form.submit "Create Account" %>
+  <% end %>
+</main>

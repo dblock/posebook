@@ -6,9 +6,10 @@ require 'open3'
 require 'securerandom'
 
 def docker!(*)
-  output, status = Open3.capture2e('docker', *)
-  raise output unless status.success?
+  output, errors, status = Open3.capture3('docker', *)
+  raise "#{output}#{errors}" unless status.success?
 
+  warn errors unless errors.empty?
   output.strip
 end
 
@@ -18,47 +19,64 @@ def request(port, path)
   end
 end
 
-image = "posebook-package:#{SecureRandom.hex(6)}"
+def wait_until(message)
+  deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 60
+  until yield
+    raise message if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+
+    sleep 1
+  end
+end
+
+suffix = SecureRandom.hex(6)
+image = "posebook-package:#{suffix}"
+network = nil
+database = nil
 container = nil
 
 begin
   puts 'Building the production image...'
   puts docker!('build', '--tag', image, '.')
+  network = docker!('network', 'create', "posebook-package-#{suffix}")
+  database = docker!(
+    'run', '--detach', '--network', network, '--network-alias', 'mongodb',
+    '--health-cmd', 'mongosh --quiet --eval "db.adminCommand({ping: 1})"',
+    '--health-interval', '2s', '--health-timeout', '5s', '--health-retries', '20', 'mongo:8.0'
+  )
+  wait_until('MongoDB did not become healthy') do
+    docker!('inspect', '--format', '{{.State.Health.Status}}', database) == 'healthy'
+  end
   container = docker!(
-    'run', '--detach', '--publish', '127.0.0.1::3000',
+    'run', '--detach', '--publish', '127.0.0.1::3000', '--network', network,
     '--env', "SECRET_KEY_BASE=#{SecureRandom.hex(64)}",
-    '--env', 'MONGODB_URI=mongodb://127.0.0.1:27017/posebook_package',
+    '--env', 'MONGODB_URI=mongodb://mongodb:27017/posebook_package',
     image
   )
   port = docker!('port', container, '3000/tcp').split(':').last.to_i
-  deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 60
 
-  loop do
-    begin
-      break if request(port, '/up').code == '200'
-    rescue SystemCallError, Timeout::Error, EOFError
-      # Puma may not have bound its port yet.
-    end
-    if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
-      raise 'The packaged application did not become healthy'
-    end
-
-    sleep 1
+  wait_until('The packaged application did not become healthy') do
+    request(port, '/up').code == '200'
+  rescue SystemCallError, Timeout::Error, EOFError
+    false
   end
 
-  response = request(port, '/')
-  unless response.code == '200' && response.body.include?('<h1>Posebook</h1>')
-    raise 'The packaged home page did not render'
+  raise 'The blank installation did not redirect to registration' unless request(port, '/').code == '302'
+
+  response = request(port, '/registration/new')
+  unless response.code == '200' && response.body.include?('Create Your Account')
+    raise 'First-user registration did not render'
   end
 
   stylesheet = response.body[/href="([^"]+\.css)"/, 1]
   raise 'The packaged stylesheet is missing' unless stylesheet && request(port, stylesheet).code == '200'
 
-  puts 'Production image passed home page, stylesheet, and liveness checks.'
+  puts 'Production image passed MongoDB index setup, first-user registration, stylesheet, and liveness checks.'
 ensure
   if container
     puts docker!('logs', container)
     docker!('rm', '--force', container)
   end
+  docker!('rm', '--force', database) if database
+  docker!('network', 'rm', network) if network
   docker!('image', 'rm', image) if system('docker', 'image', 'inspect', image, out: File::NULL, err: File::NULL)
 end
