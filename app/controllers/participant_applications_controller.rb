@@ -3,10 +3,10 @@
 class ParticipantApplicationsController < ApplicationController
   before_action -> { response.headers['Cache-Control'] = 'private, no-store' }
   before_action :remember_status_destination, only: :show
-  before_action :require_authentication, except: %i[new create]
+  before_action :require_authentication, except: %i[new create apply]
   before_action :find_program, except: :index
-  before_action :require_verified_applicant, only: %i[new create]
-  before_action :prepare_submission, only: %i[new create]
+  before_action :require_verified_applicant, only: %i[new create apply]
+  before_action :prepare_submission, only: %i[new create apply]
   rescue_from ParticipantApplicationWorkflow::Invalid, with: :submission_error
   rescue_from ParticipantApplicationWorkflow::Conflict, with: :withdrawal_error
   rescue_from Mongoid::Errors::Validations, with: :validation_error
@@ -23,6 +23,10 @@ class ParticipantApplicationsController < ApplicationController
 
   def show
     @application = own_application
+  end
+
+  def apply
+    redirect_to new_program_participation_application_path(@program)
   end
 
   def new
