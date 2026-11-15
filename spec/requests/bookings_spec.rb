@@ -69,8 +69,8 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
       get program_path(program, section: 'calendar')
       booked = response.parsed_body.at_css('[data-date="2026-11-16"]')
       expect(booked['class']).to eq('booked')
-      expect(booked.css('.status-label').map(&:text)).to eq(['Unconfirmed'])
-      expect(booked.at_css('.status-label-warning').text).to eq('Unconfirmed')
+      expect(booked.css('.status-label').map(&:text)).to eq(['Booked'])
+      expect(booked.at_css('.status-label-warning').text).to eq('Booked')
       expect(booked.css('form')).to be_empty
       expect(response.parsed_body.at_css('[data-date="2026-11-23"]')['class']).to eq('available')
       expect(response.parsed_body.at_css('[data-date="2026-11-23"] .status-label-success').text).to eq('Available')
@@ -184,7 +184,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
                                                reason: 'Travel plans changed.', changed_by_id: participant.id)
     expect(replacement.date).to eq(Date.new(2026, 11, 30))
     get program_path(program, section: 'history')
-    expect(response.body).to include('Rescheduled', 'Moved from 2026-11-23', 'Travel plans changed.', 'Unconfirmed')
+    expect(response.body).to include('Rescheduled', 'Moved from 2026-11-23', 'Travel plans changed.', 'Booked')
   end
 
   it 'keeps the original booking if a requested replacement date is occupied' do
@@ -243,7 +243,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     replacement = track_booking(program.bookings.where(status: 'confirmed').first)
     expect(replacement.id).not_to eq(original.id)
     get program_path(program, section: 'history')
-    expect(response.body).to include('2026-11-16', 'Canceled', 'A family commitment.', '2026-11-23', 'Unconfirmed')
+    expect(response.body).to include('2026-11-16', 'Canceled', 'A family commitment.', '2026-11-23', 'Booked')
     post cancel_program_booking_path(program, original),
          params: { reason: 'Overwrite history', booking_version: original.lock_version }
     expect(response).to redirect_to(program_path(program))

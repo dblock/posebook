@@ -67,4 +67,5 @@
 - [#73](https://github.com/dblock/posebook/pull/73): Show actual status for leading dates from the previous month - [@dblock](https://github.com/dblock).
 - [#74](https://github.com/dblock/posebook/pull/74): Keep copy buttons only for private invitation links - [@dblock](https://github.com/dblock).
 - [#75](https://github.com/dblock/posebook/pull/75): Run Google Calendar synchronization and future Active Jobs through a shared durable MongoDB worker - [@dblock](https://github.com/dblock).
+- [#76](https://github.com/dblock/posebook/pull/76): Rename the Unconfirmed booking label to Booked throughout the interface - [@dblock](https://github.com/dblock).
 - Your contribution here.

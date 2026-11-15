@@ -59,7 +59,7 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
     get program_participants_path(program)
     cell = response.parsed_body.at_css("tr[data-membership='#{membership.id}'] td:nth-child(2)")
     expect(cell.css('.status-label').map(&:text)).to eq(['Paused'])
-    expect(cell.text).to include('Booking retained', booking.date.iso8601, 'Unconfirmed')
+    expect(cell.text).to include('Booking retained', booking.date.iso8601, 'Booked')
     expect(cell.at_css('.attendance-warning')['role']).to eq('status')
   end
 

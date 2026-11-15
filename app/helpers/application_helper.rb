@@ -8,7 +8,7 @@ module ApplicationHelper
     'canceled' => 'danger', 'revoked' => 'danger', 'inactive' => 'danger',
     'closed' => 'danger',
     'pending' => 'warning', 'paused' => 'warning', 'rescheduled' => 'warning', 'uninvited' => 'warning',
-    'unconfirmed' => 'warning'
+    'booked' => 'warning'
   }.freeze
 
   def status_label(status, **attributes)
