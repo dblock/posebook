@@ -725,6 +725,11 @@ tbody tr:last-child td {
   min-width: 0;
 }
 
+.participant-notes {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .participant-portrait {
   flex: 0 0 4rem;
 }

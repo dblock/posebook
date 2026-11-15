@@ -68,7 +68,7 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
     expect(membership.reload.history_tracks.last.modifier_id).to eq(organizer.id)
   end
 
-  it 'keeps invitations in booking access and only pause or resume controls in actions' do
+  it 'keeps invitations in booking access with editing and pause or resume controls in actions' do
     membership
     manage_participants
     get program_participants_path(program)
@@ -81,7 +81,8 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
     get program_participants_path(program)
     actions = response.parsed_body.at_css("tr[data-membership='#{membership.id}'] .participant-actions")
     expect(actions.css('button').map(&:text)).to eq(['Resume Participant'])
-    expect(actions.css('a, details')).to be_empty
+    expect(actions.at_css('a')['href']).to eq(edit_program_participant_path(program, membership))
+    expect(actions.css('details')).to be_empty
   end
 
   it 'shows only paused for a paused participant while retaining the booking details as plain text' do

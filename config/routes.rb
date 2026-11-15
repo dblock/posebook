@@ -21,7 +21,7 @@ Rails.application.routes.draw do
     resources :photos, only: %i[show create update destroy], controller: 'program_photos'
     resource :schedule, controller: 'program_schedules', only: %i[show update]
     resources(:organizer_bookings, only: %i[new create edit update]) { post :cancel, on: :member }
-    resources :participants, controller: 'program_participants', only: :index do
+    resources :participants, controller: 'program_participants', only: %i[index edit update] do
       post :invite_all, on: :collection
       %i[invite pause resume].each { |action| post action, on: :member }
     end

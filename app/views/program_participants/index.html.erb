@@ -15,7 +15,12 @@
           <% @memberships.each do |membership| %>
             <% access = @roster.access_for(membership) %>
             <tr data-membership="<%= membership.id %>">
-              <td><%= render "shared/participant_identity", participant: membership.user %></td>
+              <td>
+                <%= render "shared/participant_identity", participant: membership.user %>
+                <% if membership.notes.present? %>
+                  <details><summary>Coordinator Notes</summary><p class="participant-notes"><%= membership.notes %></p></details>
+                <% end %>
+              </td>
               <td>
                 <% if access.booking && !access.paused? && membership.user.active? %>
                   <%= render "programs/booking_status", booking: access.booking, private_view: true %>
@@ -34,6 +39,7 @@
               </td>
               <td>
                 <div class="participant-actions">
+                  <%= link_to "Edit #{@program.participant_label.titleize}", edit_program_participant_path(@program, membership), class: "button-link" %>
                   <% if access.paused? %>
                     <%= button_to "Resume #{@program.participant_label.titleize}", resume_program_participant_path(@program, membership, page: @roster.page), class: "secondary-action" %>
                   <% else %>
