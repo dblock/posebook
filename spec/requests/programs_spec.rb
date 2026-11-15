@@ -454,19 +454,19 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     expect(response).to have_http_status(:not_found)
   end
 
-  it 'lets admins edit slugs while retaining old URLs and using slugs in nested management links' do
+  it 'lets admins edit slugs while retaining previous slugs and scoped management links' do
     sign_in(create_user(roles: ['system_admin']))
     program = create_program
     previous = program.slug
     patch program_path(program), params: { program: { custom_slug: 'Weekly Booking' } }
-    expect(response).to redirect_to('/sessions/weekly-booking')
-    get "/sessions/#{previous}"
+    expect(response).to redirect_to('/programs/weekly-booking')
+    get "/programs/#{previous}"
     expect(response).to have_http_status(:ok)
     get "/#{previous}"
     expect(response).to have_http_status(:not_found)
     get program_coordinators_path(program.reload)
     expect(response).to have_http_status(:ok)
-    expect(response.parsed_body.at_css('main form')['action']).to eq('/sessions/weekly-booking/coordinators')
+    expect(response.parsed_body.at_css('main form')['action']).to eq('/programs/weekly-booking/coordinators')
   end
 
   it 'keeps built-in routes reachable when a program requests a reserved slug' do
