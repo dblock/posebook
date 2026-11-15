@@ -12,10 +12,16 @@ class EmailDeliveryMessage
     when 'participant_invitation' then participant_invitation
     when 'coordinator_invitation' then coordinator_invitation
     when 'booking_invitation' then booking_invitation
+    when 'application_registration' then application_registration
     end
   end
 
   private
+
+  def application_registration
+    registration = ApplicationRegistration.available(token)
+    ApplicationRegistrationMailer.verify(registration, token) if registration&.id == @delivery.resource_id
+  end
 
   def token
     @token ||= @delivery.token

@@ -1,0 +1,5 @@
+en:
+  application_registration:
+    queued: Check your email for a verification link. No participation access has been granted.
+    verified: Your email is verified. Prepare your profile and photos before submitting an application.
+    unavailable: Verification email could not be queued. Please try again later.

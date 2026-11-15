@@ -16,26 +16,38 @@ class SessionsController < ApplicationController
   end
 
   def destroy
-    coordinator_token = params[:coordinator_invitation_token]
-    invitation_token = params[:invitation_token]
+    destination = sign_out_destination
     reset_session
-    return redirect_to coordinator_invitation_path(token: coordinator_token), status: :see_other if coordinator_token
-
-    redirect_to(invitation_token ? invitation_path(token: invitation_token) : new_session_path, status: :see_other)
+    redirect_to destination, status: :see_other
   end
 
   private
 
   def finish_sign_in(user)
-    invitation_token = session[:invitation_token]
-    coordinator_token = session[:coordinator_invitation_token]
-    booking_program = session[:booking_program]
+    destination = sign_in_destination(user)
     start_session(user, remember_me: params[:remember_me] == '1')
-    return redirect_to coordinator_invitation_path(token: coordinator_token) if coordinator_token
+    redirect_to destination
+  end
 
-    redirect_to(invitation_token ? invitation_path(token: invitation_token) : booking_return_path(
-      booking_program, user
-    ))
+  def sign_in_destination(user)
+    coordinator = session[:coordinator_invitation_token]
+    invitation = session[:invitation_token]
+    registration = session[:application_registration_token]
+    return coordinator_invitation_path(token: coordinator) if coordinator
+    return invitation_path(token: invitation) if invitation
+    return application_verification_path(token: registration) if registration
+
+    booking_return_path(session[:booking_program], user)
+  end
+
+  def sign_out_destination
+    if params[:coordinator_invitation_token]
+      return coordinator_invitation_path(token: params[:coordinator_invitation_token])
+    end
+    return invitation_path(token: params[:invitation_token]) if params[:invitation_token]
+
+    token = params[:application_registration_token]
+    token ? application_verification_path(token: token) : new_session_path
   end
 
   def booking_return_path(id, user)
