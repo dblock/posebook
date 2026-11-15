@@ -1,11 +1,5 @@
 # Upgrading
 
-## Shared Background Worker
-
-Change the Google Calendar Worker command to `bundle exec rake jobs:work` using the same application image, MongoDB replica set, encryption secret, and provider settings as the web app. The old `google_calendar:work` command remains a compatibility alias, but now processes all queues. Use `JOB_QUEUES=calendar` only when another worker handles other queues. Do not run old calendar-only worker images alongside the new worker.
-
-Startup creates the queue indexes. No booking/outbox migration or new Google authorization is required; pending calendar changes remain intact. New `perform_later` jobs persist in MongoDB and require a worker rather than executing in the web process. Existing synchronous account/invitation email delivery is unchanged. See [Background Jobs](docs/background-jobs.md) for retries, monitoring, and adding jobs.
-
 ## Instagram Tagging
 
 First-user and invitation registration forms now select Instagram tagging by default and require a valid handle when selected. Users can clear the checkbox. Existing accounts and their saved preferences are unchanged; no migration is required. If a new user selects private identity and the browser omits the disabled public-sharing fields, tagging is off until explicitly enabled.
