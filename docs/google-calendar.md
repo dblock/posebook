@@ -15,13 +15,13 @@ External OAuth apps in **Testing** generally receive refresh tokens that expire 
 
 ## Start the Worker
 
-Run a dedicated worker using the same application image, MongoDB replica set, OAuth settings, and `SECRET_KEY_BASE` as the web component:
+Run the shared background worker using the same application image, MongoDB replica set, OAuth settings, and `SECRET_KEY_BASE` as the web component:
 
 ```sh
-bundle exec rake google_calendar:work
+bundle exec rake jobs:work
 ```
 
-On DigitalOcean App Platform, add a **Worker** component using the application Dockerfile and that run command. Keep it running with automatic restarts. Do not run it inside the web process. `SECRET_KEY_BASE` encrypts stored refresh tokens; changing it without migrating the tokens requires reconnecting every calendar.
+On DigitalOcean App Platform, add a **Worker** component using the application Dockerfile and that run command, or update the existing calendar worker. The same worker handles calendar jobs and future Active Jobs; no separate calendar worker is required. Keep it running with automatic restarts. Do not run it inside the web process. `SECRET_KEY_BASE` encrypts stored refresh tokens; changing it without migrating the tokens requires reconnecting every calendar. See [Background Jobs](background-jobs.md) for queue filtering, scheduled runs, retries, and monitoring.
 
 For a bounded manual run:
 
@@ -29,7 +29,7 @@ For a bounded manual run:
 bundle exec rake google_calendar:sync
 ```
 
-This reconciles upcoming bookings and processes at most 100 due changes. The long-running worker reconciles every five minutes and processes new changes continuously. MongoDB persists changes inside the booking transaction; no Google call runs before commit. Failures retry with capped exponential backoff, and an expired lease recovers work after a worker restart. Only safe error classifications are stored, never provider response text or tokens. This is a calendar-specific outbox, not a general delayed-job queue.
+This reconciles upcoming bookings and processes at most 100 due changes. The shared worker runs recurring reconciliation every five minutes and calendar delivery batches every five seconds, subject to queue capacity and idle polling. MongoDB persists changes inside the booking transaction; no Google call runs before commit. Failures retry with capped exponential backoff, and an expired lease recovers work after a worker restart. Only safe error classifications are stored, never provider response text or tokens. The calendar-specific outbox retains provider state; the generic Active Job queue schedules its processing.
 
 ## Connect a Program
 

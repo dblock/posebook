@@ -152,6 +152,26 @@ RSpec.describe GoogleCalendarSync, :aggregate_failures, :database do
     expect(api).to have_received(:insert_event).once
   end
 
+  it 'delivers a booking through the shared Active Job worker' do
+    booking = book
+    job = GoogleCalendarSyncJob.perform_later
+    track_record(QueuedJob.find(job.provider_job_id))
+    expect(BackgroundWorker.build.work_off(1)).to eq([1, 0])
+    expect(api).to have_received(:insert_event).once
+    expect(described_class.find(booking.id).due_at).to be_nil
+  end
+
+  it 'runs periodic reconciliation as an Active Job' do
+    booking = book
+    described_class.process_next
+    job = GoogleCalendarReconcileJob.perform_later
+    track_record(QueuedJob.find(job.provider_job_id))
+    expect(BackgroundWorker.build.work_off(1)).to eq([1, 0])
+    expect(described_class.find(booking.id).due_at).to be_present
+    described_class.process_next
+    expect(api).to have_received(:insert_event).once
+  end
+
   it 'completes cancellation when the remote event is already missing or canceled' do
     booking = book
     mutation.cancel(booking: booking, reason: 'Canceled before synchronization.')
