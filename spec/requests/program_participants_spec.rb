@@ -40,6 +40,8 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
     manage_participants
     post invite_program_participant_path(program, membership)
     expect(response).to redirect_to(program_participants_path(program))
+    expect(ActionMailer::Base.deliveries).to be_empty
+    deliver_emails
     expect(ActionMailer::Base.deliveries.last.to).to eq([participant.email])
     expect(ActionMailer::Base.deliveries.last.text_part.body.decoded).to include('booking_invitation=1',
                                                                                  program.slug)
@@ -78,6 +80,8 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
       .to eq("4 total participants \u00b7 1 available \u00b7 1 booked \u00b7 1 paused \u00b7 1 inactive")
     expect(response.parsed_body.at_css('main form button').text).to eq('Invite All Available Participants (1)')
     post invite_all_program_participants_path(program)
+    expect(ActionMailer::Base.deliveries).to be_empty
+    deliver_emails
     expect(ActionMailer::Base.deliveries.map(&:to)).to eq([[available.user.email]])
     follow_redirect!
     expect(response.body).to include('3 booked, paused, or inactive participants skipped')
@@ -115,6 +119,7 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
     it 'invites all pages and retains the current page after individual and bulk actions' do
       post invite_all_program_participants_path(program, page: 2)
       expect(response).to redirect_to(program_participants_path(program, page: 2))
+      deliver_emails
       expect(ActionMailer::Base.deliveries.flat_map(&:to)).to match_array(members.map { |item| item.user.email })
       post pause_program_participant_path(program, members.last, page: 2), params: { reason: 'Travel.' }
       expect(response).to redirect_to(program_participants_path(program, page: 2))
@@ -179,15 +184,15 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
   it 'keeps granted permission and reports failed email rather than claiming delivery succeeded' do
     membership
     manage_participants
-    error = IOError.new('SMTP failed')
-    allow(BookingInvitationMailer).to receive(:invite).and_raise(error)
+    error = ActiveJob::EnqueueError.new('Queue failed')
+    allow(EmailDeliveryJob).to receive(:perform_later).and_raise(error)
     allow(NewRelic::Agent).to receive(:notice_error)
     post invite_program_participant_path(program, membership)
     follow_redirect!
-    expect(response.body).to include('Booking enabled, but invitation email could not be sent')
+    expect(response.body).to include('Booking enabled, but invitation email could not be queued')
     expect(BookingAccess.new(membership.reload).allowed?).to be(true)
     expect(ActionMailer::Base.deliveries).to be_empty
-    expect(NewRelic::Agent).to have_received(:notice_error).with(error).once
+    expect(NewRelic::Agent).to have_received(:notice_error).with(an_instance_of(EmailDelivery::Unavailable)).once
   end
 
   it 'reports unavailable email configuration while preserving the explicit booking grant' do
@@ -196,7 +201,7 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
     allow(Rails.configuration.x).to receive(:password_reset_delivery_enabled).and_return(false)
     post invite_program_participant_path(program, membership)
     follow_redirect!
-    expect(response.body).to include('Booking enabled, but invitation email could not be sent')
+    expect(response.body).to include('Booking enabled, but invitation email could not be queued')
     expect(membership.reload.booking_invited_by_id).to eq(organizer.id)
     expect(ActionMailer::Base.deliveries).to be_empty
   end

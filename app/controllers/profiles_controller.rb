@@ -13,12 +13,13 @@ class ProfilesController < ApplicationController
   def update
     attributes = params.expect(user: %i[name email phone gender current_password display_name instagram_handle
                                         instagram_tagging_allowed public_profile_private]).to_h.symbolize_keys
-    if @user.update_profile(attributes)
-      redirect_to profile_path, notice: t('profiles.updated')
+    if (updated = @user.update_profile(attributes))
+      redirect_to profile_path,
+                  notice: t(updated.is_a?(EmailDelivery) ? 'profiles.updated_email_queued' : 'profiles.updated')
     else
       render :edit, status: :unprocessable_content
     end
-  rescue IOError, SystemCallError, Timeout::Error, Net::SMTPError => e
+  rescue EmailDelivery::Unavailable => e
     NewRelic::Agent.notice_error(e)
     @user.errors.add(:base, t('password_resets.failed'))
     render :edit, status: :service_unavailable

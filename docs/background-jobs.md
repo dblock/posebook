@@ -12,7 +12,7 @@ bundle exec rake jobs:work
 
 On DigitalOcean App Platform, add a Worker component using the application Dockerfile and this run command. Start with one shared worker for calendar and other jobs; add processes when capacity or queue isolation requires them. All workers must use the same application version and environment. Startup creates the declared queue indexes. SIGINT and SIGTERM stop after the current job and clear the worker's locks.
 
-The worker handles every named queue by default. Set `JOB_QUEUES=calendar` to handle only calendar work, or a comma-separated list to dedicate workers to selected queues. Ensure every used queue has a worker. A default worker with no filter handles both current and future queues.
+The worker handles every named queue by default, including `calendar` and `mailers`. Set `JOB_QUEUES=calendar,mailers` for both, or dedicate separate workers to each queue. A calendar-only worker does not send email. Ensure every used queue has a worker.
 
 For a bounded scheduled or manual run:
 
@@ -46,6 +46,16 @@ Enqueue operations inside an ordinary Mongoid model transaction participate in t
 
 Jobs run with at-least-once delivery: a process can die after an external side effect but before deleting its queue entry. Make jobs idempotent, use provider idempotency keys where supported, and recheck cancellation/authorization before sending private information. Split long work into bounded batches: the shared worker enforces a five-minute execution timeout, and abandoned locks become eligible after five minutes. Unhandled failures retry with Delayed Job's progressive delays; after 25 attempts they remain marked failed for operator action. Active Job's `retry_on` and `discard_on` remain available for explicit policies.
 
+## Transactional Email
+
+Password recovery, email-change verification, participant invitations, coordinator invitations, and invitations to book again use `EmailDeliveryJob` on `mailers`. Requests report queued email, not completed SMTP delivery. Configure the worker with the web application's SMTP settings, `MAIL_FROM`, `APP_HOST`, and `SECRET_KEY_BASE`. Local development writes email files only when the worker runs.
+
+`EmailDelivery` stores the resource ID, queue-entry ID, original expiry or booking-grant timestamp, and an encrypted bearer token when required. Job arguments contain only its ID; neither queue entries nor the outbox contain plaintext tokens or contact snapshots. Account challenge/profile updates and enqueueing commit together. New invitation links and explicit booking grants remain usable even if their separate email enqueue fails.
+
+The worker reloads current accounts, invitations, permissions, and booking access before sending. Superseded, expired, consumed, revoked, or unauthorized messages are skipped; paused, booked, inactive, or no-longer-entitled participants receive no booking invitation. Recovery and verification links retain their original 30-minute deadline, and registration invitations retain their original 30-day deadline. Expired encrypted tokens are also removed by MongoDB's TTL monitor. SMTP failures or missing worker delivery configuration retain the outbox for safe retries; delivery success or an intentional skip removes it.
+
+SMTP has no atomic acknowledgment shared with MongoDB: a crash after provider acceptance can duplicate an email. Delivery remains at least once, not exactly once. No automated reminder workflow is enabled.
+
 ## Recurring Work
 
 Register additional job class names and intervals in `config/initializers/background_jobs.rb`. The shared worker checks the registry before each batch; it does not contain provider-specific dispatch code. Recurring schedules and enqueueing share a MongoDB transaction and write barrier, so competing workers do not enqueue duplicate runs. A schedule keeps at most one queued/running/retrying job, including retained failures; missed intervals do not accumulate a backlog. Completed or intentionally discarded jobs become eligible again when their next interval is due.
@@ -54,7 +64,7 @@ Register additional job class names and intervals in `config/initializers/backgr
 
 ## Monitor and Recover
 
-Worker logs contain queue-entry IDs, attempt counts, and safe error classifications, not arguments or exception messages. Active Job and Delayed Job's default payload/error logging is disabled. Failed entries retain their payload for controlled retry but store only the exception class in `last_error`.
+Worker logs contain queue-entry IDs, attempt counts, and safe error classifications, not arguments or exception messages. Active Job, Action Mailer, and Delayed Job's default payload/error logging is disabled. Failed entries retain their payload for controlled retry but store only the exception class in `last_error`.
 
 Inspect counts without printing payloads:
 
@@ -72,4 +82,4 @@ QueuedJob.find('QUEUE_ENTRY_ID').update!(
 )
 ```
 
-Do not mass-delete or blindly replay queued jobs. A retained recurring failure blocks that schedule until explicitly retried or removed. Monitor both queue failures and the program's Google Calendar pending count: Google provider failures remain in the calendar outbox rather than failing the batch job. No automated reminder or new email workflow is enabled by this infrastructure.
+Do not mass-delete or blindly replay queued jobs. A retained recurring failure blocks that schedule until explicitly retried or removed. Monitor both queue failures and the program's Google Calendar pending count: Google provider failures remain in the calendar outbox rather than failing the batch job. Email provider failures fail their individual queue entries; after an email token expires, request a new link rather than retrying its expired message.

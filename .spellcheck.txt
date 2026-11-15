@@ -1,5 +1,8 @@
 ActionMailer
 AES
+plaintext
+TTL
+TransientTransactionError
 Auth
 GCM
 OAuth

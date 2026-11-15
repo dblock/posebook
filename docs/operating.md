@@ -26,10 +26,12 @@ bin/dev
 | `APP_HOST`                                    | Allowed application hostname and email-link host; defaults to `localhost`. Set it for external deployments. |
 | `SECRET_KEY_BASE`                             | Required production session and encryption secret.                                                          |
 | `PORT`                                        | HTTP port behind the HTTPS-terminating proxy; defaults to `3000`.                                           |
-| `SMTP_ADDRESS`, `MAIL_FROM`                   | Enable production password recovery and email-change confirmations.                                         |
+| `SMTP_ADDRESS`, `MAIL_FROM`                   | Enable queued production account and invitation emails.                                                     |
 | `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` | Optional SMTP connection settings; STARTTLS is enabled automatically.                                       |
 
 Without SMTP configuration, account recovery reports that email is unavailable. SMS delivery is not implemented.
+
+Account recovery, email verification, participant/coordinator invitations, and invitations to book again are delivered by the shared worker's `mailers` queue, not during web requests. Configure both web and worker components with the same SMTP settings, `MAIL_FROM`, `APP_HOST`, and `SECRET_KEY_BASE`; a worker restricted to `calendar` will leave email pending. See [Background Jobs](background-jobs.md) for retries, encrypted token storage, and recovery.
 
 Run the [shared background worker](background-jobs.md) with `bundle exec rake jobs:work` to process durable MongoDB-backed Active Jobs. It handles every queue by default; `JOB_QUEUES` can restrict dedicated workers to comma-separated queue names. Optional Google Calendar synchronization requires a Google OAuth web client and a private calendar per program; it uses this shared worker rather than a separate calendar worker. See [Google Calendar Setup](google-calendar.md) for configuration, consent, deployment, and verification.
 

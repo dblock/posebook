@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
-require 'net/smtp'
 
 RSpec.describe 'Password recovery', :aggregate_failures, :database, type: :request do
   it 'renders a recovery form' do
@@ -13,6 +12,8 @@ RSpec.describe 'Password recovery', :aggregate_failures, :database, type: :reque
     user = create_user
     post password_resets_path, params: { email: user.email.upcase }
     notice = flash[:notice]
+    expect(ActionMailer::Base.deliveries).to be_empty
+    deliver_emails
     mail = ActionMailer::Base.deliveries.last
     post password_resets_path, params: { email: 'missing@example.test' }
 
@@ -66,15 +67,17 @@ RSpec.describe 'Password recovery', :aggregate_failures, :database, type: :reque
     expect(response.body).to include('not configured')
   end
 
-  it 'reports delivery failures without sending real email' do
+  it 'rolls back the reset challenge when email cannot be queued' do
     user = create_user
-    error = Net::SMTPAuthenticationError.new('Unavailable')
-    allow(PasswordResetMailer).to receive(:reset).and_raise(error)
+    error = ActiveJob::EnqueueError.new('Unavailable')
+    allow(EmailDeliveryJob).to receive(:perform_later).and_raise(error)
     allow(NewRelic::Agent).to receive(:notice_error)
     post password_resets_path, params: { email: user.email }
 
     expect(response).to have_http_status(:service_unavailable)
-    expect(response.body).to include('could not be sent')
-    expect(NewRelic::Agent).to have_received(:notice_error).with(error).once
+    expect(response.body).to include('could not be queued')
+    expect(user.reload.password_reset_digest).to be_nil
+    expect(EmailDelivery.where(resource_id: user.id)).to be_empty
+    expect(NewRelic::Agent).to have_received(:notice_error).with(an_instance_of(EmailDelivery::Unavailable)).once
   end
 end

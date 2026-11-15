@@ -5,9 +5,9 @@ en:
     invitation_required: Please wait for an organizer to invite you to choose your next booking date.
     reason_required: Provide a pause explanation of 1 to 200 characters.
     forbidden: "%{participant_title} management access is required."
-    sent: Booking enabled and invitation email sent.
-    skipped: No invitation sent. This %{participant_label} is booked, paused, or inactive.
-    email_failed: Booking enabled, but invitation email could not be sent. Contact the %{participant_label} directly or try again.
+    queued: Booking enabled and invitation email queued.
+    skipped: No invitation queued. This %{participant_label} is booked, paused, or inactive.
+    email_failed: Booking enabled, but invitation email could not be queued. Contact the %{participant_label} directly or try again.
     pause_saved: "%{participant_title} paused. Any existing booking is retained."
     resumed: "%{participant_title} resumed. Existing booking permission is preserved; invite them again if their last %{program_label} is completed."
-    bulk_result: "Booking enabled and email sent to %{sent} %{participants_label}; %{failed} email deliveries failed (access remains enabled); %{skipped} booked, paused, or inactive %{participants_label} skipped."
+    bulk_result: "Booking enabled and email queued for %{queued} %{participants_label}; %{failed} emails could not be queued (access remains enabled); %{skipped} booked, paused, or inactive %{participants_label} skipped."

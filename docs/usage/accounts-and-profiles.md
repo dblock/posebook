@@ -4,6 +4,8 @@
 
 Sign in with your email and password, or use the password-reset link if you cannot sign in. Registration is invitation-based after the first administrator account has been created.
 
+Password-reset and email-change instructions are queued for email delivery. Their links expire 30 minutes after the request, not after delivery; requesting new instructions invalidates the previous link. Profile email changes keep your current login address until you follow the verification link. If email is delayed or expired, request new instructions or contact an organizer.
+
 Participant and venue/program coordinator invitations follow the same email rules. If the sender specified an email, register with that address or sign in to the matching existing account, then accept the invitation. If signed in to a different account, use **Sign Out and Use the Invited Account** to switch without losing the invitation. When no email was specified, one recipient can accept the private link with any account.
 
 Open **Profile** and choose the **Edit** tab to change your name, display name, phone, Instagram handle, and privacy preferences. Your display name defaults to your account name. Registration forms select Instagram tagging by default; enter a handle or clear the tagging checkbox. Instagram appears on public calendars only when tagging is enabled; **Keep all my information private** hides your name and Instagram from public pages while retaining saved preferences.

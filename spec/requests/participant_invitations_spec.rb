@@ -33,6 +33,9 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
          params: { participant_invitation: { email: 'participant@example.test' }, send_email: '1' }
     track_record(program.participant_invitations.first)
     mail = ActionMailer::Base.deliveries.last
+    expect(mail).to be_nil
+    deliver_emails
+    mail = ActionMailer::Base.deliveries.last
     expect(mail.to).to eq(['participant@example.test'])
     expect(mail.body.decoded).to include('http://example.com/invitation?token=',
                                          'Tuesday at 7:15 PM (America/Los_Angeles)', 'using participant@example.test')
@@ -51,19 +54,19 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     expect(ActionMailer::Base.deliveries).to be_empty
   end
 
-  it 'keeps a private link when email delivery fails' do
+  it 'keeps a private link when email cannot be queued' do
     sign_in(create_user(roles: ['system_admin']))
     program = create_program
-    error = IOError.new('Unavailable')
-    allow(ParticipantInvitationMailer).to receive(:invite).and_raise(error)
+    error = ActiveJob::EnqueueError.new('Unavailable')
+    allow(EmailDeliveryJob).to receive(:perform_later).and_raise(error)
     allow(NewRelic::Agent).to receive(:notice_error)
     post program_participant_invitations_path(program),
          params: { participant_invitation: { email: 'participant@example.test' }, send_email: '1' }
     track_record(program.participant_invitations.first)
     follow_redirect!
-    expect(response.body).to include('Email delivery failed.')
+    expect(response.body).to include('Email could not be queued.')
     expect(response.parsed_body.at_css('#invitation_link')).to be_present
-    expect(NewRelic::Agent).to have_received(:notice_error).with(error).once
+    expect(NewRelic::Agent).to have_received(:notice_error).with(an_instance_of(EmailDelivery::Unavailable)).once
   end
 
   it 'rejects invalid addresses and unavailable delivery without persisting an invitation' do

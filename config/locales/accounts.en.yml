@@ -24,6 +24,7 @@ en:
     gender_rule: Gender rule
   invitations:
     created: Invitation created. Copy the personal link below.
+    created_and_queued: Invitation created and email queued. You can also copy the personal link below.
     accepted: Invitation accepted. You are %{participant_article} %{participant_label} at this %{program_label}.
     revoked: Invitation revoked.
     not_pending: This invitation has already been accepted or revoked.
@@ -31,7 +32,7 @@ en:
     email_mismatch: must match the invited email address
     wrong_account: "This invitation is for %{email}. Sign out and sign in using that email address, or register with it."
     delivery_unavailable: Email delivery needs an address and configured SMTP. Uncheck email delivery to share a link instead.
-    delivery_failed: Email delivery failed. Copy the personal link and share it directly instead.
+    delivery_failed: Email could not be queued. Copy the personal link and share it directly instead.
     subject: "You are invited as %{participant_article} %{participant_label} at %{program}"
   accounts:
     created: Your account has the system admin role.
@@ -44,6 +45,7 @@ en:
     user_email_updated: User information saved. Your email changed; sign in again.
   profiles:
     updated: Profile saved.
+    updated_email_queued: Profile saved. Verification email queued.
     password_updated: Password changed. Other sessions and outstanding recovery links were revoked.
   email_changes:
     invalid: This email confirmation link is invalid or expired.
@@ -51,8 +53,8 @@ en:
     subject: Confirm your Posebook email address
   password_resets:
     unavailable: Password reset email is not configured. Contact the organizer.
-    sent: If that account exists, we sent a password reset email.
-    failed: Password reset email could not be sent. Please try again later.
+    queued: If that account exists, password reset instructions have been queued for email.
+    failed: Email could not be queued. Please try again later.
     updated: Password updated. Sign in with your new password.
     invalid: This reset link is invalid or expired.
     subject: Reset your Posebook password

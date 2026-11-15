@@ -64,6 +64,8 @@ RSpec.describe 'Coordinator invitations', :aggregate_failures, :database, type: 
     invitation = track_record(CoordinatorInvitation.find_by(venue_id: venue.id))
     created_link
     expect(invitation.program_id).to be_nil
+    expect(ActionMailer::Base.deliveries).to be_empty
+    deliver_emails
     mail = ActionMailer::Base.deliveries.last
     expect(mail.to).to eq(['manager@example.test'])
     expect(mail.subject).to include('Venue Coordinator', venue.name)
@@ -268,12 +270,12 @@ RSpec.describe 'Coordinator invitations', :aggregate_failures, :database, type: 
     expect(response).to have_http_status(:unprocessable_content)
     expect(CoordinatorInvitation.where(venue_id: venue.id)).to be_empty
     allow(Rails.configuration.x).to receive(:password_reset_delivery_enabled).and_return(true)
-    allow(CoordinatorInvitationMailer).to receive(:invite).and_raise(IOError, 'Unavailable')
+    allow(EmailDeliveryJob).to receive(:perform_later).and_raise(ActiveJob::EnqueueError, 'Unavailable')
     allow(NewRelic::Agent).to receive(:notice_error)
     post venue_coordinators_path(venue), params: { email: 'mail@example.test', send_email: '1' }
     track_record(CoordinatorInvitation.find_by(venue_id: venue.id))
     created_link
-    expect(response.body).to include('Email delivery failed.')
+    expect(response.body).to include('Email could not be queued.')
     expect(NewRelic::Agent).to have_received(:notice_error).once
   end
 end

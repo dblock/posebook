@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'net/smtp'
-
 class PasswordResetsController < ApplicationController
   before_action :find_user, only: %i[edit update]
   before_action :require_delivery, only: :create
@@ -13,8 +11,8 @@ class PasswordResetsController < ApplicationController
 
   def create
     User.with_email(params[:email])&.send_password_reset
-    redirect_to new_session_path, notice: t('password_resets.sent')
-  rescue IOError, SystemCallError, Timeout::Error, Net::SMTPError => e
+    redirect_to new_session_path, notice: t('password_resets.queued')
+  rescue EmailDelivery::Unavailable => e
     NewRelic::Agent.notice_error(e)
     flash.now[:alert] = t('password_resets.failed')
     render :new, status: :service_unavailable

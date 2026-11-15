@@ -226,6 +226,7 @@ RSpec.describe 'Accounts', :aggregate_failures, :database, type: :request do
     old_cookie = cookies['_posebook_remember_me']
     patch profile_path, params: { user: { name: user.name, email: 'changed@example.test',
                                           current_password: DatabaseHelpers::TEST_PASSWORD } }
+    deliver_emails
     token = ActionMailer::Base.deliveries.last.body.decoded[/email_change\?token=([A-Za-z0-9_-]+)/, 1]
     patch email_change_path, params: { token: token }
     expect(response).to redirect_to(new_session_path)

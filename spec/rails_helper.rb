@@ -25,6 +25,7 @@ RSpec.configure do |config|
     GoogleCalendarConnection.create_indexes
     GoogleCalendarSync.create_indexes
     QueuedJob.create_indexes
+    EmailDelivery.create_indexes
     ProfilePhoto.storage.file_model.create_indexes
     ProfilePhoto.storage.chunk_model.create_indexes
     ActiveModel::SecurePassword.min_cost = true

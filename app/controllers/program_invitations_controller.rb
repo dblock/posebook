@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'net/smtp'
-
 class ProgramInvitationsController < ApplicationController
   before_action :require_authentication
   before_action lambda {
@@ -38,9 +36,10 @@ class ProgramInvitationsController < ApplicationController
   private
 
   def finish_creation
-    deliver_invitation
+    queued = deliver_invitation
     flash[:invitation_link] = { 'id' => @invitation.id.to_s, 'token' => @invitation.token }
-    redirect_to program_participant_invitation_path(@program, @invitation), notice: t('invitations.created')
+    redirect_to program_participant_invitation_path(@program, @invitation),
+                notice: t(queued ? 'invitations.created_and_queued' : 'invitations.created')
   end
 
   def find_invitation
@@ -58,9 +57,11 @@ class ProgramInvitationsController < ApplicationController
   def deliver_invitation
     return unless @invitation.email.present? && params[:send_email] == '1'
 
-    ParticipantInvitationMailer.invite(@invitation, @invitation.token).deliver_now
-  rescue IOError, SystemCallError, Timeout::Error, Net::SMTPError => e
+    EmailDelivery.enqueue('participant_invitation', @invitation, token: @invitation.token,
+                                                                 expires_at: @invitation.expires_at)
+  rescue EmailDelivery::Unavailable => e
     NewRelic::Agent.notice_error(e)
     flash[:alert] = t('invitations.delivery_failed')
+    false
   end
 end
