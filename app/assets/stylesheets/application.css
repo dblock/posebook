@@ -687,10 +687,6 @@ tbody tr:last-child td {
   display: none;
 }
 
-.copyable {
-  overflow-wrap: anywhere;
-}
-
 .copy-control {
   display: inline;
   font-weight: normal;

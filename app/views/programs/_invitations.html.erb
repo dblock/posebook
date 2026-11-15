@@ -5,7 +5,7 @@
     <% @invitations.each do |invitation| %>
       <li>
         <%= invitation.name.presence || "Personal invitation" %>
-        <%= copyable(invitation.email, label: "invited email") %> -
+        <%= invitation.email %> -
         <span class="invitation-status">
           <%= status_label(invitation.status) %>
           <% if invitation.status == "Pending" %>

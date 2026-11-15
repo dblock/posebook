@@ -6,7 +6,7 @@
   <% if organizers.any? %>
     <ul>
       <% organizers.each do |organizer| %>
-        <li><strong><%= copyable(organizer.name, label: "name") %></strong>: <%= copyable(organizer.email, label: "email") { mail_to organizer.email } %><% if organizer.phone.present? %> &middot; <%= copyable(organizer.phone, label: "phone number") { link_to organizer.phone, "tel:#{organizer.phone}" } %><% end %></li>
+        <li><strong><%= organizer.name %></strong>: <%= mail_to organizer.email %><% if organizer.phone.present? %> &middot; <%= link_to organizer.phone, "tel:#{organizer.phone}" %><% end %></li>
       <% end %>
     </ul>
   <% else %>

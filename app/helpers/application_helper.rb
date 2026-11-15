@@ -17,16 +17,7 @@ module ApplicationHelper
     tag.span(status, **attributes)
   end
 
-  def copy_button(label:, value: nil, target: nil)
-    return if value.blank? && target.blank?
-
-    render 'shared/copy_button', value: value, target: target, label: label
-  end
-
-  def copyable(value, label:, &block)
-    return value if value.blank?
-
-    tag.span(safe_join([block ? capture(&block) : value, copy_button(value: value, label: label)]),
-             class: 'copyable')
+  def copy_button(label:, target:)
+    render 'shared/copy_button', target: target, label: label
   end
 end

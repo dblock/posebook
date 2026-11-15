@@ -5,7 +5,7 @@
   <%= render "coordinator_invitations/form" %>
   <h2>Current Coordinators</h2>
   <% @coordinators.each do |membership| %>
-    <p><%= copyable(membership.user.name, label: "name") %> (<%= copyable(membership.user.email, label: "email") %>)</p>
+    <p><%= membership.user.name %> (<%= membership.user.email %>)</p>
     <% unless membership.user.active? %><%= status_label("Inactive") %> account<% end %>
     <%= button_to "Remove Coordinator", program_coordinator_path(@program, membership), method: :delete %>
   <% end %>
