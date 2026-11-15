@@ -27,3 +27,7 @@ The [hosted instance](https://posebook.dblock.org/) serves [Enoch's figure-drawi
 ## Contributing
 
 [CONTRIBUTING.md](CONTRIBUTING.md) covers development setup, tests, and pull request guidance.
+
+## License
+
+Copyright (c) 2026 Vestris LLC. Released under the [MIT License](LICENSE.txt).

@@ -72,6 +72,7 @@
 - [#78](https://github.com/dblock/posebook/pull/78): Use the configured session label in the booking confirmation message - [@dblock](https://github.com/dblock).
 - [#79](https://github.com/dblock/posebook/pull/79): Consolidate profile, venue, and program actions into shared tabs and breadcrumbs, combine security forms, and keep tabbed pages equally wide - [@dblock](https://github.com/dblock).
 - [#81](https://github.com/dblock/posebook/pull/81): Add public About, Privacy Policy, and Terms of Service pages with shared footer navigation - [@dblock](https://github.com/dblock).
+- [#82](https://github.com/dblock/posebook/pull/82): Add Vestris LLC. copyright notices, consistently name the company, and keep the footer at the bottom of short pages - [@dblock](https://github.com/dblock).
 - [#83](https://github.com/dblock/posebook/pull/83): Check model Google invitation responses every 12 hours and show private one-word RSVP labels without changing bookings - [@dblock](https://github.com/dblock).
 - [#84](https://github.com/dblock/posebook/pull/84): Configure per-program Google Calendar invitation lead time without changing session times - [@dblock](https://github.com/dblock).
 - [#86](https://github.com/dblock/posebook/pull/86): Show models and organizers on the shared Google meeting guest list with the venue location - [@dblock](https://github.com/dblock).
