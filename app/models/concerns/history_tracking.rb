@@ -12,12 +12,18 @@ module HistoryTracking
 
   private
 
-  def save_tracked_change(changes)
+  def save_tracked_change(changes, validate: true)
     record = nil
     self.class.with_session do |session|
       session.with_transaction do
         record = yield.first
-        record = nil unless record&.update(changes)
+        next unless record
+
+        record.assign_attributes(changes)
+        next if record.save(validate: validate)
+
+        errors.copy!(record.errors)
+        record = nil
       end
     end
     record

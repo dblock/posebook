@@ -29,6 +29,16 @@ RSpec.describe AccountSettings, :aggregate_failures, :database do
     expect(stale.confirm_email_change(token)).to be_nil
   end
 
+  it 'retains profile validation and exposes errors from the fresh email confirmation record' do
+    user = create_user
+    original_email = user.email
+    token = email_token(user)
+    user.set(gender: nil)
+    expect(user.confirm_email_change(token)).to be_nil
+    expect(user.errors[:gender]).to be_present
+    expect(user.reload.email).to eq(original_email)
+  end
+
   it 'protects an account promoted to system admin after loading it for deactivation' do
     user = create_user
     User.find(user.id).set(roles: ['system_admin'])

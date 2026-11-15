@@ -41,6 +41,7 @@ en:
     admin_protected: System admin accounts cannot be deactivated until role transfer is available.
     deactivated: Your account has been deactivated.
     status_updated: Account access updated.
+    status_update_failed: Account access could not be updated. Refresh the page and try again.
     user_updated: User information saved.
     user_email_updated: User information saved. Your email changed; sign in again.
   profiles:

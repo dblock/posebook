@@ -90,13 +90,15 @@ module AccountSettings
       errors.add(:base, I18n.t('accounts.admin_protected'))
       return false
     end
-    save_tracked_change(authentication_updates.merge(active: false)) do
+    save_tracked_change(authentication_updates.merge(active: false), validate: false) do
       self.class.where(_id: id, :roles.ne => 'system_admin')
     end
   end
 
   def reactivate
-    save_tracked_change(active: true, session_version: SecureRandom.hex(16)) { self.class.where(_id: id) }
+    save_tracked_change({ active: true, session_version: SecureRandom.hex(16) }, validate: false) do
+      self.class.where(_id: id)
+    end
   end
 
   private

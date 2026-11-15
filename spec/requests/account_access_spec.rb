@@ -75,4 +75,35 @@ RSpec.describe 'Account access management', :aggregate_failures, :database, type
     client.get(root_path)
     expect(client.response).to have_http_status(:ok)
   end
+
+  it 'changes account access even when legacy profile fields fail current validation' do
+    admin = create_user(roles: ['system_admin'])
+    user = create_user
+    user.set(phone: nil, gender: nil, instagram_tagging_allowed: true)
+    sign_in(admin)
+    patch admin_user_path(user), params: { active: false }
+    expect(response).to redirect_to(admin_users_path)
+    follow_redirect!
+    expect(response.body).to include('Account access updated.')
+    expect(user.reload).not_to be_active
+    expect(user.history_tracks.last).to have_attributes(modified: { 'active' => false }, modifier_id: admin.id)
+    patch admin_user_path(user), params: { active: true }
+    follow_redirect!
+    expect(response.body).to include('Account access updated.')
+    expect(user.reload).to have_attributes(active: true, phone: nil, gender: nil, instagram_tagging_allowed: true)
+    expect(user.history_tracks.last).to have_attributes(modified: { 'active' => true }, modifier_id: admin.id)
+  end
+
+  it 'shows a clear error if the target becomes a protected administrator before the update' do
+    admin = create_user(roles: ['system_admin'])
+    user = create_user
+    User.find(user.id).set(roles: ['system_admin'])
+    allow(User).to receive(:find).with(user.id.to_s).and_return(user)
+    sign_in(admin)
+    patch admin_user_path(user), params: { active: false }
+    follow_redirect!
+    expect(response.parsed_body.at_css('[role="alert"]').text)
+      .to eq('Account access could not be updated. Refresh the page and try again.')
+    expect(user.reload).to be_active
+  end
 end
