@@ -26,16 +26,18 @@ module BookingRecords
     text
   end
 
-  def create_record(date, previous: nil, user: @user, gender_override_reason: nil)
+  def create_record(date, previous: nil, user: @user, gender_override_reason: nil, session: nil)
     schedule = ProgramSchedule.new(@program)
     scheduled_end = schedule.ends_at(date)
-    Booking.create!(
+    booking = Booking.create!(
       program: @program, user: user, created_by_id: @user.id,
       date: date, time_zone: @program.time_zone,
       starts_at: schedule.starts_at(date), scheduled_ends_at: scheduled_end,
       ends_at: scheduled_end || (date + 1).in_time_zone(@program.time_zone).utc, previous_booking: previous,
       gender_override_reason: gender_override_reason
     )
+    GoogleCalendarSync.enqueue(booking, session: session)
+    booking
   end
 
   def expire_claims

@@ -31,6 +31,8 @@ bin/dev
 
 Without SMTP configuration, account recovery reports that email is unavailable. SMS delivery is not implemented.
 
+Optional Google Calendar synchronization requires a Google OAuth web client, a private calendar per program, and a separate worker using the same MongoDB and encryption secret as the web app. See [Google Calendar Setup](google-calendar.md) for configuration, consent, deployment, and verification.
+
 ## Production Operations
 
 Production is continuously updated: each production update replaces the currently running application. There are no per-release versions, release tags, or registry publications. DigitalOcean App Platform hosts the linked instance; this repository's package workflow builds and smoke-tests a temporary image rather than publishing or deploying it.

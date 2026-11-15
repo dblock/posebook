@@ -14,12 +14,12 @@ class BookingMutation
   end
 
   def book(date:)
-    run do
+    run do |session|
       raise Invalid, @program.message('bookings.already_scheduled') if claims.exists?
 
       selected = available_date(date)
       check_gender!(selected)
-      @booking = create_record(selected)
+      @booking = create_record(selected, session: session)
       BookingClaim.create!(program: @program, user: @user, booking: @booking,
                            date: @booking.date, ends_at: @booking.ends_at)
     end
@@ -30,7 +30,7 @@ class BookingMutation
       original = reschedulable_booking(booking.id, version: version)
       selected = rescheduling_date(original, date)
       original.close!('rescheduled', explanation(reason), @user, session: session)
-      @booking = create_record(selected, previous: original)
+      @booking = create_record(selected, previous: original, session: session)
       claim = claims.find_by(booking_id: original.id)
       claim.update!(booking: @booking, date: @booking.date, ends_at: @booking.ends_at)
     end

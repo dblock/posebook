@@ -101,5 +101,7 @@ class Booking
     raise BookingMutation::Stale, program.message('bookings.stale') unless result.modified_count == 1
 
     reload
+    GoogleCalendarSync.enqueue(self, session: session)
+    self
   end
 end

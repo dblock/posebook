@@ -11,7 +11,7 @@ class OrganizerBookingMutation
 
   def create(attributes)
     run do |session|
-      @booking = build_booking(attributes)
+      @booking = build_booking(attributes, session: session)
       BookingClaim.create!(program: @program, user: @booking.user, booking: @booking,
                            date: @booking.date, ends_at: @booking.ends_at)
       update_attendance(attributes, session)
@@ -62,7 +62,7 @@ class OrganizerBookingMutation
     booking
   end
 
-  def build_booking(attributes, previous: nil)
+  def build_booking(attributes, previous: nil, session: nil)
     date = available_date(attributes[:date], excluding: previous&.id)
     participant = if previous
                     replacement_participant(previous,
@@ -71,7 +71,7 @@ class OrganizerBookingMutation
                     participant_for(attributes[:user_id])
                   end
     reason = gender_override(date, participant, attributes, excluding: previous&.id)
-    create_record(date, user: participant, previous: previous, gender_override_reason: reason)
+    create_record(date, user: participant, previous: previous, gender_override_reason: reason, session: session)
   end
 
   def gender_override(date, participant, attributes, excluding:)
@@ -97,7 +97,7 @@ class OrganizerBookingMutation
     return original if attributes.values_at(:date, :user_id) == [original.date.iso8601, original.user_id.to_s]
 
     original.close!('rescheduled', explanation(attributes[:reason]), @user, session: session)
-    replacement = build_booking(attributes, previous: original)
+    replacement = build_booking(attributes, previous: original, session: session)
     replace_claim(original, replacement)
     replacement
   end

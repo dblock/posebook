@@ -1,4 +1,10 @@
 ActionMailer
+AES
+Auth
+GCM
+OAuth
+backoff
+Posebook's
 ActiveJob
 ActiveJob's
 addToSet

@@ -22,6 +22,8 @@ RSpec.configure do |config|
     ParticipantInvitation.create_indexes
     Booking.create_indexes
     BookingClaim.create_indexes
+    GoogleCalendarConnection.create_indexes
+    GoogleCalendarSync.create_indexes
     ProfilePhoto.storage.file_model.create_indexes
     ProfilePhoto.storage.chunk_model.create_indexes
     ActiveModel::SecurePassword.min_cost = true

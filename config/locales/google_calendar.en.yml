@@ -1,0 +1,8 @@
+en:
+  google_calendar:
+    configured: Google Calendar connected. Upcoming bookings are queued.
+    failed: Google authorization failed. Check calendar access and reconnect.
+    unavailable: Google Calendar is not configured.
+    private_required: Provide a calendar ID and confirm that access is restricted.
+    disconnect_first: Disconnect and remove old events before changing calendars.
+    disconnected: Synchronization stopped. Existing Google events and invitations are unchanged.
