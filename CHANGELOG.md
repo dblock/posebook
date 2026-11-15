@@ -91,4 +91,5 @@
 - [#101](https://github.com/dblock/posebook/pull/101): Show placeholder portraits and compact access buttons in the admin user directory and mark single-item breadcrumbs - [@dblock](https://github.com/dblock).
 - [#102](https://github.com/dblock/posebook/pull/102): Allow audited account access changes for users with incomplete profiles and prevent blank failure alerts - [@dblock](https://github.com/dblock).
 - [#103](https://github.com/dblock/posebook/pull/103): Let admins activate or deactivate venues and venue coordinators manage program activation while retaining existing bookings and history - [@dblock](https://github.com/dblock).
+- [#104](https://github.com/dblock/posebook/pull/104): Show only programs on venue program pages and group Photos, Programs, and participant management after the tab separator - [@dblock](https://github.com/dblock).
 - Your contribution here.

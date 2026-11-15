@@ -1,5 +1,5 @@
-<% tabs = [["view", "View", profile_path], ["history", "History", history_profile_path], ["details", "Account Details", details_profile_path], ["photos", "Photos", participant_path(current_user)]] %>
-<% actions = [["edit", "Edit", edit_profile_path], ["security", "Security", security_profile_path]] %>
+<% tabs = [["view", "View", profile_path], ["history", "History", history_profile_path], ["details", "Account Details", details_profile_path]] %>
+<% actions = [["photos", "Photos", participant_path(current_user)], ["edit", "Edit", edit_profile_path], ["security", "Security", security_profile_path]] %>
 <% breadcrumbs = [["Profile", profile_path]] %>
 <% breadcrumbs << [(tabs + actions).find { |key, _, _| key == active }[1], nil] unless active == "view" %>
 <%= render "shared/page_navigation", breadcrumbs: breadcrumbs, tabs: tabs, actions: actions, active: active, tabs_class: "profile-tabs", label: "Profile navigation" %>
