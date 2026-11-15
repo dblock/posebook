@@ -1,10 +1,9 @@
-<% tabs = [["view", "View", venue_path(venue)], ["programs", "Programs", programs_venue_path(venue)], ["photos", "Photos", photos_venue_path(venue)]] %>
-<% actions = [] %>
-<% if venue.coordinated_by?(current_user) %>
-  <% actions << ["edit", "Edit", edit_venue_path(venue)] %>
-  <% actions << ["new_program", "Create Program", new_venue_program_path(venue)] %>
-<% end %>
+<% tabs = [["view", "View", venue_path(venue)]] %>
+<% actions = [["programs", "Programs", programs_venue_path(venue)], ["photos", "Photos", photos_venue_path(venue)]] %>
+<% manager = venue.coordinated_by?(current_user) %>
+<% actions << ["edit", "Edit", edit_venue_path(venue)] if manager %>
 <% actions << ["coordinators", "Coordinators", venue_coordinators_path(venue)] if current_user&.system_admin? %>
+<% actions << ["new_program", "Create Program", new_venue_program_path(venue)] if manager %>
 <% breadcrumbs = [["Venues", venues_path], [venue.name, venue_path(venue)]] %>
 <% section = (tabs + actions).find { |key, _, _| key == active } %>
 <% breadcrumbs << [section[1], section[2]] if section && active != "view" %>

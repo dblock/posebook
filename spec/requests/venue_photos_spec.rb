@@ -42,9 +42,17 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     expect(response.parsed_body.css('.directory-tabs a').map(&:text)).not_to include('Programs')
     delete session_path
     get programs_venue_path(venue)
-    expect(response.parsed_body.at_css('.venue-tabs [aria-current="page"]').text).to eq('Programs')
+    expect(response.parsed_body.at_css('.venue-tabs .page-tab-group:last-child [aria-current="page"]').text)
+      .to eq('Programs')
+    expect(response.parsed_body.css('.venue-card')).to be_empty
     expect(response.parsed_body.at_css('.program-card').text).to include(program.name, venue.address)
     expect(response.body).not_to include('Private instructions')
+  end
+
+  it 'shows only the programs empty state when a venue has no programs' do
+    get programs_venue_path(venue)
+    expect(response.body).to include('No programs yet.')
+    expect(response.parsed_body.css('.venue-card, .program-card')).to be_empty
   end
 
   it 'lets admins upload public venue photos and shows square thumbnails without guest edit controls' do
@@ -76,23 +84,24 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     sign_in(admin)
     get edit_venue_path(venue)
     expect(response.parsed_body.css('.venue-tabs a').map(&:text))
-      .to eq(['View', 'Programs', 'Photos', 'Edit', 'Create Program', 'Coordinators'])
+      .to eq(['View', 'Programs', 'Photos', 'Edit', 'Coordinators', 'Create Program'])
     expect(response.parsed_body.at_css('.venue-tabs [aria-current="page"]').text).to eq('Edit')
   end
 
-  it 'groups venue creation and management separately without showing actions to public visitors' do
+  it 'groups programs and photos with management while keeping write actions private' do
     sign_in(admin)
     get venues_path
     expect(response.parsed_body.css('.directory-tabs .page-tab-group').map { |group| group.css('a').map(&:text) })
       .to eq([['Venues'], ['Create Venue']])
     get edit_venue_path(venue)
     expect(response.parsed_body.css('.venue-tabs .page-tab-group').map { |group| group.css('a').map(&:text) })
-      .to eq([%w[View Programs Photos], ['Edit', 'Create Program', 'Coordinators']])
+      .to eq([['View'], ['Programs', 'Photos', 'Edit', 'Coordinators', 'Create Program']])
     expect(response.parsed_body.at_css('.venue-tabs [aria-current="page"]').text).to eq('Edit')
     delete session_path
     get venue_path(venue)
-    expect(response.parsed_body.at_css('.tab-separator')).to be_nil
-    expect(response.parsed_body.css('.venue-tabs a').map(&:text)).to eq(%w[View Programs Photos])
+    expect(response.parsed_body.at_css('.venue-tabs .tab-separator')['aria-hidden']).to eq('true')
+    expect(response.parsed_body.css('.venue-tabs .page-tab-group').map { |group| group.css('a').map(&:text) })
+      .to eq([['View'], %w[Programs Photos]])
   end
 
   it 'serves full-size and square optimized WebP images publicly without persistent caching' do

@@ -43,7 +43,7 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     expect(response.parsed_body.css('.account-details')).to be_empty
     groups = response.parsed_body.css('.profile-tabs .page-tab-group')
     expect(groups.map { |group| group.css('a').map(&:text) })
-      .to eq([['View', 'History', 'Account Details', 'Photos'], %w[Edit Security]])
+      .to eq([['View', 'History', 'Account Details'], %w[Photos Edit Security]])
     expect(response.parsed_body.at_css('.profile-tabs .tab-separator')['aria-hidden']).to eq('true')
     get details_profile_path(user_id: other.id)
     expect(response.parsed_body.at_css('.account-details').text).to include(user.email)
