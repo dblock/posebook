@@ -4,13 +4,8 @@
   <% unless @program.booking_active? %><p role="status"><%= t('locations.inactive') %></p><% end %>
   <% if @section == "view" %>
   <p><%= render "shared/copy_button", url: program_url(@program), label: "#{@program.name} link" %></p>
-  <% if (photo = @program.primary_photo) %>
-    <figure class="program-primary-photo">
-      <%= render "shared/photo_thumbnail", full_url: program_photo_path(@program, photo),
-                 thumbnail_url: program_photo_path(@program, photo, thumbnail: 1), description: "#{@program.name} primary photo" %>
-    </figure>
-  <% end %>
-  <%= render "venues/card", venue: @program.venue %>
+  <%= render "next_session" %>
+  <%= render "venues/card", venue: @program.venue, show_photo: false %>
   <dl>
     <dt>Time Zone</dt><dd><%= @program.time_zone %></dd>
     <dt>Regular Schedule</dt><dd><%= program_schedule_summary(@program) %></dd>

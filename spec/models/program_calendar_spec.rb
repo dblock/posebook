@@ -19,6 +19,31 @@ RSpec.describe ProgramCalendar, :aggregate_failures do
     end
   end
 
+  it 'finds the next future session in the program time zone and skips sessions that have started' do
+    travel_to Time.utc(2026, 11, 16, 23) do
+      expect(described_class.new(program).next_session_date).to eq(Date.new(2026, 11, 16))
+    end
+    travel_to Time.utc(2026, 11, 16, 23, 30) do
+      expect(described_class.new(program).next_session_date).to eq(Date.new(2026, 11, 23))
+    end
+    travel_to Time.utc(2026, 11, 17, 1) do
+      expect(described_class.new(program).next_session_date).to eq(Date.new(2026, 11, 23))
+    end
+  end
+
+  it 'skips sessions whose start or overnight end does not exist because of daylight saving' do
+    travel_to Time.utc(2027, 3, 13, 15) do
+      program.available_weekdays = ['6']
+      program.start_time = '23:00'
+      program.end_time = '02:30'
+      expect(described_class.new(program).next_session_date).to eq(Date.new(2027, 3, 20))
+      program.available_weekdays = ['0']
+      program.start_time = '02:30'
+      program.end_time = nil
+      expect(described_class.new(program).next_session_date).to eq(Date.new(2027, 3, 21))
+    end
+  end
+
   it 'blocks past dates and dates beyond the calendar-month horizon' do
     travel_to Time.utc(2026, 11, 16, 15) do
       calendar = described_class.new(program)

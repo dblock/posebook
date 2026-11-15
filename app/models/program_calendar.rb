@@ -33,6 +33,16 @@ class ProgramCalendar
     @starts.fetch(date) { @starts[date] = schedule.starts_at(date) }
   end
 
+  def next_session_date
+    (today..last_date).find { |date| session_on?(date) && starts_at(date) > Time.current }
+  end
+
+  def next_session
+    date = next_session_date
+    booking = program.bookings.where(date: date, status: 'confirmed').includes(:user).first if date
+    [date, booking]
+  end
+
   def ends_at(date)
     @ends.fetch(date) { @ends[date] = schedule.ends_at(date) }
   end

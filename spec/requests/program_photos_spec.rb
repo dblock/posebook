@@ -93,11 +93,26 @@ RSpec.describe 'Program photos', :aggregate_failures, :database, type: :request 
     change = program.history_tracks.last
     expect(change.modified['primary_photo_id']).to eq(second.id)
     expect(change.modifier_id).to eq(coordinator.id)
-    [program_path(program), programs_venue_path(program.venue)].each do |path|
+    [photos_program_path(program), programs_venue_path(program.venue)].each do |path|
       get path
       expect(response.parsed_body.at_css("img[src='#{program_photo_path(program, second, thumbnail: 1)}']"))
         .to be_present
     end
+  end
+
+  it 'keeps program and venue photos off the program overview without removing their galleries' do
+    get program_path(program)
+    expect(response.parsed_body.css('main img, main [data-photo-preview]')).to be_empty
+    photo
+    VenuePhoto.add(program.venue, photo_upload)
+    get program_path(program)
+    expect(response.parsed_body.css('main img, main [data-photo-preview]')).to be_empty
+    expect(response.parsed_body.at_css('.venue-card').text).to include(program.venue.name, program.venue.address)
+    get photos_program_path(program)
+    expect(response.parsed_body.at_css('.program-photo img')['src'])
+      .to eq(program_photo_path(program, photo, thumbnail: 1))
+    get photos_venue_path(program.venue)
+    expect(response.parsed_body.css('.venue-photo img').size).to eq(1)
   end
 
   it 'requires authentication and program management for writes without granting venue editing' do

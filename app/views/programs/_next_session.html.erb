@@ -1,0 +1,22 @@
+<section class="next-session attendance-panel" aria-labelledby="next-session-heading">
+  <h2 id="next-session-heading">Next <%= @program.program_label.titleize %></h2>
+  <% if @next_session_date %>
+    <dl>
+      <dt>Date</dt>
+      <dd><time datetime="<%= (@next_session_booking&.scheduled_start || @calendar.starts_at(@next_session_date)).iso8601 %>"><%= @next_session_date.strftime("%A, %B %-d, %Y") %></time></dd>
+      <dt>Time</dt>
+      <dd><%= @next_session_booking ? calendar_booking_time(@next_session_booking) : scheduled_calendar_time(@calendar, @next_session_date) %> (<%= @next_session_booking&.time_zone || @program.time_zone %>)</dd>
+      <dt><%= @program.participant_label.titleize %></dt>
+      <dd>
+        <% if @next_session_booking&.user&.active? %>
+          <%= render "booked_participant", booking: @next_session_booking, manager: false %>
+        <% else %>
+          To be announced
+        <% end %>
+      </dd>
+    </dl>
+  <% else %>
+    <p>No scheduled <%= @program.program_label.pluralize.downcase %> within the booking window.</p>
+  <% end %>
+  <p><%= link_to "View Calendar", program_path(@program, section: "calendar", month: @next_session_date&.strftime("%Y-%m")) %></p>
+</section>
