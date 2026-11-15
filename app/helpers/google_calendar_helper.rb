@@ -4,7 +4,7 @@ module GoogleCalendarHelper
   def google_calendar_rsvp(program, booking)
     return unless booking.status == 'confirmed'
 
-    responses = request.env['posebook.google_calendar_responses'] ||= {}
+    responses = @google_calendar_responses ||= {}
     responses[program.id] ||= google_calendar_responses(program)
     responses[program.id][booking.id]
   end
@@ -21,8 +21,11 @@ module GoogleCalendarHelper
   end
 
   def google_calendar_manager?(program)
-    dashboard = request.env['posebook.dashboard']
-    dashboard ? dashboard.managed_program_ids.include?(program.id) : program.managed_by?(current_user)
+    if respond_to?(:participant_dashboard)
+      participant_dashboard.managed_program_ids.include?(program.id)
+    else
+      program.managed_by?(current_user)
+    end
   end
 
   def google_calendar_snapshots(program_id, calendar_id)

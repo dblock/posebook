@@ -1,13 +1,11 @@
 # frozen_string_literal: true
 
 class ProfilesController < ApplicationController
+  helper_method :participant_dashboard
   before_action :require_authentication
   before_action -> { @user = current_user }
 
-  def show
-    @dashboard = ParticipantDashboard.new(@user)
-    request.env['posebook.dashboard'] = @dashboard
-  end
+  def show; end
 
   def history
     @history = ParticipantHistory.new(@user, page: params[:page])
