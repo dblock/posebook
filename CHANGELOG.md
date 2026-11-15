@@ -83,4 +83,5 @@
 - [#91](https://github.com/dblock/posebook/pull/91): Show shared upcoming booking cards on home and session pages with button actions, venue locations, and chosen primary venue photos - [@dblock](https://github.com/dblock).
 - [#92](https://github.com/dblock/posebook/pull/92): Organize navigation around photo-led venues, add program galleries and primary photos, remove photo-count caps, and put model bookings and history in the profile - [@dblock](https://github.com/dblock).
 - [#94](https://github.com/dblock/posebook/pull/94): Add safe reproducible benchmarks, batch dashboard/photo/calendar reads, and index and paginate private booking history - [@dblock](https://github.com/dblock).
+- [#96](https://github.com/dblock/posebook/pull/96): Separate information and editing tabs, move account details to a photo-free profile tab, and show Users in the admin header - [@dblock](https://github.com/dblock).
 - Your contribution here.

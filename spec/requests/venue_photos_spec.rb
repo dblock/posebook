@@ -80,6 +80,21 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     expect(response.parsed_body.at_css('.venue-tabs [aria-current="page"]').text).to eq('Edit')
   end
 
+  it 'groups venue creation and management separately without showing actions to public visitors' do
+    sign_in(admin)
+    get venues_path
+    expect(response.parsed_body.css('.directory-tabs .page-tab-group').map { |group| group.css('a').map(&:text) })
+      .to eq([['Venues'], ['Create Venue']])
+    get edit_venue_path(venue)
+    expect(response.parsed_body.css('.venue-tabs .page-tab-group').map { |group| group.css('a').map(&:text) })
+      .to eq([%w[View Programs Photos], ['Edit', 'Create Program', 'Coordinators']])
+    expect(response.parsed_body.at_css('.venue-tabs [aria-current="page"]').text).to eq('Edit')
+    delete session_path
+    get venue_path(venue)
+    expect(response.parsed_body.at_css('.tab-separator')).to be_nil
+    expect(response.parsed_body.css('.venue-tabs a').map(&:text)).to eq(%w[View Programs Photos])
+  end
+
   it 'serves full-size and square optimized WebP images publicly without persistent caching' do
     get venue_photo_path(venue, photo)
     expect(response.media_type).to eq('image/webp')

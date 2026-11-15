@@ -8,6 +8,23 @@ RSpec.describe 'Administrator user editing', :aggregate_failures, :database, typ
                                                 .merge(attributes) }
   end
 
+  it 'shows Users only in the administrator header and groups user photo viewing apart from editing' do
+    admin = create_user(roles: ['system_admin'])
+    user = create_user
+    sign_in(admin)
+    get profile_path
+    expect(response.parsed_body.at_css("header a[href='#{admin_users_path}']").text).to eq('Users')
+    expect(response.parsed_body.css('.profile-tabs a').map(&:text)).not_to include('Users')
+    get edit_admin_user_path(user)
+    expect(response.parsed_body.css('.user-tabs .page-tab-group').map { |group| group.css('a').map(&:text) })
+      .to eq([%w[Users Photos], ['Edit']])
+    sign_in(user)
+    get profile_path
+    expect(response.parsed_body.at_css("header a[href='#{admin_users_path}']")).to be_nil
+    get admin_users_path
+    expect(response).to have_http_status(:forbidden)
+  end
+
   it 'labels account access states consistently without changing their controls' do
     create_user
     create_user(active: false)

@@ -14,8 +14,8 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
 
   it 'requires authentication for all account pages and password changes' do
     create_user
-    [profile_path, history_profile_path, edit_profile_path, security_profile_path, edit_password_path,
-     new_account_deactivation_path].each do |path|
+    [profile_path, history_profile_path, details_profile_path, edit_profile_path, security_profile_path,
+     edit_password_path, new_account_deactivation_path].each do |path|
       get path
       expect(response).to redirect_to(new_session_path)
     end
@@ -26,11 +26,28 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
   it 'shows account information and edit links without editing forms' do
     user = create_user
     sign_in(user)
-    get profile_path
+    get details_profile_path
     expect(response.body).to include(user.name, user.email, 'Not provided')
     expect(response.parsed_body.css('main form')).to be_empty
     expect(response.parsed_body.css('.profile-tabs a').pluck('href'))
-      .to eq([profile_path, history_profile_path, edit_profile_path, participant_path(user), security_profile_path])
+      .to eq([profile_path, history_profile_path, details_profile_path, participant_path(user), edit_profile_path,
+              security_profile_path])
+    expect(response.parsed_body.at_css('.profile-tabs [aria-current="page"]').text).to eq('Account Details')
+  end
+
+  it 'separates account information from editing and keeps details scoped to the signed-in owner' do
+    user = create_user
+    other = create_user
+    sign_in(user)
+    get profile_path
+    expect(response.parsed_body.css('.account-details')).to be_empty
+    groups = response.parsed_body.css('.profile-tabs .page-tab-group')
+    expect(groups.map { |group| group.css('a').map(&:text) })
+      .to eq([['View', 'History', 'Account Details', 'Photos'], %w[Edit Security]])
+    expect(response.parsed_body.at_css('.profile-tabs .tab-separator')['aria-hidden']).to eq('true')
+    get details_profile_path(user_id: other.id)
+    expect(response.parsed_body.at_css('.account-details').text).to include(user.email)
+    expect(response.body).not_to include(other.email)
   end
 
   it 'groups security forms while keeping profile editing separate and old security URLs usable' do
@@ -52,7 +69,7 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     user = create_user
     sign_in(user)
     update_profile(user, name: 'Updated Participant', phone: '(212) 555-1234', roles: ['system_admin'], active: false)
-    expect(response).to redirect_to(profile_path)
+    expect(response).to redirect_to(details_profile_path)
     follow_redirect!
     expect(response.body).to include('Profile saved.', 'Updated Participant', '+12125551234')
     expect(response.parsed_body.css('main form')).to be_empty
@@ -89,7 +106,7 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     sign_in(user)
     update_profile(user, display_name: '  Alex Participant  ',
                          instagram_handle: 'https://www.instagram.com/Alex.Participant/?igsh=tracking')
-    expect(response).to redirect_to(profile_path)
+    expect(response).to redirect_to(details_profile_path)
     follow_redirect!
     expect(response.parsed_body.text).to include('Profile saved.', 'Alex Participant', '@alex.participant',
                                                  'Off: Instagram stays private')
@@ -140,10 +157,10 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     expect(response).to have_http_status(:unprocessable_content)
     expect(user.reload).to have_attributes(instagram_tagging_allowed: false, instagram_handle: nil)
     update_profile(user, instagram_tagging_allowed: '1', instagram_handle: '@Preview.Artist')
-    expect(response).to redirect_to(profile_path)
+    expect(response).to redirect_to(details_profile_path)
     expect(user.reload.public_instagram_handle).to eq('preview.artist')
     update_profile(user, instagram_tagging_allowed: '0', instagram_handle: '')
-    expect(response).to redirect_to(profile_path)
+    expect(response).to redirect_to(details_profile_path)
     expect(user.reload).to have_attributes(instagram_tagging_allowed: false, instagram_handle: nil)
   end
 

@@ -3,6 +3,7 @@
 resource(:profile, only: %i[show edit update]) do
   get :security
   get :history
+  get :details
 end
 resource :password, only: %i[edit update]
 resource :account_deactivation, only: %i[new create]
