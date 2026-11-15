@@ -16,11 +16,13 @@
                    description: "#{program.name} photo #{index + 1}" %>
         <% if editable %>
           <% if photo == primary_photo %>
-            <figcaption><%= status_label("Primary") %></figcaption>
+            <figcaption class="photo-primary-control"><%= status_label("Primary") %></figcaption>
           <% else %>
-            <%= button_to "Set Primary Photo", program_photo_path(program, photo), method: :patch %>
+            <div class="photo-primary-control">
+              <%= button_to "Set Primary Photo", program_photo_path(program, photo), method: :patch, class: "secondary-action" %>
+            </div>
           <% end %>
-          <%= button_to "Delete Photo", program_photo_path(program, photo), method: :delete %>
+          <%= button_to "Delete Photo", program_photo_path(program, photo), method: :delete, class: "secondary-action" %>
         <% end %>
       </figure>
     <% end %>

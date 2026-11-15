@@ -67,6 +67,22 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
     expect(membership.reload.history_tracks.last.modifier_id).to eq(organizer.id)
   end
 
+  it 'keeps invitations in booking access and only pause or resume controls in actions' do
+    membership
+    manage_participants
+    get program_participants_path(program)
+    row = response.parsed_body.at_css("tr[data-membership='#{membership.id}']")
+    expect(row.at_css('td:nth-child(2) form')['action']).to eq(invite_program_participant_path(program, membership,
+                                                                                               page: 1))
+    expect(row.at_css('.participant-actions').text).not_to include('View Photos', 'Invite to Book')
+    expect(row.at_css('.participant-pause summary').text).to eq('Pause Participant')
+    membership.update!(participant_paused: true, participant_pause_reason: 'Travel.')
+    get program_participants_path(program)
+    actions = response.parsed_body.at_css("tr[data-membership='#{membership.id}'] .participant-actions")
+    expect(actions.css('button').map(&:text)).to eq(['Resume Participant'])
+    expect(actions.css('a, details')).to be_empty
+  end
+
   it 'shows only paused for a paused participant while retaining the booking details as plain text' do
     membership
     booking = track_booking(BookingMutation.new(program: program,
