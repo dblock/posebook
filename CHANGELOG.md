@@ -106,4 +106,5 @@
 - [#119](https://github.com/dblock/posebook/pull/119): Let assigned coordinators edit participant account and public display names with audited, program-private coordinator notes - [@dblock](https://github.com/dblock).
 - [#120](https://github.com/dblock/posebook/pull/120): Add program-scoped application lifecycle with reversible Not Now decisions, shared participant admission, and distinct retained history - [@dblock](https://github.com/dblock).
 - [#121](https://github.com/dblock/posebook/pull/121): Add email-verified account preparation for opt-in program applications without granting participant or booking access - [@dblock](https://github.com/dblock).
+- [#122](https://github.com/dblock/posebook/pull/122): Add applicant submission and status pages, scoped coordinator review and reconsideration, consented private-profile access, withdrawal, and distinct participation history - [@dblock](https://github.com/dblock).
 - Your contribution here.

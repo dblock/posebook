@@ -8,6 +8,9 @@ class ParticipantApplication
   belongs_to :user, inverse_of: nil
   field :status, type: String, default: 'pending'
   field :message, type: String
+  field :name, type: String
+  field :email, type: String
+  field :gender, type: String
   field :profile_shared_at, type: Time
   field :lock_version, type: Integer, default: 0
 

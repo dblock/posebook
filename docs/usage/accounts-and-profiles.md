@@ -2,7 +2,11 @@
 
 [Back to Posebook](../../README.md)
 
-Sign in with your email and password, or use the password-reset link if you cannot sign in. Registration is invitation-based after the first administrator account has been created.
+Sign in with your email and password, or use the password-reset link if you cannot sign in. After the first administrator account, registration requires an invitation or email verification for a program accepting participation applications.
+
+On an open program, choose **Apply to Participate**. Sign in with a verified account, or request a 30-minute verification link and create/verify your account. Prepare your account details and photos before explicitly submitting the application and profile-sharing consent. Applying does not enroll you or permit booking. The program's reviewing coordinators can see your private contact details, gender, profile, and photos while the application is Pending or Not Now.
+
+Use **Profile > Applications** to see your own status and history. **Not Now** means the program is not accepting you right now and can reconsider later without a new submission. You can **Withdraw Application** before acceptance to prevent future acceptance and end application-only review; retained history remains, and existing participant access is unchanged. A withdrawn application cannot be reopened; ask an organizer for an invitation if you later wish to participate. Reviewer notes are never shown to applicants.
 
 Password-reset and email-change instructions are queued for email delivery. Their links expire 30 minutes after the request, not after delivery; requesting new instructions invalidates the previous link. Profile email changes keep your current login address until you follow the verification link. If email is delayed or expired, request new instructions or contact an organizer.
 

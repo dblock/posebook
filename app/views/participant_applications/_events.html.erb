@@ -1,0 +1,12 @@
+<ol>
+  <% events.each do |event| %>
+    <li>
+      <strong><%= participation_event_label(event) %></strong> -
+      <time datetime="<%= event.created_at.iso8601 %>"><%= l(event.created_at.in_time_zone(@program.time_zone), format: :long) %></time>
+      <% if private_notes %>
+        by <%= participation_actor_label(event, local_assigns[:source]) %>
+        <% if event.notes.present? %><p><strong>Private Reviewer Notes:</strong> <%= event.notes %></p><% end %>
+      <% end %>
+    </li>
+  <% end %>
+</ol>

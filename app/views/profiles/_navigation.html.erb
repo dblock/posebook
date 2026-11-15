@@ -1,4 +1,5 @@
 <% tabs = [["view", "View", profile_path], ["history", "History", history_profile_path], ["details", "Account Details", details_profile_path]] %>
+<% tabs << ["applications", "Applications", applications_profile_path] %>
 <% actions = [["photos", "Photos", participant_path(current_user)], ["edit", "Edit", edit_profile_path], ["security", "Security", security_profile_path]] %>
 <% breadcrumbs = [["Profile", profile_path]] %>
 <% breadcrumbs << [(tabs + actions).find { |key, _, _| key == active }[1], nil] unless active == "view" %>

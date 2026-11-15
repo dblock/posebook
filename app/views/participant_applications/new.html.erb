@@ -1,0 +1,13 @@
+<main>
+  <%= render "programs/navigation", program: @program, active: "view", detail: "Apply" %>
+  <h1>Apply to <%= @program.name %></h1>
+  <p>Prepare your <%= link_to "Account Details", details_profile_path, target: "_blank", rel: "noopener" %> and <%= link_to "Photos", participant_path(current_user), target: "_blank", rel: "noopener" %> before applying. These links open separately so you can return here.</p>
+  <p>Acceptance grants participation and an initial booking invitation, subject to the program's existing booking rules. Applying alone does not grant access.</p>
+  <%= render "shared/errors", record: @application %>
+  <%= form_with url: program_participation_application_path(@program), scope: :participant_application do |form| %>
+    <p><%= form.label :message, "Message (Optional)" %><br><%= form.text_area :message, value: @application.message, maxlength: 5000, rows: 5 %></p>
+    <p><label><%= form.check_box :consent, { required: true }, "1", "0" %> I agree to share my account contact details, gender, profile, and all photos (including private photos) with this program's reviewing coordinators.</label></p>
+    <p>Review access continues after Not Now so coordinators can reconsider later. You can withdraw an unaccepted application to stop application-only review and future acceptance. Accepted participants use the existing organizer-access policy. Your application and decision history are retained; reviewer notes remain private.</p>
+    <%= form.submit "Submit Application" %>
+  <% end %>
+</main>

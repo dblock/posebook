@@ -37,7 +37,7 @@ class SessionsController < ApplicationController
     return invitation_path(token: invitation) if invitation
     return application_verification_path(token: registration) if registration
 
-    booking_return_path(session[:booking_program], user)
+    application_return_path(user) || booking_return_path(session[:booking_program], user)
   end
 
   def sign_out_destination
@@ -54,5 +54,27 @@ class SessionsController < ApplicationController
     id ? program_path(Program.visible_to(user).find(id), section: 'calendar') : root_path
   rescue Mongoid::Errors::DocumentNotFound
     root_path
+  end
+
+  def application_return_path(user)
+    session[:application_review] ? application_review_path(user) : applicant_return_path
+  rescue Mongoid::Errors::DocumentNotFound
+    root_path
+  end
+
+  def application_review_path(user)
+    destination = session[:application_review]
+    program = Program.managed_by(user).find(destination['program'])
+    return program_applications_path(program) unless destination['application']
+
+    application = ParticipantApplication.where(program_id: program.id).find(destination['application'])
+    program_application_path(program, application)
+  end
+
+  def applicant_return_path
+    return unless session[:application_program]
+
+    program = Program.find(session[:application_program])
+    new_program_participation_application_path(program) if program.booking_active? && program.applications_enabled?
   end
 end

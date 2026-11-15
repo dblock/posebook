@@ -30,8 +30,8 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     expect(response.body).to include(user.name, user.email, 'Not provided')
     expect(response.parsed_body.css('main form')).to be_empty
     expect(response.parsed_body.css('.profile-tabs a').pluck('href'))
-      .to eq([profile_path, history_profile_path, details_profile_path, participant_path(user), edit_profile_path,
-              security_profile_path])
+      .to eq([profile_path, history_profile_path, details_profile_path, applications_profile_path,
+              participant_path(user), edit_profile_path, security_profile_path])
     expect(response.parsed_body.at_css('.profile-tabs [aria-current="page"]').text).to eq('Account Details')
   end
 
@@ -43,7 +43,7 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     expect(response.parsed_body.css('.account-details')).to be_empty
     groups = response.parsed_body.css('.profile-tabs .page-tab-group')
     expect(groups.map { |group| group.css('a').map(&:text) })
-      .to eq([['View', 'History', 'Account Details'], %w[Photos Edit Security]])
+      .to eq([['View', 'History', 'Account Details', 'Applications'], %w[Photos Edit Security]])
     expect(response.parsed_body.at_css('.profile-tabs .tab-separator')['aria-hidden']).to eq('true')
     get details_profile_path(user_id: other.id)
     expect(response.parsed_body.at_css('.account-details').text).to include(user.email)

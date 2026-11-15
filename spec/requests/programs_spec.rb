@@ -114,7 +114,7 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     sign_in(organizer)
     get program_participants_path(program)
     expect(response.parsed_body.css('.program-tabs .page-tab-group').map { |group| group.css('a').map(&:text) })
-      .to eq([%w[View Calendar History], ['Photos', 'Models', 'Edit', 'Google Calendar']])
+      .to eq([%w[View Calendar History], ['Photos', 'Models', 'Applications', 'Edit', 'Google Calendar']])
     expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Models')
     expect(response.body).to include('Model Invitations')
     get program_coordinators_path(program)
@@ -124,7 +124,8 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     get program_coordinators_path(program)
     expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Coordinators')
     expect(response.parsed_body.css('.program-tabs a').map(&:text))
-      .to eq(['View', 'Calendar', 'History', 'Photos', 'Models', 'Edit', 'Coordinators', 'Google Calendar'])
+      .to eq(['View', 'Calendar', 'History', 'Photos', 'Models', 'Applications', 'Edit', 'Coordinators',
+              'Google Calendar'])
   end
 
   it 'places program settings and Google Calendar in tabs with matching breadcrumbs' do

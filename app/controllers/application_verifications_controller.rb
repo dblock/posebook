@@ -18,7 +18,7 @@ class ApplicationVerificationsController < InvitationAcceptancesController
   end
 
   def accepted_location
-    program_path(@program)
+    new_program_participation_application_path(@program)
   end
 
   def acceptance_notice

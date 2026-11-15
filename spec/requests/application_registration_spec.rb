@@ -56,7 +56,7 @@ RSpec.describe 'Application account verification', :aggregate_failures, :databas
   it 'creates only a verified ordinary account and consumes the link without approving an application' do
     registration = challenge
     register(registration, roles: ['system_admin'], active: false, program_id: program.id)
-    expect(response).to redirect_to(program_path(program))
+    expect(response).to redirect_to(new_program_participation_application_path(program))
     user = track_record(User.find_by(email: registration.email))
     expect(user).to have_attributes(roles: [], active: true, public_profile_private: true)
     expect(user.email_verified_at).to be_present
@@ -94,7 +94,7 @@ RSpec.describe 'Application account verification', :aggregate_failures, :databas
     sign_in(user)
     expect(response).to redirect_to(application_verification_path(token: registration.token))
     post application_verification_path, params: { token: registration.token }
-    expect(response).to redirect_to(program_path(program))
+    expect(response).to redirect_to(new_program_participation_application_path(program))
     expect(user.reload).to have_attributes(roles: [], public_profile_private: true)
     expect(user.email_verified_at).to be_present
     expect(program.participant?(user)).to be(false)
