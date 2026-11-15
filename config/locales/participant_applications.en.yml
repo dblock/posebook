@@ -2,6 +2,6 @@ en:
   participant_applications:
     submitted: "Application submitted. Coordinator notification emails are queued. You have not been enrolled or given booking access."
     withdrawn: "Application withdrawn. Application-only profile review has ended; existing participant access is unchanged."
-    reviewed: "Application decision saved. The applicant notification email is queued."
+    reviewed: "Application decision saved. Notification emails are queued."
     notifications_unavailable: "Email notifications could not be queued. No application or decision was saved. Please try again later."
     duplicate: "You already have an application for this program."

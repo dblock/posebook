@@ -5,6 +5,7 @@ class InvitationAcceptancesController < ApplicationController
   rate_limit to: 5, within: 5.minutes, only: %i[create register]
   rescue_from Mongo::Error::OperationFailure, with: :handle_database_error
   rescue_from InvitationAcceptance::RecipientMismatch, with: :handle_recipient_mismatch
+  rescue_from EmailDelivery::Unavailable, with: :handle_notification_error
 
   def show
     session.delete(:invitation_token)
@@ -26,10 +27,8 @@ class InvitationAcceptancesController < ApplicationController
   def register
     return redirect_to acceptance_path if current_user
 
-    attributes = params.expect(user: %i[name email phone gender password password_confirmation
-                                        display_name instagram_handle instagram_tagging_allowed
-                                        public_profile_private]).to_h.symbolize_keys
-    @acceptance = InvitationAcceptance.new(token: @token, attributes: attributes, invitation_class: invitation_class)
+    @acceptance = InvitationAcceptance.new(token: @token, attributes: registration_attributes,
+                                           invitation_class: invitation_class)
     finish_acceptance
   rescue Mongoid::Errors::Validations
     @user = @acceptance.user
@@ -39,6 +38,18 @@ class InvitationAcceptancesController < ApplicationController
   end
 
   private
+
+  def registration_attributes
+    params.expect(user: %i[name email phone gender password password_confirmation
+                           display_name instagram_handle instagram_tagging_allowed
+                           public_profile_private]).to_h.symbolize_keys
+  end
+
+  def handle_notification_error
+    @user = current_user || User.new(registration_attributes.except(:password, :password_confirmation))
+    flash.now[:alert] = t('invitations.notifications_unavailable')
+    render :show, status: :service_unavailable
+  end
 
   def invitation_class
     ParticipantInvitation

@@ -1,0 +1,8 @@
+<%= @source %> for <%= @program.name %> was accepted.
+
+<%= @program.participant_label %>: <%= @participant.name.presence || @program.participant_label %>
+
+Sign in to review the participation history:
+<%= @history_url %>
+
+Existing booking rules, invitations, and pauses remain in effect. Accepting another invitation or application does not renew an existing participant's booking access.

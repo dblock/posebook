@@ -217,6 +217,20 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     expect(response.body).to include(applicant.email)
   end
 
+  it 'returns admission-email recipients to private history only within their management scope' do
+    application
+    get history_program_applications_path(program)
+    expect(response).to redirect_to(new_session_path)
+    sign_in(coordinator)
+    expect(response).to redirect_to(history_program_applications_path(program))
+    follow_redirect!
+    expect(response.body).to include('Participation History', applicant.email)
+    delete session_path
+    get history_program_applications_path(program)
+    sign_in(create_user)
+    expect(response).to redirect_to(root_path)
+  end
+
   it 'scopes review, queues, and history to direct or inherited coordinators' do
     outsider = create_user
     sign_in(outsider)

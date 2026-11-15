@@ -8,7 +8,7 @@ class EmailDelivery
   class Failed < StandardError; end
 
   KINDS = %w[password_reset email_change participant_invitation coordinator_invitation booking_invitation
-             application_registration participation_event].freeze
+             application_registration participation_event participation_admission].freeze
 
   field :kind, type: String
   field :resource_id, type: BSON::ObjectId
@@ -21,10 +21,12 @@ class EmailDelivery
   index({ resource_id: 1 })
   validates :kind, inclusion: { in: KINDS }
   validates :resource_id, presence: true
-  validates :encrypted_token, :expires_at, presence: true,
-                                           unless: -> { %w[booking_invitation participation_event].include?(kind) }
+  validates :encrypted_token, :expires_at,
+            presence: true, unless: lambda {
+              %w[booking_invitation participation_event participation_admission].include?(kind)
+            }
   validates :grant_invited_at, presence: true, if: -> { kind == 'booking_invitation' }
-  validates :recipient_id, presence: true, if: -> { kind == 'participation_event' }
+  validates :recipient_id, presence: true, if: -> { %w[participation_event participation_admission].include?(kind) }
 
   def self.enqueue(kind, resource, token: nil, expires_at: nil, grant_invited_at: nil)
     result = false

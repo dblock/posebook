@@ -1,0 +1,3 @@
+en:
+  invitations:
+    notifications_unavailable: "Coordinator notification emails could not be queued. The invitation was not accepted and no account or access was created. Please try again later."

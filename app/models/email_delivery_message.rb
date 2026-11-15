@@ -11,6 +11,11 @@ class EmailDeliveryMessage
 
   private
 
+  def participation_admission
+    event = ParticipationEvent.where(id: @delivery.resource_id).first
+    ParticipationNotification.new(event).admission_message_for(@delivery.recipient_id) if event
+  end
+
   def participation_event
     event = ParticipationEvent.where(id: @delivery.resource_id).first
     ParticipationNotification.new(event).message_for(@delivery.recipient_id) if event

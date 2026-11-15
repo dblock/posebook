@@ -22,6 +22,13 @@ RSpec.describe ParticipationNotification, :aggregate_failures, :database do
     track_participant_membership(program, applicant) if status == 'accepted'
   end
 
+  def accept_invitation(inviter: coordinator)
+    invitation = create_participant_invitation(program, inviter)
+    InvitationAcceptance.new(token: invitation.token, user: applicant).call
+    track_participant_membership(program, applicant)
+    invitation
+  end
+
   it 'notifies each active assigned program or venue coordinator once without exposing the recipient list' do
     inherited = create_user
     grant_venue_access(program.venue, inherited)
@@ -60,18 +67,24 @@ RSpec.describe ParticipationNotification, :aggregate_failures, :database do
   it 'sends acceptance with the existing calendar path and honest booking constraints' do
     decide('accepted')
     deliver_emails
-    mail = ActionMailer::Base.deliveries.last
+    mail = ActionMailer::Base.deliveries.find { |message| message.to == [applicant.email] }
     expect(mail.to).to eq([applicant.email])
     expect(mail.subject).to include('Application Accepted')
     expect(mail.body.decoded).to include(program_path(program, section: 'calendar'), 'any pause still apply')
     expect(mail.body.decoded).not_to include('Secret reviewer notes')
+    notice = ActionMailer::Base.deliveries.find { |message| message.to == [coordinator.email] }
+    expect(notice.subject).to include('Participation Accepted')
+    expect(notice.body.decoded).to include('A participation application', applicant.name,
+                                           history_program_applications_path(program))
+    expect(notice.body.decoded).not_to include('Secret reviewer notes', application.message, applicant.email)
   end
 
   it 'drops superseded submission and Not Now emails rather than sending them after acceptance' do
     decide('declined')
     decide('accepted')
-    expect { deliver_emails }.to change { ActionMailer::Base.deliveries.length }.by(1)
-    expect(ActionMailer::Base.deliveries.last.subject).to include('Application Accepted')
+    expect { deliver_emails }.to change { ActionMailer::Base.deliveries.length }.by(2)
+    expect(ActionMailer::Base.deliveries.map(&:subject))
+      .to contain_exactly("Application Accepted: #{program.name}", "Participation Accepted: #{program.name}")
   end
 
   it 'drops submission and decision emails after the owner withdraws' do
@@ -128,11 +141,128 @@ RSpec.describe ParticipationNotification, :aggregate_failures, :database do
 
   it 'rolls admission, revision, and decision history back when notification enqueue fails' do
     application
-    allow(EmailDeliveryJob).to receive(:perform_later).and_return(false)
-    expect { decide('accepted') }.to raise_error(EmailDelivery::Unavailable)
+    grant_venue_access(program.venue, create_user)
+    calls = 0
+    allow(EmailDeliveryJob).to receive(:perform_later).and_wrap_original do |original, *arguments|
+      calls += 1
+      calls < 3 ? original.call(*arguments) : false
+    end
+    expect { expect { decide('accepted') }.to raise_error(EmailDelivery::Unavailable) }.not_to change(QueuedJob, :count)
+    expect(calls).to eq(3)
     expect(application.reload).to have_attributes(status: 'pending', lock_version: 0)
     expect(application.events.map(&:action)).to eq(['application_submitted'])
     expect(program.participant?(applicant)).to be(false)
+  end
+
+  it 'notifies active assigned coordinators once when a personal invitation is accepted' do
+    inherited = create_user
+    grant_venue_access(program.venue, inherited)
+    grant_venue_access(program.venue, coordinator)
+    grant_coordinator_access(program, create_user(active: false))
+    create_user(roles: ['system_admin'])
+    invitation = accept_invitation
+    event = ParticipationEvent.find_by(source_id: invitation.id)
+    deliveries = EmailDelivery.where(kind: 'participation_admission', resource_id: event.id)
+    expect(deliveries.pluck(:recipient_id)).to contain_exactly(coordinator.id, inherited.id)
+    handler = QueuedJob.find(deliveries.first.queued_job_id).handler
+    expect(handler).to include(deliveries.first.id.to_s)
+    expect(handler).not_to include(applicant.email, coordinator.email, invitation.token, applicant.name)
+    deliver_emails
+    expect(ActionMailer::Base.deliveries.map(&:to)).to contain_exactly([coordinator.email], [inherited.email])
+    bodies = ActionMailer::Base.deliveries.map { |mail| mail.body.decoded }.join
+    expect(bodies).to include('A personal invitation', applicant.name, history_program_applications_path(program))
+    expect(bodies).not_to include(invitation.token, applicant.email)
+  end
+
+  it 'delivers completed acceptance after token expiry without allowing replay or another notification' do
+    invitation = accept_invitation
+    invitation.update!(expires_at: 1.day.ago)
+    expect { deliver_emails }.to change { ActionMailer::Base.deliveries.length }.by(1)
+    expect { InvitationAcceptance.new(token: invitation.token, user: applicant).call }
+      .to raise_error(InvitationAcceptance::Unavailable)
+    expect { deliver_emails }.not_to(change { ActionMailer::Base.deliveries.length })
+  end
+
+  it 'keeps applicant decisions separate when the accepted applicant is also an assigned coordinator' do
+    grant_coordinator_access(program, applicant)
+    decide('accepted')
+    deliver_emails
+    messages = ActionMailer::Base.deliveries.select { |mail| mail.to == [applicant.email] }
+    expect(messages.map(&:subject))
+      .to contain_exactly("Application Accepted: #{program.name}", "Participation Accepted: #{program.name}")
+  end
+
+  it 'preserves private invitation acceptance without SMTP or assigned notification recipients' do
+    allow(Rails.configuration.x).to receive(:password_reset_delivery_enabled).and_return(false)
+    invitation = accept_invitation
+    expect(invitation.reload.used_by_id).to eq(applicant.id)
+    expect(program.participant?(applicant)).to be(true)
+    expect(EmailDelivery.where(resource_id: ParticipationEvent.find_by(source_id: invitation.id).id)).not_to exist
+    allow(Rails.configuration.x).to receive(:password_reset_delivery_enabled).and_return(true)
+    ProgramMembership.find_by(program_id: program.id, user_id: coordinator.id).revoke_coordinator_access
+    second = accept_invitation(inviter: create_user(roles: ['system_admin']))
+    expect(EmailDelivery.where(resource_id: ParticipationEvent.find_by(source_id: second.id).id)).not_to exist
+  end
+
+  it 'rolls invitation use, admission, history, and a real first job back if another recipient cannot queue' do
+    grant_venue_access(program.venue, create_user)
+    invitation = create_participant_invitation(program, coordinator)
+    calls = 0
+    allow(EmailDeliveryJob).to receive(:perform_later).and_wrap_original do |original, *arguments|
+      calls += 1
+      calls == 1 ? original.call(*arguments) : false
+    end
+    expect do
+      expect { InvitationAcceptance.new(token: invitation.token, user: applicant).call }
+        .to raise_error(EmailDelivery::Unavailable)
+    end.not_to change(QueuedJob, :count)
+    expect(calls).to eq(2)
+    expect(invitation.reload.used_at).to be_nil
+    expect(program.participant?(applicant)).to be(false)
+    expect(ParticipationEvent.where(source_id: invitation.id)).not_to exist
+    expect(EmailDelivery.where(kind: 'participation_admission')).not_to exist
+  end
+
+  it 'drops invitation acceptance notices after coordinator revocation or deactivation' do
+    inherited = create_user
+    grant_venue_access(program.venue, inherited)
+    accept_invitation
+    ProgramMembership.find_by(program_id: program.id, user_id: coordinator.id).revoke_coordinator_access
+    inherited.update!(active: false)
+    expect { deliver_emails }.not_to(change { ActionMailer::Base.deliveries.length })
+  end
+
+  it 'drops invitation acceptance notices after participation is revoked' do
+    accept_invitation
+    ProgramMembership.find_by(program_id: program.id, user_id: applicant.id).update!(roles: [])
+    expect { deliver_emails }.not_to(change { ActionMailer::Base.deliveries.length })
+  end
+
+  it 'drops invitation acceptance notices after the participant becomes inactive' do
+    accept_invitation
+    applicant.update!(active: false)
+    expect { deliver_emails }.not_to(change { ActionMailer::Base.deliveries.length })
+  end
+
+  it 'drops invitation acceptance notices after the parent venue becomes inactive' do
+    accept_invitation
+    program.venue.update!(active: false)
+    expect { deliver_emails }.not_to(change { ActionMailer::Base.deliveries.length })
+  end
+
+  it 'binds admission notices to a matching accepted source and excludes other event actions' do
+    application
+    invitation = accept_invitation
+    [create_program, program].each do |source_program|
+      user = source_program == program ? create_user : applicant
+      event = track_record(ParticipationEvent.create!(program: source_program, user: user, actor: coordinator,
+                                                      action: 'invitation_accepted', source_id: invitation.id))
+      expect(described_class.new(event).admission_message_for(coordinator.id)).to be_nil
+    end
+    event = track_record(ParticipationEvent.create!(program: program, user: applicant, actor: coordinator,
+                                                    action: 'application_accepted', source_id: application.id))
+    expect(described_class.new(event).admission_message_for(coordinator.id)).to be_nil
+    expect(described_class.new(application.events.first).admission_message_for(coordinator.id)).to be_nil
   end
 
   it 'binds notification resources to the source program and applicant' do

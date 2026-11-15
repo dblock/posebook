@@ -42,7 +42,8 @@ class ProgramApplicationsController < ApplicationController
   def remember_review_destination
     return if current_user
 
-    session[:application_review] = { program: params[:program_id], application: params[:id] }
+    session[:application_review] = { program: params[:program_id], application: params[:id],
+                                     history: action_name == 'history' }
     session.delete(:application_status)
     session.delete(:application_program)
   end
