@@ -8,7 +8,7 @@
       <tbody>
         <% @users.each do |user| %>
           <tr>
-            <td><%= render "shared/participant_identity", participant: user, show_email: false, show_placeholder: true %></td>
+            <td><%= render "shared/participant_identity", participant: user, show_email: false %></td>
             <td><%= link_to user.email, participant_path(user) %></td><td><%= user.phone.presence || "Not provided" %></td>
             <td><%= user.roles.join(", ") %></td>
             <td><%= status_label(user.active? ? "Active" : "Inactive") %></td>

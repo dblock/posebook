@@ -1,11 +1,18 @@
 <section class="upcoming-booking attendance-panel" aria-labelledby="upcoming-booking-<%= booking.id %>">
   <h2 id="upcoming-booking-<%= booking.id %>">Your Upcoming Booking</h2>
   <div class="upcoming-booking-details">
-    <% if local_assigns.fetch(:show_venue, false) && (photo = program.venue.primary_photo) %>
+    <% if local_assigns.fetch(:show_venue, false) %>
       <figure class="upcoming-booking-photo">
-        <%= render "shared/photo_thumbnail", full_url: venue_photo_path(program.venue, photo),
-                   thumbnail_url: venue_photo_path(program.venue, photo, thumbnail: 1),
-                   description: "#{program.venue.name} primary photo" %>
+        <% if (photo = program.venue.primary_photo) %>
+          <%= render "shared/photo_thumbnail", full_url: venue_photo_path(program.venue, photo),
+                     thumbnail_url: venue_photo_path(program.venue, photo, thumbnail: 1),
+                     description: "#{program.venue.name} primary photo" %>
+        <% else %>
+          <%= link_to venue_path(program.venue) do %>
+            <%= image_tag "venue-placeholder.svg", width: 400, height: 400,
+                          loading: "lazy", alt: "No photo for #{program.venue.name}" %>
+          <% end %>
+        <% end %>
       </figure>
     <% end %>
     <div class="upcoming-booking-summary">

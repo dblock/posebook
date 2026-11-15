@@ -41,6 +41,22 @@ RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request 
     ProfilePhoto.storage.file_model.where('metadata.user_id' => participant.id)
   end
 
+  it 'uses linked portrait placeholders for admin users without photos and keeps real private thumbnails' do
+    sign_in(create_user(roles: ['system_admin']))
+    selector = ".participant-portrait[href='#{participant_path(participant)}']"
+    get admin_users_path
+    portrait = response.parsed_body.at_css(selector)
+    expect(portrait.at_css('img')['src']).to include('profile-placeholder')
+    expect(portrait.at_css('img')['alt']).to eq("No profile photo for #{participant.name}")
+    photo
+    get admin_users_path
+    expect(response.parsed_body.at_css("#{selector} img")['src'])
+      .to eq(participant_photo_path(participant, photo.id, thumbnail: 1))
+    photo.remove(participant)
+    get admin_users_path
+    expect(response.parsed_body.at_css("#{selector} img")['src']).to include('profile-placeholder')
+  end
+
   it 'uploads privately by default and offers square linked thumbnails and per-photo controls' do
     sign_in(participant)
     post participant_photos_path(participant), params: { profile_photo: { file: photo_upload, public: '1' } }

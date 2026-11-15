@@ -30,6 +30,40 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     VenuePhoto.storage.file_model.where('metadata.venue_id' => venue.id)
   end
 
+  it 'keeps a linked placeholder on venue cards without photos, including after the last photo is deleted' do
+    sign_in(admin)
+    selector = ".venue-card .location-card-photo[href='#{venue_path(venue)}']"
+    get venues_path
+    portrait = response.parsed_body.at_css(selector)
+    expect(portrait['href']).to eq(venue_path(venue))
+    expect(portrait.at_css('img')['src']).to include('venue-placeholder')
+    expect(portrait.at_css('img')['alt']).to eq("No photo for #{venue.name}")
+    photo.destroy!
+    get venues_path
+    expect(response.parsed_body.at_css("#{selector} img")['src']).to include('venue-placeholder')
+    get photos_venue_path(venue)
+    expect(response.parsed_body.css('.venue-photo')).to be_empty
+    expect(response.body).to include('No venue photos yet.')
+  end
+
+  it 'shows venue placeholders in home and profile booking lists but not program-only booking cards' do
+    participant = create_user
+    program = create_program(venue: venue)
+    grant_participant_access(program, participant)
+    date = (Date.current..(Date.current + 7)).find { |day| day.cwday == 1 && day > Date.current }
+    track_booking(BookingMutation.new(program: program, user: participant).book(date: date.iso8601))
+    sign_in(participant)
+    [root_path, profile_path].each do |path|
+      get path
+      portrait = response.parsed_body.at_css('.upcoming-booking-photo')
+      expect(portrait.at_css('img')['src']).to include('venue-placeholder')
+      expect(portrait.at_css('a')['href']).to eq(venue_path(venue))
+      expect(portrait.at_css('[data-photo-preview]')).to be_nil
+    end
+    get program_path(program, section: 'calendar')
+    expect(response.parsed_body.at_css('.upcoming-booking-photo')).to be_nil
+  end
+
   it 'keeps the photo-led venue directory separate from public per-venue program tabs' do
     photo
     program = create_program(venue: venue, instructions: 'Private instructions')
