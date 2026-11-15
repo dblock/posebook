@@ -117,4 +117,5 @@
 - [#130](https://github.com/dblock/posebook/pull/130): Prepare account details, photos, and private application drafts on one page before explicit submission - [@dblock](https://github.com/dblock).
 - [#131](https://github.com/dblock/posebook/pull/131): Remind applicants to complete private drafts after seven days and clean up unfinished drafts after 30 days - [@dblock](https://github.com/dblock).
 - [#132](https://github.com/dblock/posebook/pull/132): Show application links with copy buttons on program View and shorten intake guidance - [@dblock](https://github.com/dblock).
+- [#133](https://github.com/dblock/posebook/pull/133): Add a headless Chrome browser test harness and document UI conventions - [@dblock](https://github.com/dblock).
 - Your contribution here.

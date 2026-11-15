@@ -18,6 +18,8 @@ gem 'rails', '~> 8.1.4', '>= 8.1.4.1'
 gem 'ruby-vips', '~> 2.3', require: false
 
 group :development, :test do
+  gem 'capybara', '~> 3.40', require: false
+  gem 'cuprite', '~> 0.20', '>= 0.20.1', require: false
   gem 'danger', '~> 9.6', '>= 9.6.2', require: false
   gem 'danger-changelog', '~> 0.10', require: false
   gem 'danger-pr-comment', '~> 0.2', require: false

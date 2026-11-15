@@ -5,6 +5,7 @@ require_relative 'spec_helper'
 require_relative '../config/environment'
 require 'rspec/rails'
 require_relative 'support/database_helpers'
+require_relative 'support/browser_helpers'
 
 RSpec.configure do |config|
   config.include DatabaseHelpers, :database
