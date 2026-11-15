@@ -797,7 +797,8 @@ tbody tr:last-child td {
   font-size: 0.75rem;
 }
 
-.participant-roster .secondary-action {
+.participant-roster .secondary-action,
+.user-accounts .secondary-action {
   width: auto;
   min-height: 1.75rem;
   padding: 0.25rem 0.5rem;

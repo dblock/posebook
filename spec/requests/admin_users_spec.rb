@@ -16,6 +16,7 @@ RSpec.describe 'Administrator user editing', :aggregate_failures, :database, typ
     expect(response.parsed_body.at_css("header a[href='#{admin_users_path}']").text).to eq('Users')
     expect(response.parsed_body.css('.profile-tabs a').map(&:text)).not_to include('Users')
     get edit_admin_user_path(user)
+    expect(response.parsed_body.css('.breadcrumbs [aria-hidden="true"]').map(&:text)).to all(eq('/'))
     expect(response.parsed_body.css('.user-tabs .page-tab-group').map { |group| group.css('a').map(&:text) })
       .to eq([%w[Users Photos], ['Edit']])
     sign_in(user)
@@ -30,11 +31,30 @@ RSpec.describe 'Administrator user editing', :aggregate_failures, :database, typ
     create_user(active: false)
     sign_in(create_user(roles: ['system_admin']))
     get admin_users_path
+    expect(response.parsed_body.css('.breadcrumbs [aria-hidden="true"]').map(&:text)).to eq(['>'])
     expect(response.parsed_body.css('td:nth-child(5) .status-label').map(&:text))
       .to contain_exactly('Active', 'Active', 'Inactive')
     expect(response.parsed_body.at_css('td:nth-child(5) .status-label-danger').text).to eq('Inactive')
     expect(response.parsed_body.at_css('td:nth-child(6) .status-label-neutral').text).to eq('Protected')
     expect(response.body).to include('Reactivate', 'Deactivate')
+    expect(response.parsed_body.css('.user-accounts button.secondary-action').map(&:text))
+      .to contain_exactly('Reactivate', 'Deactivate')
+  end
+
+  it 'shows linked placeholder portraits only for users without a profile photo' do
+    user = create_user(name: 'Participant With Photo')
+    photo = user.profile_photos.create!
+    without_photo = create_user(name: 'Participant Without Photo')
+    sign_in(create_user(roles: ['system_admin']))
+    get admin_users_path
+    portrait = response.parsed_body.at_css(".participant-portrait[href='#{participant_path(user)}'] img")
+    placeholder = response.parsed_body.at_css(".participant-portrait[href='#{participant_path(without_photo)}'] img")
+    expect(portrait['src']).to eq(participant_photo_path(user, photo, thumbnail: 1))
+    expect(portrait['alt']).to eq("Profile photo of #{user.name}")
+    expect(placeholder['src']).to include('profile-placeholder')
+    expect(placeholder['alt']).to eq("No profile photo for #{without_photo.name}")
+    expect([portrait, placeholder].map { |image| image.attributes.values_at('width', 'height').map(&:value) })
+      .to eq([%w[64 64], %w[64 64]])
   end
 
   it 'requires authentication before reading or editing user information' do
