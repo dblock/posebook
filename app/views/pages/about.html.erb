@@ -1,0 +1,26 @@
+<% content_for :title, "About | Posebook" %>
+
+<main class="information-page">
+  <h1>About Posebook</h1>
+  <p>Posebook helps organizers and participants manage recurring programs, invitations, and bookings at venues. It provides shared calendars, participant profiles, and booking history, with optional Google Calendar synchronization.</p>
+  <p>This service is operated by <%= link_to "Vestris Inc.", "https://www.vestris.com/", target: "_blank", rel: "noopener noreferrer" %>.</p>
+  <p>Access to accounts and private program information is invitation-based. Public venue pages and calendars show only the information intended for public sharing.</p>
+
+  <h2>Open Source</h2>
+  <p>Posebook is open-source software released under the MIT license.</p>
+  <ul>
+    <li><%= link_to "Source code on GitHub", "https://github.com/dblock/posebook", target: "_blank", rel: "noopener noreferrer" %></li>
+    <li><%= link_to "Report an issue or suggest an improvement", "https://github.com/dblock/posebook/issues", target: "_blank", rel: "noopener noreferrer" %></li>
+    <li><%= link_to "MIT license", "https://github.com/dblock/posebook/blob/master/LICENSE.txt", target: "_blank", rel: "noopener noreferrer" %></li>
+  </ul>
+  <p>GitHub issues are public. Do not post private contact details, invitation links, account credentials, or private photos there.</p>
+
+  <h2>Policies</h2>
+  <ul>
+    <li><%= link_to "Privacy Policy", privacy_path %> explains how information is used and shared.</li>
+    <li><%= link_to "Terms of Service", terms_path %> explains the conditions for using Posebook.</li>
+  </ul>
+
+  <h2>Contact</h2>
+  <p>For questions, private support requests, or privacy and legal inquiries, contact <%= mail_to "drawing@dblock.org" %>.</p>
+</main>

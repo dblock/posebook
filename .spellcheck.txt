@@ -11,6 +11,7 @@ requeue
 SIGINT
 SIGTERM
 Posebook's
+Vestris
 ActiveJob
 ActiveJob's
 addToSet
