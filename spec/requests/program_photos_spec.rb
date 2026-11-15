@@ -46,7 +46,8 @@ RSpec.describe 'Program photos', :aggregate_failures, :database, type: :request 
     get edit_program_path(program)
     groups = response.parsed_body.css('.program-tabs .page-tab-group')
     expect(groups.map { |group| group.css('a').map(&:text) })
-      .to eq([%w[View Calendar History], ['Photos', 'Participants', 'Applications', 'Edit', 'Google Calendar']])
+      .to eq([%w[View Calendar History],
+              ['Photos', 'Participants', 'Participant Invitations', 'Applications', 'Edit', 'Google Calendar']])
     expect(response.parsed_body.at_css('.program-tabs .tab-separator')['aria-hidden']).to eq('true')
     expect(response.parsed_body.at_css('.breadcrumbs [aria-current="page"]').text).to eq('Edit')
     delete session_path

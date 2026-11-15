@@ -115,13 +115,16 @@ RSpec.describe 'Copy controls', :aggregate_failures, :database, type: :request d
     grant_venue_access(program.venue, organizer)
     invitation = create_participant_invitation(program, admin, email: 'invited@example.test')
     sign_in(admin)
-    [program_participants_path(program), program_coordinators_path(program),
-     venue_coordinators_path(program.venue)].each do |path|
+    [program_participants_path(program), program_participant_invitations_path(program),
+     program_coordinators_path(program), venue_coordinators_path(program.venue)].each do |path|
       get path
       expect(response.parsed_body.css('.copy-button')).to be_empty
     end
     get program_participants_path(program)
-    expect(response.body).to include(user.name, user.email, invitation.email)
+    expect(response.body).to include(user.name, user.email)
+    expect(response.body).not_to include(invitation.email)
+    get program_participant_invitations_path(program)
+    expect(response.body).to include(invitation.email)
   end
 
   it 'retains calendar Instagram and organizer contact links without copy buttons' do

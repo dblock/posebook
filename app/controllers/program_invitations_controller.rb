@@ -3,9 +3,18 @@
 class ProgramInvitationsController < ApplicationController
   before_action :require_authentication
   before_action lambda {
+    response.headers['Cache-Control'] = 'private, no-store'
     @program = Program.managed_by(current_user).find(params.expect(:program_id))
   }
   before_action :find_invitation, only: %i[show destroy]
+
+  def index
+    @page = [params[:page].to_i, 1].max
+    @invitations = @program.participant_invitations.includes(:invited_by)
+                           .order_by(created_at: :desc, id: :desc).skip((@page - 1) * 50).limit(51).to_a
+    @more = @invitations.length > 50
+    @invitations = @invitations.first(50)
+  end
 
   def show
     link = flash[:invitation_link]
@@ -29,7 +38,7 @@ class ProgramInvitationsController < ApplicationController
 
   def destroy
     result = @invitation.revoke
-    redirect_to program_participants_path(@program),
+    redirect_to program_participant_invitations_path(@program, page: params[:page]),
                 result ? { notice: t('invitations.revoked') } : { alert: t('invitations.not_pending') }
   end
 

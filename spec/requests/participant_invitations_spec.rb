@@ -15,11 +15,112 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
                   { email: unknown.email }, { name: 'Named guest' }, {}]
     recipients.each { |attributes| create_participant_invitation(program, admin, **attributes) }
     sign_in(admin)
-    get program_participants_path(program)
+    get program_participant_invitations_path(program)
     expect(response.parsed_body.css('.invitation-recipient').map(&:text))
       .to contain_exactly('Drawing <Model> & Artist <artist@example.test>', unknown.email, 'Named guest',
                           'Personal invitation')
     expect(response.body).not_to include(unknown.name, '(Female)')
+  end
+
+  it 'shows invitation dates, sender, status, and compact actions in a separate labeled table' do
+    admin = create_user(name: 'Invitation Sender', roles: ['system_admin'])
+    program = create_program(participant_label: 'Model', time_zone: 'America/Los_Angeles')
+    invitation = create_participant_invitation(program, admin, name: 'Invited Model', email: 'model@example.test',
+                                                               created_at: Time.utc(2026, 11, 14, 2, 30),
+                                                               used_at: Time.utc(2026, 11, 14, 3, 30))
+    sign_in(admin)
+    get program_participant_invitations_path(program)
+    row = response.parsed_body.at_css("[data-invitation='#{invitation.id}']")
+    expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Model Invitations')
+    expect(row.text).to include('Invited Model <model@example.test>', admin.name, 'Accepted')
+    expect(row.css('time').pluck('datetime'))
+      .to eq([invitation.created_at, invitation.expires_at, invitation.used_at]
+               .map { |time| time.in_time_zone(program.time_zone).iso8601 })
+    expect(row.at_css('a.button-link')['href']).to eq(program_participant_invitation_path(program, invitation))
+    expect(response.headers['Cache-Control']).to include('no-store')
+    expect(response.body).not_to include(invitation.token, invitation.token_digest)
+  end
+
+  it 'keeps invitation details off the roster and creation, viewing, and canceling under the new tab' do
+    admin = create_user(roles: ['system_admin'])
+    invitation = create_participant_invitation(create_program, admin, email: 'not-on-the-roster@example.test')
+    program = invitation.program
+    sign_in(admin)
+    get program_participants_path(program)
+    expect(response.body).not_to include(invitation.email, 'Create Invitation')
+    [new_program_participant_invitation_path(program),
+     program_participant_invitation_path(program, invitation)].each do |path|
+      get path
+      expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Participant Invitations')
+      expect(response.parsed_body.css('main a').pluck('href')).to include(program_participant_invitations_path(program))
+    end
+    expect(response.parsed_body.at_css('.invitation-recipient').text).to eq(invitation.email)
+  end
+
+  it 'limits the invitation table to the requested program and authorized managers' do
+    program = create_program
+    coordinator = create_user
+    grant_coordinator_access(program, coordinator)
+    create_participant_invitation(program, coordinator, email: 'scoped@example.test')
+    create_participant_invitation(create_program, coordinator, email: 'foreign@example.test')
+    get program_participant_invitations_path(program)
+    expect(response).to redirect_to(new_session_path)
+    sign_in(coordinator)
+    get program_participant_invitations_path(program)
+    expect(response.body).to include('scoped@example.test')
+    expect(response.body).not_to include('foreign@example.test')
+    sign_in(create_user)
+    get program_participant_invitations_path(program)
+    expect(response).to have_http_status(:not_found)
+  end
+
+  it 'includes inherited venue coordinators but excludes ordinary participants from invitation history' do
+    program = create_program
+    coordinator = create_user
+    grant_venue_access(program.venue, coordinator)
+    sign_in(coordinator)
+    get program_participant_invitations_path(program)
+    expect(response.body).to include('No invitations on this page.')
+    participant = create_user
+    grant_participant_access(program, participant)
+    sign_in(participant)
+    get program_participant_invitations_path(program)
+    expect(response).to have_http_status(:not_found)
+    get program_path(program)
+    expect(response.parsed_body.css('.program-tabs a').map(&:text)).not_to include('Participant Invitations')
+  end
+
+  it 'paginates tied invitation dates stably without losing older history' do
+    admin = create_user(roles: ['system_admin'])
+    program = create_program
+    invitations = Array.new(51) { create_participant_invitation(program, admin, created_at: Time.utc(2026, 11, 14)) }
+    sign_in(admin)
+    get program_participant_invitations_path(program)
+    first = response.parsed_body.css('tbody tr').pluck('data-invitation')
+    expect(first).to eq(invitations.reverse.first(50).map { |invitation| invitation.id.to_s })
+    expect(response.parsed_body.at_css('a[rel="next"]')['href'])
+      .to eq(program_participant_invitations_path(program, page: 2))
+    get program_participant_invitations_path(program, page: 2)
+    expect(response.parsed_body.css('tbody tr').pluck('data-invitation')).to eq([invitations.first.id.to_s])
+    expect(response.parsed_body.at_css('a[rel="prev"]')['href'])
+      .to eq(program_participant_invitations_path(program, page: 1))
+    expect(response.parsed_body.at_css('a[rel="next"]')).to be_nil
+  end
+
+  it 'normalizes invalid page inputs, retains empty pages, and returns revocations to their page' do
+    admin = create_user(roles: ['system_admin'])
+    program = create_program
+    invitation = create_participant_invitation(program, admin)
+    sign_in(admin)
+    [-1, 'invalid'].each do |page|
+      get program_participant_invitations_path(program, page: page)
+      expect(response.parsed_body.css('tbody tr').length).to eq(1)
+    end
+    get program_participant_invitations_path(program, page: 999)
+    expect(response.body).to include('No invitations on this page.')
+    delete program_participant_invitation_path(program, invitation, page: 2)
+    expect(response).to redirect_to(program_participant_invitations_path(program, page: 2))
+    expect(invitation.reload.status).to eq('Revoked')
   end
 
   it 'allows a scoped organizer to create a private link without an email address' do
@@ -226,27 +327,29 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     admin = create_user(roles: ['system_admin'])
     invitation = create_participant_invitation(create_program, admin)
     sign_in(admin)
-    get program_participants_path(invitation.program)
-    status = response.parsed_body.at_css('.invitation-status')
+    get program_participant_invitations_path(invitation.program)
+    row = response.parsed_body.at_css("[data-invitation='#{invitation.id}']")
+    status = row.at_css('.invitation-status')
     expect(status.at_css('.status-label').text).to eq('Pending')
-    expect(status.at_css('form button.secondary-action').text).to eq('Revoke')
-    expect(status.at_css('form')['action']).to eq(program_participant_invitation_path(invitation.program, invitation))
+    expect(row.at_css('form button.secondary-action').text).to eq('Revoke')
+    expect(row.at_css('form')['action'])
+      .to eq(program_participant_invitation_path(invitation.program, invitation, page: 1))
     delete program_participant_invitation_path(invitation.program, invitation)
-    expect(response).to redirect_to(program_participants_path(invitation.program))
+    expect(response).to redirect_to(program_participant_invitations_path(invitation.program))
     expect(invitation.reload.status).to eq('Revoked')
     expect(ParticipantInvitation.available(invitation.token)).to be_nil
     follow_redirect!
     expect(response.parsed_body.at_css('.invitation-status .status-label-danger').text).to eq('Revoked')
   end
 
-  it 'labels accepted and expired invitations on the private session list' do
+  it 'labels accepted and expired invitations on the private invitation list' do
     admin = create_user(roles: ['system_admin'])
     program = create_program
     create_participant_invitation(program, admin, used_at: Time.current)
     create_participant_invitation(program, admin, expires_at: 1.minute.ago)
     sign_in(admin)
-    get program_participants_path(program)
-    invitations = response.parsed_body.at_xpath("//section[h2='Participant Invitations']")
+    get program_participant_invitations_path(program)
+    invitations = response.parsed_body.at_css('table')
     expect(invitations.at_css('.status-label-success').text).to eq('Accepted')
     expect(invitations.at_css('.status-label-neutral').text).to eq('Expired')
     expect(invitations.css('form')).to be_empty

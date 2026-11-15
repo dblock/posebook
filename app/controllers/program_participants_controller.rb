@@ -11,7 +11,6 @@ class ProgramParticipantsController < ApplicationController
   def index
     @roster = ProgramRoster.new(@program, page: params[:page])
     @memberships = @roster.memberships
-    @invitations = @program.participant_invitations.order_by(created_at: :desc)
   end
 
   def edit
