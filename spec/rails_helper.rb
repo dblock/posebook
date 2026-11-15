@@ -20,6 +20,8 @@ RSpec.configure do |config|
     ProgramScheduleException.create_indexes
     ProgramMembership.create_indexes
     ParticipantInvitation.create_indexes
+    ParticipantApplication.create_indexes
+    ParticipationEvent.create_indexes
     Booking.create_indexes
     BookingClaim.create_indexes
     GoogleCalendarConnection.create_indexes

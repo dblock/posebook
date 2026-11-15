@@ -71,17 +71,28 @@ module DatabaseHelpers
   end
 
   def cleanup_records
+    track_participation_records
     cleanup_email_deliveries
     Mongoid::History.disable do
-      tracked_records.reverse_each do |record|
-        if record.is_a?(Booking)
-          Booking.collection.find(_id: record.id).delete_one
-        elsif record.persisted?
-          record.destroy
-        end
-      end
+      tracked_records.reverse_each { |record| destroy_tracked_record(record) }
     end
     HistoryTracker.where(:'association_chain.id'.in => tracked_records.map(&:id)).delete_all
+  end
+
+  def track_participation_records
+    ids = tracked_records.grep(User).map(&:id)
+    records = [ParticipantApplication, ParticipationEvent].flat_map do |model|
+      model.where(:user_id.in => ids).to_a
+    end
+    tracked_records.concat(records - tracked_records)
+  end
+
+  def destroy_tracked_record(record)
+    if record.is_a?(Booking)
+      Booking.collection.find(_id: record.id).delete_one
+    elsif record.persisted?
+      record.destroy
+    end
   end
 
   def cleanup_email_deliveries
