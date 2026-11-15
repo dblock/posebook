@@ -42,7 +42,7 @@ Events include the model's name, public name, email, unverified phone, gender, p
 
 Google invitations are explicitly requested transactional booking notifications. Recipients' Google Calendar settings can require accepting an invitation before it appears in their personal calendar. No SMS, automated reminder campaign, or account directory is introduced.
 
-The event uses saved booking times and the program's time zone. If a session has no configured end time, its Google event lasts one hour without changing Posebook's stored end time or completion policy. Rescheduling preserves the original Google event ID, including organizer participant replacements. Periodic reconciliation updates current contact/tagging information without sending unchanged events again.
+The event uses saved booking times and the program's time zone. In program **Edit**, set **Calendar invitation lead time (minutes)** to a whole number of 0 or greater, defaulting to 0. With 15 minutes configured, a 10:00 session's Google invitation starts at 9:45; its description states the actual session start. The session's stored times, calendar, attendance deadlines, and booking history do not move. Google event end times stay unchanged; without a session end time, the fallback remains one hour after the actual session start, not the earlier invitation start. Changing the lead time queues updates for all upcoming bookings, including dated time exceptions. Rescheduling preserves the original Google event ID, including organizer participant replacements. Periodic reconciliation updates current contact/tagging information without sending unchanged events again.
 
 ## Monitor and Disconnect
 

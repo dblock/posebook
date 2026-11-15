@@ -22,6 +22,7 @@ class Program
   field :no_consecutive_genders, type: Array, default: []
   field :start_time, type: String, default: '09:00'
   field :end_time, type: String
+  field :calendar_invitation_lead_minutes, type: Integer, default: 0
   field :schedule_revision, type: Integer, default: 0
 
   slug :name, :custom_slug, history: true, reserve: RESERVED_SLUGS, max_length: 100 do |program|
@@ -29,7 +30,8 @@ class Program
   end
 
   track_history on: %i[name program_label participant_label custom_slug _slugs time_zone pay instructions
-                       booking_horizon_months available_weekdays start_time end_time no_consecutive_genders],
+                       booking_horizon_months available_weekdays start_time end_time no_consecutive_genders
+                       calendar_invitation_lead_minutes],
                 modifier_field_optional: true, modifier_field_inverse_of: nil, track_blank_changes: true
 
   has_many :memberships, class_name: 'ProgramMembership', inverse_of: :program,
@@ -58,6 +60,7 @@ class Program
   validates :pay, numericality: { greater_than_or_equal_to: 0 }
   validates :instructions, length: { maximum: 5000 }
   validates :booking_horizon_months, numericality: { only_integer: true, greater_than: 0 }
+  validates :calendar_invitation_lead_minutes, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :start_time, format: { with: ProgramSchedule::TIME_FORMAT }
   validates :end_time, format: { with: ProgramSchedule::TIME_FORMAT }, allow_nil: true
   validate do

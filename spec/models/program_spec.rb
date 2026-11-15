@@ -3,6 +3,27 @@
 require 'rails_helper'
 
 RSpec.describe Program, :aggregate_failures, :database do
+  it 'defaults new and existing programs to no calendar invitation lead time and audits changes' do
+    program = create_program
+    expect(program.reload.calendar_invitation_lead_minutes).to eq(0)
+    described_class.collection.find(_id: program.id).update_one('$unset' => { calendar_invitation_lead_minutes: '' })
+    expect(program.reload.calendar_invitation_lead_minutes).to eq(0)
+    program.update!(calendar_invitation_lead_minutes: 15)
+    expect(program.reload.calendar_invitation_lead_minutes).to eq(15)
+    expect(program.history_tracks.map(&:modified)).to include(
+      hash_including('calendar_invitation_lead_minutes' => 15)
+    )
+  end
+
+  it 'requires whole calendar invitation lead minutes of zero or greater' do
+    program = create_program
+    [-1, '1.5', 'not minutes', nil].each do |value|
+      expect(program.update(calendar_invitation_lead_minutes: value)).to be(false)
+      expect(program.errors[:calendar_invitation_lead_minutes]).not_to be_empty
+      expect(program.reload.calendar_invitation_lead_minutes).to eq(0)
+    end
+  end
+
   it 'defaults slugs from names and retains history when changing or clearing a custom slug' do
     program = create_program(name: 'Community Workshop')
     expect(program.slug).to eq('community-workshop')

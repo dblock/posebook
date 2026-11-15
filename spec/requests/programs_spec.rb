@@ -3,6 +3,47 @@
 require 'rails_helper'
 
 RSpec.describe 'Program management', :aggregate_failures, :database, type: :request do
+  it 'defaults the invitation lead-time field to zero and saves it when creating a program' do
+    sign_in(create_user(roles: ['system_admin']))
+    venue = create_venue
+    get new_venue_program_path(venue)
+    input = response.parsed_body.at_css('#program_calendar_invitation_lead_minutes')
+    expect([input['type'], input['value'], input['min'], input['step']]).to eq(%w[number 0 0 1])
+    expect(input['required']).to be_present
+    post venue_programs_path(venue),
+         params: { program: { name: 'Lead time program', calendar_invitation_lead_minutes: 15 } }
+    program = track_record(Program.find_by(name: 'Lead time program'))
+    expect(response).to redirect_to(program_path(program))
+    expect(program.calendar_invitation_lead_minutes).to eq(15)
+  end
+
+  it 'lets assigned coordinators configure calendar invitation lead time without changing session times' do
+    program = create_program
+    organizer = create_user
+    grant_coordinator_access(program, organizer)
+    sign_in(organizer)
+    patch program_path(program), params: { program: { calendar_invitation_lead_minutes: 20 } }
+    expect(response).to redirect_to(program_path(program))
+    expect(program.reload).to have_attributes(calendar_invitation_lead_minutes: 20, start_time: '09:00', end_time: nil)
+    get edit_program_path(program)
+    expect(response.parsed_body.at_css('#program_calendar_invitation_lead_minutes')['value']).to eq('20')
+    delete session_path
+    sign_in(create_user)
+    patch program_path(program), params: { program: { calendar_invitation_lead_minutes: 30 } }
+    expect(response).to have_http_status(:not_found)
+    expect(program.reload.calendar_invitation_lead_minutes).to eq(20)
+  end
+
+  it 'rejects invalid invitation lead times without changing the program' do
+    program = create_program
+    sign_in(create_user(roles: ['system_admin']))
+    [-1, '1.5', 'not minutes', nil].each do |value|
+      patch program_path(program), params: { program: { calendar_invitation_lead_minutes: value } }
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(program.reload.calendar_invitation_lead_minutes).to eq(0)
+    end
+  end
+
   it 'separates public view and calendar while keeping history private' do
     program = create_program(program_label: 'Session', participant_label: 'Model', instructions: 'Private instructions')
     get program_path(program)

@@ -12,7 +12,7 @@ class GoogleCalendarEvent
     Google::Apis::CalendarV3::Event.new(
       summary: "#{@program.name} - #{@user.name}", status: 'confirmed',
       description: description, location: @program.venue.address,
-      start: time(@booking.scheduled_start),
+      start: time(beginning),
       end: time(ending),
       visibility: 'private', guests_can_modify: false, guests_can_invite_others: false,
       guests_can_see_other_guests: false,
@@ -22,6 +22,10 @@ class GoogleCalendarEvent
   end
 
   private
+
+  def beginning
+    @booking.scheduled_start - @program.calendar_invitation_lead_minutes.minutes
+  end
 
   def ending
     @booking.scheduled_ends_at || (@booking.scheduled_start + 1.hour)
@@ -34,12 +38,20 @@ class GoogleCalendarEvent
   def description
     [
       'Private booking details. Do not share this event or make the calendar public.',
+      program_start_details,
       "Name: #{@user.name}", "Public name: #{@user.public_name}",
       "Email: #{@user.email}", "Phone (unverified): #{@user.phone}", "Gender: #{@user.gender}",
       *instagram_details,
       "Private identity: #{@user.public_profile_private? ? 'Yes' : 'No'}",
       "Posebook: #{program_link}"
     ].compact.join("\n")
+  end
+
+  def program_start_details
+    return if @program.calendar_invitation_lead_minutes.zero?
+
+    start = @booking.scheduled_start.in_time_zone(@booking.time_zone)
+    "#{@program.program_label.titleize} starts: #{start.strftime('%A, %B %-d, %Y at %-I:%M %p %Z')}"
   end
 
   def program_link
