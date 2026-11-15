@@ -2,13 +2,14 @@
   <h1>Posebook</h1>
   <p>Invitation-based registration and booking for recurring programs.</p>
   <p>Welcome, <%= current_user.name %>.</p>
-  <% @upcoming_bookings.each do |booking| %>
+  <% @dashboard.upcoming_bookings.each do |booking| %>
     <%= render "bookings/upcoming", program: booking.program, booking: booking,
-               can_book: @booking_access.fetch(booking.program_id).allowed?, show_venue: true %>
+               can_book: @dashboard.access_for(booking.program_id).allowed?, show_venue: true %>
   <% end %>
   <% if current_user.system_admin? %>
     <p>You have the system admin role.</p>
   <% end %>
-  <p><%= link_to "View Programs", programs_path %> to see your programs, calendar, and booking history.</p>
+  <p><%= link_to "View Your Profile", profile_path %> for bookings, programs you can book, and history.</p>
+  <p><%= link_to "View Venues", venues_path %> to explore your venues and their programs.</p>
   <p>Accept a personal invitation to join a program, then choose an available booking date. Automated reminders are not available yet.</p>
 </main>

@@ -4,7 +4,13 @@ class ProfilesController < ApplicationController
   before_action :require_authentication
   before_action -> { @user = current_user }
 
-  def show; end
+  def show
+    @dashboard = ParticipantDashboard.new(@user)
+  end
+
+  def history
+    @bookings = Booking.where(user_id: @user.id).includes(:program).order_by(date: :desc, created_at: :desc)
+  end
 
   def edit; end
 

@@ -1,5 +1,8 @@
 <main>
   <%= render "shared/directory_navigation", active: "venues" %>
   <h1>Venues</h1>
-  <% @venues.each do |venue| %><p><%= link_to venue.name, venue %></p><% end %>
+  <div class="location-cards">
+    <% @venues.each do |venue| %><%= render "card", venue: venue %><% end %>
+  </div>
+  <% if @venues.empty? %><p>No venues assigned. Contact a coordinator for access.</p><% end %>
 </main>

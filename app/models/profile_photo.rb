@@ -4,15 +4,10 @@ class ProfilePhoto
   include Mongoid::Document
   include PhotoFiles
 
-  LIMIT = 10
-
   embedded_in :user
   field :public, type: Mongoid::Boolean, default: false
 
   def self.add(user, upload)
-    raise ProfileImage::Invalid, 'You can have up to 10 photos. Delete one before uploading another.' if
-      user.profile_photos.length >= LIMIT
-
     buffers = ProfileImage.new(upload).buffers
     photo = new
     photo.write_files(buffers, user_id: user.id)
@@ -24,12 +19,10 @@ class ProfilePhoto
   end
 
   def attach(owner)
-    # A conditional single-document write enforces the limit across simultaneous uploads.
-    result = User.collection.find(_id: owner.id, 'profile_photos.9' => { '$exists' => false })
-                 .update_one('$push' => { profile_photos: attributes })
+    result = User.collection.find(_id: owner.id).update_one('$push' => { profile_photos: attributes })
     return if result.matched_count == 1
 
-    raise ProfileImage::Invalid, 'You can have up to 10 photos. Delete one before uploading another.'
+    raise ProfileImage::Invalid, 'This account is no longer available.'
   end
 
   def change_visibility(owner, value)

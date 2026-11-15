@@ -10,13 +10,15 @@ Rails.application.routes.draw do
   resource :email_change, only: %i[show update]
   namespace(:admin) { resources :users, only: %i[index edit update] }
   resources :venues, except: :destroy do
-    get :photos, on: :member
+    %i[photos programs].each { |page| get page, on: :member }
     resources :photos, only: %i[show create update destroy], controller: 'venue_photos'
     resources :coordinators, only: %i[index create destroy], controller: 'venue_coordinators'
     resources :coordinator_invitations, only: %i[show destroy]
     resources :programs, path: 'sessions', only: %i[new create]
   end
   resources :programs, path: 'sessions', only: %i[index show edit update] do
+    get :photos, on: :member
+    resources :photos, only: %i[show create update destroy], controller: 'program_photos'
     resource :schedule, controller: 'program_schedules', only: %i[show update]
     resources(:organizer_bookings, only: %i[new create edit update]) { post :cancel, on: :member }
     resources :participants, controller: 'program_participants', only: :index do

@@ -1,0 +1,29 @@
+<% photos = program.photos.order_by(created_at: :asc).to_a %>
+<% primary_photo = program.primary_photo(photos) %>
+<section aria-label="Program photos">
+  <% if editable %>
+    <p>All program photos are public. There is no photo-count limit. Choose a primary photo for program cards.</p>
+    <%= form_with url: program_photos_path(program), scope: :program_photo, multipart: true do |form| %>
+      <p><%= form.label :file, "New Program Photo" %><br><%= form.file_field :file, accept: "image/jpeg,image/png,image/webp", required: true %></p>
+      <%= form.submit "Upload Program Photo" %>
+    <% end %>
+  <% end %>
+  <div class="photo-gallery">
+    <% photos.each_with_index do |photo, index| %>
+      <figure class="program-photo profile-photo" data-photo="<%= photo.id %>">
+        <%= render "shared/photo_thumbnail", full_url: program_photo_path(program, photo),
+                   thumbnail_url: program_photo_path(program, photo, thumbnail: 1),
+                   description: "#{program.name} photo #{index + 1}" %>
+        <% if editable %>
+          <% if photo == primary_photo %>
+            <figcaption><%= status_label("Primary") %></figcaption>
+          <% else %>
+            <%= button_to "Set Primary Photo", program_photo_path(program, photo), method: :patch %>
+          <% end %>
+          <%= button_to "Delete Photo", program_photo_path(program, photo), method: :delete %>
+        <% end %>
+      </figure>
+    <% end %>
+  </div>
+  <% if photos.empty? %><p>No program photos yet.</p><% end %>
+</section>

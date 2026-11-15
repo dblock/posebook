@@ -2,9 +2,9 @@
 
 class ProgramsController < ApplicationController
   before_action :remember_booking_destination, only: :show
-  before_action :require_authentication, except: :show
+  before_action :require_authentication, except: %i[show photos]
   before_action :find_venue, only: %i[new create]
-  before_action :find_program, only: %i[show edit update]
+  before_action :find_program, only: %i[show photos edit update]
   before_action :prepare_program_access, only: :show
   before_action :prepare_program_page, only: :show
   rescue_from Mongo::Error::OperationFailure, with: :handle_slug_conflict
@@ -25,6 +25,8 @@ class ProgramsController < ApplicationController
   def new
     @program = @venue.programs.new
   end
+
+  def photos; end
 
   def edit; end
 
@@ -100,7 +102,7 @@ class ProgramsController < ApplicationController
   end
 
   def find_program
-    scope = action_name == 'show' ? Program.all : Program.managed_by(current_user)
+    scope = %w[show photos].include?(action_name) ? Program.all : Program.managed_by(current_user)
     @program = scope.find(params.expect(:id))
   end
 

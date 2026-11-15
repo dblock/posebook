@@ -1,0 +1,24 @@
+<main>
+  <%= render "navigation", active: "history" %>
+  <h1>Your Booking History</h1>
+  <% if @bookings.any? %>
+    <p class="scroll-hint">Scroll horizontally to view the full history.</p>
+    <div class="table-scroll" role="region" aria-label="Your booking history" tabindex="0">
+      <table>
+        <thead><tr><th>Program / Venue</th><th>Date / Time</th><th>Status</th><th>Explanation</th></tr></thead>
+        <tbody>
+          <% @bookings.each do |booking| %>
+            <tr>
+              <td><%= link_to booking.program.name, program_path(booking.program) %><br><%= link_to booking.program.venue.name, venue_path(booking.program.venue) %></td>
+              <td><%= booking.date.iso8601 %><br><%= booking_time(booking) %><% if booking.previous_booking %><br>Moved from <%= booking.previous_booking.date.iso8601 %><% end %></td>
+              <td><%= render "programs/booking_status", program: booking.program, booking: booking %></td>
+              <td><%= render "bookings/explanation", booking: booking %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p>No bookings yet.</p>
+  <% end %>
+</main>

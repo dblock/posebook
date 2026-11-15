@@ -47,7 +47,7 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
   it 'separates public view and calendar while keeping history private' do
     program = create_program(program_label: 'Session', participant_label: 'Model', instructions: 'Private instructions')
     get program_path(program)
-    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to eq(%w[View Calendar])
+    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to eq(%w[View Calendar Photos])
     expect(response.body).not_to include('Private instructions', 'Program Calendar')
     get program_path(program, section: 'history')
     expect(response).to have_http_status(:not_found)
@@ -65,7 +65,7 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     sign_in(participant)
     get program_path(program, section: 'history')
     expect(response.body).to include('Your Booking History')
-    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to eq(%w[View Calendar History])
+    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to eq(%w[View Calendar Photos])
     get program_participants_path(program)
     expect(response).to have_http_status(:not_found)
   end
@@ -76,8 +76,8 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     grant_coordinator_access(program, organizer)
     sign_in(organizer)
     get program_participants_path(program)
-    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to eq(['View', 'Calendar', 'History', 'Models',
-                                                                           'Edit', 'Google Calendar'])
+    expect(response.parsed_body.css('.program-tabs a').map(&:text))
+      .to eq(['View', 'Calendar', 'Photos', 'History', 'Models', 'Edit', 'Google Calendar'])
     expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Models')
     expect(response.body).to include('Model Invitations')
     get program_coordinators_path(program)
@@ -86,8 +86,8 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     sign_in(create_user(roles: ['system_admin']))
     get program_coordinators_path(program)
     expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Coordinators')
-    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to eq(['View', 'Calendar', 'History', 'Models',
-                                                                           'Coordinators', 'Edit', 'Google Calendar'])
+    expect(response.parsed_body.css('.program-tabs a').map(&:text))
+      .to eq(['View', 'Calendar', 'Photos', 'History', 'Models', 'Coordinators', 'Edit', 'Google Calendar'])
   end
 
   it 'places program settings and Google Calendar in tabs with matching breadcrumbs' do
