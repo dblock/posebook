@@ -8,6 +8,9 @@ module ProgramCalendarHelper
   end
 
   def program_organizer_contacts(program)
+    dashboard = request.env['posebook.dashboard']
+    return dashboard.organizer_contacts_for(program.id) if dashboard
+
     ids = program.memberships.coordinators.distinct(:user_id)
     User.active.where(:id.in => ids).order_by(name: :asc)
   end

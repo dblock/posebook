@@ -7,7 +7,7 @@ class VenuesController < ApplicationController
   rescue_from Mongo::Error::OperationFailure, with: :handle_slug_conflict
 
   def index
-    @venues = Venue.visible_to(current_user).order_by(name: :asc)
+    @venues = Venue.preload_primary_photos(Venue.visible_to(current_user).order_by(name: :asc))
   end
 
   def show; end
@@ -15,7 +15,7 @@ class VenuesController < ApplicationController
   def photos; end
 
   def programs
-    @programs = @venue.programs.order_by(name: :asc)
+    @programs = Program.preload_primary_photos(@venue.programs.includes(:venue).order_by(name: :asc))
   end
 
   def new
