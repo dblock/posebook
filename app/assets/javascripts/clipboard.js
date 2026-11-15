@@ -2,7 +2,11 @@
   const resetTimers = new WeakMap();
 
   function enableButtons() {
-    document.querySelectorAll(".copy-button[hidden]").forEach(button => { button.hidden = false; });
+    document.querySelectorAll(".copy-button[hidden]").forEach(button => {
+      button.hidden = false;
+      const fallback = button.parentElement.querySelector(".copy-fallback");
+      if (fallback) fallback.hidden = true;
+    });
   }
 
   function copyWithSelection(value) {
@@ -31,14 +35,17 @@
     const button = event.target.closest?.(".copy-button");
     if (!button || button.getAttribute("aria-busy") === "true") return;
     const feedback = button.parentElement.querySelector(".copy-feedback");
+    const fallback = button.parentElement.querySelector(".copy-fallback");
     const field = document.getElementById(button.dataset.copyTarget);
-    const value = field?.value;
+    const value = button.dataset.copyLink || field?.value;
+    const label = button.dataset.copyLink ? "Copy Link" : "Copy";
     clearTimeout(resetTimers.get(button));
-    button.textContent = "Copy";
+    button.textContent = label;
     button.disabled = true;
     button.setAttribute("aria-busy", "true");
     feedback.textContent = "";
     feedback.classList.remove("copy-error");
+    if (fallback) fallback.hidden = true;
     try {
       if (!value) throw new Error("Nothing to copy");
       if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(value);
@@ -46,13 +53,17 @@
       button.textContent = "Copied";
       feedback.textContent = "Copied!";
       resetTimers.set(button, setTimeout(() => {
-        button.textContent = "Copy";
+        button.textContent = label;
         feedback.textContent = "";
         resetTimers.delete(button);
       }, 3000));
     } catch {
       feedback.classList.add("copy-error");
       feedback.textContent = "Could not copy. Select the text and copy it manually.";
+      if (fallback) {
+        fallback.hidden = false;
+        fallback.focus();
+      }
       field?.focus();
       field?.select();
     } finally {
