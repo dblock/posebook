@@ -12,7 +12,7 @@ bundle exec rake jobs:work
 
 On DigitalOcean App Platform, add a Worker component using the application Dockerfile and this run command. Start with one shared worker for calendar and other jobs; add processes when capacity or queue isolation requires them. All workers must use the same application version and environment. Startup creates the declared queue indexes. SIGINT and SIGTERM stop after the current job and clear the worker's locks.
 
-The worker handles every named queue by default, including `calendar` and `mailers`. Set `JOB_QUEUES=calendar,mailers` for both, or dedicate separate workers to each queue. A calendar-only worker does not send email. Ensure every used queue has a worker.
+The worker handles every named queue by default, including `calendar`, `mailers`, and `maintenance`. Set `JOB_QUEUES=calendar,mailers,maintenance` for all three, or dedicate separate workers to each queue. A calendar-only worker does not send email or clean up application drafts. Ensure every used queue has a worker.
 
 For a bounded scheduled or manual run:
 
@@ -54,13 +54,17 @@ Password recovery, email-change verification, participant invitations, coordinat
 
 The worker reloads current accounts, invitations, permissions, and booking access before sending. Superseded, expired, consumed, revoked, or unauthorized messages are skipped; paused, booked, inactive, or no-longer-entitled participants receive no booking invitation. Recovery and verification links retain their original 30-minute deadline, and registration invitations retain their original 30-day deadline. Expired encrypted tokens are also removed by MongoDB's TTL monitor. SMTP failures or missing worker delivery configuration retain the outbox for safe retries; delivery success or an intentional skip removes it.
 
-SMTP has no atomic acknowledgment shared with MongoDB: a crash after provider acceptance can duplicate an email. Delivery remains at least once, not exactly once. No automated reminder workflow is enabled.
+SMTP has no atomic acknowledgment shared with MongoDB: a crash after provider acceptance can duplicate an email. Delivery remains at least once, not exactly once. Application-completion reminders use this outbox; automated booking reminders are not enabled.
 
 ## Recurring Work
 
 Register additional job class names and intervals in `config/initializers/background_jobs.rb`. The shared worker checks the registry before each batch; it does not contain provider-specific dispatch code. Recurring schedules and enqueueing share a MongoDB transaction and write barrier, so competing workers do not enqueue duplicate runs. A schedule keeps at most one queued/running/retrying job, including retained failures; missed intervals do not accumulate a backlog. Completed or intentionally discarded jobs become eligible again when their next interval is due.
 
 `GoogleCalendarSyncJob` drains up to 100 due outbox entries every five seconds. `GoogleCalendarReconcileJob` reconciles upcoming bookings every five minutes. `GoogleCalendarRsvpPollJob` schedules model invitation-response checks every 12 hours, with one `GoogleCalendarRsvpJob` per synchronized upcoming booking so provider requests remain bounded per job. All use the `calendar` queue. Idle polling adds up to another five seconds; busy workers can delay execution. RSVP checks are read-only, skip fresh duplicate checks, and use the shared queue's safe retries. Calendar event identity, private details, invitations, rescheduling, cancellations, revision protection, and provider retry handling remain unchanged.
+
+`ApplicationDraftMaintenanceJob` runs hourly on `maintenance`. It scans indexed unfinished drafts through a cursor, committing each draft separately so interrupted sweeps retain completed progress. From seven days after the first save, it atomically marks and enqueues one completion reminder for an active verified applicant while their program and venue are active, intake is open, and they are not already a participant. The mail worker rechecks those conditions and the draft's continued existence and status before sending an authenticated resume/abandon link without profile contents or bearer tokens. Delayed reminders expire at the original 30-day deadline. Editing does not reset either age or allow another reminder.
+
+At 30 days, maintenance removes only records still marked Draft without profile-sharing consent, irrespective of account or intake availability. The transaction competes safely with submission: a submitted record and its history survive; a removed draft cannot be recreated from a stale editor revision. Editor revisions bind the draft ID and revision together so an old form cannot overwrite, submit, or abandon a replacement draft whose numeric revision has restarted. Accounts, account photos, memberships, and submitted application/decision history are not deleted. These are elapsed-age thresholds, not exact-time delivery promises: hourly scheduling, worker downtime, retries, and queue load can delay work. Include both `maintenance` and `mailers` when filtering worker queues.
 
 ## Monitor and Recover
 

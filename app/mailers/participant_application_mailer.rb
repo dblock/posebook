@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 class ParticipantApplicationMailer < ApplicationMailer
+  def draft_reminder(application, recipient)
+    @program = application.program
+    @application_url = program_participation_application_url(@program)
+    mail(to: recipient.email, subject: "Finish Your Participation Application: #{@program.name}")
+  end
+
   def submitted(application, recipient)
     @application = application
     @program = application.program

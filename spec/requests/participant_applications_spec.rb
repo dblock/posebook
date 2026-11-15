@@ -132,7 +132,7 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     draft = ParticipantApplication.find_by(user_id: applicant.id)
     expect(draft).to have_attributes(status: 'draft', profile_shared_at: nil, message: 'Keep my draft')
     post program_participation_application_path(program),
-         params: { participant_application: { consent: '1', lock_version: draft.lock_version,
+         params: { participant_application: { consent: '1', lock_version: draft.draft_revision,
                                               user_id: user.id, status: 'accepted',
                                               roles: ['system_admin'] } }
     expect(response).to redirect_to(program_participation_application_path(program))

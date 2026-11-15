@@ -10,6 +10,7 @@ Rails.application.config.to_prepare { Delayed::Worker.backend = QueuedJob }
 Rails.application.config.active_job.logger = ActiveSupport::Logger.new(File::NULL)
 Rails.application.config.action_mailer.logger = ActiveSupport::Logger.new(File::NULL)
 Rails.application.config.x.recurring_jobs = {
+  ApplicationDraftMaintenanceJob: 1.hour,
   GoogleCalendarSyncJob: 5.seconds,
   GoogleCalendarReconcileJob: 5.minutes,
   GoogleCalendarRsvpPollJob: 12.hours
