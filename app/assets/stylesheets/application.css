@@ -807,6 +807,21 @@ tbody tr:last-child td {
   min-width: 0;
 }
 
+:is(.venue-photo, .program-photo) form {
+  display: flex;
+  justify-content: center;
+}
+
+:is(.venue-photo, .program-photo) .photo-primary-control {
+  align-items: center;
+  min-height: 1.75rem;
+  margin: 0.5rem 0;
+}
+
+:is(.venue-photo, .program-photo) .photo-primary-control .status-label {
+  margin: 0;
+}
+
 .profile-photo img {
   display: block;
   width: 100%;
