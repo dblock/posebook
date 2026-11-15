@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'net/smtp'
-
 module CoordinatorInviting
   extend ActiveSupport::Concern
 
@@ -32,9 +30,10 @@ module CoordinatorInviting
     return invitation_error('invitations.delivery_unavailable') unless delivery_available?
 
     @invitation.save!
-    deliver_invitation
+    queued = deliver_invitation
     flash[:invitation_link] = { 'id' => @invitation.id.to_s, 'token' => @invitation.token }
-    redirect_to polymorphic_path([@invitation.target, @invitation]), notice: t('invitations.created')
+    redirect_to polymorphic_path([@invitation.target, @invitation]),
+                notice: t(queued ? 'invitations.created_and_queued' : 'invitations.created')
   end
 
   def prepare_coordinator_page
@@ -69,9 +68,11 @@ module CoordinatorInviting
   def deliver_invitation
     return unless @invitation.email.present? && params[:send_email] == '1'
 
-    CoordinatorInvitationMailer.invite(@invitation, @invitation.token).deliver_now
-  rescue IOError, SystemCallError, Timeout::Error, Net::SMTPError => e
+    EmailDelivery.enqueue('coordinator_invitation', @invitation, token: @invitation.token,
+                                                                 expires_at: @invitation.expires_at)
+  rescue EmailDelivery::Unavailable => e
     NewRelic::Agent.notice_error(e)
     flash[:alert] = t('invitations.delivery_failed')
+    false
   end
 end

@@ -8,6 +8,7 @@ Delayed::Worker.queues = ENV.fetch('JOB_QUEUES', '').split(',').map(&:strip).rej
 Rails.application.config.to_prepare { Delayed::Worker.backend = QueuedJob }
 
 Rails.application.config.active_job.logger = ActiveSupport::Logger.new(File::NULL)
+Rails.application.config.action_mailer.logger = ActiveSupport::Logger.new(File::NULL)
 Rails.application.config.x.recurring_jobs = {
   GoogleCalendarSyncJob: 5.seconds,
   GoogleCalendarReconcileJob: 5.minutes,

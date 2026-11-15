@@ -1,5 +1,11 @@
 # Upgrading
 
+## Queued Transactional Email
+
+Account recovery, email-change verification, participant/coordinator invitations, and invitations to book again now require the shared background worker. Deploy web and worker together with the same version, SMTP settings, `MAIL_FROM`, `APP_HOST`, and `SECRET_KEY_BASE`. Remove a calendar-only queue filter, include `mailers` in `JOB_QUEUES=calendar,mailers`, or add a dedicated mail worker before serving the new web version. Startup creates the encrypted email outbox indexes; no data migration is required.
+
+Requests now report email queued rather than sent. Existing token lifetimes are unchanged, including the 30-minute recovery/verification deadline measured from the request; monitor worker delays and failures. In development, email files appear only after the worker runs. See [Background Jobs](docs/background-jobs.md) for safe retries and at-least-once SMTP delivery.
+
 ## Instagram Tagging
 
 First-user and invitation registration forms now select Instagram tagging by default and require a valid handle when selected. Users can clear the checkbox. Existing accounts and their saved preferences are unchanged; no migration is required. If a new user selects private identity and the browser omits the disabled public-sharing fields, tagging is off until explicitly enabled.

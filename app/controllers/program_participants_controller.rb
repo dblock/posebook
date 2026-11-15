@@ -22,7 +22,7 @@ class ProgramParticipantsController < ApplicationController
 
   def invite_all
     results = @program.memberships.participants.map { |membership| delivery.call(membership.id) }.tally
-    notice = @program.message('participant_access.bulk_result', sent: results.fetch(:sent, 0),
+    notice = @program.message('participant_access.bulk_result', queued: results.fetch(:queued, 0),
                                                                 failed: results.fetch(:failed, 0),
                                                                 skipped: results.fetch(:skipped, 0))
     redirect_to roster_path, notice: notice

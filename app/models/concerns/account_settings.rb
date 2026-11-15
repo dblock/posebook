@@ -44,9 +44,18 @@ module AccountSettings
     token = SecureRandom.urlsafe_base64(32)
     self.email_change_digest = Digest::SHA256.hexdigest(token)
     self.email_change_expires_at = 30.minutes.from_now
-    return false unless save
-
-    EmailChangeMailer.confirm(self, token).deliver_now
+    updates = changes.transform_values(&:last)
+    version = session_version
+    EmailDelivery.enqueue('email_change', self, token: token, expires_at: email_change_expires_at) do
+      reload
+      if active? && session_version == version
+        assign_attributes(updates)
+        save
+      else
+        errors.add(:current_password, :invalid)
+        false
+      end
+    end
   end
 
   def confirm_email_change(token)

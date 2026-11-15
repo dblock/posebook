@@ -89,8 +89,11 @@ class User
 
   def send_password_reset
     token = SecureRandom.urlsafe_base64(32)
-    set(password_reset_digest: Digest::SHA256.hexdigest(token), password_reset_expires_at: 30.minutes.from_now)
-    PasswordResetMailer.reset(self, token).deliver_now
+    expires_at = 30.minutes.from_now
+    EmailDelivery.enqueue('password_reset', self, token: token, expires_at: expires_at) do
+      reload
+      active? && set(password_reset_digest: Digest::SHA256.hexdigest(token), password_reset_expires_at: expires_at)
+    end
   end
 
   def reset_password(token, attributes)

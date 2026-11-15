@@ -8,6 +8,7 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
   end
 
   def confirmation_token
+    deliver_emails
     ActionMailer::Base.deliveries.last.body.decoded[/email_change\?token=([A-Za-z0-9_-]+)/, 1]
   end
 
@@ -195,16 +196,18 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     expect(user.reload.pending_email).to be_nil
   end
 
-  it 'handles verification mail delivery errors' do
+  it 'rolls back profile changes when verification email cannot be queued' do
     user = create_user
     sign_in(user)
-    error = IOError.new('Unavailable')
-    allow(EmailChangeMailer).to receive(:confirm).and_raise(error)
+    error = ActiveJob::EnqueueError.new('Unavailable')
+    allow(EmailDeliveryJob).to receive(:perform_later).and_raise(error)
     allow(NewRelic::Agent).to receive(:notice_error)
     update_profile(user, email: 'new@example.test', current_password: DatabaseHelpers::TEST_PASSWORD)
     expect(response).to have_http_status(:service_unavailable)
-    expect(response.body).to include('could not be sent')
-    expect(NewRelic::Agent).to have_received(:notice_error).with(error).once
+    expect(response.body).to include('could not be queued')
+    expect(user.reload.pending_email).to be_nil
+    expect(EmailDelivery.where(resource_id: user.id)).to be_empty
+    expect(NewRelic::Agent).to have_received(:notice_error).with(an_instance_of(EmailDelivery::Unavailable)).once
   end
 
   it 'rejects expired and missing email confirmation links' do

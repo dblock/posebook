@@ -71,6 +71,7 @@ module DatabaseHelpers
   end
 
   def cleanup_records
+    cleanup_email_deliveries
     Mongoid::History.disable do
       tracked_records.reverse_each do |record|
         if record.is_a?(Booking)
@@ -83,12 +84,28 @@ module DatabaseHelpers
     HistoryTracker.where(:'association_chain.id'.in => tracked_records.map(&:id)).delete_all
   end
 
+  def cleanup_email_deliveries
+    deliveries = EmailDelivery.where(:resource_id.in => tracked_records.map(&:id)).to_a
+    deliveries.concat(tracked_records.grep(EmailDelivery))
+    QueuedJob.where(:id.in => deliveries.filter_map(&:queued_job_id)).delete_all
+    EmailDelivery.where(:id.in => deliveries.map(&:id)).delete_all
+  end
+
   def sign_in(user, client: self)
     client.post(session_path, params: { email: user.email, password: TEST_PASSWORD })
   end
 
   def reset_token(user)
     user.send_password_reset
+    deliver_emails
     ActionMailer::Base.deliveries.last.body.decoded[%r{/password_resets/([^/]+)/edit}, 1]
+  end
+
+  def deliver_emails
+    previous_queues = Delayed::Worker.queues
+    count = QueuedJob.where(queue: 'mailers', failed_at: nil, :run_at.lte => Time.current).count
+    expect(BackgroundWorker.build(queues: ['mailers']).work_off(count)).to eq([count, 0])
+  ensure
+    Delayed::Worker.queues = previous_queues
   end
 end
