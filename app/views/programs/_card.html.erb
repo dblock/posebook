@@ -18,6 +18,8 @@
     <%= render "venues/information", venue: program.venue %>
     <% if local_assigns.fetch(:bookable, false) %>
       <%= link_to "Choose a Date", program_path(program, section: "calendar"), class: "button-link" %>
+    <% elsif local_assigns.fetch(:managed, false) %>
+      <%= link_to "Manage Calendar", program_path(program, section: "calendar"), class: "button-link" %>
     <% end %>
   </div>
 </article>

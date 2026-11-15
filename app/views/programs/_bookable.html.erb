@@ -1,0 +1,7 @@
+<section aria-labelledby="bookable-programs-heading">
+  <h2 id="bookable-programs-heading">Programs You Can Book</h2>
+  <div class="location-cards bookable-programs">
+    <% programs.each do |program| %><%= render "programs/card", program: program, bookable: true %><% end %>
+  </div>
+  <% if programs.empty? %><p>No programs available to book. Contact a coordinator for a booking invitation.</p><% end %>
+</section>

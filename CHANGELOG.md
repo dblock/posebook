@@ -101,4 +101,5 @@
 - [#112](https://github.com/dblock/posebook/pull/112): Configure an optional first bookable date and anchor the booking horizon to that date while it is in the future, retaining earlier sessions and existing bookings - [@dblock](https://github.com/dblock).
 - [#113](https://github.com/dblock/posebook/pull/113): Match photo deletion, primary selection, and visibility controls to the shared compact table-button size across profile, venue, and program galleries - [@dblock](https://github.com/dblock).
 - [#115](https://github.com/dblock/posebook/pull/115): Center venue and program photo labels and buttons with consistent spacing and aligned deletion controls - [@dblock](https://github.com/dblock).
+- [#116](https://github.com/dblock/posebook/pull/116): List programs participants can book and coordinators can manage on their homepage with scoped calendar actions - [@dblock](https://github.com/dblock).
 - Your contribution here.
