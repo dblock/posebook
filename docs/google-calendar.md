@@ -21,7 +21,7 @@ Run the shared background worker using the same application image, MongoDB repli
 bundle exec rake jobs:work
 ```
 
-On DigitalOcean App Platform, add a **Worker** component using the application Dockerfile and that run command, or update the existing calendar worker. The same worker handles calendar jobs and future Active Jobs; no separate calendar worker is required. Keep it running with automatic restarts. Do not run it inside the web process. `SECRET_KEY_BASE` encrypts stored refresh tokens; changing it without migrating the tokens requires reconnecting every calendar. See [Background Jobs](background-jobs.md) for queue filtering, scheduled runs, retries, and monitoring.
+On DigitalOcean App Platform, add a **Worker** component using the application Dockerfile and that run command. The same worker handles calendar jobs and future Active Jobs; no separate calendar worker is required. Keep it running with automatic restarts. Do not run it inside the web process. `SECRET_KEY_BASE` encrypts stored refresh tokens; changing it without migrating the tokens requires reconnecting every calendar. See [Background Jobs](background-jobs.md) for queue filtering, scheduled runs, retries, and monitoring.
 
 For a bounded manual run:
 

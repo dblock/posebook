@@ -10,7 +10,7 @@ Deploy a Worker component using the same application image, `MONGODB_URI`, `SECR
 bundle exec rake jobs:work
 ```
 
-On DigitalOcean App Platform, change the existing Google Calendar Worker run command to this command rather than adding another calendar-only worker. Start with one worker; add processes when capacity or queue isolation requires them. All workers must use the same application version and environment. Startup creates the declared queue indexes. SIGINT and SIGTERM stop after the current job and clear the worker's locks.
+On DigitalOcean App Platform, add a Worker component using the application Dockerfile and this run command. Start with one shared worker for calendar and other jobs; add processes when capacity or queue isolation requires them. All workers must use the same application version and environment. Startup creates the declared queue indexes. SIGINT and SIGTERM stop after the current job and clear the worker's locks.
 
 The worker handles every named queue by default. Set `JOB_QUEUES=calendar` to handle only calendar work, or a comma-separated list to dedicate workers to selected queues. Ensure every used queue has a worker. A default worker with no filter handles both current and future queues.
 
@@ -20,7 +20,7 @@ For a bounded scheduled or manual run:
 bundle exec rake jobs:run
 ```
 
-This schedules due recurring work and processes at most 100 jobs. The legacy `google_calendar:work` command remains an alias for the shared worker; `google_calendar:sync` remains a calendar-only manual reconciliation and drain.
+This schedules due recurring work and processes at most 100 jobs. Use `google_calendar:sync` for calendar-only manual reconciliation and delivery.
 
 ## Add a Job
 
