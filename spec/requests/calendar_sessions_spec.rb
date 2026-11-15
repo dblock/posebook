@@ -78,6 +78,18 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     expect(response.parsed_body.at_css('input[name="schedule[date]"]')['value']).to eq('2026-11-17')
   end
 
+  it 'leaves unscheduled cells without descriptive text for a booked participant' do
+    program.update!(program_label: 'Figure Drawing Session')
+    participant = create_user
+    grant_participant_access(program, participant)
+    track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-11-23'))
+    sign_in(participant)
+    get program_path(program, section: 'calendar')
+    expect(day('2026-11-17').text.strip).to eq('17')
+    expect(day('2026-11-17').css('a, .status-label, small')).to be_empty
+    expect(day('2026-11-23').text).not_to include('Unconfirmed')
+  end
+
   it 'retains booked, closed, and future states rather than treating them as empty days' do
     booking = reserve('2026-11-16')
     program.update!(available_weekdays: ['2'])

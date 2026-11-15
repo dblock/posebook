@@ -68,7 +68,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     end
   end
 
-  it 'shows one unconfirmed label before the confirmation window on calendars and history' do
+  it 'hides the owner calendar badge while retaining unconfirmed status for managers and in history' do
     travel_to Time.utc(2026, 11, 13, 15)
     organizer = create_user
     grant_coordinator_access(program, organizer)
@@ -78,8 +78,16 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
       expect(status.css('.status-label').map(&:text)).to eq(['Unconfirmed'])
       get program_path(program, section: 'calendar')
       day = response.parsed_body.at_css(".calendar [data-date='#{booking.date.iso8601}']")
-      expect(day.css('.status-label').map(&:text)).to eq(['Unconfirmed'])
+      expect(day.css('.status-label').map(&:text)).to eq(viewer == participant ? [] : ['Unconfirmed'])
     end
+  end
+
+  it 'retains the overdue warning on the owner calendar without an unconfirmed badge' do
+    travel_to Time.utc(2026, 11, 18, 5)
+    get program_path(program, section: 'calendar')
+    day = response.parsed_body.at_css(".calendar [data-date='#{booking.date.iso8601}']")
+    expect(day.css('.status-label')).to be_empty
+    expect(day.at_css('.attendance-warning').text).to include('Please contact an organizer ASAP')
   end
 
   %w[canceled rescheduled].each do |state|

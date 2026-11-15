@@ -13,8 +13,9 @@ class BookingMutation
     @user = user
   end
 
-  def book(date:)
+  def book(date:, schedule_revision: nil)
     run do |session|
+      check_schedule_revision!(schedule_revision)
       raise Invalid, @program.message('bookings.already_scheduled') if claims.exists?
 
       selected = available_date(date)
@@ -48,6 +49,12 @@ class BookingMutation
   end
 
   private
+
+  def check_schedule_revision!(revision)
+    return if revision.nil? || revision.to_s == (@program.schedule_revision - 1).to_s
+
+    raise Stale, @program.message('bookings.stale')
+  end
 
   def run(booking_access: true)
     verify_participant!

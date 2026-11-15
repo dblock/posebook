@@ -14,7 +14,9 @@ class BookingsController < ApplicationController
   end
 
   def create
-    @booking = mutation.book(date: params[:date])
+    return show_booking_confirmation unless params[:confirmed] == '1'
+
+    @booking = mutation.book(date: params[:date], schedule_revision: submitted_schedule_revision)
     finish_booking('bookings.created')
   end
 
@@ -38,6 +40,24 @@ class BookingsController < ApplicationController
   end
 
   private
+
+  def submitted_schedule_revision
+    revision = params[:schedule_revision]
+    return revision if revision.is_a?(String) && revision.match?(/\A(?:0|[1-9]\d*)\z/)
+
+    raise BookingMutation::Stale, @program.message('bookings.stale')
+  end
+
+  def show_booking_confirmation
+    @date = Date.iso8601(params[:date].to_s)
+    @calendar = ProgramCalendar.new(@program, month: @date.strftime('%Y-%m'))
+    raise BookingMutation::Invalid, @program.message('bookings.invalid_date') if @calendar.blocked_reason(@date)
+    raise BookingMutation::Conflict, @program.message('bookings.date_taken') if @calendar.displayed_bookings[@date]
+
+    render :confirmation
+  rescue ArgumentError
+    raise BookingMutation::Invalid, @program.message('bookings.invalid_date')
+  end
 
   def require_booking_permission
     @booking_access = BookingAccess.new(@program.memberships.participants.where(user_id: current_user.id).first)
