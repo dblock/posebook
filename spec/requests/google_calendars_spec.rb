@@ -80,6 +80,19 @@ RSpec.describe 'Google Calendar connections', :aggregate_failures, :database, ty
     expect(booking.reload.display_status).to eq('Booked')
   end
 
+  it 'places Google responses inline beside booking badges without a visible prefix' do
+    _, booking, = response_snapshot
+    sign_in(organizer)
+    [program_path(program, section: 'calendar'), program_path(program, section: 'history'),
+     program_participants_path(program), edit_program_organizer_booking_path(program, booking)].each do |path|
+      get path
+      rsvp = response.parsed_body.at_css('span.google-calendar-rsvp')
+      expect(rsvp.text.strip).to eq('Declined')
+      expect(rsvp.previous_element.text).to eq('Booked')
+      expect(rsvp.at_css('.status-label')['aria-label']).to include('Google RSVP')
+    end
+  end
+
   it 'keeps Google responses out of public and participant views' do
     _, booking, = response_snapshot
     [nil, booking.user, create_user].each do |viewer|
