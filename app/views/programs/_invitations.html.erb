@@ -4,8 +4,7 @@
   <ul>
     <% @invitations.each do |invitation| %>
       <li>
-        <%= invitation.name.presence || "Personal invitation" %>
-        <%= invitation.email %> -
+        <span class="invitation-recipient"><%= participant_contact_label(invitation) %></span> -
         <span class="invitation-status">
           <%= status_label(invitation.status) %>
           <% if invitation.status == "Pending" %>

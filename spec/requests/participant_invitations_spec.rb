@@ -7,6 +7,21 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     URI.decode_www_form(URI(response.parsed_body.at_css('#invitation_link')['value']).query).to_h.fetch('token')
   end
 
+  it 'formats invitation recipients from their available details without exposing matching accounts' do
+    admin = create_user(roles: ['system_admin'])
+    program = create_program
+    unknown = create_user(name: 'Private account name', gender: 'female', public_profile_private: true)
+    recipients = [{ name: 'Drawing <Model> & Artist', email: 'artist@example.test' },
+                  { email: unknown.email }, { name: 'Named guest' }, {}]
+    recipients.each { |attributes| create_participant_invitation(program, admin, **attributes) }
+    sign_in(admin)
+    get program_participants_path(program)
+    expect(response.parsed_body.css('.invitation-recipient').map(&:text))
+      .to contain_exactly('Drawing <Model> & Artist <artist@example.test>', unknown.email, 'Named guest',
+                          'Personal invitation')
+    expect(response.body).not_to include(unknown.name, '(Female)')
+  end
+
   it 'allows a scoped organizer to create a private link without an email address' do
     program = create_program
     organizer = create_user

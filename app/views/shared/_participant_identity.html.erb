@@ -6,10 +6,8 @@
                   alt: photo ? "Profile photo of #{participant.name}" : "No profile photo for #{participant.name}") %>
   <% end %>
   <div>
-    <strong><%= link_to participant.name, participant_path(participant) %></strong>
-    <% if local_assigns.fetch(:show_email, true) %>
-      <br><%= link_to participant.email, participant_path(participant), class: "participant-email" %>
-    <% end %>
+    <% label = local_assigns.fetch(:show_email, true) ? participant_contact_label(participant) : participant.name %>
+    <strong><%= link_to label, participant_path(participant) %></strong>
     <% if participant.instagram_handle.present? %>
       <br><%= link_to "@#{participant.instagram_handle}", InstagramProfile.url(participant.instagram_handle),
                       target: "_blank", rel: "noopener noreferrer" %>

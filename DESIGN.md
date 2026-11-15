@@ -51,6 +51,8 @@ Compact Copy controls appear inside read-only private invitation link fields, fo
 
 Roster Actions contains compact Pause/Resume controls; individual Invite to Book remains in Booking Access. Linked model identity and thumbnails open the existing participant page without a redundant View Photos action. Profile, venue, and program photo editors center primary labels and compact primary-selection buttons beneath each photo. Venue and program galleries also center Delete Photo; their primary labels and selection buttons share a minimum-height row with equal spacing above and below, aligning deletion controls across adjacent photos.
 
+Private participant selectors, roster/history contact links, and participant invitation lists share the `Name <email> (Gender)` format. Missing name or gender is omitted independently, leaving just the email when neither is available; name-only and unrestricted personal invitations retain their available name or Personal invitation fallback. Gender appears when stored on the displayed record, regardless of booking rules. Invitation labels never look up an unrelated account by email. Instagram remains a separate roster/history link, not part of selector labels; public identities and name-only admin cells are unchanged.
+
 The admin user directory shows a linked, local placeholder portrait when an account has no profile photo, keeping identities aligned with photo-bearing rows. Deactivate and Reactivate use the same compact controls as roster actions; protected administrator accounts retain their non-interactive label.
 
 Single-item breadcrumbs have a decorative leading `>`; longer trails retain `/` separators. Both markers are hidden from screen readers.

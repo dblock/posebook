@@ -28,15 +28,26 @@ RSpec.describe 'Organizer bookings', :aggregate_failures, :database, type: :requ
     track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-11-16'))
   end
 
-  it 'identifies private models by name, email and Instagram in booking selectors' do
-    participant.update!(name: 'Drawing Model', instagram_handle: 'drawing.model', public_profile_private: true)
+  it 'uses the same escaped name, email, and gender label with and without gender rules' do
+    participant.update!(name: 'Drawing <Model> & Artist', instagram_handle: 'drawing.model',
+                        public_profile_private: true)
     get new_program_organizer_booking_path(program)
     option = response.parsed_body.at_css("#booking_user_id option[value='#{participant.id}']")
-    expect(option.text).to eq("Drawing Model - #{participant.email} - @drawing.model")
+    expect(option.text).to eq("Drawing <Model> & Artist <#{participant.email}> (Other)")
     program.update!(no_consecutive_genders: ['other'])
     get edit_program_organizer_booking_path(program, reserve)
     expect(response.parsed_body.at_css("#booking_user_id option[value='#{participant.id}']").text)
-      .to end_with(' - Other')
+      .to eq("Drawing <Model> & Artist <#{participant.email}> (Other)")
+  end
+
+  it 'omits missing name and gender without leaving empty identity punctuation' do
+    [[nil, 'female', "#{participant.email} (Female)"],
+     ['Drawing Model', nil, "Drawing Model <#{participant.email}>"],
+     [nil, nil, participant.email]].each do |name, gender, label|
+      participant.set(name: name, gender: gender)
+      get new_program_organizer_booking_path(program)
+      expect(response.parsed_body.at_css("#booking_user_id option[value='#{participant.id}']").text).to eq(label)
+    end
   end
 
   it 'creates a booking for an assigned participant without granting unrelated administrator permissions' do

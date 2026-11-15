@@ -509,7 +509,6 @@ form:not(.button_to) > p {
 }
 
 small,
-.participant-email,
 .scroll-hint {
   font-size: 0.85rem;
 }
@@ -714,10 +713,6 @@ tbody tr:last-child td {
   padding: 0.9rem;
   vertical-align: top;
   overflow-wrap: anywhere;
-}
-
-.participant-email {
-  font-size: 0.8rem;
 }
 
 .participant-identity {
