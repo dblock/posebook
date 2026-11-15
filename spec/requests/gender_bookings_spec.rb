@@ -34,17 +34,24 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
     patch profile_path, params: { user: { name: participant.name, email: participant.email }.merge(overrides) }
   end
 
-  it 'blocks both adjacent choices in the participant calendar without publishing another participant gender' do
+  it 'blocks adjacent choices without displaying gender rules on participant, manager, or public calendars' do
     reserve('2026-11-23')
     sign_in(participant)
     get program_path(program, section: 'calendar')
     %w[2026-11-16 2026-11-30].each do |date|
       expect(calendar_day(date)['class']).to eq('blocked')
-      expect(calendar_day(date).text).to include('Gender rule')
+      expect(calendar_day(date).text).to include('Blocked')
       expect(calendar_day(date).css('form, button')).to be_empty
     end
     expect(calendar_day('2026-11-23').text).to include('To be announced')
     expect(calendar_day('2026-11-23').text).not_to include('Male')
+    expect(response.parsed_body.at_css('[data-calendar]').text).not_to match(/gender|male|female/i)
+    sign_in(organizer)
+    get program_path(program, section: 'calendar')
+    expect(response.parsed_body.at_css('[data-calendar]').text).not_to match(/gender|male|female/i)
+    delete session_path
+    get program_path(program, section: 'calendar')
+    expect(response.parsed_body.at_css('[data-calendar]').text).not_to match(/gender|male|female/i)
   end
 
   it 'enforces the rule on direct submissions even with a forged organizer override' do
@@ -57,11 +64,11 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
     expect(Booking.where(user_id: participant.id)).to be_empty
   end
 
-  it 'asks existing participants to select a gender and enables their calendar after a no-JavaScript profile save' do
+  it 'blocks participants without a gender and enables their calendar after a no-JavaScript profile save' do
     participant.set(gender: nil)
     sign_in(participant)
     get program_path(program, section: 'calendar')
-    expect(response.body).to include(edit_profile_path, 'before your next booking')
+    expect(response.parsed_body.at_css('[data-calendar]').text).not_to match(/gender|male|female/i)
     expect(calendar_day('2026-11-16').css('form')).to be_empty
     update_profile(gender: 'female')
     expect(response).to redirect_to(profile_path)
@@ -217,5 +224,17 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
     get edit_program_booking_path(program, original)
     expect(calendar_day('2026-11-30')['class']).to eq('available')
     expect(calendar_day('2026-11-30').at_css('button')['value']).to eq('2026-11-30')
+    expect(response.parsed_body.at_css('[data-calendar]').text).not_to match(/gender|male|female/i)
+  end
+
+  it 'blocks restricted rescheduling dates without displaying the gender rule' do
+    reserve('2026-11-16')
+    original = track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-11-30'))
+    sign_in(participant)
+    get edit_program_booking_path(program, original)
+    expect(calendar_day('2026-11-23')['class']).to eq('blocked')
+    expect(calendar_day('2026-11-23').text).to include('Blocked')
+    expect(calendar_day('2026-11-23').css('button')).to be_empty
+    expect(response.parsed_body.at_css('[data-calendar]').text).not_to match(/gender|male|female/i)
   end
 end
