@@ -104,4 +104,5 @@
 - [#116](https://github.com/dblock/posebook/pull/116): List programs participants can book and coordinators can manage on their homepage with scoped calendar actions - [@dblock](https://github.com/dblock).
 - [#117](https://github.com/dblock/posebook/pull/117): Standardize private model selectors, roster identities, and invitation recipients as name, email, and optional gender - [@dblock](https://github.com/dblock).
 - [#119](https://github.com/dblock/posebook/pull/119): Let assigned coordinators edit participant account and public display names with audited, program-private coordinator notes - [@dblock](https://github.com/dblock).
+- [#120](https://github.com/dblock/posebook/pull/120): Add program-scoped application lifecycle with reversible Not Now decisions, shared participant admission, and distinct retained history - [@dblock](https://github.com/dblock).
 - Your contribution here.
