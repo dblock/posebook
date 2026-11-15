@@ -28,6 +28,8 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
       expect(identity.at_css('strong a').text).to eq(participant.name)
       expect(identity.at_css('strong a')['href']).to eq(participant_path(participant))
       expect(identity.at_css('.participant-email')['href']).to eq(participant_path(participant))
+      expect(identity.at_css('.participant-portrait')['href']).to eq(participant_path(participant))
+      expect(identity.at_css('.participant-portrait img')['src']).to include('profile-placeholder')
       expect(identity.at_css('a[target="_blank"]').text).to eq('@drawing.model')
     end
   end

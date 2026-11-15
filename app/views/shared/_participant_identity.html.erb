@@ -1,11 +1,9 @@
 <div class="participant-identity">
   <% photo = participant.primary_profile_photo %>
-  <% if photo || local_assigns.fetch(:show_placeholder, false) %>
-    <%= link_to participant_path(participant), class: "participant-portrait" do %>
-      <%= image_tag(photo ? participant_photo_path(participant, photo, thumbnail: 1) : "profile-placeholder.svg",
-                    width: 64, height: 64, loading: "lazy",
-                    alt: photo ? "Profile photo of #{participant.name}" : "No profile photo for #{participant.name}") %>
-    <% end %>
+  <%= link_to participant_path(participant), class: "participant-portrait" do %>
+    <%= image_tag(photo ? participant_photo_path(participant, photo, thumbnail: 1) : "profile-placeholder.svg",
+                  width: 64, height: 64, loading: "lazy",
+                  alt: photo ? "Profile photo of #{participant.name}" : "No profile photo for #{participant.name}") %>
   <% end %>
   <div>
     <strong><%= link_to participant.name, participant_path(participant) %></strong>

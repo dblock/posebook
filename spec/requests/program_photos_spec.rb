@@ -25,6 +25,22 @@ RSpec.describe 'Program photos', :aggregate_failures, :database, type: :request 
     ProgramPhoto.storage.file_model.where('metadata.program_id' => program.id)
   end
 
+  it 'uses a program placeholder only when neither the program nor its venue has a photo' do
+    get programs_venue_path(program.venue)
+    portrait = response.parsed_body.at_css('.program-card .location-card-photo')
+    expect(portrait['href']).to eq(program_path(program))
+    expect(portrait.at_css('img')['src']).to include('program-placeholder')
+    expect(portrait.at_css('img')['alt']).to eq("No photo for #{program.name}")
+    venue_photo = VenuePhoto.add(program.venue, photo_upload)
+    get programs_venue_path(program.venue)
+    expect(response.parsed_body.at_css('.program-card img')['src'])
+      .to eq(venue_photo_path(program.venue, venue_photo, thumbnail: 1))
+    photo
+    get programs_venue_path(program.venue)
+    expect(response.parsed_body.at_css('.program-card img')['src'])
+      .to eq(program_photo_path(program, photo, thumbnail: 1))
+  end
+
   it 'groups program information and scoped configuration without exposing parent management' do
     sign_in(coordinator)
     get edit_program_path(program)

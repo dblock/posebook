@@ -1,9 +1,13 @@
 <article class="location-card program-card">
-  <% if (photo = program.primary_photo || program.venue.primary_photo) %>
-    <%= link_to program_path(program), class: "location-card-photo" do %>
+  <% photo = program.primary_photo || program.venue.primary_photo %>
+  <%= link_to program_path(program), class: "location-card-photo" do %>
+    <% if photo %>
       <% photo_url = photo.is_a?(ProgramPhoto) ? program_photo_path(program, photo, thumbnail: 1) : venue_photo_path(program.venue, photo, thumbnail: 1) %>
       <%= image_tag photo_url, width: 400, height: 400,
                     loading: "lazy", alt: "#{program.name} primary photo" %>
+    <% else %>
+      <%= image_tag "program-placeholder.svg", width: 400, height: 400,
+                    loading: "lazy", alt: "No photo for #{program.name}" %>
     <% end %>
   <% end %>
   <div class="location-card-summary">
