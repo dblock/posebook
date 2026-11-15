@@ -32,6 +32,32 @@ RSpec.describe User, :aggregate_failures, :database do
     expect(user.phone).to eq('+12025550101')
   end
 
+  it 'normalizes formatted North American and international phone numbers' do
+    {
+      '(212) 555-1234' => '+12125551234',
+      '212.555.1234' => '+12125551234',
+      '1 (212) 555-1234' => '+12125551234',
+      '+1 (212) 555-1234' => '+12125551234',
+      '+44 20 7946 0958' => '+442079460958',
+      '44 20 7946 0958' => '+442079460958',
+      '0044 20 7946 0958' => '+442079460958',
+      '+39 02 1234 5678' => '+390212345678'
+    }.each do |input, expected|
+      user = described_class.new(user_attributes(phone: input))
+      expect(user).to be_valid
+      expect(user.phone).to eq(expected)
+    end
+  end
+
+  it 'rejects malformed, ambiguous, and unsupported phone input rather than discarding it' do
+    ['(212) 555-1234 ext 5', '212+5551234', '++12125551234', '0123456789', '+123',
+     '+1234567890123456', '+44 (0)20 7946 0958', '0044 (0)20 7946 0958'].each do |input|
+      user = described_class.new(user_attributes(phone: input))
+      expect(user).not_to be_valid
+      expect(user.errors[:phone]).to be_present
+    end
+  end
+
   it 'rejects a password confirmation mismatch and duplicate normalized email' do
     original = create_user
     user = described_class.new(user_attributes(email: original.email.upcase, password_confirmation: 'different'))

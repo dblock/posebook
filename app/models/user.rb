@@ -6,6 +6,7 @@ class User
   include Mongoid::Document
   include Mongoid::Timestamps
   include ActiveModel::SecurePassword
+  include PhoneSettings
   include AccountSettings
   include PublicProfile
   include HistoryTracking

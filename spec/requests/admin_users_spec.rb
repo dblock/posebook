@@ -37,7 +37,7 @@ RSpec.describe 'Administrator user editing', :aggregate_failures, :database, typ
     expect(response.parsed_body.at_css("a[href='#{edit_admin_user_path(user)}']")).to be_present
     get edit_admin_user_path(user)
     expect(response.parsed_body.css('main input[type=password]')).to be_empty
-    update_user(user, name: 'Edited Participant', email: " #{user.email.upcase} ", phone: '+12125551234',
+    update_user(user, name: 'Edited Participant', email: " #{user.email.upcase} ", phone: '1 (212) 555-1234',
                       roles: ['system_admin'], active: false, password: 'a forbidden password change')
     expect(response).to redirect_to(admin_users_path)
     follow_redirect!

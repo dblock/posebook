@@ -9,7 +9,7 @@
   <%= form_with model: @user, url: admin_user_path(@user), method: :patch do |form| %>
     <p><%= form.label :name %><br><%= form.text_field :name, required: true, autocomplete: "name", maxlength: 100 %></p>
     <p><%= form.label :email %><br><%= form.email_field :email, required: true, autocomplete: "email" %></p>
-    <p><%= form.label :phone %><br><%= form.telephone_field :phone, required: true, autocomplete: "tel" %><br>Use an international number beginning with +. Phone numbers are unverified.</p>
+    <p><%= form.label :phone %><br><%= form.telephone_field :phone, required: true, autocomplete: "tel", placeholder: "(212) 555-1234" %><br>Include the country code outside the US and Canada. Phone numbers are unverified.</p>
     <%= render "shared/gender_field", form: form %>
     <%= render "shared/public_profile_fields", form: form, self_service: false %>
     <%= form.submit "Save User" %>

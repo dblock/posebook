@@ -45,7 +45,7 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
   it 'updates name and phone without accepting privileged fields' do
     user = create_user
     sign_in(user)
-    update_profile(user, name: 'Updated Participant', phone: '+12125551234', roles: ['system_admin'], active: false)
+    update_profile(user, name: 'Updated Participant', phone: '(212) 555-1234', roles: ['system_admin'], active: false)
     expect(response).to redirect_to(profile_path)
     follow_redirect!
     expect(response.body).to include('Profile saved.', 'Updated Participant', '+12125551234')
