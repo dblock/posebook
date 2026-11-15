@@ -1,6 +1,55 @@
 # frozen_string_literal: true
 
+# Removes only records a test tracked, plus records those records own.
+module DatabaseCleanup
+  def cleanup_records
+    track_participation_records
+    cleanup_email_deliveries
+    Mongoid::History.disable do
+      tracked_records.reverse_each { |record| destroy_tracked_record(record) }
+    end
+    HistoryTracker.where(:'association_chain.id'.in => tracked_records.map(&:id)).delete_all
+  end
+
+  def track_participation_records
+    records = owned(:user_id, User, ParticipantApplication, ParticipationEvent) +
+              owned(:program_id, Program, ApplicationRegistration, ProgramScheduleException)
+    tracked_records.concat(records - tracked_records)
+  end
+
+  def owned(key, owner, *models)
+    models.flat_map { |model| model.where(key.in => tracked_ids(owner)).to_a }
+  end
+
+  def tracked_ids(model)
+    tracked_records.grep(model).map(&:id)
+  end
+
+  # Reloads so restrict_with_error checks current associations instead of stale in-memory caches.
+  def destroy_tracked_record(record)
+    return Booking.collection.find(_id: record.id).delete_one if record.is_a?(Booking)
+
+    current = record.class.where(id: record.id).first
+    return if current.nil? || current.destroy
+
+    raise cleanup_failure(current)
+  end
+
+  def cleanup_failure(record)
+    "Could not clean up #{record.class} #{record.id}: #{record.errors.full_messages.to_sentence}"
+  end
+
+  def cleanup_email_deliveries
+    deliveries = EmailDelivery.where(:resource_id.in => tracked_records.map(&:id)).to_a
+    deliveries.concat(tracked_records.grep(EmailDelivery))
+    QueuedJob.where(:id.in => deliveries.filter_map(&:queued_job_id)).delete_all
+    EmailDelivery.where(:id.in => deliveries.map(&:id)).delete_all
+  end
+end
+
 module DatabaseHelpers
+  include DatabaseCleanup
+
   TEST_PASSWORD = 'a sufficiently long test password'
 
   def tracked_records
@@ -68,41 +117,6 @@ module DatabaseHelpers
     track_record(booking)
     track_record(BookingClaim.where(booking_id: booking.id).first)
     booking
-  end
-
-  def cleanup_records
-    track_participation_records
-    cleanup_email_deliveries
-    Mongoid::History.disable do
-      tracked_records.reverse_each { |record| destroy_tracked_record(record) }
-    end
-    HistoryTracker.where(:'association_chain.id'.in => tracked_records.map(&:id)).delete_all
-  end
-
-  def track_participation_records
-    scopes = [ParticipantApplication.where(:user_id.in => tracked_ids(User)),
-              ParticipationEvent.where(:user_id.in => tracked_ids(User)),
-              ApplicationRegistration.where(:program_id.in => tracked_ids(Program))]
-    tracked_records.concat(scopes.flat_map(&:to_a) - tracked_records)
-  end
-
-  def tracked_ids(model)
-    tracked_records.grep(model).map(&:id)
-  end
-
-  def destroy_tracked_record(record)
-    if record.is_a?(Booking)
-      Booking.collection.find(_id: record.id).delete_one
-    elsif record.persisted?
-      record.destroy
-    end
-  end
-
-  def cleanup_email_deliveries
-    deliveries = EmailDelivery.where(:resource_id.in => tracked_records.map(&:id)).to_a
-    deliveries.concat(tracked_records.grep(EmailDelivery))
-    QueuedJob.where(:id.in => deliveries.filter_map(&:queued_job_id)).delete_all
-    EmailDelivery.where(:id.in => deliveries.map(&:id)).delete_all
   end
 
   def sign_in(user, client: self)

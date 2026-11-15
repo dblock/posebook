@@ -186,3 +186,9 @@ totalDocsExamined
 JSON
 UserExperienceBenchmark
 SaaS
+UI
+Capybara
+Cuprite
+viewport
+viewports
+namespace
