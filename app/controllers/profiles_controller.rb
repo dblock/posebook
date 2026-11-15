@@ -8,6 +8,8 @@ class ProfilesController < ApplicationController
 
   def edit; end
 
+  def security; end
+
   def update
     attributes = params.expect(user: %i[name email phone gender current_password display_name instagram_handle
                                         instagram_tagging_allowed public_profile_private]).to_h.symbolize_keys

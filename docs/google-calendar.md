@@ -35,7 +35,7 @@ This reconciles upcoming bookings and processes at most 100 due changes. The sha
 
 1. Create a dedicated calendar in Google Calendar. Keep it private and share it only with authorized program organizers.
 2. Under the calendar's **Settings and sharing**, copy the **Calendar ID** from **Integrate calendar**.
-3. In Posebook, open the program's **View** page, select **Google Calendar**, enter the ID, confirm restricted access, and authorize the Google account. Upcoming bookings are queued automatically.
+3. In Posebook, select the program's **Google Calendar** tab, enter the ID, confirm restricted access, and authorize the Google account. Upcoming bookings are queued automatically.
 4. Make a synthetic booking with an email account you control, verify the invitation and event, reschedule it, then cancel it. Confirm that Google moves the same event and sends the cancellation.
 
 Events include the model's name, public name, email, unverified phone, gender, private-identity choice, and effective Instagram tagging permission. A permitted Instagram handle is included; disabled tagging or private identity omits it. Events invite the model, assigned program and venue organizers, and the connecting organizer. They are marked private, disallow guest edits/invitations, hide the guest list, and disable default reminders. Calendar permissions still determine who can read details; do not rely on the event's private flag to protect an improperly shared calendar.

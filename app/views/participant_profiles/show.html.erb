@@ -1,4 +1,5 @@
 <main>
+  <% if current_user == @user %><%= render "profiles/navigation", active: "photos" %><% end %>
   <h1><%= @gallery.private_access? ? @user.name : @user.public_name %> - Photos</h1>
   <% if @gallery.private_access? %>
     <p><%= @photos.length %> of <%= ProfilePhoto::LIMIT %> photos. Private photos are visible only to the account owner, system admins, and their program organizers.</p>
@@ -36,5 +37,4 @@
     <% end %>
   </div>
   <% if @photos.empty? %><p>No photos yet.</p><% end %>
-  <% if current_user == @user %><p><%= link_to "Back to Profile", profile_path %></p><% end %>
 </main>

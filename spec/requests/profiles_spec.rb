@@ -13,7 +13,8 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
 
   it 'requires authentication for all account pages and password changes' do
     create_user
-    [profile_path, edit_profile_path, edit_password_path, new_account_deactivation_path].each do |path|
+    [profile_path, edit_profile_path, security_profile_path, edit_password_path,
+     new_account_deactivation_path].each do |path|
       get path
       expect(response).to redirect_to(new_session_path)
     end
@@ -27,18 +28,22 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     get profile_path
     expect(response.body).to include(user.name, user.email, 'Not provided')
     expect(response.parsed_body.css('main form')).to be_empty
-    expect(response.parsed_body.css('main a').pluck('href'))
-      .to eq([edit_profile_path, participant_path(user), edit_password_path, new_account_deactivation_path])
+    expect(response.parsed_body.css('.profile-tabs a').pluck('href'))
+      .to eq([profile_path, edit_profile_path, participant_path(user), security_profile_path])
   end
 
-  it 'provides one dedicated form per page with a cancel link to the profile' do
+  it 'groups security forms while keeping profile editing separate and old security URLs usable' do
     sign_in(create_user)
-    { edit_profile_path => 'profile-form', edit_password_path => 'password-form',
-      new_account_deactivation_path => 'deactivation-form' }.each do |path, form_id|
+    get edit_profile_path
+    expect(response.parsed_body.css('main form').pluck('id')).to eq(['profile-form'])
+    get security_profile_path
+    expect(response.parsed_body.css('main form').pluck('id')).to eq(%w[password-form deactivation-form])
+    expect(response.parsed_body.at_css('.profile-tabs [aria-current="page"]').text).to eq('Security')
+    expect(response.parsed_body.at_css('.breadcrumbs [aria-current="page"]').text).to eq('Security')
+    { edit_password_path => 'change-password',
+      new_account_deactivation_path => 'deactivate-account' }.each do |path, anchor|
       get path
-      expect(response).to have_http_status(:ok)
-      expect(response.parsed_body.css('main form').pluck('id')).to eq([form_id])
-      expect(response.parsed_body.at_css('main a')['href']).to eq(profile_path)
+      expect(response).to redirect_to(security_profile_path(anchor: anchor))
     end
   end
 
@@ -252,7 +257,7 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
      { current_password: DatabaseHelpers::TEST_PASSWORD, password: 'short' }].each do |attributes|
       patch password_path, params: { user: attributes.merge(password_confirmation: attributes[:password]) }
       expect(response).to have_http_status(:unprocessable_content)
-      expect(response.parsed_body.css('main form').pluck('id')).to eq(['password-form'])
+      expect(response.parsed_body.css('main form').pluck('id')).to eq(%w[password-form deactivation-form])
     end
     expect(user.reload.authenticate(DatabaseHelpers::TEST_PASSWORD)).to eq(user)
   end

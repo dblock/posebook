@@ -16,12 +16,12 @@ class VenuePhotosController < ApplicationController
 
   def create
     VenuePhoto.add(@venue, params.expect(venue_photo: [:file]).fetch(:file))
-    redirect_to @venue, notice: t('photos.venue_uploaded'), status: :see_other
+    redirect_to photos_venue_path(@venue), notice: t('photos.venue_uploaded'), status: :see_other
   end
 
   def destroy
     @photo.destroy!
-    redirect_to @venue, notice: t('photos.deleted'), status: :see_other
+    redirect_to photos_venue_path(@venue), notice: t('photos.deleted'), status: :see_other
   end
 
   private
@@ -36,7 +36,7 @@ class VenuePhotosController < ApplicationController
   end
 
   def invalid_upload(error)
-    redirect_to @venue, alert: error.message, status: :see_other
+    redirect_to photos_venue_path(@venue), alert: error.message, status: :see_other
   end
 
   def storage_unavailable(error)

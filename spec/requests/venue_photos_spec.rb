@@ -33,18 +33,34 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
   it 'lets admins upload public venue photos and shows square thumbnails without guest edit controls' do
     sign_in(admin)
     post venue_photos_path(venue), params: { venue_photo: { file: photo_upload } }
-    expect(response).to redirect_to(venue_path(venue))
+    expect(response).to redirect_to(photos_venue_path(venue))
     expect(venue.photos.count).to eq(1)
-    get venue_path(venue)
+    get photos_venue_path(venue)
+    expect(response.parsed_body.at_css('.venue-tabs [aria-current="page"]').text).to eq('Photos')
     expect(response.parsed_body.at_css('.venue-photo button.secondary-action').text).to eq('Delete Photo')
     delete session_path
-    get venue_path(venue)
+    get photos_venue_path(venue)
     image = response.parsed_body.at_css('.venue-photo img')
     expect(image.attributes.transform_values(&:value)).to include('width' => '400', 'height' => '400')
     expect(response.body).not_to include('Upload Venue Photo', admin.email)
     expect(response.parsed_body.at_css('.venue-photo button.secondary-action')).to be_nil
     expect(image.parent['data-photo-preview']).to eq('true')
     expect(image.parent['target']).to be_nil
+  end
+
+  it 'moves venue photos into a public tab without granting management access' do
+    get venue_path(venue)
+    expect(response.parsed_body.css('.venue-tabs a').map(&:text)).to eq(%w[View Photos])
+    expect(response.parsed_body.at_css('.photo-gallery')).to be_nil
+    get photos_venue_path(venue)
+    expect(response.body).to include('No venue photos yet.')
+    expect(response.parsed_body.at_css('.breadcrumbs [aria-current="page"]').text).to eq('Photos')
+    expect(response.parsed_body.css('main form')).to be_empty
+    sign_in(admin)
+    get edit_venue_path(venue)
+    expect(response.parsed_body.css('.venue-tabs a').map(&:text)).to eq(['View', 'Photos', 'Edit', 'Create Program',
+                                                                         'Coordinators'])
+    expect(response.parsed_body.at_css('.venue-tabs [aria-current="page"]').text).to eq('Edit')
   end
 
   it 'serves full-size and square optimized WebP images publicly without persistent caching' do
@@ -66,7 +82,7 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     venue.update!(instagram_handle: '@venue.account')
     expect(venue.photos.count).to eq(13)
     expect(stored_files.count).to eq(26)
-    get venue_path(venue)
+    get photos_venue_path(venue)
     expect(response.parsed_body.css('.venue-photo').count).to eq(13)
   end
 
@@ -105,7 +121,7 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     url = venue_photo_path(venue, photo)
     ids = [photo.image_id, photo.thumbnail_id]
     delete url
-    expect(response).to redirect_to(venue_path(venue))
+    expect(response).to redirect_to(photos_venue_path(venue))
     expect(venue.reload.photos).to be_empty
     expect(stored_files.count).to eq(0)
     expect(VenuePhoto.storage.chunk_model.where(:files_id.in => ids).count).to eq(0)

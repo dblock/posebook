@@ -1,5 +1,6 @@
 <main>
   <% if @target.is_a?(Program) %><%= render "programs/navigation", program: @target, active: "coordinators", detail: "Coordinator Invitation" %><% end %>
+  <% if @target.is_a?(Venue) %><%= render "venues/navigation", venue: @target, active: "coordinators", detail: "Coordinator Invitation" %><% end %>
   <h1><%= @invitation.coordinator_label %> Invitation to <%= @invitation.target.name %></h1>
   <p><% if @invitation.email.present? %>Invited email: <%= @invitation.email %>.<% else %>No email restriction.<% end %> <%= status_label(@invitation.status) %></p>
   <p>This invitation grants management access only at <%= @invitation.target.name %>.<% if @invitation.email.present? %> The recipient must register or sign in using the invited email address.<% end %> It expires in 30 days and can be accepted once.</p>

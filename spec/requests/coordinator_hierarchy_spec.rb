@@ -60,6 +60,7 @@ RSpec.describe 'Coordinator hierarchy', :aggregate_failures, :database, type: :r
     sign_in(coordinator)
     get edit_program_path(program)
     expect(response).to have_http_status(:ok)
+    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to include('Edit', 'Google Calendar')
     get edit_program_path(sibling)
     expect(response).to have_http_status(:not_found)
     get edit_venue_path(venue)
@@ -85,5 +86,6 @@ RSpec.describe 'Coordinator hierarchy', :aggregate_failures, :database, type: :r
     expect(response.body).to include(venue.name, venue.address, program_path(program))
     expect(response.body).not_to include('Pay', 'Booking History', 'Create Program', 'Program Coordinators')
     expect(response.parsed_body.css('[data-calendar], form')).to be_empty
+    expect(response.parsed_body.css('.venue-tabs a').map(&:text)).to eq(%w[View Photos])
   end
 end

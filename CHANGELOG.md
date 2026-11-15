@@ -70,4 +70,5 @@
 - [#76](https://github.com/dblock/posebook/pull/76): Rename the Unconfirmed booking label to Booked throughout the interface - [@dblock](https://github.com/dblock).
 - [#77](https://github.com/dblock/posebook/pull/77): Clarify initial shared background worker setup - [@dblock](https://github.com/dblock).
 - [#78](https://github.com/dblock/posebook/pull/78): Use the configured session label in the booking confirmation message - [@dblock](https://github.com/dblock).
+- [#79](https://github.com/dblock/posebook/pull/79): Consolidate profile, venue, and program actions into shared tabs and breadcrumbs, combine security forms, and keep tabbed pages equally wide - [@dblock](https://github.com/dblock).
 - Your contribution here.

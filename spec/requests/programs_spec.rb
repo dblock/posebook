@@ -35,7 +35,8 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     grant_coordinator_access(program, organizer)
     sign_in(organizer)
     get program_participants_path(program)
-    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to eq(%w[View Calendar History Models])
+    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to eq(['View', 'Calendar', 'History', 'Models',
+                                                                           'Edit', 'Google Calendar'])
     expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Models')
     expect(response.body).to include('Model Invitations')
     get program_coordinators_path(program)
@@ -44,7 +45,24 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     sign_in(create_user(roles: ['system_admin']))
     get program_coordinators_path(program)
     expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Coordinators')
-    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to eq(%w[View Calendar History Models Coordinators])
+    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to eq(['View', 'Calendar', 'History', 'Models',
+                                                                           'Coordinators', 'Edit', 'Google Calendar'])
+  end
+
+  it 'places program settings and Google Calendar in tabs with matching breadcrumbs' do
+    program = create_program(program_label: 'Workshop')
+    sign_in(create_user(roles: ['system_admin']))
+    { edit_program_path(program) => 'Edit',
+      program_google_calendar_path(program) => 'Google Calendar' }.each do |path, title|
+      get path
+      expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq(title)
+      breadcrumb = response.parsed_body.at_css('.breadcrumbs')
+      expect(breadcrumb.at_css('[aria-current="page"]').text).to eq(title)
+      expect(breadcrumb.css('a').pluck('href')).to include(venue_path(program.venue), program_path(program))
+    end
+    get program_path(program)
+    expect(response.parsed_body.css('main > p a').pluck('href')).not_to include(edit_program_path(program),
+                                                                                program_google_calendar_path(program))
   end
 
   context 'with configurable terminology' do
@@ -216,7 +234,7 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     expect(response.body).not_to include(other.name)
     get program_path(program)
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include('Edit Program')
+    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to include('Edit', 'Google Calendar')
     expect(response.body).not_to include('Existing user', 'Program Coordinators')
     get program_coordinators_path(program)
     expect(response).to have_http_status(:forbidden)
@@ -291,14 +309,15 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     expect(response.parsed_body.css('select[name="user_id"]')).to be_empty
   end
 
-  it 'links to a separate organizer page beside program editing without exposing controls on the program' do
+  it 'links to organizer and settings pages in tabs without exposing controls on the program' do
     sign_in(create_user(roles: ['system_admin']))
     program = create_program
     user = create_user
     get program_path(program)
-    links = response.parsed_body.css('main > p').find { |paragraph| paragraph.text.include?('Edit Program') }
-    expect(links.css('a').pluck('href')).to eq([edit_program_path(program), program_google_calendar_path(program)])
-    expect(response.body).to include(program_coordinators_path(program))
+    links = response.parsed_body.css('.program-tabs a').pluck('href')
+    expect(links).to include(edit_program_path(program), program_google_calendar_path(program),
+                             program_coordinators_path(program))
+    expect(response.parsed_body.css('main > p a').pluck('href')).not_to include(edit_program_path(program))
     expect(response.body).not_to include('Grant Schedule Access', 'Remove Schedule Access', user.email)
     get program_coordinators_path(program)
     expect(response.body).to include('Invite or Promote a Coordinator', 'Continue')
@@ -322,7 +341,8 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     other = create_program
     get program_path(other)
     expect(response).to have_http_status(:ok)
-    expect(response.body).not_to include('Edit Program', 'Manage Schedule')
+    expect(response.body).not_to include(edit_program_path(other), program_google_calendar_path(other),
+                                         'Manage Schedule')
     get "/#{program.slug}"
     expect(response).to have_http_status(:not_found)
   end

@@ -1,6 +1,5 @@
 <main>
+  <%= render "shared/directory_navigation", active: "venues" %>
   <h1>Venues</h1>
   <% @venues.each do |venue| %><p><%= link_to venue.name, venue %></p><% end %>
-  <% if current_user.system_admin? %><p><%= link_to "Create Venue", new_venue_path %></p><% end %>
-  <p><%= link_to "Programs", programs_path %></p>
 </main>

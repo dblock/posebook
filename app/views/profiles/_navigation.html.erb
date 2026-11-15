@@ -1,0 +1,4 @@
+<% tabs = [["view", "View", profile_path], ["edit", "Edit", edit_profile_path], ["photos", "Photos", participant_path(current_user)], ["security", "Security", security_profile_path]] %>
+<% breadcrumbs = [["Profile", profile_path]] %>
+<% breadcrumbs << [tabs.find { |key, _, _| key == active }[1], nil] unless active == "view" %>
+<%= render "shared/page_navigation", breadcrumbs: breadcrumbs, tabs: tabs, active: active, tabs_class: "profile-tabs", label: "Profile navigation" %>

@@ -21,7 +21,6 @@
     <%= simple_format(@program.instructions) %>
   <% end %>
   <%= render "upcoming_booking" %>
-  <% if @program_coordinator %><p><%= link_to "Edit #{@program.program_label.titleize}", edit_program_path(@program) %> | <%= link_to "Google Calendar", program_google_calendar_path(@program) %></p><% end %>
   <%= render "venues/photos", venue: @program.venue, editable: false %>
   <% elsif @section == "calendar" %>
   <%= render "upcoming_booking" %>

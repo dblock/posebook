@@ -1,4 +1,5 @@
 <main>
+  <%= render "venues/navigation", venue: @venue, active: "coordinators" %>
   <h1>Venue Coordinators at <%= @venue.name %></h1>
   <%= render "coordinator_invitations/form" %>
   <h2>Current Coordinators</h2>

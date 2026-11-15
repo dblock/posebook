@@ -4,6 +4,8 @@
 
 System administrators create physical venues, invite or promote **Venue Coordinators**, and manage accounts. Venue coordinators edit their location, photos, and Instagram, create recurring programs, manage every program there, and invite or promote **Program Coordinators**. Coordinator assignment does not expose a global user directory.
 
+Use the venue's **Edit**, **Photos**, **Create Program**, and **Coordinators** tabs for permitted management actions. Programs provide **Edit** and **Google Calendar** tabs alongside Calendar, History, and participant/coordinator management. Breadcrumbs show the current venue, program, and section.
+
 On **Venue Coordinators** or **Program Coordinators**, leave email blank and choose **Continue** to generate a private link for one person, or enter an email to restrict acceptance to that address. If that email already has an active account, Posebook offers **Grant Coordinator Access** for confirmation instead of creating another account. Their other memberships and booking permissions are retained. For a new account, create a private registration link and optionally send it by email. No email is sent when the address is blank. The link expires in 30 days and can be revoked from the coordinator list. Copy it when created; it is not displayed again.
 
 Venue coordinator access includes all programs at that venue; program coordinator access includes only that program. Neither promotion grants system admin access. An outstanding invitation stops working if its sender becomes inactive or loses the authority to delegate that venue/program.

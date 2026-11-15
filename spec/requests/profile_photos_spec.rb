@@ -96,6 +96,16 @@ RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request 
     expect(link['href']).to eq(photo_url)
     expect(link['target']).to be_nil
     expect(response.parsed_body.at_css('[data-photo-dialog]')).not_to be_nil
+    expect(response.parsed_body.at_css('.profile-tabs')).to be_nil
+  end
+
+  it 'keeps the owner photo editor in profile tabs and breadcrumbs' do
+    sign_in(participant)
+    get participant_path(participant)
+    expect(response.parsed_body.css('.profile-tabs a').map(&:text)).to eq(%w[View Edit Photos Security])
+    expect(response.parsed_body.at_css('.profile-tabs [aria-current="page"]').text).to eq('Photos')
+    expect(response.parsed_body.at_css('.breadcrumbs [aria-current="page"]').text).to eq('Photos')
+    expect(response.parsed_body.at_css('form[action$="/photos"]')).to be_present
   end
 
   it 'accepts actual JPEG, PNG and WebP content rather than trusting filenames or supplied types' do

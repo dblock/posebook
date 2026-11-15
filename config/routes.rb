@@ -2,17 +2,15 @@
 
 Rails.application.routes.draw do
   root 'pages#home'
-  %i[invitations google_calendar].each { |routes| draw routes }
+  %i[invitations google_calendar profile].each { |routes| draw routes }
   resource :session, only: %i[new create destroy]
-  resource :profile, only: %i[show edit update]
   resources :participants, only: :show, controller: 'participant_profiles' do
     resources :photos, only: %i[show create update destroy], controller: 'profile_photos'
   end
-  resource :password, only: %i[edit update]
-  resource :account_deactivation, only: %i[new create]
   resource :email_change, only: %i[show update]
   namespace(:admin) { resources :users, only: %i[index edit update] }
   resources :venues, except: :destroy do
+    get :photos, on: :member
     resources :photos, only: %i[show create destroy], controller: 'venue_photos'
     resources :coordinators, only: %i[index create destroy], controller: 'venue_coordinators'
     resources :coordinator_invitations, only: %i[show destroy]
