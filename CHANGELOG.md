@@ -118,4 +118,5 @@
 - [#131](https://github.com/dblock/posebook/pull/131): Remind applicants to complete private drafts after seven days and clean up unfinished drafts after 30 days - [@dblock](https://github.com/dblock).
 - [#132](https://github.com/dblock/posebook/pull/132): Show application links with copy buttons on program View and shorten intake guidance - [@dblock](https://github.com/dblock).
 - [#133](https://github.com/dblock/posebook/pull/133): Add a headless Chrome browser test harness and document UI conventions - [@dblock](https://github.com/dblock).
+- [#134](https://github.com/dblock/posebook/pull/134): Direct contributors to check for existing behavior before building and map where it lives - [@dblock](https://github.com/dblock).
 - Your contribution here.
