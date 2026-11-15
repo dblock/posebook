@@ -266,4 +266,37 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     get new_program_participation_application_path(program)
     expect(response).to have_http_status(:not_found)
   end
+
+  it 'retains the submitted draft and does not claim success when notifications cannot queue' do
+    sign_in(applicant)
+    allow(EmailDeliveryJob).to receive(:perform_later).and_return(false)
+    post program_participation_application_path(program),
+         params: { participant_application: { message: 'Keep my application draft', consent: '1' } }
+    expect(response).to have_http_status(:service_unavailable)
+    expect(response.body).to include('Keep my application draft', 'No application or decision was saved')
+    expect(ParticipantApplication.where(user_id: applicant.id)).not_to exist
+  end
+
+  it 'does not grant access or claim a saved decision when its notification cannot queue' do
+    application
+    sign_in(coordinator)
+    allow(EmailDeliveryJob).to receive(:perform_later).and_return(false)
+    review('accepted')
+    expect(response).to redirect_to(program_application_path(program, application))
+    follow_redirect!
+    expect(response.body).to include('No application or decision was saved')
+    expect(application.reload.status).to eq('pending')
+    expect(program.participant?(applicant)).to be(false)
+  end
+
+  it 'returns authenticated decision-email recipients to their own status without exposing another account' do
+    application
+    get program_participation_application_path(program)
+    sign_in(applicant)
+    expect(response).to redirect_to(program_participation_application_path(program))
+    delete session_path
+    get program_participation_application_path(program)
+    sign_in(create_user)
+    expect(response).to redirect_to(root_path)
+  end
 end

@@ -13,7 +13,7 @@ class ParticipantApplicationWorkflow
 
   def submit(message:, consent:)
     ParticipantApplication.with_session do |session|
-      session.with_transaction { submit_application(message, consent) }
+      session.with_transaction { submit_application(message, consent, session) }
     end
     @application
   end
@@ -27,7 +27,7 @@ class ParticipantApplicationWorkflow
       @application = ParticipantApplication.where(program_id: @program.id).find(id)
       check_decision(status, version)
       admit_participant(session) if status == 'accepted'
-      transition(status, actor, notes)
+      transition(status, actor, notes, session)
     end
     @application
   end
@@ -38,7 +38,7 @@ class ParticipantApplicationWorkflow
         actor = User.active.find(@user.id)
         @application = ParticipantApplication.where(program_id: @program.id, user_id: actor.id).find(id)
         check_decision('withdrawn', version)
-        transition('withdrawn', actor, nil)
+        transition('withdrawn', actor, nil, session)
       end
     end
     @application
@@ -46,7 +46,7 @@ class ParticipantApplicationWorkflow
 
   private
 
-  def submit_application(message, consent)
+  def submit_application(message, consent, session)
     actor = User.active.find(@user.id)
     @program = Program.find(@program.id)
     unless @program.applications_enabled? && @program.booking_active? && actor.email_verified_at &&
@@ -56,7 +56,7 @@ class ParticipantApplicationWorkflow
 
     @application = ParticipantApplication.create!(program: @program, user: actor, **identity_snapshot(actor),
                                                   message: message, profile_shared_at: Time.current)
-    record_event('submitted', actor)
+    record_event('submitted', actor, nil, session)
   end
 
   def identity_snapshot(actor)
@@ -80,13 +80,14 @@ class ParticipantApplicationWorkflow
     ProgramMembership.grant_participant_access(@program, participant, session: session)
   end
 
-  def transition(status, actor, notes)
+  def transition(status, actor, notes, session)
     @application.update!(status: status, lock_version: @application.lock_version + 1)
-    record_event(status, actor, notes)
+    record_event(status, actor, notes, session)
   end
 
-  def record_event(action, actor, notes = nil)
-    ParticipationEvent.create!(program: @program, user_id: @application.user_id, actor: actor,
-                               source_id: @application.id, action: "application_#{action}", notes: notes)
+  def record_event(action, actor, notes, session)
+    event = ParticipationEvent.create!(program: @program, user_id: @application.user_id, actor: actor,
+                                       source_id: @application.id, action: "application_#{action}", notes: notes)
+    ParticipationNotification.new(event).enqueue(session: session)
   end
 end

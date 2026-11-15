@@ -2,6 +2,7 @@
 
 class ParticipantApplicationsController < ApplicationController
   before_action -> { response.headers['Cache-Control'] = 'private, no-store' }
+  before_action :remember_status_destination, only: :show
   before_action :require_authentication, except: %i[new create]
   before_action :find_program, except: :index
   before_action :require_verified_applicant, only: %i[new create]
@@ -10,6 +11,7 @@ class ParticipantApplicationsController < ApplicationController
   rescue_from ParticipantApplicationWorkflow::Conflict, with: :withdrawal_error
   rescue_from Mongoid::Errors::Validations, with: :validation_error
   rescue_from Mongo::Error::OperationFailure, with: :duplicate_application
+  rescue_from EmailDelivery::Unavailable, with: :notification_error
 
   def index
     @page = [params[:page].to_i, 1].max
@@ -39,6 +41,14 @@ class ParticipantApplicationsController < ApplicationController
   end
 
   private
+
+  def remember_status_destination
+    return if current_user
+
+    session[:application_status] = params[:program_id]
+    session.delete(:application_review)
+    session.delete(:application_program)
+  end
 
   def find_program
     @program = Program.find(params.expect(:program_id))
@@ -71,10 +81,15 @@ class ParticipantApplicationsController < ApplicationController
     ParticipantApplicationWorkflow.new(program: @program, user: current_user)
   end
 
-  def submission_error(error)
+  def submission_error(error, status: :unprocessable_content)
     @application = ParticipantApplication.new(message: params.dig(:participant_application, :message))
     @application.errors.add(:base, error.message)
-    render :new, status: :unprocessable_content
+    render :new, status: status
+  end
+
+  def notification_error
+    submission_error(EmailDelivery::Unavailable.new(t('participant_applications.notifications_unavailable')),
+                     status: :service_unavailable)
   end
 
   def validation_error(error)

@@ -8,6 +8,8 @@ class ApplicationRegistrationsController < ApplicationController
 
   def new
     session[:application_program] = @program.id.to_s unless current_user
+    session.delete(:application_status)
+    session.delete(:application_review)
     @registration = ApplicationRegistration.new(email: current_user&.email)
   end
 
