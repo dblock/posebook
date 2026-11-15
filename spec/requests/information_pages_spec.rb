@@ -3,6 +3,10 @@
 require 'rails_helper'
 
 RSpec.describe 'Public information pages', :aggregate_failures, :database, type: :request do
+  include ActiveSupport::Testing::TimeHelpers
+
+  around { |example| travel_to(Time.utc(2027, 1, 1, 12)) { example.run } }
+
   it 'provides About, privacy, and terms without an account and links them in the footer' do
     { about_path => 'About Posebook', privacy_path => 'Privacy Policy',
       terms_path => 'Terms of Service' }.each do |path, title|
@@ -10,7 +14,8 @@ RSpec.describe 'Public information pages', :aggregate_failures, :database, type:
       expect(response).to have_http_status(:ok)
       page = response.parsed_body
       expect(page.at_css('main h1').text).to eq(title)
-      expect(page.at_css('main').text).to include('Vestris Inc.')
+      expect(page.at_css('main').text).to include('Vestris LLC.')
+      expect(page.at_css('footer nav span').text).to eq("Copyright \u00a9 2027 Vestris LLC.")
       expect(page.at_css('main a[href="mailto:drawing@dblock.org"]')).to be_present
       expect(page.css('footer a').pluck('href')).to contain_exactly(about_path, privacy_path, terms_path)
     end
@@ -34,6 +39,7 @@ RSpec.describe 'Public information pages', :aggregate_failures, :database, type:
     sign_in(user)
     get root_path
     expect(response).to have_http_status(:ok)
+    expect(response.parsed_body.at_css('footer nav span').text).to eq("Copyright \u00a9 2027 Vestris LLC.")
     expect(response.parsed_body.css('footer a').pluck('href')).to contain_exactly(about_path, privacy_path, terms_path)
     get privacy_path
     expect(response).to have_http_status(:ok)
