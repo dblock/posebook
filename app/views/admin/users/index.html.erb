@@ -3,20 +3,20 @@
   <h1>Users</h1>
   <p class="scroll-hint">Scroll horizontally to view account details and controls.</p>
   <div class="table-scroll" role="region" aria-label="User accounts" tabindex="0">
-    <table>
+    <table class="user-accounts">
       <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Global Roles</th><th>Status</th><th>Access</th><th>Details</th></tr></thead>
       <tbody>
         <% @users.each do |user| %>
           <tr>
-            <td><%= render "shared/participant_identity", participant: user, show_email: false %></td>
+            <td><%= render "shared/participant_identity", participant: user, show_email: false, show_placeholder: true %></td>
             <td><%= link_to user.email, participant_path(user) %></td><td><%= user.phone.presence || "Not provided" %></td>
             <td><%= user.roles.join(", ") %></td>
             <td><%= status_label(user.active? ? "Active" : "Inactive") %></td>
             <td>
               <% if !user.active? %>
-                <%= button_to "Reactivate", admin_user_path(user), method: :patch, params: { active: true } %>
+                <%= button_to "Reactivate", admin_user_path(user), method: :patch, params: { active: true }, class: "secondary-action" %>
               <% elsif !user.system_admin? %>
-                <%= button_to "Deactivate", admin_user_path(user), method: :patch, params: { active: false } %>
+                <%= button_to "Deactivate", admin_user_path(user), method: :patch, params: { active: false }, class: "secondary-action" %>
               <% else %>
                 <%= status_label("Protected") %>
               <% end %>

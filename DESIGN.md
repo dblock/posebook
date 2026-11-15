@@ -43,6 +43,10 @@ Compact Copy controls appear only inside read-only private invitation link field
 
 Roster Actions contains compact Pause/Resume controls; individual Invite to Book remains in Booking Access. Linked model identity and thumbnails open the existing participant page without a redundant View Photos action. Profile, venue, and program photo editors center primary labels and compact primary-selection buttons beneath each photo.
 
+The admin user directory shows a linked, local placeholder portrait when an account has no profile photo, keeping identities aligned with photo-bearing rows. Deactivate and Reactivate use the same compact controls as roster actions; protected administrator accounts retain their non-interactive label.
+
+Single-item breadcrumbs have a decorative leading `>`; longer trails retain `/` separators. Both markers are hidden from screen readers.
+
 Participants' upcoming bookings use the same bordered card on the homepage and program View/Calendar pages, grouping the saved date/time, attendance state, confirmation, and reschedule/cancel buttons. The homepage includes the venue's public primary photo, name, address, and Google Maps link; bookings are scoped to the signed-in participant's memberships and sorted by saved start time. Paused participants retain their bookings and cancellation/confirmation controls without gaining rescheduling rights. Venue coordinators and system admins select an audited primary photo in the venue Photos tab; selection never changes public visibility and falls back to the first remaining photo when unset or deleted.
 
 ## Google Calendar Synchronization
