@@ -65,6 +65,42 @@ RSpec.describe ProgramCalendar, :aggregate_failures do
     end
   end
 
+  it 'reuses schedule times within one calendar, including absent end times' do
+    travel_to Time.utc(2026, 11, 16, 15) do
+      calendar = described_class.new(program)
+      date = Date.new(2026, 11, 16)
+      helper = Object.new.extend(ProgramCalendarHelper)
+      allow(calendar.schedule).to receive(:starts_at).and_call_original
+      allow(calendar.schedule).to receive(:ends_at).and_call_original
+      2.times do
+        expect(calendar.blocked_reason(date)).to be_nil
+        expect(calendar.session_on?(date)).to be(true)
+        expect(helper.scheduled_calendar_time(calendar, date)).to eq('6:30 PM')
+        expect(calendar.ends_at(date)).to be_nil
+      end
+      expect(calendar.schedule).to have_received(:starts_at).with(date).once
+      expect(calendar.schedule).to have_received(:ends_at).with(date).once
+    end
+  end
+
+  it 'uses fresh times in a new calendar and does not cache daylight saving errors as values' do
+    travel_to Time.utc(2027, 3, 8, 15) do
+      program.available_weekdays = ['6']
+      program.start_time = '23:00'
+      program.end_time = '02:30'
+      date = Date.new(2027, 3, 13)
+      calendar = described_class.new(program)
+      2.times do
+        expect(calendar.blocked_reason(date)).to eq('End time unavailable because of daylight saving')
+        expect(calendar.session_on?(date)).to be(false)
+      end
+      program.end_time = '03:30'
+      fresh = described_class.new(program)
+      expect(fresh.blocked_reason(date)).to be_nil
+      expect(fresh.ends_at(date) - fresh.starts_at(date)).to eq(3.5.hours)
+    end
+  end
+
   it 'blocks nonexistent end times and calculates actual elapsed time across daylight saving' do
     travel_to Time.utc(2027, 3, 8, 15) do
       program.available_weekdays = ['6']

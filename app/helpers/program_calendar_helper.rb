@@ -87,8 +87,8 @@ module ProgramCalendarHelper
     clock = calendar.schedule.time_for(date)
     return unless clock
 
-    start = calendar.schedule.starts_at(date)
-    ending = calendar.schedule.ends_at(date)
+    start = calendar.starts_at(date)
+    ending = calendar.ends_at(date)
     return format_start_time(clock) unless ending
 
     time_range(start.in_time_zone(calendar.program.time_zone), ending.in_time_zone(calendar.program.time_zone))

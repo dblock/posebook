@@ -9,6 +9,8 @@ class ProgramCalendar
     @last_date = today.advance(months: program.booking_horizon_months)
     @month = selected_month(month)
     @schedule = ProgramSchedule.new(program, from: date_range.begin)
+    @starts = {}
+    @ends = {}
   end
 
   def weeks
@@ -20,11 +22,19 @@ class ProgramCalendar
   end
 
   def session_on?(date)
-    start = schedule.starts_at(date)
-    schedule.ends_at(date) if start
+    start = starts_at(date)
+    ends_at(date) if start
     start.present?
   rescue ArgumentError
     false
+  end
+
+  def starts_at(date)
+    @starts.fetch(date) { @starts[date] = schedule.starts_at(date) }
+  end
+
+  def ends_at(date)
+    @ends.fetch(date) { @ends[date] = schedule.ends_at(date) }
   end
 
   def displayed_bookings
@@ -72,8 +82,8 @@ class ProgramCalendar
   end
 
   def schedule_start(date)
-    start = schedule.starts_at(date)
-    schedule.ends_at(date)
+    start = starts_at(date)
+    ends_at(date)
     start
   end
 
