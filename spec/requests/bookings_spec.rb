@@ -135,7 +135,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     booking = track_booking(program.bookings.first)
     expect(booking.user_id).to eq(participant.id)
     follow_redirect!
-    expect(response.body).to include('Your booking date is booked.', 'Your Upcoming Booking',
+    expect(response.body).to include('Your program is booked.', 'Your Upcoming Booking',
                                      'Contact an Organizer Before Rescheduling', 'Cancel Booking')
     expect(response.body).not_to include('Change Date')
     expect(response.parsed_body.css('.calendar form')).to be_empty
@@ -143,6 +143,15 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     follow_redirect!
     expect(response.body).to include('You already have an upcoming booking')
     expect(program.bookings.count).to eq(1)
+  end
+
+  it 'uses the configured session label in the booking confirmation message' do
+    program.update!(program_label: 'Figure Drawing Session')
+    prepare_participant
+    post program_bookings_path(program), params: confirmed_booking('2026-11-23')
+    track_booking(program.bookings.first)
+    follow_redirect!
+    expect(response.body).to include('Your figure drawing session is booked.')
   end
 
   it 'rejects malformed, past, non-participating, and out-of-horizon dates on the server' do
