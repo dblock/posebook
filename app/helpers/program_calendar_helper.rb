@@ -19,7 +19,7 @@ module ProgramCalendarHelper
 
     "#{manager ? 'manager' : 'participant'}:#{current_user.id}:#{current_user.system_admin?}:" \
       "#{program.schedule_revision}:#{booking&.confirmation_open?}:#{booking&.rescheduling_locked?}:" \
-      "#{current_user.gender}"
+      "#{current_user.gender}:#{program.booking_active?}"
   end
 
   def calendar_day_empty?(calendar, date)

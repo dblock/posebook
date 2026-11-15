@@ -21,7 +21,7 @@ class BookingAccess
   def allowed?
     return @allowed if defined?(@allowed)
 
-    return false unless @membership&.user&.active? && !paused?
+    return false unless active_participant? && @membership.program.booking_active?
 
     granted_at = invitation_time
     granted_at.present? && !records.exists?(status: 'confirmed', :ends_at.gt => granted_at,
@@ -35,6 +35,8 @@ class BookingAccess
   end
 
   def reason
+    return @membership.program.message('bookings.inactive_program') unless @membership.program.booking_active?
+
     @membership.program.message(paused? ? 'participant_access.paused' : 'participant_access.invitation_required')
   end
 
@@ -47,6 +49,10 @@ class BookingAccess
   end
 
   private
+
+  def active_participant?
+    @membership&.user&.active? && !paused?
+  end
 
   def invitation_time
     @membership.booking_invited_at || records.order_by(created_at: :desc).first&.created_at

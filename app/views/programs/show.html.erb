@@ -1,6 +1,7 @@
 <main>
   <%= render "navigation", program: @program, active: @section, detail: (@section.titleize unless @section == "view") %>
   <h1><%= @program.name %></h1>
+  <% unless @program.booking_active? %><p role="status"><%= t('locations.inactive') %></p><% end %>
   <% if @section == "view" %>
   <p><%= link_to "#{@program.program_label.titleize} Link", program_path(@program) %></p>
   <% if (photo = @program.primary_photo) %>
@@ -27,7 +28,7 @@
   <%= render "upcoming_booking" %>
   <%= render "calendar", calendar: @calendar, public_view: !@program_member %>
   <% if @program_coordinator %>
-    <p><%= link_to "Schedule #{@program.participant_article} #{@program.participant_label.titleize}", new_program_organizer_booking_path(@program) %> | <%= link_to "Manage Schedule", program_schedule_path(@program) %></p>
+    <p><% if @program.booking_active? %><%= link_to "Schedule #{@program.participant_article} #{@program.participant_label.titleize}", new_program_organizer_booking_path(@program) %> | <% end %><%= link_to "Manage Schedule", program_schedule_path(@program) %></p>
   <% end %>
   <% unless @program_member %>
     <p>Booking is available to invited <%= @program.participant_label.pluralize.downcase %>. <%= link_to "Sign In", program_path(@program, booking_invitation: "1") unless current_user %></p>

@@ -1,0 +1,7 @@
+en:
+  locations:
+    access_updated: Location access updated.
+    inactive: Inactive. New bookings and date changes are unavailable. Existing bookings, cancellations, and attendance confirmations are retained.
+    venue_inactive: "The venue is inactive. A system administrator must activate it before this %{program_label} can accept new bookings."
+  bookings:
+    inactive_program: "This %{program_label} is inactive and cannot accept new bookings or date changes."

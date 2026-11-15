@@ -62,7 +62,8 @@ class BookingsController < ApplicationController
   def require_booking_permission
     @booking_access = BookingAccess.new(@program.memberships.participants.where(user_id: current_user.id).first)
     @can_book = @booking_access.allowed?
-    redirect_to program_path(@program), alert: @booking_access.reason unless @can_book
+    destination = @program.booking_active? ? program_path(@program) : profile_path
+    redirect_to destination, alert: @booking_access.reason unless @can_book
   end
 
   def find_program
@@ -84,7 +85,12 @@ class BookingsController < ApplicationController
   end
 
   def finish_booking(message)
-    redirect_to program_path(@program, month: @booking.date.strftime('%Y-%m')),
+    destination = if @program.reload.booking_active?
+                    program_path(@program, month: @booking.date.strftime('%Y-%m'))
+                  else
+                    profile_path
+                  end
+    redirect_to destination,
                 notice: @program.message(message)
   end
 
@@ -103,11 +109,14 @@ class BookingsController < ApplicationController
   end
 
   def error_calendar_path
+    return profile_path unless @program.reload.booking_active?
+
     month = params[:date]&.to_s&.first(7)
     program_path(@program, month: month, section: ('calendar' if month.blank?))
   end
 
   def show_stale_booking(error)
-    redirect_to program_path(@program), alert: error.message
+    destination = @program.reload.booking_active? ? program_path(@program) : profile_path
+    redirect_to destination, alert: error.message
   end
 end

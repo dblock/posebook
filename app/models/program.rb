@@ -6,6 +6,7 @@ class Program
   include Mongoid::Slug
   include HistoryTracking
   include PrimaryPhoto
+  include ProgramVisibility
 
   TIME_ZONES = TZInfo::Timezone.all_identifiers.freeze
   RESERVED_SLUGS = %w[new edit admin assets rails up venues sessions programs profile password registration
@@ -25,6 +26,7 @@ class Program
   field :end_time, type: String
   field :calendar_invitation_lead_minutes, type: Integer, default: 0
   field :schedule_revision, type: Integer, default: 0
+  field :active, type: Mongoid::Boolean, default: true
 
   slug :name, :custom_slug, history: true, reserve: RESERVED_SLUGS, max_length: 100 do |program|
     (program.custom_slug.presence || program.name).to_url
@@ -32,7 +34,7 @@ class Program
 
   track_history on: %i[name program_label participant_label custom_slug _slugs time_zone pay instructions
                        booking_horizon_months available_weekdays start_time end_time no_consecutive_genders
-                       calendar_invitation_lead_minutes primary_photo_id],
+                       calendar_invitation_lead_minutes primary_photo_id active],
                 modifier_field_optional: true, modifier_field_inverse_of: nil, track_blank_changes: true
 
   has_many :memberships, class_name: 'ProgramMembership', inverse_of: :program,
@@ -92,10 +94,6 @@ class Program
 
     ids = ProgramMembership.coordinators.where(user_id: user.id).distinct(:program_id)
     where('$or' => [{ :id.in => ids }, { :venue_id.in => Venue.coordinated_by(user).distinct(:id) }])
-  end
-
-  def managed_by?(user)
-    venue.coordinated_by?(user) || memberships.coordinators.exists?(user_id: user.id)
   end
 
   def participant?(user)

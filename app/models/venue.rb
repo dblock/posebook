@@ -20,11 +20,14 @@ class Venue
   field :address, type: String
   field :instagram_handle, type: String
   field :google_maps_url, type: String
+  field :active, type: Mongoid::Boolean, default: true
+  field :booking_revision, type: Integer, default: 0
+  scope :active, -> { where(:active.ne => false) }
 
   slug :name, :custom_slug, history: true, reserve: Program::RESERVED_SLUGS, max_length: 100 do |venue|
     (venue.custom_slug.presence || venue.name).to_url
   end
-  track_history on: %i[name custom_slug _slugs address instagram_handle google_maps_url primary_photo_id],
+  track_history on: %i[name custom_slug _slugs address instagram_handle google_maps_url primary_photo_id active],
                 modifier_field_optional: true, modifier_field_inverse_of: nil, track_blank_changes: true
 
   has_many :memberships, class_name: 'VenueMembership', inverse_of: :venue, dependent: :restrict_with_error
@@ -77,8 +80,20 @@ class Venue
     where(:id.in => ids)
   end
 
+  def self.viewable_by(user)
+    return active unless user
+    return all if user.system_admin?
+
+    ids = coordinated_by(user).distinct(:id) + Program.retained_for(user).distinct(:venue_id)
+    any_of({ :active.ne => false }, { :id.in => ids })
+  end
+
   def coordinated_by?(user)
     user && (user.system_admin? || memberships.coordinators.exists?(user_id: user.id))
+  end
+
+  def viewable_by?(user)
+    active? || (user && (coordinated_by?(user) || Program.retained_for(user).exists?(venue_id: id)))
   end
 
   private

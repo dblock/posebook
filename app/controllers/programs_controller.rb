@@ -8,9 +8,12 @@ class ProgramsController < ApplicationController
   before_action :prepare_program_access, only: :show
   before_action :prepare_program_page, only: :show
   rescue_from Mongo::Error::OperationFailure, with: :handle_slug_conflict
+  rescue_from LocationActivation::Forbidden, with: -> { head :forbidden }
+  rescue_from LocationActivation::Invalid, with: -> { head :bad_request }
 
   def index
-    @programs = Program.preload_primary_photos(Program.visible_to(current_user).includes(:venue).order_by(name: :asc))
+    records = Program.visible_to(current_user).and(Program.viewable_by(current_user).selector)
+    @programs = Program.preload_primary_photos(records.includes(:venue).order_by(name: :asc))
   end
 
   def show
@@ -40,6 +43,8 @@ class ProgramsController < ApplicationController
   end
 
   def update
+    return update_activation if params.key?(:active)
+
     @program = ProgramSettingsUpdate.new(program: @program,
                                          user: current_user).call(program_params)
     if @program.errors.empty?
@@ -50,6 +55,11 @@ class ProgramsController < ApplicationController
   end
 
   private
+
+  def update_activation
+    @program = LocationActivation.new(location: @program, user: current_user).call(params[:active])
+    redirect_to edit_program_path(@program), notice: t('locations.access_updated')
+  end
 
   def prepare_program_access
     @program_coordinator = current_user && @program.managed_by?(current_user)
@@ -102,8 +112,10 @@ class ProgramsController < ApplicationController
   end
 
   def find_program
-    scope = %w[show photos].include?(action_name) ? Program.all : Program.managed_by(current_user)
+    public_action = %w[show photos].include?(action_name)
+    scope = public_action ? Program.all : Program.managed_by(current_user)
     @program = scope.find(params.expect(:id))
+    head :not_found if public_action && !@program.viewable_by?(current_user)
   end
 
   def program_params

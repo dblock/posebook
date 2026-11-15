@@ -5,9 +5,12 @@ class VenuesController < ApplicationController
   before_action :require_system_admin, only: %i[new create]
   before_action :find_venue, only: %i[show photos programs edit update]
   rescue_from Mongo::Error::OperationFailure, with: :handle_slug_conflict
+  rescue_from LocationActivation::Forbidden, with: -> { head :forbidden }
+  rescue_from LocationActivation::Invalid, with: -> { head :bad_request }
 
   def index
-    @venues = Venue.preload_primary_photos(Venue.visible_to(current_user).order_by(name: :asc))
+    records = Venue.visible_to(current_user).and(Venue.viewable_by(current_user).selector)
+    @venues = Venue.preload_primary_photos(records.order_by(name: :asc))
   end
 
   def show; end
@@ -15,7 +18,8 @@ class VenuesController < ApplicationController
   def photos; end
 
   def programs
-    @programs = Program.preload_primary_photos(@venue.programs.includes(:venue).order_by(name: :asc))
+    records = Program.viewable_by(current_user).where(venue_id: @venue.id)
+    @programs = Program.preload_primary_photos(records.includes(:venue).order_by(name: :asc))
   end
 
   def new
@@ -34,6 +38,8 @@ class VenuesController < ApplicationController
   end
 
   def update
+    return update_activation if params.key?(:active)
+
     if @venue.update(venue_params)
       redirect_to @venue, notice: t('venues.updated')
     else
@@ -43,9 +49,16 @@ class VenuesController < ApplicationController
 
   private
 
+  def update_activation
+    @venue = LocationActivation.new(location: @venue, user: current_user).call(params[:active])
+    redirect_to edit_venue_path(@venue), notice: t('locations.access_updated')
+  end
+
   def find_venue
-    scope = %w[show photos programs].include?(action_name) ? Venue.all : Venue.coordinated_by(current_user)
+    public_action = %w[show photos programs].include?(action_name)
+    scope = public_action ? Venue.all : Venue.coordinated_by(current_user)
     @venue = scope.find(params.expect(:id))
+    head :not_found if public_action && !@venue.viewable_by?(current_user)
   end
 
   def venue_params

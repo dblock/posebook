@@ -44,6 +44,8 @@ class ProgramCalendar
   end
 
   def blocked_reason(date)
+    return 'Inactive' unless program.booking_active?
+
     return 'Outside booking window' unless date.between?(today, last_date)
 
     exception = schedule.exceptions[date]
