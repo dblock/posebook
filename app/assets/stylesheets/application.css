@@ -767,9 +767,12 @@ tbody tr:last-child td {
   gap: 0.4rem;
 }
 
-.photo-actions form,
-.participant-actions > form {
+.photo-actions form {
   flex: 0 0 calc(50% - 0.25rem);
+  margin: 0;
+}
+
+.participant-actions > form {
   margin: 0;
 }
 
@@ -790,14 +793,29 @@ tbody tr:last-child td {
   flex-basis: 100%;
 }
 
-.participant-pause .secondary-action {
-  width: 50%;
+.participant-pause summary {
+  font-size: 0.75rem;
 }
 
-.participant-actions .secondary-action {
-  min-height: 2.75rem;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
+.participant-roster .secondary-action {
+  width: auto;
+  min-height: 1.75rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.photo-primary-control {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.25rem;
+}
+
+.photo-primary-control form {
+  margin: 0;
+}
+
+.photo-primary-control .secondary-action {
+  width: auto;
 }
 
 .photo-gallery {

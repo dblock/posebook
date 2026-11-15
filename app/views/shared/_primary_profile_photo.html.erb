@@ -8,10 +8,12 @@
           <%= image_tag participant_photo_path(user, photo, thumbnail: 1), width: 120, height: 120,
                         loading: "lazy", alt: "Profile photo option" %>
           <% if user.primary_profile_photo.id == photo.id %>
-            <figcaption><%= status_label("Primary") %></figcaption>
+            <figcaption class="photo-primary-control"><%= status_label("Primary") %></figcaption>
           <% else %>
-            <%= button_to "Set Primary Photo", participant_photo_path(user, photo), method: :patch,
-                          params: { profile_photo: { primary: "1" } } %>
+            <div class="photo-primary-control">
+              <%= button_to "Set Primary Photo", participant_photo_path(user, photo), method: :patch,
+                            params: { profile_photo: { primary: "1" } }, class: "secondary-action" %>
+            </div>
           <% end %>
         </figure>
       <% end %>

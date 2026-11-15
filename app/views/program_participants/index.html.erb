@@ -28,13 +28,12 @@
                 <% if membership.participant_pause_reason.present? %>
                   <details><summary>Pause note</summary><p>Last pause: <%= membership.participant_pause_reason %></p></details>
                 <% end %>
+                <% if membership.user.active? && !access.paused? && !access.booking %>
+                  <%= button_to "Invite to Book", invite_program_participant_path(@program, membership, page: @roster.page), class: "secondary-action" %>
+                <% end %>
               </td>
               <td>
                 <div class="participant-actions">
-                  <% if membership.user.profile_photos.any? %><%= link_to "View Photos", participant_path(membership.user) %><% end %>
-                  <% if membership.user.active? && !access.paused? && !access.booking %>
-                    <%= button_to "Invite to Book", invite_program_participant_path(@program, membership, page: @roster.page), class: "secondary-action" %>
-                  <% end %>
                   <% if access.paused? %>
                     <%= button_to "Resume #{@program.participant_label.titleize}", resume_program_participant_path(@program, membership, page: @roster.page), class: "secondary-action" %>
                   <% else %>

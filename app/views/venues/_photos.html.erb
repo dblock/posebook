@@ -18,9 +18,11 @@
                      description: "#{venue.name} photo #{index + 1}" %>
           <% if editable %>
             <% if photo == primary_photo %>
-              <figcaption><%= status_label("Primary") %></figcaption>
+              <figcaption class="photo-primary-control"><%= status_label("Primary") %></figcaption>
             <% else %>
-              <%= button_to "Set Primary Photo", venue_photo_path(venue, photo), method: :patch, class: "secondary-action" %>
+              <div class="photo-primary-control">
+                <%= button_to "Set Primary Photo", venue_photo_path(venue, photo), method: :patch, class: "secondary-action" %>
+              </div>
             <% end %>
             <%= button_to "Delete Photo", venue_photo_path(venue, photo), method: :delete, class: "secondary-action" %>
           <% end %>
