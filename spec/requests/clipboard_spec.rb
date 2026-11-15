@@ -107,6 +107,37 @@ RSpec.describe 'Copy controls', :aggregate_failures, :database, type: :request d
     expect(response.parsed_body.at_css('.copy-button')).to be_nil
   end
 
+  [[true, true, 'Open'], [false, true, 'Closed'], [true, false, 'Closed']].each do |enabled, active, status|
+    it "shows managers a visible application URL and copy control when intake is #{enabled} and active is #{active}" do
+      program.update!(applications_enabled: enabled, active: active)
+      coordinator = create_user
+      grant_coordinator_access(program, coordinator)
+      sign_in(coordinator)
+      get program_path(program), params: { token: 'private-token' }
+      sharing = response.parsed_body.at_css('#application-sharing')
+      link = sharing.at_css('.copy-visible-link')
+      button = sharing.at_css('.copy-button')
+      expect([link['href'], link.text, button['data-copy-link']]).to eq([program_apply_url(program)] * 3)
+      expect(sharing.text).to include(status)
+      expect(sharing.css('a').length).to eq(1)
+      expect(button.text).to eq('Copy Link')
+      expect(button['aria-label']).to eq('Copy application link')
+      expect(button.key?('hidden')).to be(true)
+    end
+  end
+
+  it 'keeps application sharing tools off public and ordinary participant views' do
+    program.update!(applications_enabled: true)
+    get program_path(program)
+    expect(response.parsed_body.at_css('#application-sharing')).to be_nil
+    participant = create_user
+    grant_participant_access(program, participant)
+    sign_in(participant)
+    get program_path(program)
+    expect(response.parsed_body.at_css('#application-sharing')).to be_nil
+    expect(response.parsed_body.css('.copy-button').length).to eq(1)
+  end
+
   it 'retains roster, invitation and coordinator information without copy buttons' do
     user = create_user
     grant_participant_access(program, user)
