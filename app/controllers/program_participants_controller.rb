@@ -3,6 +3,7 @@
 class ProgramParticipantsController < ApplicationController
   before_action :require_authentication
   before_action lambda {
+    response.headers['Cache-Control'] = 'private, no-store'
     @program = Program.managed_by(current_user).find(params.expect(:program_id))
   }
   rescue_from BookingMutation::Invalid, with: :show_error
@@ -11,6 +12,22 @@ class ProgramParticipantsController < ApplicationController
     @roster = ProgramRoster.new(@program, page: params[:page])
     @memberships = @roster.memberships
     @invitations = @program.participant_invitations.order_by(created_at: :desc)
+  end
+
+  def edit
+    @membership = @program.memberships.participants.find(params.expect(:id))
+    @participant = @membership.user
+  end
+
+  def update
+    @membership = ParticipantDetailsUpdate.new(program: @program, user: current_user)
+                                          .call(params.expect(:id), participant_params)
+    @participant = @membership.user
+    if @membership.errors.empty? && @participant.errors.empty?
+      redirect_to roster_path, notice: @program.message('participant_access.details_updated')
+    else
+      render :edit, status: :unprocessable_content
+    end
   end
 
   def invite
@@ -39,6 +56,10 @@ class ProgramParticipantsController < ApplicationController
   end
 
   private
+
+  def participant_params
+    params.expect(participant: %i[name display_name notes]).to_h.symbolize_keys
+  end
 
   def roster_path
     program_participants_path(@program, page: params[:page])

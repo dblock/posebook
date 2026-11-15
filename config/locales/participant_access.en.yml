@@ -1,5 +1,6 @@
 en:
   participant_access:
+    details_updated: "%{participant_title} details updated."
     subject: "Choose your next booking date at %{program}"
     paused: Your booking access at this %{program_label} is paused. Contact an organizer; you can still cancel an existing booking.
     invitation_required: Please wait for an organizer to invite you to choose your next booking date.
