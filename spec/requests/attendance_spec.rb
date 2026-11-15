@@ -43,6 +43,11 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
   end
 
   it 'offers confirmation and the usual rescheduling workflow seven days before participating' do
+    get root_path
+    card = response.parsed_body.at_css('.upcoming-booking')
+    expect(card.at_css('input[name="booking_version"]')['value']).to eq(booking.lock_version.to_s)
+    expect(card.at_css('form[action$="/confirm"]')).to be_present
+    expect(card.at_css('.button-link').text).to eq('I can no longer make it.')
     get program_path(program)
     expect(response.body).to include('I&#39;ll be there!', 'I can no longer make it.')
     confirm_booking
@@ -192,6 +197,9 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     expect(booking.reload.attendance_confirmed?).to be(true)
     get program_path(program)
     expect(response.body).not_to include('I can no longer make it.')
+    get root_path
+    expect(response.body).to include('Your Upcoming Booking', 'Cancel Booking')
+    expect(response.body).not_to include('Change Date', 'I can no longer make it.', 'On a break.')
   end
 
   it 'reloads stale private summaries when confirmation changes during calendar navigation' do

@@ -1,7 +1,7 @@
-<aside class="rescheduling-notice" aria-labelledby="rescheduling-notice-title">
-  <h3 id="rescheduling-notice-title">Contact an Organizer Before Rescheduling</h3>
+<aside class="rescheduling-notice" aria-label="Contact an Organizer Before Rescheduling">
+  <h3>Contact an Organizer Before Rescheduling</h3>
   <% if local_assigns.fetch(:urgent, false) %><p><strong>Please contact an organizer ASAP. Your attendance has not been confirmed.</strong></p><% end %>
-  <p>Your <%= @program.program_label.downcase %> is five days away or sooner. Please contact an organizer so we can work out a new date together. Online rescheduling is unavailable.</p>
+  <p>Your <%= program.program_label.downcase %> is five days away or sooner. Please contact an organizer so we can work out a new date together. Online rescheduling is unavailable.</p>
   <% organizers = program_organizer_contacts(program) %>
   <% if organizers.any? %>
     <ul>
@@ -10,6 +10,6 @@
       <% end %>
     </ul>
   <% else %>
-    <p>No organizer contact details are listed. Please contact the <%= @program.program_label.downcase %> directly.</p>
+    <p>No organizer contact details are listed. Please contact the <%= program.program_label.downcase %> directly.</p>
   <% end %>
 </aside>

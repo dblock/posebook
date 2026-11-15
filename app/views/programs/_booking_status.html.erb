@@ -1,6 +1,6 @@
 <% status = booking.display_status %>
 <%= status_label(status, class: ("attendance-confirmed" if status == "Confirmed")) if local_assigns.fetch(:show_status, true) %>
-<% if local_assigns.fetch(:private_view, false) && (rsvp = google_calendar_rsvp(@program, booking)) %>
+<% if local_assigns.fetch(:private_view, false) && (rsvp = google_calendar_rsvp(local_assigns.fetch(:program, @program), booking)) %>
   <span class="google-calendar-rsvp">
     <%= status_label(t("google_calendar.responses.#{rsvp.rsvp_status}"),
                      title: t("google_calendar.checked", time: rsvp.rsvp_checked_at.in_time_zone(booking.time_zone).to_fs(:long)),

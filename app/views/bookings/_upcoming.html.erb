@@ -1,0 +1,34 @@
+<section class="upcoming-booking attendance-panel" aria-labelledby="upcoming-booking-<%= booking.id %>">
+  <h2 id="upcoming-booking-<%= booking.id %>">Your Upcoming Booking</h2>
+  <div class="upcoming-booking-details">
+    <% if local_assigns.fetch(:show_venue, false) && (photo = program.venue.primary_photo) %>
+      <figure class="upcoming-booking-photo">
+        <%= render "shared/photo_thumbnail", full_url: venue_photo_path(program.venue, photo),
+                   thumbnail_url: venue_photo_path(program.venue, photo, thumbnail: 1),
+                   description: "#{program.venue.name} primary photo" %>
+      </figure>
+    <% end %>
+    <div class="upcoming-booking-summary">
+      <% if local_assigns.fetch(:show_venue, false) %>
+        <h3><%= link_to program.name, program_path(program) %></h3>
+      <% end %>
+      <p class="upcoming-booking-date"><time datetime="<%= booking.scheduled_start.iso8601 %>"><%= booking.date.to_fs(:long) %> at <%= booking_time(booking) %></time></p>
+      <% if local_assigns.fetch(:show_venue, false) %>
+        <p><%= link_to program.venue.name, venue_path(program.venue) %></p>
+        <%= simple_format(program.address) %>
+        <p><%= link_to "View on Google Maps", program.venue.google_maps_location_url,
+                      target: "_blank", rel: "noopener noreferrer", class: "venue-google-maps" %></p>
+      <% end %>
+      <%= render "bookings/attendance", program: program, booking: booking, can_book: can_book %>
+      <% if booking.rescheduling_locked? %>
+        <%= render "bookings/rescheduling_notice", program: program, urgent: booking.attendance_overdue? %>
+      <% end %>
+      <div class="booking-actions">
+        <% if can_book && !booking.confirmation_open? && !booking.rescheduling_locked? %>
+          <%= link_to "Change Date", edit_program_booking_path(program, booking), class: "button-link" %>
+        <% end %>
+        <%= link_to "Cancel Booking", cancellation_program_booking_path(program, booking), class: "button-link" %>
+      </div>
+    </div>
+  </div>
+</section>

@@ -74,6 +74,59 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     expect([square.width, square.height]).to eq([400, 400])
   end
 
+  it 'lets venue coordinators select an audited primary photo' do
+    photo
+    second = VenuePhoto.add(venue, photo_upload)
+    coordinator = create_user
+    grant_venue_access(venue, coordinator)
+    sign_in(coordinator)
+    get photos_venue_path(venue)
+    expect(response.parsed_body.at_css("[data-photo='#{photo.id}'] .status-label").text).to eq('Primary')
+    patch venue_photo_path(venue, second)
+    expect(response).to redirect_to(photos_venue_path(venue))
+    expect(venue.reload.primary_photo).to eq(second)
+    change = HistoryTracker.where('association_chain.id': venue.id, action: 'update').last
+    expect(change.modified['primary_photo_id']).to eq(second.id)
+    expect(change.modifier_id).to eq(coordinator.id)
+    get photos_venue_path(venue)
+    selected = response.parsed_body.at_css("[data-photo='#{second.id}']")
+    expect(selected.at_css('.status-label').text).to eq('Primary')
+    expect(selected.text).not_to include('Set Primary Photo')
+  end
+
+  it 'falls back to the first remaining photo after deleting the primary photo without guest edit controls' do
+    photo
+    second = VenuePhoto.add(venue, photo_upload)
+    venue.update!(primary_photo_id: second.id)
+    sign_in(admin)
+    delete venue_photo_path(venue, second)
+    expect(venue.reload.primary_photo).to eq(photo)
+    delete session_path
+    get photos_venue_path(venue)
+    expect(response.body).not_to include('Set Primary Photo', 'Delete Photo')
+    expect(venue.photos.count).to eq(1)
+  end
+
+  it 'shows the selected public venue photo inside the homepage booking card' do
+    photo
+    second = VenuePhoto.add(venue, photo_upload)
+    venue.update!(primary_photo_id: second.id)
+    participant = create_user
+    program = create_program(venue: venue)
+    grant_participant_access(program, participant)
+    date = (Date.current..(Date.current + 7)).find { |day| day.cwday == 1 && day > Date.current }
+    track_booking(BookingMutation.new(program: program, user: participant).book(date: date.iso8601))
+    sign_in(participant)
+    get root_path
+    card = response.parsed_body.at_css('.upcoming-booking')
+    expect(card.at_css('.upcoming-booking-photo img')['src']).to eq(venue_photo_path(venue, second, thumbnail: 1))
+    expect(card.at_css('.upcoming-booking-photo a')['href']).to eq(venue_photo_path(venue, second))
+    sign_in(admin)
+    patch venue_photo_path(create_venue, second)
+    expect(response).to have_http_status(:not_found)
+    expect(venue.reload.primary_photo).to eq(second)
+  end
+
   it 'has no ten-photo cap and retains simultaneous uploads alongside venue settings edits' do
     11.times { VenuePhoto.add(venue, photo_upload) }
     owners = Array.new(2) { Venue.find(venue.id) }
@@ -99,6 +152,9 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     expect(response).to have_http_status(:forbidden)
     delete url
     expect(response).to have_http_status(:forbidden)
+    patch url
+    expect(response).to have_http_status(:forbidden)
+    expect(venue.reload.primary_photo_id).to be_nil
     expect(venue.photos.count).to eq(1)
   end
 

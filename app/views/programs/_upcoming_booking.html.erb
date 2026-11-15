@@ -1,8 +1,4 @@
 <% if @booking_access&.participant? && !@can_book %><p role="status"><%= @booking_access.reason %></p><% end %>
 <% if @my_booking %>
-  <h2>Your Upcoming Booking</h2>
-  <p><%= @my_booking.date.to_fs(:long) %> at <%= booking_time(@my_booking) %>. You can have one upcoming booking at this <%= @program.program_label.downcase %>.</p>
-  <%= render "bookings/attendance", program: @program, booking: @my_booking %>
-  <% if @my_booking.rescheduling_locked? %><%= render "bookings/rescheduling_notice", program: @program, urgent: @my_booking.attendance_overdue? %><% end %>
-  <p><% if @can_book && !@my_booking.confirmation_open? && !@my_booking.rescheduling_locked? %><%= link_to "Change Date", edit_program_booking_path(@program, @my_booking) %> | <% end %><%= link_to "Cancel Booking", cancellation_program_booking_path(@program, @my_booking) %></p>
+  <%= render "bookings/upcoming", program: @program, booking: @my_booking, can_book: @can_book %>
 <% end %>

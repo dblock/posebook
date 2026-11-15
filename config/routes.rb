@@ -11,7 +11,7 @@ Rails.application.routes.draw do
   namespace(:admin) { resources :users, only: %i[index edit update] }
   resources :venues, except: :destroy do
     get :photos, on: :member
-    resources :photos, only: %i[show create destroy], controller: 'venue_photos'
+    resources :photos, only: %i[show create update destroy], controller: 'venue_photos'
     resources :coordinators, only: %i[index create destroy], controller: 'venue_coordinators'
     resources :coordinator_invitations, only: %i[show destroy]
     resources :programs, path: 'sessions', only: %i[new create]

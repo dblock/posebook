@@ -79,4 +79,5 @@
 - [#88](https://github.com/dblock/posebook/pull/88): Place Google invitation response badges beside booking badges without a visible prefix - [@dblock](https://github.com/dblock).
 - [#89](https://github.com/dblock/posebook/pull/89): Show model names, Instagram accounts, linked profiles, and chosen primary photos in private tables and enlarge roster actions - [@dblock](https://github.com/dblock).
 - [#90](https://github.com/dblock/posebook/pull/90): Add venue Google Maps links and include venue details in shared meeting invitations - [@dblock](https://github.com/dblock).
+- [#91](https://github.com/dblock/posebook/pull/91): Show shared upcoming booking cards on home and session pages with button actions, venue locations, and chosen primary venue photos - [@dblock](https://github.com/dblock).
 - Your contribution here.
