@@ -4,7 +4,9 @@
 
 Sign in with your email and password, or use the password-reset link if you cannot sign in. After the first administrator account, registration requires an invitation or email verification for a program accepting participation applications.
 
-On an open program, choose **Apply to Participate**. Sign in with a verified account, or request a 30-minute verification link and create/verify your account. Prepare your account details and photos before explicitly submitting the application and profile-sharing consent. Applying does not enroll you or permit booking. The program's reviewing coordinators can see your private contact details, gender, profile, and photos while the application is Pending or Not Now.
+On an open program, choose **Apply to Participate**. Sign in with a verified account, or request a 30-minute verification link and create/verify your account. The application editor brings account details, photos, and your message together on one page. **Save Draft** creates a private application on the first save, even with incomplete details, so you can return through **Profile > Applications**. Account edits are staged in the draft and applied only when you submit; photo uploads are saved to your account immediately and are private by default. Choose **Save Draft** to upload and preview photos before submitting.
+
+Drafts grant no membership, booking access, coordinator review, or notifications. **Abandon Draft** removes only the unfinished application, keeping your account and uploaded photos. **Submit Application** requires valid account details and explicit profile-sharing consent. Submitted applications retain their history; the program's reviewing coordinators can see your private contact details, gender, profile, and photos while the application is Pending or Not Now.
 
 Organizers can also share a direct `/programs/<program-slug>/apply` link to the same workflow. Applications must be enabled for that specific program, and both the program and venue must be active. Opening the link does not submit an application or grant access.
 

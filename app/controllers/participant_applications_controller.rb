@@ -1,17 +1,14 @@
 # frozen_string_literal: true
 
 class ParticipantApplicationsController < ApplicationController
+  include ParticipantApplicationErrors
+
   before_action -> { response.headers['Cache-Control'] = 'private, no-store' }
   before_action :remember_status_destination, only: :show
   before_action :require_authentication, except: %i[new create apply]
   before_action :find_program, except: :index
   before_action :require_verified_applicant, only: %i[new create apply]
   before_action :prepare_submission, only: %i[new create apply]
-  rescue_from ParticipantApplicationWorkflow::Invalid, with: :submission_error
-  rescue_from ParticipantApplicationWorkflow::Conflict, with: :withdrawal_error
-  rescue_from Mongoid::Errors::Validations, with: :validation_error
-  rescue_from Mongo::Error::OperationFailure, with: :duplicate_application
-  rescue_from EmailDelivery::Unavailable, with: :notification_error
 
   def index
     @page = [params[:page].to_i, 1].max
@@ -23,6 +20,7 @@ class ParticipantApplicationsController < ApplicationController
 
   def show
     @application = own_application
+    redirect_to new_program_participation_application_path(@program) if @application.draft?
   end
 
   def apply
@@ -30,21 +28,45 @@ class ParticipantApplicationsController < ApplicationController
   end
 
   def new
-    @application = ParticipantApplication.new
+    return if @application
+
+    @application = ParticipantApplication.new(status: 'draft')
   end
 
   def create
-    attributes = params.expect(participant_application: %i[message consent])
-    workflow.submit(message: attributes[:message], consent: attributes[:consent])
-    redirect_to own_application_path, notice: t('participant_applications.submitted')
+    attributes = editor_attributes
+    @application = save_editor(attributes)
+    if attributes[:intent] == 'draft' || attributes[:remove_photo_id].present?
+      redirect_to new_program_participation_application_path(@program),
+                  notice: t('participant_applications.draft_saved')
+    else
+      submit_editor(attributes)
+    end
   end
 
   def destroy
+    return abandon_draft if own_application.draft?
+
     workflow.withdraw(own_application.id, version: params[:lock_version])
     redirect_to own_application_path, notice: t('participant_applications.withdrawn')
   end
 
   private
+
+  def save_editor(attributes)
+    draft.save(**attributes.slice(:message, :profile, :photos, :remove_photo_id).to_h.symbolize_keys,
+                version: attributes[:lock_version])
+  end
+
+  def submit_editor(attributes)
+    workflow.submit(message: @application.message, consent: attributes[:consent], version: @application.lock_version)
+    redirect_to own_application_path, notice: t('participant_applications.submitted')
+  end
+
+  def abandon_draft
+    draft.discard(version: params[:lock_version])
+    redirect_to program_path(@program), notice: t('participant_applications.draft_abandoned')
+  end
 
   def remember_status_destination
     return if current_user
@@ -59,8 +81,8 @@ class ParticipantApplicationsController < ApplicationController
   end
 
   def prepare_submission
-    return redirect_to own_application_path if ParticipantApplication.exists?(program_id: @program.id,
-                                                                              user_id: current_user.id)
+    @application = ParticipantApplication.where(program_id: @program.id, user_id: current_user.id).first
+    return redirect_to own_application_path if @application && !@application.draft?
 
     redirect_to program_path(@program) if @program.participant?(current_user)
   end
@@ -85,31 +107,12 @@ class ParticipantApplicationsController < ApplicationController
     ParticipantApplicationWorkflow.new(program: @program, user: current_user)
   end
 
-  def submission_error(error, status: :unprocessable_content)
-    @application = ParticipantApplication.new(message: params.dig(:participant_application, :message))
-    @application.errors.add(:base, error.message)
-    render :new, status: status
+  def draft
+    ApplicationDraft.new(program: @program, user: current_user)
   end
 
-  def notification_error
-    submission_error(EmailDelivery::Unavailable.new(t('participant_applications.notifications_unavailable')),
-                     status: :service_unavailable)
-  end
-
-  def validation_error(error)
-    raise error unless error.document.is_a?(ParticipantApplication)
-
-    @application = error.document
-    render :new, status: :unprocessable_content
-  end
-
-  def withdrawal_error(error)
-    redirect_to own_application_path, alert: error.message
-  end
-
-  def duplicate_application(error)
-    raise error unless error.code == 11_000
-
-    redirect_to own_application_path, alert: t('participant_applications.duplicate')
+  def editor_attributes
+    params.expect(participant_application: [:message, :consent, :lock_version, :intent, :remove_photo_id,
+                                            { profile: ApplicationDraft::PROFILE_FIELDS, photos: [] }])
   end
 end

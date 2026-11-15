@@ -14,7 +14,7 @@
           <% @applications.each do |application| %>
             <tr>
               <td><%= participant_contact_label(application) %></td><td><%= application.status_label %></td>
-              <td><%= l(application.created_at.to_date, format: :long) %></td>
+              <td><%= l((application.submitted_at || application.created_at).to_date, format: :long) %></td>
               <td><%= link_to "Review", program_application_path(@program, application), class: "button-link" %></td>
             </tr>
           <% end %>

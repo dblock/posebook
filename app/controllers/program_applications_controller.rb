@@ -12,7 +12,7 @@ class ProgramApplicationsController < ApplicationController
     @status = params[:status].presence || 'pending'
     return head :bad_request unless %w[pending declined accepted withdrawn all].include?(@status)
 
-    records = ParticipantApplication.where(program_id: @program.id)
+    records = ParticipantApplication.where(program_id: @program.id, :status.ne => 'draft')
     records = records.where(status: @status) unless @status == 'all'
     @applications = page_of(records)
   end
@@ -58,7 +58,7 @@ class ProgramApplicationsController < ApplicationController
   end
 
   def scoped_application
-    ParticipantApplication.where(program_id: @program.id).find(params.expect(:id))
+    ParticipantApplication.where(program_id: @program.id, :status.ne => 'draft').find(params.expect(:id))
   end
 
   def page_of(records)

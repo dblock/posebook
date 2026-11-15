@@ -1,0 +1,16 @@
+<h2>Photos</h2>
+<p>Photos are optional. Uploads are saved to your account when you save or submit, are private by default, and are not removed when you abandon a draft. Existing authorized organizers retain their normal account-photo access.</p>
+<div class="photo-gallery">
+  <% current_user.profile_photos.each_with_index do |photo, index| %>
+    <figure class="profile-photo">
+      <%= render "shared/photo_thumbnail", full_url: participant_photo_path(current_user, photo),
+                 thumbnail_url: participant_photo_path(current_user, photo, thumbnail: 1),
+                 description: "Profile photo #{index + 1}" %>
+      <figcaption><%= status_label(photo.public? ? "Public" : "Private") %></figcaption>
+      <div class="photo-actions">
+        <%= form.button "Delete Photo", name: "participant_application[remove_photo_id]", value: photo.id.to_s, formnovalidate: true, class: "secondary-action" %>
+      </div>
+    </figure>
+  <% end %>
+</div>
+<p><%= form.label :photos, "Add Photos (Optional)" %><br><%= form.file_field :photos, multiple: true, accept: "image/jpeg,image/png,image/webp" %><br><small>JPEG, PNG, or WebP, up to 10 MB and 40 megapixels per photo. Choose Save Draft to upload and preview before submitting.</small></p>
