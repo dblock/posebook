@@ -1,0 +1,44 @@
+<% content_for :title, "Privacy Policy | Posebook" %>
+
+<main class="information-page">
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <%= link_to "About", about_path %>
+    <span>Privacy Policy</span>
+  </nav>
+  <h1>Privacy Policy</h1>
+  <p>Last updated: November 14, 2026.</p>
+  <p>This policy explains how Vestris Inc., the operator of this Posebook service, collects, uses, and shares information when you use its websites and scheduling features. In this policy, "we" and "us" refer to Vestris Inc. For privacy questions or requests, contact <%= mail_to "drawing@dblock.org" %>.</p>
+
+  <h2>Information We Process</h2>
+  <p>Account information includes your name, email address, phone number, gender, password hash, account status, and access roles. Phone numbers are not verified. Optional profile information includes a public name, Instagram handle, tagging preferences, identity-privacy preference, and uploaded photos.</p>
+  <p>Program information includes venue details, organizer assignments, invitations, participation permissions, bookings, attendance confirmations, cancellations, rescheduling, and the explanations and history needed to manage them. We also process authentication cookies and technical information such as request details, IP addresses, and diagnostic logs needed to operate and protect the service.</p>
+
+  <h2>How We Use Information</h2>
+  <p>We use information to provide accounts and access controls, coordinate programs and bookings, display permitted profile information, send requested account and invitation messages, maintain booking and audit records, provide support, and investigate errors or misuse. Optional calendar integration uses booking information to create and maintain calendar events and invitations.</p>
+  <p>We do not sell personal information or use it for advertising. Posebook does not provide a public account directory.</p>
+
+  <h2>Visibility and Sharing</h2>
+  <p>System administrators and authorized program or venue organizers can access information needed to manage their programs, including participant names and contact details. Other participants and public visitors do not receive private contact details, private program instructions, or private booking explanations.</p>
+  <p>Public venue information, venue photos, and public calendars can be viewed without signing in. A calendar may display a participant's public name and permitted Instagram handle. Public profile photos are shown only where your sharing settings allow them. Private Identity hides your identity, Instagram, and profile photos from public and other-participant views; it does not hide your account from authorized administrators and organizers.</p>
+  <p>We use service providers for hosting, database storage, requested email delivery, and optional error monitoring. They process information as needed to provide those services. We may disclose information when required by law or reasonably necessary to protect accounts, investigate abuse, or protect the rights and safety of users.</p>
+
+  <h2>Google Calendar</h2>
+  <p>Google Calendar synchronization is optional and connected by an authorized organizer. Posebook accesses metadata for the selected calendar to verify the calendar and write permissions, and uses event permissions to create, update, and delete corresponding booking events. It does not import unrelated calendar events into Posebook.</p>
+  <p>Google events contain the program, venue, booking times, participant name and public name, email, unverified phone number, gender, private-identity choice, and effective Instagram tagging preference. An Instagram handle is included only when public-sharing preferences permit it. Events invite the participant and assigned organizers, and Google processes the event details and invitations under its <%= link_to "Privacy Policy", "https://policies.google.com/privacy", target: "_blank", rel: "noopener noreferrer" %>.</p>
+  <p>Events are marked private, but access also depends on the destination calendar's sharing settings and the people invited. Organizers must use a calendar restricted to authorized people. Private Identity does not remove contact details from these private booking events.</p>
+  <p>Posebook stores the selected calendar ID, the connecting organizer, and an encrypted authorization refresh token. Booking synchronization records retain identifiers and delivery status rather than copies of contact details. Disconnecting removes the stored credential and stops synchronization, but does not delete Google events or invitations already created. Organizers can remove those events in Google Calendar and revoke application access through their Google account.</p>
+  <p>Google user data is used only to provide the calendar features described here, not for advertising, sale, or training AI models. Posebook's use and transfer of information received from Google APIs adheres to the <%= link_to "Google API Services User Data Policy", "https://developers.google.com/terms/api-services-user-data-policy", target: "_blank", rel: "noopener noreferrer" %>, including its Limited Use requirements.</p>
+
+  <h2>Cookies and Security</h2>
+  <p>Posebook uses cookies for sign-in, request protection, and optional remembered sign-in. Remember me can keep you signed in for an extended period until you sign out, revoke access, or your browser clears the cookie. Blocking these essential cookies may prevent account features from working. Posebook does not set advertising cookies.</p>
+  <p>Passwords are hashed, Google refresh tokens are encrypted, and access to private information is restricted by account and program permissions. No online service can guarantee complete security. Use a unique password, keep private invitation links confidential, and contact us if you suspect unauthorized access.</p>
+
+  <h2>Retention and Your Choices</h2>
+  <p>We retain information for as long as reasonably needed to operate accounts and programs, maintain booking and audit records, resolve disputes, protect the service, or meet legal obligations. Deactivating an account is not the same as deleting its history. Removed information may remain in backups until those backups expire or are replaced. Information held by Google or other recipients is subject to their own retention and deletion controls.</p>
+  <p>You can update supported account and profile fields, change public-sharing preferences, remove your profile photos, and deactivate your account. For access, correction, or deletion requests, contact <%= mail_to "drawing@dblock.org" %>. We may need to verify your identity and explain records that must be retained. Additional rights may apply under the laws where you live.</p>
+  <p>Hosting and service providers may process information outside your country. Contact us if you need information about the providers or locations used for this installation.</p>
+
+  <h2>Children and Policy Changes</h2>
+  <p>Posebook is not designed for children. If you believe a child has provided personal information without legally required permission, contact us so we can review and address it.</p>
+  <p>We may update this policy as the service or its data practices change. The date above identifies the latest version. We will provide notice and request any additional consent required before using information for a materially different purpose.</p>
+</main>

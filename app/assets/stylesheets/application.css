@@ -36,6 +36,21 @@ body {
   padding-bottom: 5rem;
 }
 
+.information-page {
+  max-width: 48rem;
+  margin-inline: auto;
+}
+
+.site-footer {
+  border-top: 1px solid var(--line);
+  padding: 1.25rem 2rem;
+  font-size: 0.875rem;
+}
+
+.site-footer nav {
+  justify-content: center;
+}
+
 main {
   min-width: 0;
 }

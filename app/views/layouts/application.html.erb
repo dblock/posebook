@@ -38,6 +38,13 @@
       <% end %>
       <%= yield %>
     </div>
+    <footer class="site-footer">
+      <nav aria-label="Information">
+        <%= link_to "About", about_path %>
+        <%= link_to "Privacy Policy", privacy_path %>
+        <%= link_to "Terms of Service", terms_path %>
+      </nav>
+    </footer>
     <%= render "shared/photo_preview" %>
     <%= javascript_include_tag "clipboard", defer: true %>
   </body>
