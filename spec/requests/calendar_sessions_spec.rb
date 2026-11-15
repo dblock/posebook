@@ -167,14 +167,16 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     expect(day('2026-11-09').css('form, button')).to be_empty
   end
 
-  it 'uses date-only Future placeholders outside the horizon and neighboring months for guests and participants' do
+  it 'shows real leading dates and Future placeholders outside the horizon for guests and participants' do
     program.update!(booking_horizon_months: 1)
     participant = create_user
     grant_participant_access(program, participant)
     [nil, participant].each do |viewer|
       sign_in(viewer) if viewer
       get program_path(program, month: '2026-12')
-      %w[2026-11-30 2026-12-14].each do |date|
+      expect(day('2026-11-30').text).to include('Available', '6:30 PM')
+      expect(day('2026-11-29').text.strip).to eq('29')
+      %w[2026-12-14 2027-01-01].each do |date|
         expect(day(date).css('span').text).to eq('Future')
         expect(day(date).css('strong, small, form, button, a')).to be_empty
       end
@@ -203,7 +205,34 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     expect(day('2026-12-14').css('a, form, button')).to be_empty
     sign_in(organizer_for(create_program))
     get program_path(program, month: '2026-12', program_coordinator: '1')
-    expect(day('2026-11-30').css('span').text).to eq('Future')
+    expect(day('2026-11-30').css('span').text).to eq('Available')
     expect(day('2026-11-30').css('a, form, button')).to be_empty
+  end
+
+  it 'shows leading November dates correctly to a participant booked in December' do
+    participant = create_user
+    grant_participant_access(program, participant)
+    track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-12-14'))
+    sign_in(participant)
+    get program_path(program, month: '2026-12')
+    expect(day('2026-11-29').text.strip).to eq('29')
+    expect(day('2026-11-30').text).to include('6:30 PM', 'You are already scheduled')
+    expect(day('2026-11-30').text).not_to include('Future')
+    expect(day('2026-12-14').text).to include('Your booking')
+    expect(day('2027-01-01').css('.status-label').text).to eq('Future')
+  end
+
+  it 'retains public identity privacy and hides manager controls on leading bookings' do
+    booking = reserve('2026-11-30')
+    booking.user.update!(public_profile_private: true)
+    participant = create_user
+    grant_participant_access(program, participant)
+    [nil, participant].each do |viewer|
+      sign_in(viewer) if viewer
+      get program_path(program, month: '2026-12')
+      expect(day('2026-11-30').text).to include('To be announced')
+      expect(day('2026-11-30').text).not_to include(booking.user.name, 'Future')
+      expect(day('2026-11-30').css('a, form, button')).to be_empty
+    end
   end
 end
