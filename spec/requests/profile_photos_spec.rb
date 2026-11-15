@@ -199,6 +199,26 @@ RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request 
     expect(response).to have_http_status(:forbidden)
   end
 
+  it 'ends public gallery and image sharing after self-deactivation while privately retaining the photos' do
+    photo.change_visibility(participant, true)
+    organizer = organizer_for(participant)
+    guest = ActionDispatch::Integration::Session.new(Rails.application)
+    guest.get(photo_url)
+    expect(guest.response).to have_http_status(:ok)
+    sign_in(participant)
+    post account_deactivation_path, params: { current_password: DatabaseHelpers::TEST_PASSWORD }
+    [participant_path(participant), photo_url,
+     participant_photo_path(participant, photo.id, thumbnail: 1)].each do |path|
+      guest.get(path)
+      expect(guest.response).to have_http_status(:not_found)
+      expect(guest.response.headers['Cache-Control']).to include('no-store')
+    end
+    expect(participant.reload.profile_photos.first.public?).to be(true)
+    sign_in(organizer)
+    get photo_url
+    expect(response).to have_http_status(:ok)
+  end
+
   it 'denies unrelated organizers and removes private access when the organizer role is revoked' do
     organizer = organizer_for(participant)
     membership = ProgramMembership.coordinators.where(user_id: organizer.id).first
