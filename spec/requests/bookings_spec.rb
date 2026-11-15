@@ -23,6 +23,51 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     { date: date, confirmed: '1', schedule_revision: program.reload.schedule_revision.to_s }.merge(attributes)
   end
 
+  it 'shows only your upcoming bookings on home, ordered by saved time, with venue details and button actions' do
+    prepare_participant
+    later = book('2026-12-07')
+    earlier_program = create_program(time_zone: 'America/New_York', start_time: '20:00', end_time: '22:00')
+    grant_participant_access(earlier_program, participant)
+    earlier = book('2026-11-23', at: earlier_program)
+    other = create_user
+    grant_participant_access(earlier_program, other)
+    book('2026-11-30', user: other, at: earlier_program)
+    get root_path
+    cards = response.parsed_body.css('.upcoming-booking')
+    expect(cards.pluck('aria-labelledby'))
+      .to eq(["upcoming-booking-#{earlier.id}", "upcoming-booking-#{later.id}"])
+    expect(cards.first.text).to include('November 23, 2026', '8:00 PM - 10:00 PM', earlier_program.address)
+    expect(cards.first.at_css('.venue-google-maps')['href']).to eq(earlier_program.venue.google_maps_location_url)
+    expect(cards.first.css('.booking-actions .button-link').map(&:text)).to eq(['Change Date', 'Cancel Booking'])
+    expect(response.body).not_to include(other.email, 'November 30, 2026', 'Confirmation opens',
+                                         'You can have one upcoming booking')
+  end
+
+  it 'groups the date, status, and actions inside the same card on session View and Calendar pages' do
+    prepare_participant
+    later = book('2026-12-07')
+    [program_path(program), program_path(program, section: 'calendar')].each do |path|
+      get path
+      card = response.parsed_body.at_css('.upcoming-booking')
+      expect(card.at_css('time').text).to include('December 07, 2026', '6:30 PM')
+      expect(card.at_css('time')['datetime']).to eq(later.scheduled_start.iso8601)
+      expect(card.css('.booking-actions .button-link').map(&:text)).to eq(['Change Date', 'Cancel Booking'])
+      expect(response.body).not_to include('Confirmation opens', 'You can have one upcoming booking')
+    end
+  end
+
+  it 'omits canceled and completed bookings from the homepage' do
+    prepare_participant
+    later = book('2026-12-07')
+    earlier_program = create_program
+    grant_participant_access(earlier_program, participant)
+    earlier = book('2026-11-23', at: earlier_program)
+    BookingMutation.new(program: program, user: participant).cancel(booking: later, reason: 'Plans changed.')
+    travel_to earlier.ends_at
+    get root_path
+    expect(response.parsed_body.css('.upcoming-booking')).to be_empty
+  end
+
   it 'asks for confirmation before booking and lets the participant cancel without a reservation' do
     prepare_participant
     post program_bookings_path(program), params: { date: '2026-11-16' }

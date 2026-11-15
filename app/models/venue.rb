@@ -19,11 +19,12 @@ class Venue
   field :address, type: String
   field :instagram_handle, type: String
   field :google_maps_url, type: String
+  field :primary_photo_id, type: BSON::ObjectId
 
   slug :name, :custom_slug, history: true, reserve: Program::RESERVED_SLUGS, max_length: 100 do |venue|
     (venue.custom_slug.presence || venue.name).to_url
   end
-  track_history on: %i[name custom_slug _slugs address instagram_handle google_maps_url],
+  track_history on: %i[name custom_slug _slugs address instagram_handle google_maps_url primary_photo_id],
                 modifier_field_optional: true, modifier_field_inverse_of: nil, track_blank_changes: true
 
   has_many :memberships, class_name: 'VenueMembership', inverse_of: :venue, dependent: :restrict_with_error
@@ -53,6 +54,10 @@ class Venue
 
   def google_maps_location_url
     google_maps_url.presence || "https://www.google.com/maps/search/?#{URI.encode_www_form(api: 1, query: address)}"
+  end
+
+  def primary_photo(photos = self.photos.order_by(created_at: :asc).to_a)
+    photos.find { |photo| photo.id == primary_photo_id } || photos.first
   end
 
   def public_instagram_handle

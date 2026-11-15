@@ -1,9 +1,10 @@
 <% photos = venue.photos.order_by(created_at: :asc).to_a %>
+<% primary_photo = venue.primary_photo(photos) %>
 <% if photos.any? || editable || local_assigns.fetch(:show_empty, false) %>
   <section aria-labelledby="venue-photos-heading">
     <h2 id="venue-photos-heading">Venue Photos</h2>
     <% if editable %>
-      <p>All venue photos are public. There is no photo-count limit.</p>
+      <p>All venue photos are public. There is no photo-count limit. Choose a primary photo for upcoming bookings on the homepage; otherwise, the first photo is used.</p>
       <%= form_with url: venue_photos_path(venue), scope: :venue_photo, multipart: true do |form| %>
         <p><%= form.label :file, "New Venue Photo" %><br><%= form.file_field :file, accept: "image/jpeg,image/png,image/webp", required: true %></p>
         <%= form.submit "Upload Venue Photo" %>
@@ -15,7 +16,14 @@
           <%= render "shared/photo_thumbnail", full_url: venue_photo_path(venue, photo),
                      thumbnail_url: venue_photo_path(venue, photo, thumbnail: 1),
                      description: "#{venue.name} photo #{index + 1}" %>
-          <% if editable %><%= button_to "Delete Photo", venue_photo_path(venue, photo), method: :delete, class: "secondary-action" %><% end %>
+          <% if editable %>
+            <% if photo == primary_photo %>
+              <figcaption><%= status_label("Primary") %></figcaption>
+            <% else %>
+              <%= button_to "Set Primary Photo", venue_photo_path(venue, photo), method: :patch, class: "secondary-action" %>
+            <% end %>
+            <%= button_to "Delete Photo", venue_photo_path(venue, photo), method: :delete, class: "secondary-action" %>
+          <% end %>
         </figure>
       <% end %>
     </div>

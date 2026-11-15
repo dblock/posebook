@@ -277,6 +277,47 @@ nav {
   margin: 1rem 0;
 }
 
+.upcoming-booking h2,
+.upcoming-booking h3 {
+  margin-top: 0;
+}
+
+.upcoming-booking-details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.upcoming-booking-photo {
+  flex: 0 1 12rem;
+  margin: 0;
+}
+
+.upcoming-booking-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-box);
+}
+
+.upcoming-booking-summary {
+  flex: 1 1 20rem;
+  min-width: 0;
+}
+
+.upcoming-booking-date {
+  margin-top: 0;
+  font-weight: 600;
+}
+
+.booking-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
 .status-label {
   display: inline-block;
   box-sizing: border-box;
@@ -354,7 +395,8 @@ input::file-selector-button {
 }
 
 button,
-input[type="submit"] {
+input[type="submit"],
+.button-link {
   min-height: 2.75rem;
   max-width: 100%;
   padding: 0.6rem 1.1rem;
@@ -370,8 +412,16 @@ input[type="submit"] {
   cursor: pointer;
 }
 
+.button-link {
+  display: inline-flex;
+  align-items: center;
+  text-align: center;
+  text-decoration: none;
+}
+
 button:hover:not(:disabled),
-input[type="submit"]:hover:not(:disabled) {
+input[type="submit"]:hover:not(:disabled),
+.button-link:hover {
   background: color-mix(in srgb, var(--color-primary) 85%, var(--color-secondary));
   color: var(--color-primary-content);
 }

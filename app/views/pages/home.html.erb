@@ -2,6 +2,10 @@
   <h1>Posebook</h1>
   <p>Invitation-based registration and booking for recurring programs.</p>
   <p>Welcome, <%= current_user.name %>.</p>
+  <% @upcoming_bookings.each do |booking| %>
+    <%= render "bookings/upcoming", program: booking.program, booking: booking,
+               can_book: @booking_access.fetch(booking.program_id).allowed?, show_venue: true %>
+  <% end %>
   <% if current_user.system_admin? %>
     <p>You have the system admin role.</p>
   <% end %>

@@ -19,6 +19,11 @@ class VenuePhotosController < ApplicationController
     redirect_to photos_venue_path(@venue), notice: t('photos.venue_uploaded'), status: :see_other
   end
 
+  def update
+    @venue.update!(primary_photo_id: @photo.id)
+    redirect_to photos_venue_path(@venue), notice: t('photos.venue_primary_updated'), status: :see_other
+  end
+
   def destroy
     @photo.destroy!
     redirect_to photos_venue_path(@venue), notice: t('photos.deleted'), status: :see_other
