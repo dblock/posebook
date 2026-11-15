@@ -3,7 +3,7 @@
   <h1><%= @program.name %></h1>
   <% unless @program.booking_active? %><p role="status"><%= t('locations.inactive') %></p><% end %>
   <% if @section == "view" %>
-  <p><%= link_to "#{@program.program_label.titleize} Link", program_path(@program) %></p>
+  <p><%= render "shared/copy_button", url: program_url(@program), label: "#{@program.name} link" %></p>
   <% if (photo = @program.primary_photo) %>
     <figure class="program-primary-photo">
       <%= render "shared/photo_thumbnail", full_url: program_photo_path(@program, photo),

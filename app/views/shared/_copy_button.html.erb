@@ -1,4 +1,9 @@
 <span class="copy-control">
-  <button type="button" class="copy-button" data-copy-target="<%= target %>" aria-label="Copy <%= label %>" hidden>Copy</button>
+  <%= button_tag local_assigns[:url] ? "Copy Link" : "Copy", type: "button", class: "copy-button",
+                 data: { copy_target: local_assigns[:target], copy_link: local_assigns[:url] },
+                 aria: { label: "Copy #{label}" }, hidden: true %>
+  <% if local_assigns[:url] %>
+    <%= link_to url, url, class: "copy-fallback" %>
+  <% end %>
   <span class="copy-feedback" role="status"></span>
 </span>

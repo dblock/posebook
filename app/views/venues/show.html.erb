@@ -2,6 +2,6 @@
   <%= render "navigation", venue: @venue, active: "view" %>
   <h1><%= @venue.name %></h1>
   <% unless @venue.active? %><p role="status"><%= t('locations.inactive') %></p><% end %>
-  <p><%= link_to "Venue Link", venue_path(@venue) %></p>
+  <p><%= render "shared/copy_button", url: venue_url(@venue), label: "#{@venue.name} link" %></p>
   <%= render "card", venue: @venue, show_title: false %>
 </main>

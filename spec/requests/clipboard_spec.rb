@@ -76,22 +76,23 @@ RSpec.describe 'Copy controls', :aggregate_failures, :database, type: :request d
       expect(response.parsed_body.css('.copy-button')).to be_empty
       expect(response.body).to include('Invited email: manager@example.test')
     end
-  end
 
-  it 'retains public addresses and sharing links without copy buttons' do
-    program = create_program(instagram_handle: '@preview.studio')
-    get program_path(program, token: 'private-token')
-    expect(response.parsed_body.css('.copy-button')).to be_empty
-    expect(response.body).to include(program.address)
-    expect(response.parsed_body.css('a').find { |link| link.text == 'Program Link' }['href'])
-      .to eq(program_path(program))
-    expect(response.parsed_body.at_css('a[href="https://www.instagram.com/preview.studio/"]')).to be_present
-    get venue_path(program.venue)
-    expect(response.parsed_body.css('.copy-button')).to be_empty
-    expect(response.body).to include(program.venue.address)
-    expect(response.parsed_body.css('a').find { |link| link.text == 'Venue Link' }['href'])
-      .to eq(venue_path(program.venue))
-    expect(response.parsed_body.at_css('a[href="https://www.instagram.com/preview.studio/"]')).to be_present
+    it "copies the canonical #{scope} URL without query strings while retaining public information" do
+      program = create_program(program_label: 'Figure Drawing Session', instagram_handle: '@preview.studio')
+      resource = scope == :venue ? program.venue : program
+      get polymorphic_path(resource), params: { token: 'private-token' }
+      button = response.parsed_body.at_css('.copy-button')
+      url = "#{request.base_url}#{polymorphic_path(resource)}"
+      expect(button.text).to eq('Copy Link')
+      expect(button['data-copy-link']).to eq(url)
+      expect(button.key?('hidden')).to be(true)
+      expect(response.parsed_body.css('.copy-button').length).to eq(1)
+      fallback = response.parsed_body.at_css('.copy-fallback')
+      expect([fallback['href'], fallback.text]).to eq([url, url])
+      expect(response.body).to include(resource.address)
+      expect(response.body).not_to include('Figure Drawing Session Link', 'Venue Link')
+      expect(response.parsed_body.at_css('a[href="https://www.instagram.com/preview.studio/"]')).to be_present
+    end
   end
 
   it 'retains authorized account details without copy buttons' do

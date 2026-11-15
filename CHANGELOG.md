@@ -94,4 +94,5 @@
 - [#104](https://github.com/dblock/posebook/pull/104): Show only programs on venue program pages and group Photos, Programs, and participant management after the tab separator - [@dblock](https://github.com/dblock).
 - [#105](https://github.com/dblock/posebook/pull/105): Disable and pale action buttons while submissions, navigation, and copying are pending, with duplicate-submission protection and browser-history recovery - [@dblock](https://github.com/dblock).
 - [#106](https://github.com/dblock/posebook/pull/106): Use `/programs` instead of `/sessions` for program URLs, including creation and nested routes, without compatibility redirects - [@dblock](https://github.com/dblock).
+- [#107](https://github.com/dblock/posebook/pull/107): Replace venue and program sharing links with Copy Link buttons, retaining canonical URLs, clipboard feedback, and manual-copy support - [@dblock](https://github.com/dblock).
 - Your contribution here.
