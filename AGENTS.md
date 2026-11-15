@@ -36,7 +36,7 @@ Venues and recurring programs use independent slugs and retained slug history un
 
 `mongoid-history` audits whitelisted User/Program business fields, never credentials, authentication challenges, or session secrets. Keep request actor context scoped and allow nil for anonymous/system writes. Audited email confirmation and account activation changes require fresh-document transactional saves; preserve expiry, token, and protected-admin predicates on retries. Atomic/raw updates bypass history; do not use them for normal audited field changes. No history or undo interface exists.
 
-New programs default to Program/Participant terminology, zero pay, Monday at 09:00 UTC, and a six-month horizon. Retain explicitly configured labels, schedules, pay, and historical booking snapshots. Gender is optional unless the program enables consecutive-gender rules; apply the same rule checks to calendars and transactional mutations, retaining explicit organizer overrides and private explanations.
+New programs default to Program/Participant terminology, zero pay, Monday at 09:00 UTC, and a six-month horizon. Retain explicitly configured labels, schedules, pay, and historical booking snapshots. Phone and gender are required for all accounts. Gender rules remain optional; apply the same rule checks to calendars and transactional mutations, retaining explicit organizer overrides and private explanations.
 
 Tests use `MONGODB_TEST_URI`, never the development or production connection. The test database guard requires `posebook_test` or a `posebook_test_` prefix. Delete only records owned by a test, not entire collections or databases. Keep real network-provider calls out of tests.
 

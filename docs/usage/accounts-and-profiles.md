@@ -8,7 +8,7 @@ Participant and venue/program coordinator invitations follow the same email rule
 
 Use **Profile** to edit your name, display name, phone, Instagram handle, and privacy preferences. Your display name defaults to your account name. Instagram appears on public calendars only when tagging is enabled; **Keep all my information private** hides your name and Instagram from public pages while retaining your preferences.
 
-Gender is optional and private. Programs without gender rules allow booking without a selection; programs with enabled gender rules require one for new or replacement bookings. Existing bookings, attendance confirmation, and cancellation remain available.
+Phone and gender are required for all accounts. Enter your phone in international format beginning with `+`; it is unverified and cannot be used for recovery or messaging. Gender is private. Existing accounts may have a migration placeholder for either field; check and update your profile.
 
 Use **Change Password** or **Deactivate Account** from your profile to manage account access. Changing your password signs out other sessions. Deactivation signs you out and retains your booking history.
 

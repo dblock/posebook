@@ -105,6 +105,17 @@ RSpec.describe 'Administrator user editing', :aggregate_failures, :database, typ
     expect(user.reload.attributes).to eq(original)
   end
 
+  it 'requires phone and gender on administrator edits' do
+    sign_in(create_user(roles: ['system_admin']))
+    user = create_user
+    get edit_admin_user_path(user)
+    expect(response.parsed_body.at_css('input[name="user[phone]"][required]')).to be_present
+    expect(response.parsed_body.at_css('select[name="user[gender]"][required]')).to be_present
+    update_user(user, phone: '', gender: '')
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(user.reload).to have_attributes(phone: '+12025550101', gender: 'other')
+  end
+
   it 'rejects an email address belonging to another user' do
     sign_in(create_user(roles: ['system_admin']))
     user = create_user

@@ -58,4 +58,5 @@
 - [#63](https://github.com/dblock/posebook/pull/63): Separate program view, calendar, history, participants, and coordinators with breadcrumb navigation and compact invitation revocation - [@dblock](https://github.com/dblock).
 - [#65](https://github.com/dblock/posebook/pull/65): Simplify unscheduled calendar days and let organizers edit them by selecting the date - [@dblock](https://github.com/dblock).
 - [#66](https://github.com/dblock/posebook/pull/66): Improve the contrast of available calendar badges - [@dblock](https://github.com/dblock).
+- [#67](https://github.com/dblock/posebook/pull/67): Require phone and gender for all accounts and backfill missing details - [@dblock](https://github.com/dblock).
 - Your contribution here.

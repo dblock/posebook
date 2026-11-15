@@ -1,8 +1,14 @@
 # Upgrading
 
+## Required Phone and Gender
+
+Before serving this version, stop all application writers, back up MongoDB, and run `bundle exec rake users:backfill_required_details` using the new application image and the production `MONGODB_URI`. The command runs explicitly, not at startup. It fills only blank phone values with the fictional US number `+12025550100` and only blank gender values with `male`, including inactive accounts; existing values are preserved. Each changed account is saved with audit history in its own transaction. If a validation or database error stops the command, fix it and rerun; completed accounts are skipped. Do not start the new application until it succeeds.
+
+These are placeholders, not verified contact details or confirmed genders. Ask affected users to update their profiles. The default gender can affect consecutive-gender booking rules; review affected bookings and scheduling decisions. New registrations and profile edits now require both fields, and phone must be in international format. Phone verification and messaging remain unavailable.
+
 ## Generic Defaults
 
-New programs default to **Program** and **Participant**, zero pay, Mondays at 09:00 UTC, and a six-month booking horizon. Existing stored labels, schedules, pay, memberships, and booking history are not rewritten. Gender selection is required only for programs that enable consecutive-gender rules; otherwise participants and organizers may book without it. Configured gender rules and explicit organizer overrides remain supported.
+New programs default to **Program** and **Participant**, zero pay, Mondays at 09:00 UTC, and a six-month booking horizon. Existing stored labels, schedules, pay, memberships, and booking history are not rewritten. Configured gender rules and explicit organizer overrides remain supported.
 
 `APP_HOST` now defaults to `localhost`. Set it to your actual hostname for an external deployment, particularly if the installation previously relied on the old built-in hostname. Public `/sessions` URLs and authentication `/session` remain unchanged. No data migration is required.
 

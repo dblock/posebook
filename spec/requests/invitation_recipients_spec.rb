@@ -43,6 +43,23 @@ RSpec.describe 'Invitation recipient restrictions', :aggregate_failures, :databa
   end
 
   shared_examples 'optional recipient email' do
+    it 'requires phone and gender without consuming the invitation' do
+      invitation = recipient_invitation(nil)
+      get accept_path, params: { token: invitation.token }
+      expect(response.parsed_body.at_css('input[name="user[phone]"][required]')).to be_present
+      expect(response.parsed_body.at_css('select[name="user[gender]"][required]')).to be_present
+      attributes = user_attributes(phone: '', gender: '')
+      post register_path, params: { token: invitation.token, user: attributes }
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(invitation.reload.used_at).to be_nil
+      expect(User.where(email: attributes[:email])).to be_empty
+      post register_path, params: { token: invitation.token, user: user_attributes(email: attributes[:email]) }
+      registered = track_record(User.find_by(email: attributes[:email]))
+      track_granted_membership(registered)
+      expect(response).to redirect_to(destination)
+      expect(invitation.reload.used_by_id).to eq(registered.id)
+    end
+
     it 'allows an existing account to accept a blank-email link' do
       invitation = recipient_invitation(' ')
       sign_in(recipient)

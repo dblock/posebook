@@ -113,7 +113,7 @@ RSpec.describe BookingGenderRule, :aggregate_failures, :database do
 
   it 'allows booking and rescheduling without a gender when no rules are enabled' do
     program.update!(no_consecutive_genders: [])
-    participant.update!(gender: nil)
+    participant.set(gender: nil)
     expect(described_class.new(program).evaluate(Date.new(2026, 11, 23), participant)).to be_nil
     original = book('2026-11-23')
     replacement = change(original, '2026-11-30')
@@ -124,7 +124,7 @@ RSpec.describe BookingGenderRule, :aggregate_failures, :database do
 
   it 'reports a missing-gender decision that organizers cannot override using configured labels' do
     program.update!(program_label: 'Workshop', participant_label: 'Instructor')
-    participant.update!(gender: nil)
+    participant.set(gender: nil)
     decision = described_class.new(program).evaluate(Date.new(2026, 11, 23), participant)
     expect(decision).to be_a(BookingRuleDecision)
     expect(decision).to have_attributes(
@@ -137,7 +137,7 @@ RSpec.describe BookingGenderRule, :aggregate_failures, :database do
 
   it 'requires a gender after enabling rules without changing an existing booking' do
     program.update!(no_consecutive_genders: [])
-    participant.update!(gender: nil)
+    participant.set(gender: nil)
     original = book('2026-11-23')
     program.update!(no_consecutive_genders: ['male'])
     expect { change(original, '2026-11-30') }.to raise_error(BookingMutation::Invalid, /Select a gender/)

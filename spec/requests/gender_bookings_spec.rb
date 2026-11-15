@@ -58,7 +58,7 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
   end
 
   it 'asks existing participants to select a gender and enables their calendar after a no-JavaScript profile save' do
-    participant.update!(gender: nil)
+    participant.set(gender: nil)
     sign_in(participant)
     get program_path(program, section: 'calendar')
     expect(response.body).to include(edit_profile_path, 'before your next booking')
@@ -142,7 +142,7 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
   end
 
   it 'does not let organizers override a missing gender selection' do
-    participant.update!(gender: nil)
+    participant.set(gender: nil)
     sign_in(organizer)
     post program_organizer_bookings_path(
       program
@@ -171,7 +171,7 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
 
   it 'lets organizers book an unspecified gender when optional rules are disabled' do
     program.update!(no_consecutive_genders: [])
-    participant.update!(gender: nil)
+    participant.set(gender: nil)
     sign_in(organizer)
     get new_program_organizer_booking_path(program)
     expect(response.body).not_to include('Gender not selected', 'Override the')
@@ -183,7 +183,7 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
 
   it 'lets participants book from their calendar without selecting a gender when rules are disabled' do
     program.update!(no_consecutive_genders: [])
-    participant.update!(gender: nil)
+    participant.set(gender: nil)
     sign_in(participant)
     get program_path(program, section: 'calendar')
     expect(response.body).not_to include('before your next booking')

@@ -15,6 +15,7 @@ module AccountSettings
     index({ email_change_digest: 1 })
     scope :active, -> { where(:active.ne => false) }
     before_validation { self.phone = phone.to_s.strip.presence }
+    validates :phone, presence: true
     validates :phone, format: { with: /\A\+[1-9]\d{7,14}\z/ }, allow_blank: true
     validates :pending_email, format: { with: URI::MailTo::EMAIL_REGEXP },
                               length: { maximum: 254 }, allow_nil: true

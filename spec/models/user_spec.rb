@@ -20,6 +20,18 @@ RSpec.describe User, :aggregate_failures, :database do
     expect(user.errors.attribute_names).to include(:name, :email, :password, :roles)
   end
 
+  it 'requires a valid international phone number and a gender' do
+    user = described_class.new(user_attributes(phone: ' ', gender: ''))
+    expect(user).not_to be_valid
+    expect(user.errors.attribute_names).to include(:phone, :gender)
+    user.assign_attributes(phone: '123', gender: 'invalid')
+    expect(user).not_to be_valid
+    expect(user.errors.attribute_names).to include(:phone, :gender)
+    user.assign_attributes(phone: ' +12025550101 ', gender: 'female')
+    expect(user).to be_valid
+    expect(user.phone).to eq('+12025550101')
+  end
+
   it 'rejects a password confirmation mismatch and duplicate normalized email' do
     original = create_user
     user = described_class.new(user_attributes(email: original.email.upcase, password_confirmation: 'different'))
