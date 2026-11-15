@@ -19,6 +19,45 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     track_booking(BookingMutation.new(program: at, user: user).book(date: date))
   end
 
+  def confirmed_booking(date, **attributes)
+    { date: date, confirmed: '1', schedule_revision: program.reload.schedule_revision.to_s }.merge(attributes)
+  end
+
+  it 'asks for confirmation before booking and lets the participant cancel without a reservation' do
+    prepare_participant
+    post program_bookings_path(program), params: { date: '2026-11-16' }
+    expect(response.body).to include('Confirm Your Booking', 'November 16, 2026', '6:30 PM', 'America/New_York')
+    form = response.parsed_body.at_css("form[action='#{program_bookings_path(program)}']")
+    expect(form.at_css('[name="date"]')['value']).to eq('2026-11-16')
+    expect(form.at_css('[name="confirmed"]')['value']).to eq('1')
+    expect(form.at_css('[name="schedule_revision"]')['value']).to eq(program.reload.schedule_revision.to_s)
+    expect(program.bookings).to be_empty
+    get response.parsed_body.css('a').find { |link| link.text == 'Cancel' }['href']
+    expect(program.bookings).to be_empty
+    expect(response.parsed_body.at_css('[data-date="2026-11-16"] form')).to be_present
+    post program_bookings_path(program), params: { date: '2026-11-16' }
+    revision = response.parsed_body.at_css('[name="schedule_revision"]')['value']
+    post program_bookings_path(program),
+         params: { date: '2026-11-16', confirmed: '1', schedule_revision: revision }
+    booking = track_booking(program.bookings.first)
+    expect(booking).to have_attributes(user_id: participant.id, date: Date.new(2026, 11, 16))
+  end
+
+  it 'rejects missing or stale schedule revisions instead of booking a changed time' do
+    prepare_participant
+    post program_bookings_path(program), params: { date: '2026-11-16', confirmed: '1' }
+    expect(response).to redirect_to(program_path(program))
+    expect(program.bookings).to be_empty
+    post program_bookings_path(program), params: { date: '2026-11-16' }
+    revision = response.parsed_body.at_css('[name="schedule_revision"]')['value']
+    ProgramSettingsUpdate.new(program: program, user: create_user(roles: ['system_admin'])).call(start_time: '19:30')
+    post program_bookings_path(program),
+         params: { date: '2026-11-16', confirmed: '1', schedule_revision: revision }
+    expect(response).to redirect_to(program_path(program))
+    expect(flash[:alert]).to include('changed while you were editing')
+    expect(program.bookings).to be_empty
+  end
+
   it 'distinguishes booked, available, and blocked dates for guests and session managers' do
     prepare_participant
     book
@@ -92,7 +131,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
 
   it 'books a nearby date and blocks further bookings while offering organizer contact and cancellation' do
     prepare_participant
-    post program_bookings_path(program), params: { date: '2026-11-16', user_id: create_user.id }
+    post program_bookings_path(program), params: confirmed_booking('2026-11-16', user_id: create_user.id)
     booking = track_booking(program.bookings.first)
     expect(booking.user_id).to eq(participant.id)
     follow_redirect!
@@ -100,7 +139,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
                                      'Contact an Organizer Before Rescheduling', 'Cancel Booking')
     expect(response.body).not_to include('Change Date')
     expect(response.parsed_body.css('.calendar form')).to be_empty
-    post program_bookings_path(program), params: { date: '2026-11-23' }
+    post program_bookings_path(program), params: confirmed_booking('2026-11-23')
     follow_redirect!
     expect(response.body).to include('You already have an upcoming booking')
     expect(program.bookings.count).to eq(1)
@@ -109,7 +148,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
   it 'rejects malformed, past, non-participating, and out-of-horizon dates on the server' do
     prepare_participant
     ['invalid', '2026-11-09', '2026-11-17', '2027-05-17', nil].each do |date|
-      post program_bookings_path(program), params: { date: date }
+      post program_bookings_path(program), params: confirmed_booking(date)
       follow_redirect!
       expect(response.body).to include('Choose an available date')
       expect(program.bookings).to be_empty
@@ -123,7 +162,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     other = create_user
     grant_participant_access(program, other)
     winner = book('2026-12-07', user: other)
-    post program_bookings_path(program), params: { date: '2026-12-07' }
+    post program_bookings_path(program), params: confirmed_booking('2026-12-07')
     expect(response).to redirect_to(program_path(program, month: '2026-12'))
     follow_redirect!
     expect(response.body).to include('someone else just booked that date', 'Please choose another available date.')
@@ -200,7 +239,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     post cancel_program_booking_path(program, original),
          params: { reason: 'A family commitment.', booking_version: original.lock_version }
     expect(original.reload).to have_attributes(status: 'canceled', reason: 'A family commitment.')
-    post program_bookings_path(program), params: { date: '2026-11-23' }
+    post program_bookings_path(program), params: confirmed_booking('2026-11-23')
     replacement = track_booking(program.bookings.where(status: 'confirmed').first)
     expect(replacement.id).not_to eq(original.id)
     get program_path(program, section: 'history')

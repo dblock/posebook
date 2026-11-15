@@ -58,7 +58,8 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
     reserve('2026-11-16')
     sign_in(participant)
     post program_bookings_path(program),
-         params: { date: '2026-11-23', override_gender_rule: '1', reason: 'Override.' }
+         params: { date: '2026-11-23', confirmed: '1', schedule_revision: program.reload.schedule_revision.to_s,
+                   override_gender_rule: '1', reason: 'Override.' }
     expect(response).to redirect_to(program_path(program, month: '2026-11'))
     expect(flash[:alert]).to include('consecutive-gender rule')
     expect(Booking.where(user_id: participant.id)).to be_empty
@@ -195,7 +196,8 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
     get program_path(program, section: 'calendar')
     expect(response.body).not_to include('before your next booking')
     expect(calendar_day('2026-11-23').css('form')).to be_present
-    post program_bookings_path(program), params: { date: '2026-11-23' }
+    post program_bookings_path(program),
+         params: { date: '2026-11-23', confirmed: '1', schedule_revision: program.reload.schedule_revision.to_s }
     track_booking(Booking.find_by(program_id: program.id, user_id: participant.id))
     expect(response).to redirect_to(program_path(program, month: '2026-11'))
   end
