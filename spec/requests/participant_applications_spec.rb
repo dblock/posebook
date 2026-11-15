@@ -41,6 +41,7 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
   it 'offers opt-in public applications without exposing private program information or granting access' do
     get program_path(program)
     expect(response.body).to include('Apply to Participate')
+    expect(response.body).to include("href=\"#{program_apply_path(program)}\"")
     expect(response.body).not_to include(program.instructions, 'Participation History')
     get new_program_participation_application_path(program)
     expect(response).to redirect_to(new_program_application_registration_path(program))
@@ -50,6 +51,69 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     expect(response.body).to include('including private photos', 'Submit Application')
     expect(response.headers['Cache-Control']).to include('no-store')
     expect(program.participant?(applicant)).to be(false)
+  end
+
+  it 'redirects the shareable link through account preparation without submitting an application' do
+    get program_apply_path(program)
+    expect(response).to redirect_to(new_program_application_registration_path(program))
+    expect(response.headers['Cache-Control']).to include('no-store')
+    sign_in(applicant)
+    expect(response).to redirect_to(new_program_participation_application_path(program))
+    get program_apply_path(program)
+    expect(response).to redirect_to(new_program_participation_application_path(program))
+    expect(ParticipantApplication.where(program_id: program.id, user_id: applicant.id)).not_to exist
+  end
+
+  it 'keeps shareable links working after slug changes and accepts existing ID links' do
+    original_path = program_apply_path(program)
+    program.update!(custom_slug: "#{program.to_param}-renamed")
+    sign_in(applicant)
+    [original_path, program_apply_path(program.id)].each do |path|
+      get path
+      expect(response).to redirect_to(new_program_participation_application_path(program))
+    end
+    get program_apply_path('unknown-program')
+    expect(response).to have_http_status(:not_found)
+  end
+
+  it 'routes existing applicants to their status and participants to their program' do
+    application
+    sign_in(applicant)
+    get program_apply_path(program)
+    expect(response).to redirect_to(program_participation_application_path(program))
+    member = create_user(email_verified_at: Time.current)
+    grant_participant_access(program, member)
+    sign_in(member)
+    get program_apply_path(program)
+    expect(response).to redirect_to(program_path(program))
+  end
+
+  it 'blocks shareable links when either the program or its venue is inactive' do
+    program.update!(active: false)
+    get program_apply_path(program)
+    expect(response).to have_http_status(:not_found)
+    program.update!(active: true)
+    program.venue.update!(active: false)
+    get program_apply_path(program)
+    expect(response).to have_http_status(:not_found)
+  end
+
+  it 'keeps intake off by default and lets coordinators toggle each program independently' do
+    other = create_program
+    grant_coordinator_access(other, coordinator)
+    get program_apply_path(other)
+    expect(response).to have_http_status(:not_found)
+    sign_in(coordinator)
+    patch program_path(program), params: { program: { applications_enabled: '0' } }
+    patch program_path(other), params: { program: { applications_enabled: '1' } }
+    expect(program.reload.applications_enabled?).to be(false)
+    expect(other.reload.applications_enabled?).to be(true)
+    get program_apply_path(program)
+    expect(response).to have_http_status(:not_found)
+    get program_apply_path(other)
+    expect(response).to redirect_to(new_program_application_registration_path(other))
+    patch program_path(program), params: { program: { applications_enabled: '1' } }
+    expect(program.reload.applications_enabled?).to be(true)
   end
 
   it 'requires verification before allowing submission' do
@@ -245,6 +309,7 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     sign_in(coordinator)
     get edit_program_path(program)
     expect(response.body).to include('Accept Participation Applications')
+    expect(response.body).to include(program_apply_url(program))
     patch program_path(program), params: { program: { applications_enabled: '0' } }
     expect(program.reload.applications_enabled?).to be(false)
     get program_applications_path(program)
@@ -252,6 +317,8 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     sign_in(create_user)
     get program_path(program)
     expect(response.body).not_to include('Apply to Participate')
+    get program_apply_path(program)
+    expect(response).to have_http_status(:not_found)
     post program_participation_application_path(program),
          params: { participant_application: { consent: '1' } }
     expect(response).to have_http_status(:not_found)

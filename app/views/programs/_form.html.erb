@@ -44,6 +44,9 @@
   <p><%= form.label :instructions %><br><%= form.text_area :instructions, maxlength: 5000, rows: 4 %></p>
   <p><label><%= form.check_box :applications_enabled %> Accept Participation Applications</label><br>
     <small>Off by default. Configure email delivery and assign at least one active program or venue coordinator before enabling applications. Applicants verify their account and consent to profile review. Coordinators decide whether to accept them; closing intake retains existing applications.</small>
+    <% if program.persisted? %>
+      <br><small>Shareable application link: <%= link_to program_apply_url(program), program_apply_path(program) %>. This link accepts new applications only while intake is enabled and the program and venue are active.</small>
+    <% end %>
   </p>
   <p>Changing regular times updates upcoming bookings without a dated time exception, retaining each time change. Other settings do not rewrite existing bookings. Automated reminders are not available yet.</p>
   <%= form.submit program.persisted? ? "Save #{@program.program_label.titleize}" : "Create #{@program.program_label.titleize}" %>
