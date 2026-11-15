@@ -73,7 +73,7 @@ end
 
 def create_current_records(container)
   source = <<~RUBY
-    User.create!(name: "Package Participant", email: "package@example.test",
+    User.create!(name: "Package Participant", email: "package@example.test", phone: "+12025550101",
                  password: "a sufficiently long package password", gender: "other",
                  instagram_handle: "package.participant", instagram_tagging_allowed: true, public_profile_private: true)
     venue = Venue.create!(name: "Package Venue", address: "Test")

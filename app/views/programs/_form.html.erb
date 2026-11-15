@@ -25,7 +25,7 @@
   </fieldset>
   <fieldset>
     <legend>Prevent Consecutive <%= @program.participant_label.pluralize.titleize %> by Gender</legend>
-    <p>Optional. Leave all unchecked to allow bookings without a gender selection. When enabled, each selected gender cannot repeat in immediately adjacent scheduled <%= @program.program_label.pluralize.downcase %>. Unselected genders may repeat. An unbooked <%= @program.program_label.downcase %> breaks the sequence; closed dates are skipped.</p>
+    <p>Optional. When enabled, each selected gender cannot repeat in immediately adjacent scheduled <%= @program.program_label.pluralize.downcase %>. Unselected genders may repeat. An unbooked <%= @program.program_label.downcase %> breaks the sequence; closed dates are skipped.</p>
     <%= hidden_field_tag "program[no_consecutive_genders][]", "" %>
     <% User::GENDERS.each do |gender| %>
       <label><%= check_box_tag "program[no_consecutive_genders][]", gender, program.no_consecutive_genders.include?(gender), id: "no-consecutive-#{gender}" %> <%= gender.capitalize %></label>

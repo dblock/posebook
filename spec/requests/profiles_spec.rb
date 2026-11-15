@@ -67,6 +67,17 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     expect(user.reload.pending_email).to be_nil
   end
 
+  it 'requires phone and gender on profile edits' do
+    user = create_user
+    sign_in(user)
+    get edit_profile_path
+    expect(response.parsed_body.at_css('input[name="user[phone]"][required]')).to be_present
+    expect(response.parsed_body.at_css('select[name="user[gender]"][required]')).to be_present
+    update_profile(user, phone: '', gender: '')
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(user.reload).to have_attributes(phone: '+12025550101', gender: 'other')
+  end
+
   it 'stores only the handle from a profile URL and keeps tagging off by default' do
     user = create_user
     sign_in(user)

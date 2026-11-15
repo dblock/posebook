@@ -40,6 +40,16 @@ RSpec.describe 'Accounts', :aggregate_failures, :database, type: :request do
     expect(response.body).to include('Password')
   end
 
+  it 'requires phone and gender for the first account and renders required fields' do
+    get new_registration_path
+    expect(response.parsed_body.at_css('input[name="user[phone]"][required]')).to be_present
+    expect(response.parsed_body.at_css('select[name="user[gender]"][required]')).to be_present
+    post registration_path, params: { user: user_attributes(phone: '', gender: '') }
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.parsed_body.text).to include("Phone can't be blank", "Gender can't be blank")
+    expect(User.exists?).to be(false)
+  end
+
   it 'closes both registration endpoints after the first account exists' do
     create_user
     get new_registration_path

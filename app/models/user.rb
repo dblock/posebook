@@ -35,6 +35,7 @@ class User
 
   before_validation { self.email = email.to_s.strip.downcase }
   before_validation { self.gender = gender.presence }
+  validates :gender, presence: true
   validates :gender, inclusion: { in: GENDERS }, allow_nil: true
   validates :name, presence: true, length: { maximum: 100 }
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP },

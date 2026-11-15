@@ -20,6 +20,8 @@
       <%= hidden_field_tag :token, @token %>
       <p><%= form.label :name %><br><%= form.text_field :name, required: true, maxlength: 100, autocomplete: "name" %></p>
       <p><%= form.label :email %><br><%= form.email_field :email, required: true, readonly: @invitation.email.present?, autocomplete: "email" %></p>
+      <p><%= form.label :phone %><br><%= form.telephone_field :phone, required: true, autocomplete: "tel", placeholder: "+12125551234" %><br>Use an international number beginning with +. Phone numbers are unverified.</p>
+      <%= render "shared/gender_field", form: form %>
       <p><%= form.label :password %><br><%= form.password_field :password, required: true, minlength: 12, autocomplete: "new-password" %></p>
       <p><%= form.label :password_confirmation %><br><%= form.password_field :password_confirmation, required: true, autocomplete: "new-password" %></p>
       <%= form.submit "Create Account and Accept Invitation" %>

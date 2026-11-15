@@ -1,5 +1,5 @@
 <p>
-  <%= form.label :gender, "Gender (optional)" %><br>
-  <%= form.select :gender, User::GENDERS.map { |gender| [gender.capitalize, gender] }, include_blank: "Not selected" %><br>
-  <small>Private. Required for booking only when the program has gender rules enabled.</small>
+  <%= form.label :gender %><br>
+  <%= form.select :gender, User::GENDERS.map { |gender| [gender.capitalize, gender] }, { include_blank: "Select a gender" }, required: true %><br>
+  <small>Private.</small>
 </p>

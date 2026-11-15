@@ -7,7 +7,7 @@
   <%= form_with model: @user, url: profile_path, method: :patch, id: "profile-form" do |form| %>
     <p><%= form.label :name %><br><%= form.text_field :name, required: true, autocomplete: "name", maxlength: 100 %></p>
     <p><%= form.label :email %><br><%= form.email_field :email, value: @user.pending_email.presence || @user.email, required: true, autocomplete: "email" %></p>
-    <p><%= form.label :phone %><br><%= form.telephone_field :phone, autocomplete: "tel", placeholder: "+12125551234" %><br>Use an international number beginning with +. Phone recovery is not available yet.</p>
+    <p><%= form.label :phone %><br><%= form.telephone_field :phone, required: true, autocomplete: "tel", placeholder: "+12125551234" %><br>Use an international number beginning with +. Phone recovery is not available yet.</p>
     <%= render "shared/gender_field", form: form %>
     <%= render "shared/public_profile_fields", form: form, self_service: true %>
     <p><%= label_tag "profile-current-password", "Current password (required for email changes)" %><br><%= password_field_tag "user[current_password]", nil, id: "profile-current-password", autocomplete: "current-password" %></p>

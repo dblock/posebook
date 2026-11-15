@@ -19,7 +19,9 @@ RSpec.describe 'Copy controls', :aggregate_failures, :database, type: :request d
   end
 
   it 'does not offer copy controls for missing contact fields' do
-    sign_in(create_user)
+    user = create_user
+    user.set(phone: nil)
+    sign_in(user)
     get profile_path
     expect(response.parsed_body.at_css('[aria-label="Copy phone number"]')).to be_nil
     expect(response.parsed_body.at_css('[aria-label="Copy Instagram handle"]')).to be_nil
