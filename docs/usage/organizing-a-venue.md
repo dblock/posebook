@@ -4,6 +4,8 @@
 
 System administrators create physical venues, invite or promote **Venue Coordinators**, and manage accounts. Venue coordinators edit their location, photos, and Instagram, create recurring programs, manage every program there, and invite or promote **Program Coordinators**. Coordinator assignment does not expose a global user directory.
 
+Your homepage lists **Programs You Manage**, with **Manage Calendar** opening each program's organizer calendar. Venue coordinators see every program at their venues; program coordinators see only their assigned programs; system administrators see all programs. Inactive programs and programs at inactive venues remain listed for management. Accounts that are also participants see their eligible programs separately under **Programs You Can Book**.
+
 Use the venue's **Edit**, **Photos**, **Create Program**, and **Coordinators** tabs for permitted management actions. Programs provide **Edit** and **Google Calendar** tabs alongside Calendar, History, and participant/coordinator management. Breadcrumbs show the current venue, program, and section.
 
 System administrators can **Deactivate Venue** or **Activate Venue** in venue **Edit**. Venue coordinators and system administrators can deactivate or activate individual programs in program **Edit**; program coordinators cannot. Deactivation hides the location from public pages and galleries and prevents new bookings and date changes, including organizer scheduling. Managers and participants with upcoming bookings retain access. Existing bookings, attendance confirmations, cancellations, history, and calendar invitations remain intact. Reactivating a venue restores only programs that have not been independently deactivated.

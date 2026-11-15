@@ -6,6 +6,16 @@
     <%= render "bookings/upcoming", program: booking.program, booking: booking,
                can_book: participant_dashboard.access_for(booking.program_id).allowed?, show_venue: true %>
   <% end %>
+  <% programs = participant_dashboard.bookable_programs %>
+  <% if programs.any? %><%= render "programs/bookable", programs: programs %><% end %>
+  <% if @managed_programs.any? %>
+    <section aria-labelledby="managed-programs-heading">
+      <h2 id="managed-programs-heading">Programs You Manage</h2>
+      <div class="location-cards managed-programs">
+        <% @managed_programs.each do |program| %><%= render "programs/card", program: program, managed: true %><% end %>
+      </div>
+    </section>
+  <% end %>
   <% if current_user.system_admin? %>
     <p>You have the system admin role.</p>
   <% end %>

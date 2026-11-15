@@ -34,14 +34,17 @@ RSpec.describe 'Profile bookings', :aggregate_failures, :database, type: :reques
   end
 
   it 'lists your current bookings and only programs with an unused active booking invitation' do
-    get profile_path
-    expect(response.parsed_body.at_css('.upcoming-booking').text).to include('December 07, 2026', booked.name)
-    expect(response.parsed_body.css('.bookable-programs .program-card h2 a').map(&:text)).to eq([available.name])
-    expect(response.parsed_body.at_css(".bookable-programs a[href='#{program_path(available, section: 'calendar')}']"))
-      .to be_present
-    expect(response.body).not_to include(other.email, 'December 14, 2026', 'Manager-only pause reason.')
-    expect(response.parsed_body.css('.nav-links a').map(&:text)).to eq(['Venues'])
-    expect(response.parsed_body.at_css(".nav-account[href='#{profile_path}']")).to be_present
+    [profile_path, root_path].each do |path|
+      get path
+      expect(response.parsed_body.at_css('.upcoming-booking').text).to include('December 07, 2026', booked.name)
+      expect(response.parsed_body.css('.bookable-programs .program-card h2 a').map(&:text)).to eq([available.name])
+      expect(response.parsed_body.at_css(".bookable-programs a[href='#{program_path(available,
+                                                                                    section: 'calendar')}']"))
+        .to be_present
+      expect(response.body).not_to include(other.email, 'December 14, 2026', 'Manager-only pause reason.')
+      expect(response.parsed_body.css('.nav-links a').map(&:text)).to eq(['Venues'])
+      expect(response.parsed_body.at_css(".nav-account[href='#{profile_path}']")).to be_present
+    end
   end
 
   it 'shows your retained all-program history without exposing other models or accepting a user ID' do
@@ -58,8 +61,10 @@ RSpec.describe 'Profile bookings', :aggregate_failures, :database, type: :reques
   it 'retains owner history after membership loss without offering new bookings there' do
     available.memberships.participants.find_by(user_id: participant.id).set(roles: [])
     exhausted.memberships.participants.find_by(user_id: participant.id).set(roles: [])
-    get profile_path
-    expect(response.parsed_body.css('.bookable-programs .program-card')).to be_empty
+    [profile_path, root_path].each do |path|
+      get path
+      expect(response.parsed_body.css('.bookable-programs .program-card')).to be_empty
+    end
     get history_profile_path
     expect(response.body).to include(exhausted.name, 'Completed')
     delete session_path
