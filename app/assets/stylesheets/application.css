@@ -176,22 +176,6 @@ nav {
   opacity: 0.6;
 }
 
-.invitation-status {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.invitation-status form {
-  display: inline-block;
-  margin: 0;
-}
-
-.invitation-status .secondary-action {
-  width: auto;
-}
-
 .site-nav {
   gap: 1rem 2rem;
 }

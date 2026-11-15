@@ -4,6 +4,7 @@
 <% actions = [["photos", "Photos", photos_program_path(program)]] %>
 <% if manager %>
   <% actions << ["participants", program.participant_label.pluralize.titleize, program_participants_path(program)] %>
+  <% actions << ["invitations", "#{program.participant_label.titleize} Invitations", program_participant_invitations_path(program)] %>
   <% actions << ["applications", "Applications", program_applications_path(program)] %>
   <% actions << ["edit", "Edit", edit_program_path(program)] %>
 <% end %>

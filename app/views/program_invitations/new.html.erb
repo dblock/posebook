@@ -1,5 +1,5 @@
 <main>
-  <%= render "programs/navigation", program: @program, active: "participants", detail: "Invite #{@program.participant_label.titleize}" %>
+  <%= render "programs/navigation", program: @program, active: "invitations", detail: "Invite #{@program.participant_label.titleize}" %>
   <h1>Invite <%= @program.participant_article %> <%= @program.participant_label.titleize %> to <%= @program.name %></h1>
   <%= render "programs/regular_schedule", program: @program %>
   <%= render "shared/errors", record: @invitation %>
@@ -10,5 +10,5 @@
     <p><label><%= check_box_tag :send_email, "1", params[:send_email] == "1" %> Also send the invitation by email</label></p>
     <%= form.submit "Create Invitation" %>
   <% end %>
-  <p><%= link_to "Cancel", program_participants_path(@program) %></p>
+  <p><%= link_to "Cancel", program_participant_invitations_path(@program) %></p>
 </main>

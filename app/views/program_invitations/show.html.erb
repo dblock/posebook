@@ -1,7 +1,8 @@
 <main>
-  <%= render "programs/navigation", program: @program, active: "participants", detail: "#{@program.participant_label.titleize} Invitation" %>
+  <%= render "programs/navigation", program: @program, active: "invitations", detail: "#{@program.participant_label.titleize} Invitation" %>
   <h1><%= @program.participant_label.titleize %> Invitation</h1>
   <p><%= @program.name %> - <%= status_label(@invitation.status) %></p>
+  <p class="invitation-recipient"><%= participant_contact_label(@invitation) %></p>
   <%= render "programs/regular_schedule", program: @program %>
   <% if @token.present? %>
     <p><%= label_tag :invitation_link, "Invitation link (copy now)" %><span class="copy-field"><%= url_field_tag :invitation_link, invitation_url(token: @token, **Rails.configuration.action_mailer.default_url_options), readonly: true %><%= copy_button(target: "invitation_link", label: "private invitation link") %></span></p>
@@ -9,5 +10,5 @@
   <% else %>
     <p>The private link is only displayed when the invitation is created. Create a new invitation if you did not keep it.</p>
   <% end %>
-  <p><%= link_to "Back to #{@program.participant_label.pluralize.titleize}", program_participants_path(@program) %></p>
+  <p><%= link_to "Back to #{@program.participant_label.titleize} Invitations", program_participant_invitations_path(@program) %></p>
 </main>

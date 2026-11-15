@@ -1,0 +1,41 @@
+<main>
+  <%= render "programs/navigation", program: @program, active: "invitations" %>
+  <h1><%= @program.participant_label.titleize %> Invitations at <%= @program.name %></h1>
+  <p><%= link_to "Invite #{@program.participant_article} #{@program.participant_label.titleize}", new_program_participant_invitation_path(@program), class: "button-link" %></p>
+  <p>Personal invitations let one person join this <%= @program.program_label.downcase %>. Invited dates show link creation, not proof of email delivery. Times use <%= @program.time_zone %>.</p>
+  <% if @invitations.empty? %>
+    <p>No invitations on this page.</p>
+  <% else %>
+    <p class="scroll-hint">Scroll horizontally to view invitation dates and actions.</p>
+    <div class="table-scroll" role="region" aria-label="<%= @program.participant_label.titleize %> invitations" tabindex="0">
+      <table>
+        <thead><tr><th>Invitee</th><th>Status</th><th>Invited</th><th>Invited By</th><th>Expires</th><th>Accepted</th><th>Actions</th></tr></thead>
+        <tbody>
+          <% @invitations.each do |invitation| %>
+            <tr data-invitation="<%= invitation.id %>">
+              <td class="invitation-recipient"><%= participant_contact_label(invitation) %></td>
+              <td class="invitation-status"><%= status_label(invitation.status) %></td>
+              <td><%= time_tag invitation.created_at.in_time_zone(@program.time_zone), format: :long %></td>
+              <td><%= invitation.invited_by&.name.presence || "Not recorded" %></td>
+              <td><%= time_tag invitation.expires_at.in_time_zone(@program.time_zone), format: :long %></td>
+              <td><% if invitation.used_at %><%= time_tag invitation.used_at.in_time_zone(@program.time_zone), format: :long %><% else %>Not accepted<% end %></td>
+              <td>
+                <div class="participant-actions">
+                  <%= link_to "View", program_participant_invitation_path(@program, invitation), class: "button-link", aria: { label: "View invitation for #{invitation.name.presence || invitation.email.presence || 'participant'}" } %>
+                  <% if invitation.status == "Pending" %>
+                    <%= button_to "Revoke", program_participant_invitation_path(@program, invitation, page: @page), method: :delete, class: "secondary-action", aria: { label: "Revoke invitation for #{invitation.name.presence || invitation.email.presence || 'participant'}" } %>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+  <nav class="participant-pagination" aria-label="Invitation pages">
+    <% if @page > 1 %><%= link_to "Previous", program_participant_invitations_path(@program, page: @page - 1), rel: "prev" %><% end %>
+    <span>Page <%= @page %></span>
+    <% if @more %><%= link_to "Next", program_participant_invitations_path(@program, page: @page + 1), rel: "next" %><% end %>
+  </nav>
+</main>
