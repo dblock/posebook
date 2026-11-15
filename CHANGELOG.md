@@ -112,4 +112,5 @@
 - [#125](https://github.com/dblock/posebook/pull/125): Notify assigned coordinators when participant invitations or applications are accepted - [@dblock](https://github.com/dblock).
 - [#126](https://github.com/dblock/posebook/pull/126): Separate participant invitations into a private tab with paginated recipient, status, sender, date, and action columns - [@dblock](https://github.com/dblock).
 - [#127](https://github.com/dblock/posebook/pull/127): Show current account data and a privacy-aware public-card preview with live name updates while editing participants - [@dblock](https://github.com/dblock).
+- [#128](https://github.com/dblock/posebook/pull/128): Link the README to the article about building Posebook - [@dblock](https://github.com/dblock).
 - Your contribution here.
