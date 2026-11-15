@@ -1,5 +1,9 @@
 # Upgrading
 
+## Application Draft Maintenance
+
+Deploy web and worker at the same version. The default shared worker handles the new `maintenance` queue automatically; installations filtering `JOB_QUEUES` must add it, for example `JOB_QUEUES=calendar,mailers,maintenance`, or deploy a dedicated maintenance worker. Completion reminders require the existing `mailers` worker and SMTP configuration. Startup creates the draft status/creation index; existing submitted applications need no migration and are never cleaned up as drafts. Maintenance runs hourly, so reminders and cleanup depend on worker and queue availability. See [Background Jobs](docs/background-jobs.md).
+
 ## Program URLs
 
 Program URLs now use `/programs` instead of `/sessions`, including calendars, bookings, galleries, management, and Google Calendar settings. Creating a program uses `/venues/:venue_slug/programs/new` and posts to `/venues/:venue_slug/programs`. Update saved bookmarks, shared links, and external clients to the new prefix; old `/sessions` paths are not redirected or aliased. Authentication remains at `/session`, and the Google OAuth callback is unchanged. No database or slug migration is required.

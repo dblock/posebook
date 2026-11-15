@@ -84,8 +84,7 @@ class ApplicationDraft
 
   def check_version!(record, version)
     return if record.new_record? && version.blank?
-    return if record.persisted? && record.draft? && version.to_s.match?(/\A[0-9]+\z/) &&
-              version.to_i == record.lock_version
+    return if record.persisted? && record.draft? && version.to_s == record.draft_revision
 
     raise ParticipantApplicationWorkflow::Conflict, 'This application changed. Reload it before saving.'
   end

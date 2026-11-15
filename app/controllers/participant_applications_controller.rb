@@ -59,7 +59,7 @@ class ParticipantApplicationsController < ApplicationController
   end
 
   def submit_editor(attributes)
-    workflow.submit(message: @application.message, consent: attributes[:consent], version: @application.lock_version)
+    workflow.submit(message: @application.message, consent: attributes[:consent], version: @application.draft_revision)
     redirect_to own_application_path, notice: t('participant_applications.submitted')
   end
 

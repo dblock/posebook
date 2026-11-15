@@ -11,6 +11,10 @@ class EmailDeliveryMessage
 
   private
 
+  def application_draft
+    ApplicationDraftMaintenance.new(@delivery.resource_id).reminder_message
+  end
+
   def participation_admission
     event = ParticipationEvent.where(id: @delivery.resource_id).first
     ParticipationNotification.new(event).admission_message_for(@delivery.recipient_id) if event

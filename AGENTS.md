@@ -54,6 +54,8 @@ Booking writes must atomically compare and increment `lock_version` with their s
 
 Application drafts are owner-only and excluded from every coordinator list, review route, and application-only photo permission. Stage incomplete account fields in the draft; validate and apply only whitelisted profile fields inside the submission/history/notification transaction. Account photos use existing authorized storage outside that transaction and survive draft abandonment. Require displayed revisions for saving, submitting, and abandoning drafts; never recreate a removed draft from a stale form.
 
+Application draft retention uses first creation, not edits: one completion reminder from seven days and cleanup from 30 days. Use the existing recurring scheduler, `maintenance` and `mailers` queues, transactional reminder marker/outbox, and current-state email checks. Cleanup must transact against submission and remove only Draft records without consent; never use a blanket application TTL or delete accounts, photos, or submitted history. Bind editor revisions to the draft ID so old forms cannot alter replacement drafts. Keep draft revisions stable when queuing a reminder so an open editor remains usable.
+
 ## Validation and Documentation
 
 Run `bundle exec rake spec` and `bundle exec rake lint` before every development push. Run `bundle exec rake package` before committing changes to packaging, runtime dependencies, configuration, or HTTP entry points. Reuse passing results only if the tested content and configuration have not changed. The package check builds and runs the actual production Docker image and cleans up its own container and image.
