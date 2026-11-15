@@ -1,6 +1,6 @@
 en:
   bookings:
-    created: Your booking date is booked.
+    created: Your %{program_label} is booked.
     changed: Your booking date was changed. The previous booking remains in your history.
     canceled: Your booking was canceled. The date is available again and your explanation is saved.
     conflict: This booking or date just changed. Refresh the calendar and try again.
