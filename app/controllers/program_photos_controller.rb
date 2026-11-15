@@ -33,6 +33,8 @@ class ProgramPhotosController < ApplicationController
 
   def find_program
     @program = Program.find(params.expect(:program_id))
+    return head :not_found if action_name == 'show' && !@program.viewable_by?(current_user)
+
     head :forbidden unless action_name == 'show' || @program.managed_by?(current_user)
   end
 

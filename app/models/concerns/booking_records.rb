@@ -5,10 +5,7 @@ module BookingRecords
 
   def available_date(value, excluding: nil)
     date = Date.iso8601(value.to_s)
-    if ProgramCalendar.new(@program).blocked_reason(date)
-      raise BookingMutation::Invalid,
-            @program.message('bookings.invalid_date')
-    end
+    validate_availability(date)
 
     claims = BookingClaim.where(program_id: @program.id, date: date)
     claims = claims.where(:booking_id.ne => excluding) if excluding
@@ -16,6 +13,13 @@ module BookingRecords
 
     date
   rescue ArgumentError
+    raise BookingMutation::Invalid, @program.message('bookings.invalid_date')
+  end
+
+  def validate_availability(date)
+    raise BookingMutation::Invalid, @program.message('bookings.inactive_program') unless @program.booking_active?
+    return unless ProgramCalendar.new(@program).blocked_reason(date)
+
     raise BookingMutation::Invalid, @program.message('bookings.invalid_date')
   end
 

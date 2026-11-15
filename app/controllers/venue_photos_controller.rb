@@ -33,6 +33,8 @@ class VenuePhotosController < ApplicationController
 
   def find_venue
     @venue = Venue.find(params.expect(:venue_id))
+    return head :not_found if action_name == 'show' && !@venue.viewable_by?(current_user)
+
     head :forbidden unless action_name == 'show' || @venue.coordinated_by?(current_user)
   end
 

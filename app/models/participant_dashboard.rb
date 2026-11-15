@@ -68,7 +68,7 @@ class ParticipantDashboard
   end
 
   def booking_allowed?(membership)
-    return false unless @user.active? && !membership.participant_paused
+    return false unless @user.active? && !membership.participant_paused && membership.program.booking_active?
 
     previous = booking_history.fetch(membership.program_id, {})
     invited_at = membership.booking_invited_at || previous['created_at']
