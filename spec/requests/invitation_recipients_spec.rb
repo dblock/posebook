@@ -43,6 +43,23 @@ RSpec.describe 'Invitation recipient restrictions', :aggregate_failures, :databa
   end
 
   shared_examples 'optional recipient email' do
+    it 'defaults tagging on and requires a valid handle before accepting an invitation' do
+      invitation = recipient_invitation(nil)
+      get accept_path, params: { token: invitation.token }
+      expect(response.parsed_body.at_css('input[type="checkbox"][name="user[instagram_tagging_allowed]"]')['checked'])
+        .to be_present
+      attributes = user_attributes(instagram_tagging_allowed: '1')
+      post register_path, params: { token: invitation.token, user: attributes }
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(invitation.reload.used_at).to be_nil
+      post register_path,
+           params: { token: invitation.token, user: attributes.merge(instagram_handle: '@Preview.Artist') }
+      registered = track_record(User.find_by(email: attributes[:email]))
+      track_granted_membership(registered)
+      expect(response).to redirect_to(destination)
+      expect(registered).to have_attributes(instagram_handle: 'preview.artist', instagram_tagging_allowed: true)
+    end
+
     it 'requires phone and gender without consuming the invitation' do
       invitation = recipient_invitation(nil)
       get accept_path, params: { token: invitation.token }

@@ -1,5 +1,9 @@
 # Upgrading
 
+## Instagram Tagging
+
+First-user and invitation registration forms now select Instagram tagging by default and require a valid handle when selected. Users can clear the checkbox. Existing accounts and their saved preferences are unchanged; no migration is required. If a new user selects private identity and the browser omits the disabled public-sharing fields, tagging is off until explicitly enabled.
+
 ## Required Phone and Gender
 
 Before serving this version, stop all application writers, back up MongoDB, and run `bundle exec rake users:backfill_required_details` using the new application image and the production `MONGODB_URI`. The command runs explicitly, not at startup. It fills only blank phone values with the fictional US number `+12025550100` and only blank gender values with `male`, including inactive accounts; existing values are preserved. Each changed account is saved with audit history in its own transaction. If a validation or database error stops the command, fix it and rerun; completed accounts are skipped. Do not start the new application until it succeeds.

@@ -6,7 +6,7 @@ Sign in with your email and password, or use the password-reset link if you cann
 
 Participant and venue/program coordinator invitations follow the same email rules. If the sender specified an email, register with that address or sign in to the matching existing account, then accept the invitation. If signed in to a different account, use **Sign Out and Use the Invited Account** to switch without losing the invitation. When no email was specified, one recipient can accept the private link with any account.
 
-Use **Profile** to edit your name, display name, phone, Instagram handle, and privacy preferences. Your display name defaults to your account name. Instagram appears on public calendars only when tagging is enabled; **Keep all my information private** hides your name and Instagram from public pages while retaining your preferences.
+Use **Profile** to edit your name, display name, phone, Instagram handle, and privacy preferences. Your display name defaults to your account name. Registration forms select Instagram tagging by default; enter a handle or clear the tagging checkbox. Instagram appears on public calendars only when tagging is enabled; **Keep all my information private** hides your name and Instagram from public pages while retaining saved preferences.
 
 Phone and gender are required for all accounts. Enter your phone in international format beginning with `+`; it is unverified and cannot be used for recovery or messaging. Gender is private. Existing accounts may have a migration placeholder for either field; check and update your profile.
 

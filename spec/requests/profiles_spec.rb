@@ -124,6 +124,23 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     end
   end
 
+  it 'preserves existing opt-outs and requires a handle when enabling tagging' do
+    user = create_user
+    sign_in(user)
+    get edit_profile_path
+    checkbox = response.parsed_body.at_css('input[type="checkbox"][name="user[instagram_tagging_allowed]"]')
+    expect(checkbox['checked']).to be_nil
+    update_profile(user, instagram_tagging_allowed: '1', instagram_handle: '')
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(user.reload).to have_attributes(instagram_tagging_allowed: false, instagram_handle: nil)
+    update_profile(user, instagram_tagging_allowed: '1', instagram_handle: '@Preview.Artist')
+    expect(response).to redirect_to(profile_path)
+    expect(user.reload.public_instagram_handle).to eq('preview.artist')
+    update_profile(user, instagram_tagging_allowed: '0', instagram_handle: '')
+    expect(response).to redirect_to(profile_path)
+    expect(user.reload).to have_attributes(instagram_tagging_allowed: false, instagram_handle: nil)
+  end
+
   it 'verifies a new email before using it for login or recovery and rejects link replay' do
     user = create_user
     old_email = user.email

@@ -56,6 +56,7 @@ RSpec.describe 'Public identity privacy', :aggregate_failures, :database, type: 
     registered = track_record(User.find_by(email: attributes[:email]))
     expect(response).to redirect_to(root_path)
     expect(registered.public_name).to eq('To be announced')
+    expect(registered.instagram_tagging_allowed?).to be(false)
     get edit_profile_path
     expect(response.parsed_body.at_css('[data-public-profile-fields]').key?('disabled')).to be(true)
   end

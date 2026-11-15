@@ -59,4 +59,5 @@
 - [#65](https://github.com/dblock/posebook/pull/65): Simplify unscheduled calendar days and let organizers edit them by selecting the date - [@dblock](https://github.com/dblock).
 - [#66](https://github.com/dblock/posebook/pull/66): Improve the contrast of available calendar badges - [@dblock](https://github.com/dblock).
 - [#67](https://github.com/dblock/posebook/pull/67): Require phone and gender for all accounts and backfill missing details - [@dblock](https://github.com/dblock).
+- [#68](https://github.com/dblock/posebook/pull/68): Default registration to Instagram tagging and require a handle when enabled - [@dblock](https://github.com/dblock).
 - Your contribution here.

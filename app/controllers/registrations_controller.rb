@@ -5,7 +5,7 @@ class RegistrationsController < ApplicationController
   rate_limit to: 5, within: 5.minutes, only: :create
 
   def new
-    @user = User.new
+    @user = User.new(instagram_tagging_allowed: true)
   end
 
   def create

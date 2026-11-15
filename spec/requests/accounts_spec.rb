@@ -50,6 +50,22 @@ RSpec.describe 'Accounts', :aggregate_failures, :database, type: :request do
     expect(User.exists?).to be(false)
   end
 
+  it 'defaults registration tagging on and requires a valid handle when selected' do
+    get new_registration_path
+    expect(response.parsed_body.at_css('input[type="checkbox"][name="user[instagram_tagging_allowed]"]')['checked'])
+      .to be_present
+    attributes = user_attributes(instagram_tagging_allowed: '1')
+    post registration_path, params: { user: attributes }
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.parsed_body.text).to include("Instagram handle can't be blank")
+    post registration_path, params: { user: attributes.merge(instagram_handle: 'https://example.com/artist') }
+    expect(response).to have_http_status(:unprocessable_content)
+    post registration_path, params: { user: attributes.merge(instagram_handle: '@Preview.Artist') }
+    registered = track_record(User.find_by(email: attributes[:email]))
+    expect(response).to redirect_to(root_path)
+    expect(registered).to have_attributes(instagram_tagging_allowed: true, instagram_handle: 'preview.artist')
+  end
+
   it 'closes both registration endpoints after the first account exists' do
     create_user
     get new_registration_path
