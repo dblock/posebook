@@ -343,17 +343,6 @@ nav {
   margin-top: 0;
 }
 
-.program-primary-photo {
-  margin: 1.5rem 0;
-  max-width: 20rem;
-}
-
-.program-primary-photo img {
-  width: 100%;
-  height: auto;
-  border-radius: var(--radius-box);
-}
-
 .upcoming-booking-details {
   display: flex;
   flex-wrap: wrap;

@@ -32,6 +32,95 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
     expect(response.parsed_body.css('.calendar form, .calendar button')).to be_empty
   end
 
+  def schedule_exception(date, **attributes)
+    track_record(ProgramScheduleException.create!(program: program, date: Date.iso8601(date), mode: 'closed',
+                                                  reason: 'Private schedule explanation.', **attributes))
+  end
+
+  it 'summarizes the next session using only public identity and consented Instagram' do
+    program.update!(end_time: '21:00')
+    user = private_booking.user
+    user.update!(instagram_tagging_allowed: true)
+    get program_path(program)
+    summary = response.parsed_body.at_css('.next-session')
+    expect(summary.text).to include('Monday, November 16, 2026', '6:30 PM - 9:00 PM (2 hours 30 min)',
+                                    'America/New_York', 'Public Participant')
+    expect(summary.at_css('time')['datetime']).to eq('2026-11-16T23:30:00Z')
+    expect(summary.at_css('.booked-participant a')['href']).to eq('https://www.instagram.com/private_participant/')
+    expect(response.body).not_to include(user.name, user.email, user.phone)
+    expect_public_only
+  end
+
+  it 'keeps private and inactive next-session identities anonymous even in the manager overview' do
+    user = private_booking.user
+    user.update!(public_profile_private: true, instagram_tagging_allowed: true)
+    [nil, create_user, create_user(roles: ['system_admin'])].each do |viewer|
+      grant_participant_access(program, viewer) if viewer && !viewer.system_admin?
+      sign_in(viewer) if viewer
+      get program_path(program)
+      summary = response.parsed_body.at_css('.next-session')
+      expect(summary.text).to include('To be announced')
+      expect(summary.to_html).not_to include(user.name, user.display_name, user.email, user.id.to_s,
+                                             'private_participant')
+    end
+    user.update!(public_profile_private: false, active: false)
+    get program_path(program)
+    expect(response.parsed_body.at_css('.next-session').text).to include('To be announced')
+  end
+
+  it 'refreshes public identity and tagging choices in the next-session summary on each request' do
+    user = private_booking.user
+    user.update!(instagram_tagging_allowed: true)
+    get program_path(program)
+    expect(response.parsed_body.at_css('.next-session').text).to include('@private_participant')
+    user.update!(display_name: 'Current Public Name', instagram_tagging_allowed: false)
+    get program_path(program)
+    summary = response.parsed_body.at_css('.next-session')
+    expect(summary.text).to include('Current Public Name')
+    expect(summary.text).not_to include('Public Participant', 'private_participant')
+  end
+
+  it 'announces the scheduled date without treating canceled or foreign bookings as its participant' do
+    booking = private_booking
+    BookingMutation.new(program: program, user: booking.user).cancel(booking: booking, reason: 'Private cancellation.')
+    scheduled_booking('2026-11-16', at: create_program, display_name: 'Other Program Participant')
+    get program_path(program)
+    summary = response.parsed_body.at_css('.next-session')
+    expect(summary.text).to include('Monday, November 16, 2026', 'To be announced')
+    expect(summary.text).not_to include('Public Participant', 'Other Program Participant', 'Private cancellation.')
+  end
+
+  it 'respects closures and one-off opening times instead of jumping to the next booked date' do
+    tagged_booking
+    schedule_exception('2026-11-16')
+    schedule_exception('2026-11-17', mode: 'open', start_time: '20:00', end_time: '22:00')
+    get program_path(program)
+    summary = response.parsed_body.at_css('.next-session')
+    expect(summary.text).to include('Tuesday, November 17, 2026', '8:00 PM - 10:00 PM (2 hours)', 'To be announced')
+    expect(response.body).not_to include('Private schedule explanation.', 'Fallback Participant')
+  end
+
+  it 'finds next-month sessions and their public booking independently of an overview month parameter' do
+    schedule_exception('2026-12-07')
+    scheduled_booking('2026-12-14', display_name: 'December Participant')
+    travel_to Time.utc(2026, 11, 30, 23, 31)
+    get program_path(program, section: 'view', month: '2027-02')
+    summary = response.parsed_body.at_css('.next-session')
+    expect(summary.text).to include('Monday, December 14, 2026', 'December Participant')
+    expect(summary.at_css('p a')['href']).to eq(program_path(program, section: 'calendar', month: '2026-12'))
+    expect(response.body).not_to include('Private schedule explanation.')
+  end
+
+  it 'shows an honest empty state when all dates within the booking window are closed' do
+    program.update!(booking_horizon_months: 1, program_label: 'Session')
+    %w[2026-11-16 2026-11-23 2026-11-30 2026-12-07].each { |date| schedule_exception(date) }
+    get program_path(program)
+    summary = response.parsed_body.at_css('.next-session')
+    expect(summary.text).to include('No scheduled sessions within the booking window.')
+    expect(summary.at_css('time')).to be_nil
+    expect(summary.at_css('a')['href']).to eq(program_path(program, section: 'calendar'))
+  end
+
   it 'renders only the calendar for a matching public navigation context' do
     private_booking
     get program_path(program, section: 'calendar')

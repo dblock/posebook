@@ -22,6 +22,7 @@ class ProgramsController < ApplicationController
                     locals: { calendar: @calendar, public_view: !@program_member }
     end
 
+    @next_session_date, @next_session_booking = @calendar.next_session if @section == 'view'
     @booking_history = @calendar.history_for(current_user) if @section == 'history'
   end
 
@@ -71,7 +72,7 @@ class ProgramsController < ApplicationController
     return head :not_found unless %w[view calendar history].include?(@section)
     return head :not_found if @section == 'history' && !@program_member
 
-    @calendar = ProgramCalendar.new(@program, month: params[:month])
+    @calendar = ProgramCalendar.new(@program, month: (params[:month] unless @section == 'view'))
     load_calendar if @program_member
   end
 

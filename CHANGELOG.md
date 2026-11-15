@@ -96,4 +96,5 @@
 - [#106](https://github.com/dblock/posebook/pull/106): Use `/programs` instead of `/sessions` for program URLs, including creation and nested routes, without compatibility redirects - [@dblock](https://github.com/dblock).
 - [#107](https://github.com/dblock/posebook/pull/107): Replace venue and program sharing links with Copy Link buttons, retaining canonical URLs, clipboard feedback, and manual-copy support - [@dblock](https://github.com/dblock).
 - [#108](https://github.com/dblock/posebook/pull/108): Add consistent venue, program, and portrait placeholders throughout picture-bearing lists while preserving real-photo choices and gallery privacy - [@dblock](https://github.com/dblock).
+- [#109](https://github.com/dblock/posebook/pull/109): Show the next session's public schedule and participant details on photo-free program overview pages - [@dblock](https://github.com/dblock).
 - Your contribution here.

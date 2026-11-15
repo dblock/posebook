@@ -1,9 +1,11 @@
 <article class="location-card venue-card">
-  <% photo = venue.primary_photo %>
-  <%= link_to venue_path(venue), class: "location-card-photo" do %>
-    <%= image_tag(photo ? venue_photo_path(venue, photo, thumbnail: 1) : "venue-placeholder.svg",
-                  width: 400, height: 400, loading: "lazy",
-                  alt: photo ? "#{venue.name} primary photo" : "No photo for #{venue.name}") %>
+  <% if local_assigns.fetch(:show_photo, true) %>
+    <% photo = venue.primary_photo %>
+    <%= link_to venue_path(venue), class: "location-card-photo" do %>
+      <%= image_tag(photo ? venue_photo_path(venue, photo, thumbnail: 1) : "venue-placeholder.svg",
+                    width: 400, height: 400, loading: "lazy",
+                    alt: photo ? "#{venue.name} primary photo" : "No photo for #{venue.name}") %>
+    <% end %>
   <% end %>
   <div class="location-card-summary">
     <% unless venue.active? %><p><%= status_label("Inactive") %></p><% end %>
