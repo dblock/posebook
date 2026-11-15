@@ -15,7 +15,7 @@ class GoogleCalendarEvent
       start: time(beginning),
       end: time(ending),
       visibility: 'private', guests_can_modify: false, guests_can_invite_others: false,
-      guests_can_see_other_guests: false,
+      guests_can_see_other_guests: true,
       reminders: Google::Apis::CalendarV3::Event::Reminders.new(use_default: false),
       attendees: attendee_emails.map { |email| Google::Apis::CalendarV3::EventAttendee.new(email: email) }
     )
