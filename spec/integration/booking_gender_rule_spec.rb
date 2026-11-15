@@ -132,7 +132,7 @@ RSpec.describe BookingGenderRule, :aggregate_failures, :database do
       message: "Select a gender in the instructor's profile to book with this workshop's gender rules."
     )
     expect(ProgramCalendar.new(program).gender_blocked_reason(Date.new(2026, 11, 23), participant))
-      .to eq('Select gender')
+      .to eq('Blocked')
   end
 
   it 'requires a gender after enabling rules without changing an existing booking' do
