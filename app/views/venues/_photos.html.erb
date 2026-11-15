@@ -1,5 +1,5 @@
 <% photos = venue.photos.order_by(created_at: :asc).to_a %>
-<% if photos.any? || editable %>
+<% if photos.any? || editable || local_assigns.fetch(:show_empty, false) %>
   <section aria-labelledby="venue-photos-heading">
     <h2 id="venue-photos-heading">Venue Photos</h2>
     <% if editable %>

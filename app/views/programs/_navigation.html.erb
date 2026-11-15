@@ -1,15 +1,15 @@
 <% manager = current_user && program.managed_by?(current_user) %>
 <% member = manager || (current_user && program.participant?(current_user)) %>
-<nav class="breadcrumbs" aria-label="Breadcrumb">
-  <%= link_to program.venue.name, venue_path(program.venue) %>
-  <span aria-hidden="true">/</span>
-  <%= link_to program.name, program_path(program) %>
-  <% if local_assigns[:detail].present? %><span aria-hidden="true">/</span><span aria-current="page"><%= detail %></span><% end %>
-</nav>
-<nav class="program-tabs" aria-label="<%= program.program_label.titleize %> navigation">
-  <%= link_to "View", program_path(program), aria: { current: ("page" if active == "view") } %>
-  <%= link_to "Calendar", program_path(program, section: "calendar"), aria: { current: ("page" if active == "calendar") } %>
-  <% if member %><%= link_to "History", program_path(program, section: "history"), aria: { current: ("page" if active == "history") } %><% end %>
-  <% if manager %><%= link_to program.participant_label.pluralize.titleize, program_participants_path(program), aria: { current: ("page" if active == "participants") } %><% end %>
-  <% if program.venue.coordinated_by?(current_user) %><%= link_to "Coordinators", program_coordinators_path(program), aria: { current: ("page" if active == "coordinators") } %><% end %>
-</nav>
+<% tabs = [["view", "View", program_path(program)], ["calendar", "Calendar", program_path(program, section: "calendar")]] %>
+<% tabs << ["history", "History", program_path(program, section: "history")] if member %>
+<% tabs << ["participants", program.participant_label.pluralize.titleize, program_participants_path(program)] if manager %>
+<% tabs << ["coordinators", "Coordinators", program_coordinators_path(program)] if program.venue.coordinated_by?(current_user) %>
+<% if manager %>
+  <% tabs << ["edit", "Edit", edit_program_path(program)] %>
+  <% tabs << ["google_calendar", "Google Calendar", program_google_calendar_path(program)] %>
+<% end %>
+<% breadcrumbs = [["Venues", venues_path], [program.venue.name, venue_path(program.venue)], [program.name, program_path(program)]] %>
+<% section = tabs.find { |key, _, _| key == active } %>
+<% breadcrumbs << [section[1], section[2]] if section && active != "view" %>
+<% breadcrumbs << [detail, nil] if local_assigns[:detail].present? && detail != section&.fetch(1) %>
+<%= render "shared/page_navigation", breadcrumbs: breadcrumbs, tabs: tabs, active: active, tabs_class: "program-tabs", label: "#{program.program_label.titleize} navigation" %>

@@ -40,7 +40,7 @@ main {
   min-width: 0;
 }
 
-main:has(> form:not(.button_to)):not(:has(table, .photo-gallery)) {
+main:has(> form:not(.button_to)):not(:has(table, .photo-gallery, .page-tabs)) {
   max-width: 42rem;
   margin-inline: auto;
 }
@@ -124,20 +124,20 @@ nav {
   font-size: 0.9rem;
 }
 
-.program-tabs {
+.page-tabs {
   gap: 0.25rem;
   margin-bottom: 1.5rem;
   border-bottom: 1px solid var(--line);
 }
 
-.program-tabs a {
+.page-tabs a {
   padding: 0.55rem 0.8rem;
   border-bottom: 3px solid transparent;
   font-weight: 600;
   text-decoration: none;
 }
 
-.program-tabs a[aria-current="page"] {
+.page-tabs a[aria-current="page"] {
   border-bottom-color: var(--color-primary);
   color: var(--color-secondary);
 }

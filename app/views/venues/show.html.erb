@@ -1,4 +1,5 @@
 <main>
+  <%= render "navigation", venue: @venue, active: "view" %>
   <h1><%= @venue.name %></h1>
   <p><%= link_to "Venue Link", venue_path(@venue) %></p>
   <%= simple_format(@venue.address) %>
@@ -7,9 +8,4 @@
   <% @venue.programs.order_by(name: :asc).each do |program| %>
     <p><%= link_to program.name, program %><br><%= program_schedule_summary(program) %></p>
   <% end %>
-  <% if @venue.coordinated_by?(current_user) %>
-    <p><%= link_to "Edit Venue", edit_venue_path(@venue) %> | <%= link_to "Create Program", new_venue_program_path(@venue) %></p>
-  <% end %>
-  <% if current_user&.system_admin? %><p><%= link_to "Venue Coordinators", venue_coordinators_path(@venue) %></p><% end %>
-  <%= render "photos", venue: @venue, editable: @venue.coordinated_by?(current_user) %>
 </main>

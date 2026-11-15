@@ -1,0 +1,11 @@
+<% tabs = [["view", "View", venue_path(venue)], ["photos", "Photos", photos_venue_path(venue)]] %>
+<% if venue.coordinated_by?(current_user) %>
+  <% tabs << ["edit", "Edit", edit_venue_path(venue)] %>
+  <% tabs << ["new_program", "Create Program", new_venue_program_path(venue)] %>
+<% end %>
+<% tabs << ["coordinators", "Coordinators", venue_coordinators_path(venue)] if current_user&.system_admin? %>
+<% breadcrumbs = [["Venues", venues_path], [venue.name, venue_path(venue)]] %>
+<% section = tabs.find { |key, _, _| key == active } %>
+<% breadcrumbs << [section[1], section[2]] if section && active != "view" %>
+<% breadcrumbs << [detail, nil] if local_assigns[:detail].present? && detail != section&.fetch(1) %>
+<%= render "shared/page_navigation", breadcrumbs: breadcrumbs, tabs: tabs, active: active, tabs_class: "venue-tabs", label: "Venue navigation" %>

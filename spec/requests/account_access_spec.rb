@@ -25,16 +25,17 @@ RSpec.describe 'Account access management', :aggregate_failures, :database, type
     sign_in(user)
     post account_deactivation_path, params: { current_password: 'incorrect' }
     expect(response).to have_http_status(:unprocessable_content)
-    expect(response.parsed_body.css('main form').pluck('id')).to eq(['deactivation-form'])
+    expect(response.parsed_body.css('main form').pluck('id')).to eq(%w[password-form deactivation-form])
     expect(user.reload).to be_active
   end
 
   it 'protects system admin accounts from deactivation' do
     user = create_user(roles: ['system_admin'])
     sign_in(user)
-    get new_account_deactivation_path
+    get security_profile_path
     expect(response.body).to include('System admin accounts stay active')
-    expect(response.parsed_body.css('main form')).to be_empty
+    expect(response.parsed_body.at_css('#deactivation-form')).to be_nil
+    expect(response.parsed_body.at_css('#password-form')).to be_present
     post account_deactivation_path, params: { current_password: DatabaseHelpers::TEST_PASSWORD }
     expect(response).to have_http_status(:unprocessable_content)
     patch admin_user_path(user), params: { active: false }

@@ -1,0 +1,11 @@
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+  <% breadcrumbs.each_with_index do |(title, path), index| %>
+    <% if index.positive? %><span aria-hidden="true">/</span><% end %>
+    <% if index == breadcrumbs.length - 1 %><span aria-current="page"><%= title %></span><% else %><%= link_to title, path %><% end %>
+  <% end %>
+</nav>
+<nav class="page-tabs <%= tabs_class %>" aria-label="<%= label %>">
+  <% tabs.each do |key, title, path| %>
+    <%= link_to title, path, aria: { current: ("page" if active == key) } %>
+  <% end %>
+</nav>

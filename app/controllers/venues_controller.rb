@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 class VenuesController < ApplicationController
-  before_action :require_authentication, except: :show
+  before_action :require_authentication, except: %i[show photos]
   before_action :require_system_admin, only: %i[new create]
-  before_action :find_venue, only: %i[show edit update]
+  before_action :find_venue, only: %i[show photos edit update]
   rescue_from Mongo::Error::OperationFailure, with: :handle_slug_conflict
 
   def index
@@ -11,6 +11,8 @@ class VenuesController < ApplicationController
   end
 
   def show; end
+
+  def photos; end
 
   def new
     @venue = Venue.new
@@ -38,7 +40,7 @@ class VenuesController < ApplicationController
   private
 
   def find_venue
-    scope = action_name == 'show' ? Venue.all : Venue.coordinated_by(current_user)
+    scope = %w[show photos].include?(action_name) ? Venue.all : Venue.coordinated_by(current_user)
     @venue = scope.find(params.expect(:id))
   end
 

@@ -1,0 +1,14 @@
+<main>
+  <%= render "profiles/navigation", active: "security" %>
+  <h1>Security</h1>
+  <%= render "shared/errors", record: @user %>
+  <section id="change-password" aria-labelledby="change-password-heading">
+    <h2 id="change-password-heading">Change Password</h2>
+    <%= render "passwords/form" %>
+  </section>
+  <section id="deactivate-account" aria-labelledby="deactivate-account-heading">
+    <h2 id="deactivate-account-heading">Deactivate Account</h2>
+    <%= render "account_deactivations/form" %>
+  </section>
+  <p><%= link_to "Cancel", profile_path %></p>
+</main>

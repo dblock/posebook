@@ -1,6 +1,6 @@
 <main>
+  <%= render "shared/directory_navigation", active: "programs" %>
   <h1>Programs</h1>
-  <p><%= link_to "Venues", venues_path %></p>
   <% if @programs.empty? %>
     <p>No programs assigned. Visit Venues to create a program or contact a coordinator for access.</p>
   <% else %>

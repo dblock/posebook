@@ -1,4 +1,5 @@
 <main>
+  <%= render "venues/navigation", venue: @venue, active: "new_program" %>
   <h1>Create <%= @program.program_label.titleize %></h1>
   <%= render "form", program: @program %>
 </main>

@@ -1,5 +1,5 @@
 <main>
-  <%= render "navigation", program: @program, active: "view", detail: "Edit" %>
+  <%= render "navigation", program: @program, active: "edit" %>
   <h1>Edit <%= @program.program_label.titleize %></h1>
   <%= render "form", program: @program %>
 </main>

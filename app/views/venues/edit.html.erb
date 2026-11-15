@@ -1,4 +1,5 @@
 <main>
+  <%= render "navigation", venue: @venue, active: "edit" %>
   <h1>Edit Venue</h1>
   <%= render "form", venue: @venue %>
   <p><%= link_to "Back to Venue", venue_path(@venue) %></p>
