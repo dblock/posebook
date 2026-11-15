@@ -8,6 +8,8 @@ Posebook is open-source software for managing venues, recurring programs, partic
 
 The [hosted instance](https://posebook.dblock.org/) serves [Enoch's figure-drawing sessions](https://art.dblock.org/2026/05/25/figure-drawing-at-enochs.html). You can also install and run Posebook for your own venue; see [Contributing](CONTRIBUTING.md) to get started.
 
+Read the story behind Posebook: [The Sunk Cost Fallacy of a Vibe-Coded Custom SaaS](https://code.dblock.org/2026/11/15/the-sunk-cost-fallacy-of-a-vibe-coded-custom-saas.html).
+
 ## Key Features
 
 - Separate venue locations and recurring programs.
