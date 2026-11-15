@@ -22,6 +22,58 @@ RSpec.describe 'Coordinator participant details', :aggregate_failures, :database
                                    notes: " Private program note.\nSecond line. " }.merge(overrides) }
   end
 
+  it 'shows saved account data separately from a public preview with name fallback and consented Instagram' do
+    participant.update!(public_profile_private: false, display_name: nil, instagram_handle: 'preview.model',
+                        instagram_tagging_allowed: true)
+    membership.update!(notes: 'Never public.')
+    get edit_program_participant_path(program, membership)
+    current = response.parsed_body.at_css('[data-current-profile]')
+    preview = response.parsed_body.at_css('[data-public-preview]')
+    expect(current.text).to include(participant.name, participant.email, participant.phone,
+                                    'Not set (uses account name)')
+    expect(preview.at_css('[data-public-preview-name]').text).to eq(participant.name)
+    expect(preview.at_css('a')['href']).to eq(participant.public_instagram_url)
+    expect(preview.text).not_to include(participant.email, participant.phone, participant.gender, 'Never public.')
+  end
+
+  it 'previews only public photos, never the private primary photo' do
+    participant.update!(public_profile_private: false)
+    private_photo = participant.profile_photos.create!
+    public_photo = participant.profile_photos.create!(public: true)
+    get edit_program_participant_path(program, membership)
+    current = response.parsed_body.at_css('[data-current-profile]')
+    preview = response.parsed_body.at_css('[data-public-preview]')
+    expect(current.at_css('img')['src']).to eq(participant_photo_path(participant, private_photo, thumbnail: 1))
+    expect(preview.css('img').pluck('src')).to eq([participant_photo_path(participant, public_photo, thumbnail: 1)])
+    expect(preview.at_css('[data-public-preview-name]').text).to eq('Original Public')
+  end
+
+  it 'keeps private and inactive public previews anonymous despite the manager viewing private account data' do
+    participant.update!(instagram_handle: 'hidden.model', instagram_tagging_allowed: true)
+    participant.profile_photos.create!(public: true)
+    [{ public_profile_private: true }, { public_profile_private: false, active: false }].each do |privacy|
+      participant.update!(privacy)
+      get edit_program_participant_path(program, membership)
+      preview = response.parsed_body.at_css('[data-public-preview]')
+      expect(preview['data-public-preview-visible']).to eq('false')
+      expect(preview.at_css('[data-public-preview-name]').text).to eq('To be announced')
+      expect(preview.css('a, img')).to be_empty
+      expect(preview.text).not_to include('Original Account', 'Original Public', 'hidden.model')
+    end
+  end
+
+  it 'keeps saved data unchanged while previewing escaped drafts after validation errors' do
+    participant.update!(public_profile_private: false)
+    update_details(name: '', display_name: '<script>alert(1)</script>')
+    expect(response).to have_http_status(:unprocessable_content)
+    current = response.parsed_body.at_css('[data-current-profile]')
+    preview = response.parsed_body.at_css('[data-public-preview]')
+    expect(current.text).to include('Original Account', 'Original Public')
+    expect(preview.at_css('[data-public-preview-name]').text).to eq('<script>alert(1)</script>')
+    expect(preview.css('img, script')).to be_empty
+    expect(response.parsed_body.at_css('#participant_name')['value']).to eq('')
+  end
+
   it 'edits both names and program notes together with attributed history and unchanged privacy' do
     get edit_program_participant_path(program, membership)
     expect(response.parsed_body.at_css('#participant_name')['value']).to eq('Original Account')

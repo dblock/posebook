@@ -16,6 +16,7 @@ class ProgramParticipantsController < ApplicationController
   def edit
     @membership = @program.memberships.participants.find(params.expect(:id))
     @participant = @membership.user
+    @current_participant = @participant
   end
 
   def update
@@ -25,7 +26,7 @@ class ProgramParticipantsController < ApplicationController
     if @membership.errors.empty? && @participant.errors.empty?
       redirect_to roster_path, notice: @program.message('participant_access.details_updated')
     else
-      render :edit, status: :unprocessable_content
+      render_invalid_details
     end
   end
 
@@ -55,6 +56,11 @@ class ProgramParticipantsController < ApplicationController
   end
 
   private
+
+  def render_invalid_details
+    @current_participant = User.find(@participant.id)
+    render :edit, status: :unprocessable_content
+  end
 
   def participant_params
     params.expect(participant: %i[name display_name notes]).to_h.symbolize_keys
