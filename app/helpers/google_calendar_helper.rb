@@ -12,12 +12,17 @@ module GoogleCalendarHelper
   private
 
   def google_calendar_responses(program)
-    return {} unless current_user && program.managed_by?(current_user)
+    return {} unless current_user && google_calendar_manager?(program)
 
     connection = GoogleCalendarConnection.where(program_id: program.id, enabled: true).first
     return {} unless connection&.authorized?
 
     google_calendar_snapshots(program.id, connection.calendar_id)
+  end
+
+  def google_calendar_manager?(program)
+    dashboard = request.env['posebook.dashboard']
+    dashboard ? dashboard.managed_program_ids.include?(program.id) : program.managed_by?(current_user)
   end
 
   def google_calendar_snapshots(program_id, calendar_id)

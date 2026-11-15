@@ -29,6 +29,18 @@ CI builds the production image with Docker layer caching, then runs the same che
 
 For Ruby lint failures, run `bundle exec rubocop -a` and review safe corrections. Fix remaining offenses when practical; otherwise use `bundle exec rubocop --auto-gen-config`, review its output and inheritance, and avoid broad handwritten cop exclusions.
 
+## Performance Benchmarks
+
+Run the reproducible request benchmark against MongoDB 8.0 in an explicitly disposable benchmark database:
+
+```sh
+MONGODB_TEST_URI='mongodb://127.0.0.1:27017/posebook_test_benchmark?replicaSet=rs0' bundle exec ruby bin/benchmark --samples 5
+```
+
+The command refuses non-test environments and database names outside `posebook_test_benchmark` or its underscore-prefixed variants. It creates 20 venues, 60 programs, 50 synthetic users, 3,000 memberships, 12,240 historical/upcoming bookings, and eight real optimized photos per location. It cleans up only its own records and files, including after failures; it never deletes collections or sends messages. Use a dedicated local database, not production credentials. Fixture creation uses raw writes only for owned synthetic memberships and booking snapshots.
+
+JSON output includes warm request median/percentile estimates, Ruby allocations, response bytes, read-command counts by collection, database time, and indexed query work. It covers the venue directory, profile bookings/history, venue programs/photos, public and booking calendars, model roster, and public/private thumbnails. Setup, login, warm-up, browser, and network time are excluded. Compare results on the same machine and corpus; small samples and shared-machine load make timings indicative, not production guarantees. History measurements reflect its first 50-record page; all older bookings remain accessible through pagination. Regression specs enforce bounded database work rather than flaky latency thresholds.
+
 ## Tests
 
 Request specs exercise the actual Rails routes and views. The Mongoid integration spec writes and reads a real document against `MONGODB_TEST_URI`; it removes only its own record. The test helper rejects database names other than `posebook_test` or names beginning with `posebook_test_`, and never uses `MONGODB_URI` as the test fallback.

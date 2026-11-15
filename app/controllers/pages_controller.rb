@@ -5,6 +5,7 @@ class PagesController < ApplicationController
 
   def home
     @dashboard = ParticipantDashboard.new(current_user)
+    request.env['posebook.dashboard'] = @dashboard
   end
 
   def about; end

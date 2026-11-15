@@ -176,3 +176,11 @@ cancelled
 tooltip
 datetime
 ProgramPhoto
+ParticipantHistory
+getMore
+executionStats
+nReturned
+totalKeysExamined
+totalDocsExamined
+JSON
+UserExperienceBenchmark

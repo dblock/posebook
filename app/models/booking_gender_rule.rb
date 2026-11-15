@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 class BookingGenderRule
-  def initialize(program, excluding: nil)
+  def initialize(program, excluding: nil, bookings: {})
     @program = program
     @excluding = excluding
     @schedule = ProgramSchedule.new(program, from: nil)
-    @bookings = {}
+    @bookings = bookings.reject { |_date, booking| booking && booking.id == excluding }
   end
 
   def evaluate(date, user)

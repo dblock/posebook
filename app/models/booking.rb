@@ -30,6 +30,8 @@ class Booking
   index({ program_id: 1, user_id: 1, date: -1 })
   index({ program_id: 1, status: 1, ends_at: 1 })
   index({ program_id: 1, date: -1, created_at: -1 })
+  index({ user_id: 1, status: 1, ends_at: 1 })
+  index({ user_id: 1, date: -1, created_at: -1, _id: -1 })
   scope :upcoming, -> { where(status: 'confirmed', :ends_at.gt => Time.current) }
   validates :date, :ends_at, :time_zone, presence: true
   validates :status, inclusion: { in: %w[confirmed canceled rescheduled] }

@@ -52,7 +52,8 @@ class ProgramCalendar
   end
 
   def gender_blocked_reason(date, user, excluding: nil)
-    @gender_rule ||= BookingGenderRule.new(program, excluding: excluding)
+    @gender_rule ||= BookingGenderRule.new(program, excluding: excluding,
+                                                    bookings: date_range.index_with { |day| displayed_bookings[day] })
     'Blocked' if @gender_rule.evaluate(date, user)
   end
 

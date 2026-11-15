@@ -6,10 +6,12 @@ class ProfilesController < ApplicationController
 
   def show
     @dashboard = ParticipantDashboard.new(@user)
+    request.env['posebook.dashboard'] = @dashboard
   end
 
   def history
-    @bookings = Booking.where(user_id: @user.id).includes(:program).order_by(date: :desc, created_at: :desc)
+    @history = ParticipantHistory.new(@user, page: params[:page])
+    @bookings = @history.bookings
   end
 
   def edit; end

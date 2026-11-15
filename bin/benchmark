@@ -1,0 +1,26 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'optparse'
+require 'uri'
+
+raise 'Benchmarks require RAILS_ENV=test.' if ENV['RAILS_ENV'] && ENV['RAILS_ENV'] != 'test'
+
+uri = ENV.fetch('MONGODB_TEST_URI') { raise 'Set MONGODB_TEST_URI to a disposable benchmark database.' }
+database = URI.parse(uri).path.delete_prefix('/')
+unless database.match?(/\Aposebook_test_benchmark(?:_|\z)/)
+  raise 'Benchmarks require a posebook_test_benchmark database.'
+end
+
+samples = 5
+OptionParser.new do |options|
+  options.banner = 'Usage: bundle exec ruby bin/benchmark [--samples N]'
+  options.on('--samples N', Integer, 'Measured requests per page (1-20; default 5)') { |value| samples = value }
+end.parse!
+raise 'Samples must be between 1 and 20.' unless samples.between?(1, 20)
+
+ENV['RAILS_ENV'] = 'test'
+require_relative '../config/environment'
+require_relative '../script/benchmark_user_experience'
+
+puts JSON.pretty_generate(UserExperienceBenchmark.run(samples: samples))

@@ -100,8 +100,21 @@ RSpec.describe 'Google Calendar connections', :aggregate_failures, :database, ty
       get program_path(program, section: 'calendar')
       expect(response.parsed_body.at_css('.google-calendar-rsvp')).to be_nil
     end
+
     sign_in(booking.user)
     get program_path(program, section: 'history')
+    expect(response.parsed_body.at_css('.google-calendar-rsvp')).to be_nil
+  end
+
+  it 'uses fresh dashboard management permissions on each request' do
+    _, booking, = response_snapshot
+    user = booking.user
+    grant_coordinator_access(program, user)
+    sign_in(user)
+    get profile_path
+    expect(response.parsed_body.at_css('.google-calendar-rsvp .status-label').text).to eq('Declined')
+    program.memberships.find_by(user_id: user.id).revoke_coordinator_access
+    get profile_path
     expect(response.parsed_body.at_css('.google-calendar-rsvp')).to be_nil
   end
 

@@ -10,7 +10,7 @@ class ProgramsController < ApplicationController
   rescue_from Mongo::Error::OperationFailure, with: :handle_slug_conflict
 
   def index
-    @programs = Program.visible_to(current_user).order_by(name: :asc)
+    @programs = Program.preload_primary_photos(Program.visible_to(current_user).includes(:venue).order_by(name: :asc))
   end
 
   def show

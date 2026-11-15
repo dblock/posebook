@@ -5,7 +5,7 @@ class BookingAccess
     @membership = membership
     return if allowed.nil?
 
-    # Roster rendering supplies a request-local snapshot; mutations still query live state.
+    # Read-only pages supply request-local snapshots; mutations still query live state.
     @booking = booking
     @allowed = allowed
   end
