@@ -57,9 +57,18 @@ class SessionsController < ApplicationController
   end
 
   def application_return_path(user)
+    return application_status_path(user) if session[:application_status]
+
     session[:application_review] ? application_review_path(user) : applicant_return_path
   rescue Mongoid::Errors::DocumentNotFound
     root_path
+  end
+
+  def application_status_path(user)
+    program = Program.find(session[:application_status])
+    return root_path unless ParticipantApplication.exists?(program_id: program.id, user_id: user.id)
+
+    program_participation_application_path(program)
   end
 
   def application_review_path(user)

@@ -1,0 +1,19 @@
+Thank you for your interest in <%= @program.name %>.
+
+<% if @application.status == "accepted" %>
+Your application has been accepted. You now have participant access through the same admission process as an accepted personal invitation.
+
+Choose an available date in the calendar:
+<%= @calendar_url %>
+
+Existing program availability, booking rules, invitation cycles, and any pause still apply.
+<% else %>
+We are not accepting your application right now. Your application remains on file for future consideration, and coordinators can accept it later without a new submission.
+
+You can withdraw your application to end application-only profile review and future acceptance.
+<% end %>
+
+View your current application and retained decision history:
+<%= @application_url %>
+
+Sign in with the account you used to apply. The application page always shows the current status.

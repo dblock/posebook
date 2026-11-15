@@ -8,10 +8,11 @@ class EmailDelivery
   class Failed < StandardError; end
 
   KINDS = %w[password_reset email_change participant_invitation coordinator_invitation booking_invitation
-             application_registration].freeze
+             application_registration participation_event].freeze
 
   field :kind, type: String
   field :resource_id, type: BSON::ObjectId
+  field :recipient_id, type: BSON::ObjectId
   field :queued_job_id, type: BSON::ObjectId
   field :encrypted_token, type: String
   field :expires_at, type: Time
@@ -20,8 +21,10 @@ class EmailDelivery
   index({ resource_id: 1 })
   validates :kind, inclusion: { in: KINDS }
   validates :resource_id, presence: true
-  validates :encrypted_token, :expires_at, presence: true, unless: -> { kind == 'booking_invitation' }
+  validates :encrypted_token, :expires_at, presence: true,
+                                           unless: -> { %w[booking_invitation participation_event].include?(kind) }
   validates :grant_invited_at, presence: true, if: -> { kind == 'booking_invitation' }
+  validates :recipient_id, presence: true, if: -> { kind == 'participation_event' }
 
   def self.enqueue(kind, resource, token: nil, expires_at: nil, grant_invited_at: nil)
     result = false
@@ -30,17 +33,28 @@ class EmailDelivery
         result = false
         next if block_given? && !yield
 
-        result = new(kind: kind, resource_id: resource.id, expires_at: expires_at, grant_invited_at: grant_invited_at)
-        result.token = token if token
-        result.save!
-        job = EmailDeliveryJob.perform_later(result.id.to_s).presence
-        raise Unavailable, 'Email enqueue failed' unless job&.successfully_enqueued?
-
-        result.update!(queued_job_id: job.provider_job_id)
+        result = enqueue_in_transaction(kind, resource, session: session, token: token, expires_at: expires_at,
+                                                        grant_invited_at: grant_invited_at)
       end
     end
     result
   rescue Mongo::Error, ActiveJob::EnqueueError => e
+    raise Unavailable, e.class.name, cause: nil
+  end
+
+  def self.enqueue_in_transaction(kind, resource, session:, **attributes)
+    raise Unavailable, 'Email enqueue requires an active transaction' unless session.in_transaction?
+
+    token = attributes.delete(:token)
+    result = new(kind: kind, resource_id: resource.id, **attributes)
+    result.token = token if token
+    result.save!
+    job = EmailDeliveryJob.perform_later(result.id.to_s).presence
+    raise Unavailable, 'Email enqueue failed' unless job&.successfully_enqueued?
+
+    result.update!(queued_job_id: job.provider_job_id)
+    result
+  rescue ActiveJob::EnqueueError => e
     raise Unavailable, e.class.name, cause: nil
   end
 

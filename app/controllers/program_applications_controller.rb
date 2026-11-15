@@ -6,6 +6,7 @@ class ProgramApplicationsController < ApplicationController
   before_action :find_program
   rescue_from ParticipantApplicationWorkflow::Invalid, ParticipantApplicationWorkflow::Conflict, with: :decision_error
   rescue_from Mongoid::Errors::Validations, with: :validation_error
+  rescue_from EmailDelivery::Unavailable, with: :notification_error
 
   def index
     @status = params[:status].presence || 'pending'
@@ -42,6 +43,12 @@ class ProgramApplicationsController < ApplicationController
     return if current_user
 
     session[:application_review] = { program: params[:program_id], application: params[:id] }
+    session.delete(:application_status)
+    session.delete(:application_program)
+  end
+
+  def notification_error
+    decision_error(EmailDelivery::Unavailable.new(t('participant_applications.notifications_unavailable')))
   end
 
   def find_program

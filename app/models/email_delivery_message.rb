@@ -6,17 +6,15 @@ class EmailDeliveryMessage
   end
 
   def build
-    case @delivery.kind
-    when 'password_reset' then password_reset
-    when 'email_change' then email_change
-    when 'participant_invitation' then participant_invitation
-    when 'coordinator_invitation' then coordinator_invitation
-    when 'booking_invitation' then booking_invitation
-    when 'application_registration' then application_registration
-    end
+    send(@delivery.kind) if EmailDelivery::KINDS.include?(@delivery.kind)
   end
 
   private
+
+  def participation_event
+    event = ParticipationEvent.where(id: @delivery.resource_id).first
+    ParticipationNotification.new(event).message_for(@delivery.recipient_id) if event
+  end
 
   def application_registration
     registration = ApplicationRegistration.available(token)
