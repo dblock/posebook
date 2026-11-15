@@ -45,7 +45,7 @@ class VenuesController < ApplicationController
   end
 
   def venue_params
-    params.expect(venue: %i[name custom_slug address instagram_handle])
+    params.expect(venue: %i[name custom_slug address instagram_handle google_maps_url])
   end
 
   def handle_slug_conflict(error)

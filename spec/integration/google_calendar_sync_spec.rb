@@ -66,7 +66,34 @@ RSpec.describe GoogleCalendarSync, :aggregate_failures, :database do
       expect(Time.iso8601(event.end.date_time)).to eq(booking.scheduled_ends_at)
       expect(event.description).to include('Program starts: Monday, November 23, 2026 at 6:30 PM EST')
     end
+
     expect(booking.reload.attributes.slice(*original.keys)).to eq(original)
+  end
+
+  it 'includes the venue name, address and address-based Maps link in invitations' do
+    book
+    described_class.process_next
+    expect(api).to have_received(:insert_event) do |_, event, **|
+      expect(event.description).to include("Venue: #{program.venue.name}", "Address: #{program.venue.address}",
+                                           "Google Maps: #{program.venue.google_maps_location_url}")
+    end
+  end
+
+  it 'reconciles venue address and exact Maps changes onto the same meeting without changing booking times' do
+    booking = book
+    described_class.process_next
+    allow(api).to receive(:insert_event).and_raise(Google::Apis::ClientError.new('Conflict', status_code: 409))
+    program.venue.update!(address: '456 New Studio Street', google_maps_url: 'https://maps.app.goo.gl/studio123')
+    described_class.reconcile
+    described_class.process_next
+    expect(api).to have_received(:update_event) do |_, id, event, **|
+      expect(id).to eq("posebook#{booking.id}")
+      expect(event.location).to eq('456 New Studio Street')
+      expect(event.description).to include('Google Maps: https://maps.app.goo.gl/studio123')
+      expect(Time.iso8601(event.start.date_time)).to eq(booking.scheduled_start)
+      expect(Time.iso8601(event.end.date_time)).to eq(booking.scheduled_start + 1.hour)
+    end
+    expect(booking.reload.time_changes).to be_empty
   end
 
   it 'updates existing invitations with dated overrides without rewriting booking times' do

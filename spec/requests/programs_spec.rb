@@ -163,6 +163,72 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     expect(program.reload.participant_label).to eq('Participant')
   end
 
+  it 'links venue and program visitors to an encoded address search when no Maps link is configured' do
+    venue = create_venue(address: "123 Drawing Street & Studio #2\nNew York, NY")
+    program = create_program(venue: venue)
+    [venue_path(venue), program_path(program)].each do |path|
+      get path
+      link = response.parsed_body.at_css('.venue-google-maps')
+      uri = URI.parse(link['href'])
+      expect(uri.host).to eq('www.google.com')
+      expect(URI.decode_www_form(uri.query).to_h).to eq('api' => '1', 'query' => venue.address)
+      expect(link['rel'].split).to include('noopener', 'noreferrer')
+    end
+  end
+
+  it 'saves an exact Google Maps share link when creating a venue' do
+    sign_in(create_user(roles: ['system_admin']))
+    post venues_path, params: { venue: { name: 'Maps Venue', address: '123 Drawing Street',
+                                         google_maps_url: ' https://maps.app.goo.gl/example123 ' } }
+    venue = track_record(Venue.find_by(name: 'Maps Venue'))
+    expect(venue.google_maps_url).to eq('https://maps.app.goo.gl/example123')
+    get edit_venue_path(venue)
+    expect(response.parsed_body.at_css('#venue_google_maps_url')['value']).to eq(venue.google_maps_url)
+  end
+
+  it 'accepts official Maps links and returns to address search when the link is cleared' do
+    venue = create_venue
+    sign_in(create_user(roles: ['system_admin']))
+    %w[https://www.google.com/maps/place/Studio https://google.com/maps?cid=123
+       https://maps.google.com/?q=Studio https://maps.app.goo.gl/example123
+       https://goo.gl/maps/example123].each do |url|
+      patch venue_path(venue), params: { venue: { google_maps_url: url } }
+      expect(response).to redirect_to(venue_path(venue))
+      get venue_path(venue)
+      expect(response.parsed_body.at_css('.venue-google-maps')['href']).to eq(url)
+    end
+    patch venue_path(venue), params: { venue: { google_maps_url: '', address: '456 New Street' } }
+    expect(venue.reload.google_maps_url).to be_nil
+    expect(URI.decode_www_form(URI.parse(venue.google_maps_location_url).query).to_h['query']).to eq('456 New Street')
+  end
+
+  it 'rejects arbitrary, spoofed, insecure and malformed Maps URLs without replacing the saved link' do
+    venue = create_venue(google_maps_url: 'https://maps.app.goo.gl/saved123')
+    sign_in(create_user(roles: ['system_admin']))
+    ['https://example.test/maps', 'https://google.com.evil.test/maps', 'https://google.com/url?q=other',
+     'http://www.google.com/maps', 'javascript:alert(1)', 'https://user@www.google.com/maps',
+     'https://www.google.com:444/maps', 'https://www.google.com/maps bad'].each do |url|
+      patch venue_path(venue), params: { venue: { google_maps_url: url } }
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(venue.reload.google_maps_url).to eq('https://maps.app.goo.gl/saved123')
+    end
+  end
+
+  it 'allows audited venue coordinator Maps edits but denies program-only coordinators' do
+    venue = create_venue
+    coordinator = create_user
+    grant_coordinator_access(create_program(venue: venue), coordinator)
+    sign_in(coordinator)
+    patch venue_path(venue), params: { venue: { google_maps_url: 'https://maps.app.goo.gl/studio123' } }
+    expect(response).to have_http_status(:not_found)
+    expect(venue.reload.google_maps_url).to be_nil
+    grant_venue_access(venue, coordinator)
+    patch venue_path(venue), params: { venue: { google_maps_url: 'https://maps.app.goo.gl/studio123' } }
+    expect(response).to redirect_to(venue_path(venue))
+    expect(venue.reload.history_tracks.last.modified).to include('google_maps_url' => venue.google_maps_url)
+    expect(venue.history_tracks.last.modifier_id).to eq(coordinator.id)
+  end
+
   it 'normalizes program Instagram handles and URLs and publishes safe external links without account preferences' do
     venue = create_venue
     sign_in(create_user(roles: ['system_admin']))

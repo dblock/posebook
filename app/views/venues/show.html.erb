@@ -3,6 +3,8 @@
   <h1><%= @venue.name %></h1>
   <p><%= link_to "Venue Link", venue_path(@venue) %></p>
   <%= simple_format(@venue.address) %>
+  <p><%= link_to "View on Google Maps", @venue.google_maps_location_url, class: "venue-google-maps",
+                 target: "_blank", rel: "noopener noreferrer" %></p>
   <% if @venue.public_instagram_url %><p><%= link_to "@#{@venue.public_instagram_handle}", @venue.public_instagram_url, target: "_blank", rel: "noopener noreferrer" %></p><% end %>
   <h2>Programs</h2>
   <% @venue.programs.order_by(name: :asc).each do |program| %>
