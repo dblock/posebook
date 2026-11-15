@@ -129,10 +129,11 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     post program_participation_application_path(program),
          params: { participant_application: { message: 'Keep my draft', consent: '0' } }
     expect(response).to have_http_status(:unprocessable_content)
-    expect(response.body).to include('Keep my draft')
-    expect(ParticipantApplication.where(user_id: applicant.id)).not_to exist
+    draft = ParticipantApplication.find_by(user_id: applicant.id)
+    expect(draft).to have_attributes(status: 'draft', profile_shared_at: nil, message: 'Keep my draft')
     post program_participation_application_path(program),
-         params: { participant_application: { consent: '1', user_id: user.id, status: 'accepted',
+         params: { participant_application: { consent: '1', lock_version: draft.lock_version,
+                                              user_id: user.id, status: 'accepted',
                                               roles: ['system_admin'] } }
     expect(response).to redirect_to(program_participation_application_path(program))
     saved = ParticipantApplication.find_by(user_id: applicant.id)
@@ -354,8 +355,9 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     post program_participation_application_path(program),
          params: { participant_application: { message: 'Keep my application draft', consent: '1' } }
     expect(response).to have_http_status(:service_unavailable)
-    expect(response.body).to include('Keep my application draft', 'No application or decision was saved')
-    expect(ParticipantApplication.where(user_id: applicant.id)).not_to exist
+    expect(response.body).to include('Keep my application draft', 'Your draft was saved')
+    expect(ParticipantApplication.find_by(user_id: applicant.id)).to have_attributes(status: 'draft',
+                                                                                     profile_shared_at: nil)
   end
 
   it 'does not grant access or claim a saved decision when its notification cannot queue' do

@@ -114,4 +114,5 @@
 - [#127](https://github.com/dblock/posebook/pull/127): Show current account data and a privacy-aware public-card preview with live name updates while editing participants - [@dblock](https://github.com/dblock).
 - [#128](https://github.com/dblock/posebook/pull/128): Link the README to the article about building Posebook - [@dblock](https://github.com/dblock).
 - [#129](https://github.com/dblock/posebook/pull/129): Clarify account deactivation and private data retention, and enforce inactive-account public identity masking - [@dblock](https://github.com/dblock).
+- [#130](https://github.com/dblock/posebook/pull/130): Prepare account details, photos, and private application drafts on one page before explicit submission - [@dblock](https://github.com/dblock).
 - Your contribution here.

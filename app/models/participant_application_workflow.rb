@@ -11,9 +11,9 @@ class ParticipantApplicationWorkflow
     @user = user
   end
 
-  def submit(message:, consent:)
+  def submit(message:, consent:, version: nil)
     ParticipantApplication.with_session do |session|
-      session.with_transaction { submit_application(message, consent, session) }
+      session.with_transaction { submit_application(message, consent, version, session) }
     end
     @application
   end
@@ -46,7 +46,7 @@ class ParticipantApplicationWorkflow
 
   private
 
-  def submit_application(message, consent, session)
+  def submit_application(message, consent, version, session)
     actor = User.active.find(@user.id)
     @program = Program.find(@program.id)
     unless @program.applications_enabled? && @program.booking_active? && actor.email_verified_at &&
@@ -54,13 +54,9 @@ class ParticipantApplicationWorkflow
       raise Invalid, 'Applications require an open program, verified account, and profile-sharing consent.'
     end
 
-    @application = ParticipantApplication.create!(program: @program, user: actor, **identity_snapshot(actor),
-                                                  message: message, profile_shared_at: Time.current)
+    @application = ApplicationDraft.new(program: @program, user: actor)
+                                   .submit(message: message, version: version, session: session)
     record_event('submitted', actor, nil, session)
-  end
-
-  def identity_snapshot(actor)
-    { name: actor.name, email: actor.email, gender: actor.gender }
   end
 
   def check_decision(status, version)

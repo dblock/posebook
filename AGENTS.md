@@ -52,6 +52,8 @@ Tests use `MONGODB_TEST_URI`, never the development or production connection. Th
 
 Booking writes must atomically compare and increment `lock_version` with their state/history changes. Participant and organizer mutation forms submit the displayed revision; do not make missing or stale tokens default to the latest state. Preserve the originally submitted version across transaction retries and redirect conflicts to fresh program details, not a stale draft with a new token. Schedule time changes also invalidate old booking forms. Missing stored revisions are legacy zero; repeated positive confirmations may be idempotent but must never reverse a newer organizer clear.
 
+Application drafts are owner-only and excluded from every coordinator list, review route, and application-only photo permission. Stage incomplete account fields in the draft; validate and apply only whitelisted profile fields inside the submission/history/notification transaction. Account photos use existing authorized storage outside that transaction and survive draft abandonment. Require displayed revisions for saving, submitting, and abandoning drafts; never recreate a removed draft from a stale form.
+
 ## Validation and Documentation
 
 Run `bundle exec rake spec` and `bundle exec rake lint` before every development push. Run `bundle exec rake package` before committing changes to packaging, runtime dependencies, configuration, or HTTP entry points. Reuse passing results only if the tested content and configuration have not changed. The package check builds and runs the actual production Docker image and cleans up its own container and image.
