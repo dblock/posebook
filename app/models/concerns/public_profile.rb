@@ -21,7 +21,7 @@ module PublicProfile
   end
 
   def public_name
-    return 'To be announced' if public_profile_private?
+    return 'To be announced' if !active? || public_profile_private?
 
     display_name.presence || name
   end
@@ -31,7 +31,7 @@ module PublicProfile
   end
 
   def public_instagram_handle
-    InstagramProfile.normalize(instagram_handle) if instagram_tagging_allowed? && !public_profile_private?
+    InstagramProfile.normalize(instagram_handle) if active? && instagram_tagging_allowed? && !public_profile_private?
   end
 
   def public_photos

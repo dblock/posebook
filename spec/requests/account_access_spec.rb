@@ -26,7 +26,42 @@ RSpec.describe 'Account access management', :aggregate_failures, :database, type
     post account_deactivation_path, params: { current_password: 'incorrect' }
     expect(response).to have_http_status(:unprocessable_content)
     expect(response.parsed_body.css('main form').pluck('id')).to eq(%w[password-form deactivation-form])
+    details = response.parsed_body.at_css('#deactivate-account')
+    expect(details.text).to include('It does not delete your account.', 'will no longer be shared publicly',
+                                    'Existing bookings are not canceled.', 'authorized administrators and organizers')
+    expect(details.at_css('a')['href']).to eq(privacy_path(anchor: 'retention-and-your-choices'))
     expect(user.reload).to be_active
+  end
+
+  it 'retains bookings and memberships with attributed history on self-deactivation' do
+    user = create_user
+    program = create_program
+    membership = grant_participant_access(program, user)
+    date = Date.current.next_occurring(:monday).iso8601
+    booking = track_booking(BookingMutation.new(program: program, user: user).book(date: date))
+    sign_in(user)
+    post account_deactivation_path, params: { current_password: DatabaseHelpers::TEST_PASSWORD }
+    follow_redirect!
+    expect(response.body).to include('Your profile is no longer shared publicly',
+                                     'your account and booking history have been retained')
+    expect(membership.reload.roles).to include('participant')
+    expect(booking.reload).to have_attributes(user_id: user.id, status: 'confirmed', date: Date.iso8601(date))
+    expect(user.history_tracks.where('modified.active' => false).last.modifier_id).to eq(user.id)
+  end
+
+  it 'revokes every browser and remembered login on self-deactivation, including after reactivation' do
+    user = create_user
+    client = ActionDispatch::Integration::Session.new(Rails.application)
+    client.post(session_path, params: { email: user.email, password: DatabaseHelpers::TEST_PASSWORD, remember_me: '1' })
+    sign_in(user)
+    post account_deactivation_path, params: { current_password: DatabaseHelpers::TEST_PASSWORD }
+    [self, client].each do |browser|
+      browser.get(profile_path)
+      expect(browser.response.location).to end_with(new_session_path)
+    end
+    user.reactivate
+    client.get(profile_path)
+    expect(client.response.location).to end_with(new_session_path)
   end
 
   it 'protects system admin accounts from deactivation' do
