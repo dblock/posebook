@@ -39,13 +39,15 @@ RSpec.describe GoogleCalendarSync, :aggregate_failures, :database do
   it 'creates one private event with contact details, consented Instagram, attendees, and a one-hour fallback' do
     booking = book
     expect(described_class.process_next).to be_present
-    expect(api).to have_received(:insert_event) do |calendar, event, options|
+    expect(api).to have_received(:insert_event).once do |calendar, event, options|
       expect(calendar).to eq(connection.calendar_id)
       expect(event.id).to eq("posebook#{booking.id}")
       expect(event.description).to include(participant.phone, participant.email, 'Instagram tagging: Yes',
                                            '@preview_model')
       expect(event.attendees.map(&:email)).to contain_exactly(participant.email, organizer.email)
-      expect(event).to have_attributes(visibility: 'private', guests_can_invite_others: false)
+      expect(event).to have_attributes(visibility: 'private', guests_can_invite_others: false,
+                                       guests_can_modify: false, guests_can_see_other_guests: true,
+                                       location: program.venue.address)
       expect(Time.iso8601(event.start.date_time)).to eq(booking.scheduled_start)
       expect(Time.iso8601(event.end.date_time) - Time.iso8601(event.start.date_time)).to eq(1.hour)
       expect(event.reminders.use_default).to be(false)
@@ -197,6 +199,26 @@ RSpec.describe GoogleCalendarSync, :aggregate_failures, :database do
     described_class.process_next
     expect(api).to have_received(:insert_event).once
     expect(described_class.find(booking.id).due_at).to be_nil
+  end
+
+  it 'reveals guests on existing meetings through reconciliation without creating another event' do
+    booking = book
+    previous_payload = GoogleCalendarEvent.new(booking, connection).build
+    previous_payload.guests_can_see_other_guests = false
+    pending = described_class.find(booking.id)
+    pending.set(fingerprint: pending.payload_fingerprint(connection, previous_payload), due_at: nil)
+    allow(api).to receive(:insert_event).and_raise(Google::Apis::ClientError.new('Conflict', status_code: 409))
+    described_class.reconcile
+    described_class.process_next
+    expect(api).to have_received(:update_event).with(
+      connection.calendar_id, "posebook#{booking.id}",
+      have_attributes(guests_can_see_other_guests: true, location: program.venue.address),
+      send_updates: 'all'
+    )
+    described_class.reconcile
+    described_class.process_next
+    expect(api).to have_received(:update_event).once
+    expect(pending.reload.due_at).to be_nil
   end
 
   it 'reflects schedule time edits and closures using the same event' do
