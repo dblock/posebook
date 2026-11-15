@@ -64,4 +64,5 @@
 - [#70](https://github.com/dblock/posebook/pull/70): Remove gender rule details from calendar displays - [@dblock](https://github.com/dblock).
 - [#71](https://github.com/dblock/posebook/pull/71): Synchronize bookings, reschedules, and cancellations to private Google calendars with OAuth and durable retries - [@dblock](https://github.com/dblock).
 - [#72](https://github.com/dblock/posebook/pull/72): Confirm bookings before saving and simplify the participant calendar - [@dblock](https://github.com/dblock).
+- [#73](https://github.com/dblock/posebook/pull/73): Show actual status for leading dates from the previous month - [@dblock](https://github.com/dblock).
 - Your contribution here.

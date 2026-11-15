@@ -36,7 +36,7 @@ module ProgramCalendarHelper
   end
 
   def calendar_future_placeholder?(calendar, date, manager:)
-    date > calendar.last_date || (!manager && date.beginning_of_month != calendar.month)
+    date > calendar.last_date || (!manager && date.beginning_of_month > calendar.month)
   end
 
   def calendar_day_label(booking, reason)
