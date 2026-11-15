@@ -53,6 +53,8 @@ The admin user directory shows a linked, local placeholder portrait when an acco
 
 Single-item breadcrumbs have a decorative leading `>`; longer trails retain `/` separators. Both markers are hidden from screen readers.
 
+All table buttons, submit inputs, and button-styled links use one compact size: `0.75rem` text, a `1.75rem` minimum height, and `0.25rem` by `0.5rem` padding. This includes user activation, participant invitation/pause/resume, and calendar Book/Choose actions without requiring a per-view class. Width follows the label instead of filling the cell. Standalone forms, bulk actions, gallery controls, plain links, and disclosure summaries retain their existing styles.
+
 Participants' upcoming bookings use the same bordered card on the homepage and program View/Calendar pages, grouping the saved date/time, attendance state, confirmation, and reschedule/cancel buttons. The homepage includes the venue's public primary photo, name, address, and Google Maps link; bookings are scoped to the signed-in participant's memberships and sorted by saved start time. Paused participants retain their bookings and cancellation/confirmation controls without gaining rescheduling rights. Venue coordinators and system admins select an audited primary photo in the venue Photos tab; selection never changes public visibility and falls back to the first remaining photo when unset or deleted.
 
 ## Google Calendar Synchronization

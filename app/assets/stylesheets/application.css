@@ -656,10 +656,7 @@ tbody tr:last-child td {
 }
 
 .calendar button {
-  font-size: inherit;
-  min-height: 2rem;
   margin-top: 0.4rem;
-  padding: 0.3rem 0.55rem;
 }
 
 @media (max-width: 40rem) {
@@ -796,14 +793,6 @@ tbody tr:last-child td {
   font-size: 0.75rem;
 }
 
-.participant-roster .secondary-action,
-.user-accounts .secondary-action {
-  width: auto;
-  min-height: 1.75rem;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-}
-
 .photo-primary-control {
   display: flex;
   justify-content: center;
@@ -921,6 +910,13 @@ button.copy-button[hidden] {
 
 .copy-feedback {
   font-size: 0.8rem;
+}
+
+table :is(button, input[type="submit"], .button-link) {
+  width: auto;
+  min-height: 1.75rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
 }
 
 .copy-feedback:not(.copy-error) {
