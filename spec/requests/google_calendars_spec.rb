@@ -39,6 +39,78 @@ RSpec.describe 'Google Calendar connections', :aggregate_failures, :database, ty
     allow(client).to receive(:get_calendar_list).with(calendar_id).and_return(entry)
   end
 
+  def response_connection
+    connection = GoogleCalendarConnection.new(program: program, connected_by: organizer, calendar_id: calendar_id)
+    connection.refresh_token = 'synthetic-refresh-token'
+    track_record(connection.tap(&:save!))
+  end
+
+  def response_booking
+    participant = create_user
+    grant_participant_access(program, participant)
+    track_booking(BookingMutation.new(program: program, user: participant)
+                   .book(date: Date.current.next_occurring(:monday).iso8601))
+  end
+
+  def response_snapshot
+    connection = response_connection
+    booking = response_booking
+    sync = GoogleCalendarSync.find(booking.id)
+    sync.set(fingerprint: 'sent', rsvp_fingerprint: 'sent', rsvp_booking_id: booking.id,
+             rsvp_calendar_id: calendar_id, rsvp_status: 'declined', rsvp_checked_at: Time.current)
+    [connection, booking, sync]
+  end
+
+  it 'shows separate one-word Google response labels to managers without changing booking labels' do
+    _, booking, sync = response_snapshot
+    sign_in(organizer)
+    { 'needsAction' => 'Pending', 'accepted' => 'Accepted', 'tentative' => 'Tentative',
+      'declined' => 'Declined' }.each do |status, label|
+      sync.set(rsvp_status: status)
+      get program_path(program, section: 'calendar')
+      cell = response.parsed_body.at_css("[data-date=\"#{booking.date.iso8601}\"]")
+      expect(cell.at_css('.google-calendar-rsvp .status-label').text).to eq(label)
+      expect(cell.css('.status-label').map(&:text)).to eq(['Booked', label])
+      expect(cell.at_css('.google-calendar-rsvp .status-label')['title']).to include('last checked')
+    end
+    get program_path(program, section: 'history')
+    expect(response.parsed_body.at_css('.google-calendar-rsvp .status-label').text).to eq('Declined')
+    get edit_program_organizer_booking_path(program, booking)
+    expect(response.parsed_body.at_css('.google-calendar-rsvp .status-label').text).to eq('Declined')
+    expect(booking.reload.display_status).to eq('Booked')
+  end
+
+  it 'keeps Google responses out of public and participant views' do
+    _, booking, = response_snapshot
+    [nil, booking.user, create_user].each do |viewer|
+      sign_in(viewer) if viewer
+      get program_path(program, section: 'calendar')
+      expect(response.parsed_body.at_css('.google-calendar-rsvp')).to be_nil
+    end
+    sign_in(booking.user)
+    get program_path(program, section: 'history')
+    expect(response.parsed_body.at_css('.google-calendar-rsvp')).to be_nil
+  end
+
+  it 'hides responses belonging to an old payload or booking and disconnected or unauthorized calendars' do
+    connection, booking, sync = response_snapshot
+    sign_in(create_user(roles: ['system_admin']))
+    sync.set(rsvp_fingerprint: 'old-payload')
+    get program_path(program, section: 'calendar')
+    expect(response.parsed_body.at_css('.google-calendar-rsvp')).to be_nil
+    sync.set(rsvp_fingerprint: 'sent', rsvp_booking_id: BSON::ObjectId.new)
+    get program_path(program, section: 'calendar')
+    expect(response.parsed_body.at_css('.google-calendar-rsvp')).to be_nil
+    sync.set(rsvp_booking_id: booking.id)
+    connection.update!(enabled: false)
+    get program_path(program, section: 'calendar')
+    expect(response.parsed_body.at_css('.google-calendar-rsvp')).to be_nil
+    connection.update!(enabled: true)
+    program.memberships.coordinators.first.pull(roles: 'program_coordinator')
+    get program_path(program, section: 'calendar')
+    expect(response.parsed_body.at_css('.google-calendar-rsvp')).to be_nil
+  end
+
   it 'restricts connection settings to the program managers' do
     get program_google_calendar_path(program)
     expect(response).to redirect_to(new_session_path)

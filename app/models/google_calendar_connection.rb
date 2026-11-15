@@ -40,6 +40,10 @@ class GoogleCalendarConnection
     self.class.service(auth)
   end
 
+  def authorized?
+    connected_by.active? && program.managed_by?(connected_by)
+  end
+
   def self.service(auth)
     Google::Apis::CalendarV3::CalendarService.new.tap do |client|
       client.authorization = auth

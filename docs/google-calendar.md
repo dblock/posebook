@@ -1,6 +1,6 @@
 # Google Calendar Setup
 
-Posebook uses Google's official [`google-apis-calendar_v3`](https://github.com/googleapis/google-api-ruby-client) Ruby client. Synchronization is optional, one-way, and configured per program. Only booked slots become Google events, not unbooked days. Booking, rescheduling, organizer replacements, schedule time changes, and cancellations are synchronized. Google edits never change Posebook.
+Posebook uses Google's official [`google-apis-calendar_v3`](https://github.com/googleapis/google-api-ruby-client) Ruby client. Synchronization is optional and configured per program. Booking data flows from Posebook to Google; Google invitation responses are read separately. Only booked slots become Google events, not unbooked days. Booking, rescheduling, organizer replacements, schedule time changes, and cancellations are synchronized. Google edits and responses never change Posebook bookings or attendance confirmation.
 
 ## Configure Google OAuth
 
@@ -45,6 +45,10 @@ Google invitations are explicitly requested transactional booking notifications.
 The event uses saved booking times and the program's time zone. If a session has no configured end time, its Google event lasts one hour without changing Posebook's stored end time or completion policy. Rescheduling preserves the original Google event ID, including organizer participant replacements. Periodic reconciliation updates current contact/tagging information without sending unchanged events again.
 
 ## Monitor and Disconnect
+
+Every 12 hours, the shared worker schedules a separate response check for each synchronized upcoming booking. Organizers see a one-word Google RSVP label beside the booking status in calendars, history, and booking editing: Pending, Accepted, Tentative, or Declined. Pending means Google reports that the model has not responded. The label's tooltip shows the last successful check in the session's time zone. Models, unrelated users, and public visitors do not see these labels.
+
+Google RSVP is independent of Posebook attendance confirmation: accepting does not confirm attendance, and declining does not cancel a reservation. Checks match the model's email, not an organizer's response. Old responses are hidden after the booking or synchronized payload changes, and disabled or unauthorized connections are not checked. Missing events or attendees clear the response rather than being treated as declines. Provider failures retry through the shared queue and retain the last successful response and its timestamp; responses are not real-time.
 
 The program's Google Calendar page shows the count of changes awaiting synchronization. Reconnect when authorization fails; confirm the worker is running if that count does not drain. A revoked or inactive connecting organizer cannot continue synchronizing private data; an authorized organizer must reconnect.
 
