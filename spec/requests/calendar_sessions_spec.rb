@@ -87,7 +87,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     get program_path(program, section: 'calendar')
     expect(day('2026-11-17').text.strip).to eq('17')
     expect(day('2026-11-17').css('a, .status-label, small')).to be_empty
-    expect(day('2026-11-23').text).not_to include('Unconfirmed')
+    expect(day('2026-11-23').text).not_to include('Booked')
   end
 
   it 'retains booked, closed, and future states rather than treating them as empty days' do
@@ -97,7 +97,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
                                                   mode: 'closed', reason: 'Private closure.'))
     sign_in(organizer_for)
     get program_path(program, section: 'calendar')
-    expect(day('2026-11-16').text).to include('Unconfirmed', booking.user.public_name, 'Edit Day')
+    expect(day('2026-11-16').text).to include('Booked', booking.user.public_name, 'Edit Day')
     expect(day('2026-11-17').text).to include('Blocked', 'Private closure.', 'Edit Day')
     program.update!(booking_horizon_months: 1)
     get program_path(program, month: '2026-12')
@@ -187,7 +187,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     booking = reserve('2026-12-28')
     sign_in(organizer_for)
     get program_path(program, month: '2027-01')
-    expect(day('2026-12-28').text).to include('Unconfirmed', '6:30 PM', booking.user.public_name)
+    expect(day('2026-12-28').text).to include('Booked', '6:30 PM', booking.user.public_name)
     expect(day('2026-12-28').at_css('a')['href']).to eq(edit_program_organizer_booking_path(program,
                                                                                             booking))
     expect(day('2027-02-01').text).to include('Available', '6:30 PM', 'Schedule Participant', 'Edit Day')

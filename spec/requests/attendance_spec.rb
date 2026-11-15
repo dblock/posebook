@@ -68,21 +68,21 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     end
   end
 
-  it 'hides the owner calendar badge while retaining unconfirmed status for managers and in history' do
+  it 'hides the owner calendar badge while retaining booked status for managers and in history' do
     travel_to Time.utc(2026, 11, 13, 15)
     organizer = create_user
     grant_coordinator_access(program, organizer)
     [[participant, 'Your Booking History', 2],
      [organizer, 'Program Booking History', 3]].each do |viewer, heading, column|
       status = history_status(viewer, heading, column)
-      expect(status.css('.status-label').map(&:text)).to eq(['Unconfirmed'])
+      expect(status.css('.status-label').map(&:text)).to eq(['Booked'])
       get program_path(program, section: 'calendar')
       day = response.parsed_body.at_css(".calendar [data-date='#{booking.date.iso8601}']")
-      expect(day.css('.status-label').map(&:text)).to eq(viewer == participant ? [] : ['Unconfirmed'])
+      expect(day.css('.status-label').map(&:text)).to eq(viewer == participant ? [] : ['Booked'])
     end
   end
 
-  it 'retains the overdue warning on the owner calendar without an unconfirmed badge' do
+  it 'retains the overdue warning on the owner calendar without a booked badge' do
     travel_to Time.utc(2026, 11, 18, 5)
     get program_path(program, section: 'calendar')
     day = response.parsed_body.at_css(".calendar [data-date='#{booking.date.iso8601}']")
@@ -148,13 +148,13 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     sign_in(organizer)
     [program_path(program, section: 'calendar'), program_participants_path(program)].each do |path|
       get path
-      expect(response.body).to include('Unconfirmed', 'Please contact an organizer ASAP')
+      expect(response.body).to include('Booked', 'Please contact an organizer ASAP')
       warning = response.parsed_body.at_css('.attendance-warning')
       expect(warning['role']).to eq('status')
       expect(warning['class']).not_to include('status-label')
       selector = ".calendar [data-date='#{booking.date.iso8601}'], .participant-roster td:nth-child(2)"
       cell = response.parsed_body.at_css(selector)
-      expect(cell.css('.status-label').map(&:text)).to eq(['Unconfirmed'])
+      expect(cell.css('.status-label').map(&:text)).to eq(['Booked'])
     end
     delete session_path
     get program_path(program, section: 'calendar')

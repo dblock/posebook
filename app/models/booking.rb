@@ -43,7 +43,7 @@ class Booking
     return status.humanize unless status == 'confirmed'
     return 'Completed' if ends_at <= Time.current
 
-    attendance_confirmed? ? 'Confirmed' : 'Unconfirmed'
+    attendance_confirmed? ? 'Confirmed' : 'Booked'
   end
 
   def scheduled_start

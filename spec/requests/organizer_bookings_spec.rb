@@ -31,6 +31,7 @@ RSpec.describe 'Organizer bookings', :aggregate_failures, :database, type: :requ
   it 'creates a booking for an assigned participant without granting unrelated administrator permissions' do
     get new_program_organizer_booking_path(program)
     expect(response.body).to include('Schedule a Participant', participant.name)
+    expect(response.parsed_body.at_css('#booking_attendance option[value="unconfirmed"]').text).to eq('Booked')
     expect(response.parsed_body.at_css('#booking_attendance option[value="confirmed"]').text).to eq('Confirmed')
     post program_organizer_bookings_path(program), params: booking_params
     record = track_booking(program.bookings.first)
@@ -44,7 +45,7 @@ RSpec.describe 'Organizer bookings', :aggregate_failures, :database, type: :requ
   it 'edits and clears attendance after the participant cutoff while retaining attributed changes' do
     record = reserve
     get edit_program_organizer_booking_path(program, record)
-    expect(response.body).to include('Edit Booking', 'Unconfirmed')
+    expect(response.body).to include('Edit Booking', 'Booked')
     patch program_organizer_booking_path(program, record),
           params: booking_params(attendance: 'confirmed')
     expect(record.reload.attendance_confirmed_by_id).to eq(organizer.id)

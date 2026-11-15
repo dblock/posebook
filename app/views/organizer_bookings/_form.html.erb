@@ -8,7 +8,7 @@
   <%= form.label :date, "Booking date" %>
   <%= form.date_field :date, value: values[:date], required: true %>
   <%= form.label :attendance, "Attendance" %>
-  <%= form.select :attendance, [["Not confirmed", "unconfirmed"], ["Confirmed", "confirmed"]], selected: values[:attendance] %>
+  <%= form.select :attendance, [["Booked", "unconfirmed"], ["Confirmed", "confirmed"]], selected: values[:attendance] %>
   <%= form.label :reason, "Explanation" %>
   <%= form.text_area :reason, value: values[:reason], required: @booking.present?, maxlength: 2000, rows: 2 %>
   <% if @program.no_consecutive_genders.any? %>
