@@ -2,6 +2,7 @@
 
 class ParticipationNotification
   DECISIONS = { 'application_accepted' => 'accepted', 'application_declined' => 'declined' }.freeze
+  ADMISSIONS = %w[application_accepted invitation_accepted].freeze
 
   def initialize(event)
     @event = event
@@ -9,15 +10,8 @@ class ParticipationNotification
 
   def enqueue(session:)
     ids = recipient_ids
-    return unless ids
-
-    unless ids.any? && Rails.configuration.x.password_reset_delivery_enabled
-      raise EmailDelivery::Unavailable, 'Application notifications are unavailable'
-    end
-
-    ids.each do |id|
-      EmailDelivery.enqueue_in_transaction('participation_event', @event, session: session, recipient_id: id)
-    end
+    queue('participation_event', ids, session) if ids
+    enqueue_admission(session)
   end
 
   def message_for(recipient_id)
@@ -33,7 +27,50 @@ class ParticipationNotification
     end
   end
 
+  def admission_message_for(recipient_id)
+    return unless valid_admission_source?
+
+    recipient = User.active.where(id: recipient_id).first
+    participant = current_participant
+    return unless recipient && participant && coordinator_ids.include?(recipient.id)
+
+    ParticipantAdmissionMailer.accepted(@event, participant, recipient)
+  end
+
   private
+
+  def current_participant
+    program = @event.program
+    participant = User.active.where(id: @event.user_id).first
+    participant if participant && program&.booking_active? && program.participant?(participant)
+  end
+
+  def queue(kind, ids, session)
+    unless ids.any? && Rails.configuration.x.password_reset_delivery_enabled
+      raise EmailDelivery::Unavailable, 'Participation notifications are unavailable'
+    end
+
+    ids.each do |id|
+      EmailDelivery.enqueue_in_transaction(kind, @event, session: session, recipient_id: id)
+    end
+  end
+
+  def enqueue_admission(session)
+    return unless ADMISSIONS.include?(@event.action) && Rails.configuration.x.password_reset_delivery_enabled
+
+    ids = coordinator_ids
+    queue('participation_admission', ids, session) if ids.any?
+  end
+
+  def valid_admission_source?
+    if @event.action == 'invitation_accepted'
+      ParticipantInvitation.exists?(id: @event.source_id, program_id: @event.program_id,
+                                    used_by_id: @event.user_id, :used_at.ne => nil)
+    elsif @event.action == 'application_accepted'
+      ParticipantApplication.exists?(id: @event.source_id, program_id: @event.program_id,
+                                     user_id: @event.user_id, status: 'accepted', :profile_shared_at.ne => nil)
+    end
+  end
 
   def recipient_ids
     return coordinator_ids if @event.action == 'application_submitted'

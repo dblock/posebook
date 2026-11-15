@@ -183,6 +183,45 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     expect(invitation.program.memberships).to be_empty
   end
 
+  it 'retains a signed-in invitation for retry when coordinator notifications cannot queue' do
+    program = create_program
+    coordinator = create_user
+    grant_coordinator_access(program, coordinator)
+    invitation = create_participant_invitation(program, coordinator)
+    user = create_user
+    sign_in(user)
+    allow(EmailDeliveryJob).to receive(:perform_later).and_return(false)
+    post invitation_path, params: { token: invitation.token }
+    expect(response).to have_http_status(:service_unavailable)
+    expect(response.body).to include('The invitation was not accepted', 'Accept Invitation')
+    expect(invitation.reload.used_at).to be_nil
+    expect(program.participant?(user)).to be(false)
+    allow(EmailDeliveryJob).to receive(:perform_later).and_call_original
+    post invitation_path, params: { token: invitation.token }
+    track_participant_membership(program, user)
+    expect(response).to redirect_to(program_path(program, section: 'calendar'))
+  end
+
+  it 'rolls back invited registration on notification failure and retains a working registration form' do
+    program = create_program
+    coordinator = create_user
+    grant_coordinator_access(program, coordinator)
+    invitation = create_participant_invitation(program, coordinator)
+    attributes = user_attributes(name: 'Retained Applicant', instagram_tagging_allowed: '0')
+    allow(EmailDeliveryJob).to receive(:perform_later).and_return(false)
+    post invited_registration_path, params: { token: invitation.token, user: attributes }
+    expect(response).to have_http_status(:service_unavailable)
+    expect(response.parsed_body.at_css('#user_name')['value']).to eq('Retained Applicant')
+    expect(response.parsed_body.at_css('form[action="/invitation/register"] input[name="_method"]')).to be_nil
+    expect(User.where(email: attributes[:email])).not_to exist
+    expect(invitation.reload.used_at).to be_nil
+    allow(EmailDeliveryJob).to receive(:perform_later).and_call_original
+    post invited_registration_path, params: { token: invitation.token, user: attributes }
+    user = track_record(User.find_by(email: attributes[:email]))
+    track_participant_membership(program, user)
+    expect(response).to redirect_to(program_path(program, section: 'calendar'))
+  end
+
   it 'revokes pending invitations without deleting their history' do
     admin = create_user(roles: ['system_admin'])
     invitation = create_participant_invitation(create_program, admin)

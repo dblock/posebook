@@ -109,4 +109,5 @@
 - [#122](https://github.com/dblock/posebook/pull/122): Add applicant submission and status pages, scoped coordinator review and reconsideration, consented private-profile access, withdrawal, and distinct participation history - [@dblock](https://github.com/dblock).
 - [#123](https://github.com/dblock/posebook/pull/123): Notify assigned coordinators of applications and applicants of decisions through transactional queued email with current-audience checks and stale-message suppression - [@dblock](https://github.com/dblock).
 - [#124](https://github.com/dblock/posebook/pull/124): Add shareable program application links controlled by independent intake settings - [@dblock](https://github.com/dblock).
+- [#125](https://github.com/dblock/posebook/pull/125): Notify assigned coordinators when participant invitations or applications are accepted - [@dblock](https://github.com/dblock).
 - Your contribution here.

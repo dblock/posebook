@@ -16,7 +16,8 @@ class ParticipantInvitation
 
   def grant_access(user, session:)
     ProgramMembership.grant_participant_access(program, user, session: session)
-    ParticipationEvent.create!(program: program, user: user, actor: invited_by,
-                               action: 'invitation_accepted', source_id: id)
+    event = ParticipationEvent.create!(program: program, user: user, actor: invited_by,
+                                       action: 'invitation_accepted', source_id: id)
+    ParticipationNotification.new(event).enqueue(session: session)
   end
 end

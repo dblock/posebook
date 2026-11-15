@@ -74,6 +74,7 @@ class SessionsController < ApplicationController
   def application_review_path(user)
     destination = session[:application_review]
     program = Program.managed_by(user).find(destination['program'])
+    return history_program_applications_path(program) if destination['history']
     return program_applications_path(program) unless destination['application']
 
     application = ParticipantApplication.where(program_id: program.id).find(destination['application'])
