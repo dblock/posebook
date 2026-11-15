@@ -63,6 +63,39 @@ RSpec.describe ProgramCalendar, :aggregate_failures do
     expect(program).not_to be_valid
   end
 
+  it 'opens the calendar at a future first bookable date and anchors the inclusive horizon there' do
+    travel_to Time.utc(2026, 11, 16, 15) do
+      program.first_bookable_date = Date.new(2027, 1, 1)
+      program.available_weekdays = %w[0 1 2 3 4 5 6]
+      calendar = described_class.new(program)
+      expect(calendar.month).to eq(Date.new(2027, 1, 1))
+      expect(calendar.blocked_reason(Date.new(2026, 12, 31))).to eq('Outside booking window')
+      expect(calendar.blocked_reason(Date.new(2027, 1, 1))).to be_nil
+      expect(calendar.blocked_reason(Date.new(2027, 7, 1))).to be_nil
+      expect(calendar.blocked_reason(Date.new(2027, 7, 2))).to eq('Outside booking window')
+      expect(described_class.new(program, month: '2027-07').month).to eq(Date.new(2027, 7, 1))
+      expect(described_class.new(program, month: 'invalid').month).to eq(Date.new(2027, 1, 1))
+      expect(described_class.new(program, month: '2026-11').month).to eq(Date.new(2026, 11, 1))
+    end
+  end
+
+  it 'resumes a rolling horizon in the program time zone when the first bookable date is reached' do
+    program.first_bookable_date = Date.new(2027, 1, 1)
+    travel_to Time.utc(2027, 1, 2, 1) do
+      calendar = described_class.new(program)
+      expect(calendar.today).to eq(Date.new(2027, 1, 1))
+      expect(calendar.last_date).to eq(Date.new(2027, 7, 1))
+    end
+    travel_to Time.utc(2027, 1, 2, 5) do
+      expect(described_class.new(program).last_date).to eq(Date.new(2027, 7, 2))
+    end
+    program.first_bookable_date = nil
+    travel_to Time.utc(2027, 1, 31, 15) do
+      program.booking_horizon_months = 1
+      expect(described_class.new(program).last_date).to eq(Date.new(2027, 2, 28))
+    end
+  end
+
   it 'bounds malformed and out-of-range month navigation' do
     travel_to Time.utc(2026, 11, 16, 15) do
       [nil, 'invalid', '2026-99', '2025-11', '2028-01'].each do |month|

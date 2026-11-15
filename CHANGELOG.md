@@ -98,4 +98,5 @@
 - [#108](https://github.com/dblock/posebook/pull/108): Add consistent venue, program, and portrait placeholders throughout picture-bearing lists while preserving real-photo choices and gallery privacy - [@dblock](https://github.com/dblock).
 - [#109](https://github.com/dblock/posebook/pull/109): Show the next session's public schedule and participant details on photo-free program overview pages - [@dblock](https://github.com/dblock).
 - [#110](https://github.com/dblock/posebook/pull/110): Standardize all table action buttons on the same compact size while preserving standalone controls - [@dblock](https://github.com/dblock).
+- [#112](https://github.com/dblock/posebook/pull/112): Configure an optional first bookable date and anchor the booking horizon to that date while it is in the future, retaining earlier sessions and existing bookings - [@dblock](https://github.com/dblock).
 - Your contribution here.

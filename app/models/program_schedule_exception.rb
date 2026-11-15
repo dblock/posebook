@@ -35,9 +35,8 @@ class ProgramScheduleException
   def validate_date
     return unless date && program
 
-    today = Time.current.in_time_zone(program.time_zone).to_date
-    last_date = today.advance(months: program.booking_horizon_months)
-    errors.add(:date, 'must be within the booking window') unless date.between?(today, last_date)
+    calendar = ProgramCalendar.new(program)
+    errors.add(:date, 'must be within the booking window') unless date.between?(calendar.today, calendar.last_date)
   end
 
   def validate_local_time

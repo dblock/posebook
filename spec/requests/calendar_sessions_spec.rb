@@ -46,6 +46,41 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     track_booking(BookingMutation.new(program: program, user: user).book(date: date))
   end
 
+  it 'defaults to the first bookable month but retains earlier sessions and their exceptions' do
+    track_record(ProgramScheduleException.create!(program: program, date: Date.new(2026, 11, 16),
+                                                  mode: 'closed', reason: 'Private closure.'))
+    track_record(ProgramScheduleException.create!(program: program, date: Date.new(2026, 11, 17),
+                                                  mode: 'open', start_time: '20:00', reason: 'Private extra session.'))
+    program.update!(first_bookable_date: Date.new(2027, 1, 1))
+    get program_path(program)
+    expect(response.parsed_body.at_css('.next-session').text).to include('November 17', '8:00 PM')
+    get program_path(program, section: 'calendar')
+    expect(response.parsed_body.at_css('[data-calendar-month]').text).to eq('January 2027')
+    expect(response.parsed_body.at_css('.booking-window-notice').text).to include('book now', 'January 1, 2027')
+    get program_path(program, month: '2026-11')
+    expect(day('2026-11-16').text).not_to include('6:30 PM')
+    expect(day('2026-11-17').text).to include('8:00 PM')
+    expect(response.body).not_to include('Private closure.', 'Private extra session.')
+    get program_path(program, month: '2027-07')
+    expect(response.parsed_body.at_css('[data-calendar-month]').text).to eq('July 2027')
+    expect(response.parsed_body.css('nav[aria-label="Calendar months"] a').map(&:text)).not_to include('Next Month')
+  end
+
+  it 'keeps earlier existing bookings visible and offers new bookings only after the cutoff' do
+    booking = reserve('2026-11-16')
+    program.update!(first_bookable_date: Date.new(2027, 1, 1))
+    sign_in(booking.user)
+    get program_path(program, section: 'calendar')
+    expect(response.body).to include('Your Upcoming Booking', 'Cancel Booking', 'I&#39;ll be there!')
+    participant = create_user
+    grant_participant_access(program, participant)
+    sign_in(participant)
+    get program_path(program, month: '2026-12')
+    expect(day('2026-12-28').css('form, button')).to be_empty
+    get program_path(program, section: 'calendar')
+    expect(day('2027-01-04').at_css('form')).to be_present
+  end
+
   it 'uses one-word labels and leaves past non-session cells entirely blank' do
     get program_path(program, section: 'calendar')
     expect(day('2026-11-17').text.strip).to eq('17')
