@@ -2,6 +2,14 @@
   <% if current_user == @user %><%= render "profiles/navigation", active: "photos" %><% end %>
   <h1><%= @gallery.private_access? ? @user.name : @user.public_name %> - Photos</h1>
   <% if @gallery.private_access? %>
+    <dl class="participant-details">
+      <dt>Email</dt><dd><%= mail_to @user.email %></dd>
+      <dt>Phone</dt><dd><%= @user.phone %></dd>
+      <% if @user.instagram_handle.present? %>
+        <dt>Instagram</dt><dd><%= link_to "@#{@user.instagram_handle}", InstagramProfile.url(@user.instagram_handle),
+                                         target: "_blank", rel: "noopener noreferrer" %></dd>
+      <% end %>
+    </dl>
     <p><%= @photos.length %> of <%= ProfilePhoto::LIMIT %> photos. Private photos are visible only to the account owner, system admins, and their program organizers.</p>
     <% if @user.public_profile_private? %>
       <p class="rescheduling-notice">Private Identity is on. All photos are hidden publicly, including photos marked Public.</p>

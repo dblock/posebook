@@ -602,6 +602,42 @@ tbody tr:last-child td {
   font-size: 0.8rem;
 }
 
+.participant-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.participant-identity > div {
+  min-width: 0;
+}
+
+.participant-portrait {
+  flex: 0 0 4rem;
+}
+
+.participant-portrait img {
+  width: 4rem;
+  height: 4rem;
+  object-fit: cover;
+  border-radius: var(--radius-box);
+}
+
+.primary-photo-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.primary-photo-picker figure {
+  margin: 0;
+}
+
+.primary-photo-picker img {
+  display: block;
+  border-radius: var(--radius-box);
+}
+
 .participant-actions {
   display: flex;
   flex-wrap: wrap;
@@ -634,6 +670,12 @@ tbody tr:last-child td {
 
 .participant-pause .secondary-action {
   width: 50%;
+}
+
+.participant-actions .secondary-action {
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
 }
 
 .photo-gallery {

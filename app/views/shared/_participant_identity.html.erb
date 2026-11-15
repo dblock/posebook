@@ -1,0 +1,18 @@
+<div class="participant-identity">
+  <% if (photo = participant.primary_profile_photo) %>
+    <%= link_to participant_path(participant), class: "participant-portrait" do %>
+      <%= image_tag participant_photo_path(participant, photo, thumbnail: 1), width: 64, height: 64,
+                    loading: "lazy", alt: "Profile photo of #{participant.name}" %>
+    <% end %>
+  <% end %>
+  <div>
+    <strong><%= link_to participant.name, participant_path(participant) %></strong>
+    <% if local_assigns.fetch(:show_email, true) %>
+      <br><%= link_to participant.email, participant_path(participant), class: "participant-email" %>
+    <% end %>
+    <% if participant.instagram_handle.present? %>
+      <br><%= link_to "@#{participant.instagram_handle}", InstagramProfile.url(participant.instagram_handle),
+                      target: "_blank", rel: "noopener noreferrer" %>
+    <% end %>
+  </div>
+</div>

@@ -193,6 +193,82 @@ RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request 
     expect(response).to have_http_status(:not_found)
   end
 
+  it 'selects a primary photo from the profile editor without changing sharing preferences' do
+    first = photo
+    second = ProfilePhoto.add(participant.reload, photo_upload)
+    sign_in(participant)
+    get edit_profile_path
+    expect(response.parsed_body.at_css("[data-photo='#{first.id}'] figcaption").text).to eq('Primary')
+    patch participant_photo_path(participant, second.id), params: { profile_photo: { primary: '1', public: '1' } }
+    expect(response).to redirect_to(edit_profile_path)
+    expect(participant.reload.primary_profile_photo.id).to eq(second.id)
+    expect(participant.profile_photos.map(&:public?)).to eq([false, false])
+    get edit_profile_path
+    expect(response.parsed_body.at_css("[data-photo='#{second.id}'] figcaption").text).to eq('Primary')
+  end
+
+  it 'allows admin selection but rejects foreign photos and organizer selection' do
+    photo
+    sign_in(create_user(roles: ['system_admin']))
+    get edit_admin_user_path(participant)
+    expect(response.parsed_body.at_css('.primary-photo-picker img')).to be_present
+    patch photo_url, params: { profile_photo: { primary: '1' } }
+    expect(response).to redirect_to(edit_admin_user_path(participant))
+    patch participant_photo_path(create_user, photo.id), params: { profile_photo: { primary: '1' } }
+    expect(response).to have_http_status(:not_found)
+    sign_in(organizer_for(participant))
+    patch photo_url, params: { profile_photo: { primary: '1' } }
+    expect(response).to have_http_status(:forbidden)
+  end
+
+  it 'falls back to the first remaining photo after primary deletion' do
+    first = photo
+    second = ProfilePhoto.add(participant.reload, photo_upload)
+    second.select_primary(participant)
+    second.remove(participant)
+    expect(participant.reload.primary_profile_photo_id).to be_nil
+    expect(participant.primary_profile_photo.id).to eq(first.id)
+    first.remove(participant)
+    participant.reload
+    expect(participant.primary_profile_photo).to be_nil
+  end
+
+  it 'does not clear a newer primary selection when deleting a stale photo' do
+    first = photo
+    second = ProfilePhoto.add(participant.reload, photo_upload)
+    second.select_primary(participant)
+    first.remove(participant)
+    expect(participant.reload.primary_profile_photo.id).to eq(second.id)
+  end
+
+  it 'uses the selected private thumbnail in model tables' do
+    photo
+    second = ProfilePhoto.add(participant.reload, photo_upload)
+    second.select_primary(participant)
+    program = create_program
+    grant_participant_access(program, participant)
+    track_booking(BookingMutation.new(program: program, user: participant)
+                   .book(date: Date.current.next_occurring(:monday).iso8601))
+    sign_in(create_user(roles: ['system_admin']))
+    [program_participants_path(program), program_path(program, section: 'history'), admin_users_path].each do |path|
+      get path
+      url = participant_photo_path(participant, second.id, thumbnail: 1)
+      expect(response.parsed_body.at_css(".participant-identity img[src='#{url}']")).to be_present
+      expect(response.parsed_body.at_css(".participant-identity a[href='#{participant_path(participant)}']"))
+        .to be_present
+    end
+  end
+
+  it 'keeps private model details out of public galleries and retains organizer access without photos' do
+    participant.update!(instagram_handle: 'private.model', public_profile_private: true)
+    sign_in(organizer_for(participant))
+    get participant_path(participant)
+    expect(response.body).to include(participant.name, participant.email, '@private.model', 'No photos yet.')
+    delete session_path
+    get participant_path(participant)
+    expect(response).to have_http_status(:not_found)
+  end
+
   it 'lets system admins manage another participant while preventing cross-owner photo IDs' do
     sign_in(create_user(roles: ['system_admin']))
     post participant_photos_path(participant), params: { profile_photo: { file: photo_upload } }
@@ -214,6 +290,8 @@ RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request 
     patch photo_url, params: { profile_photo: { public: 'yes' } }
     expect(response).to have_http_status(:bad_request)
     expect(participant.reload.profile_photos.first.public?).to be(false)
+    patch photo_url, params: { profile_photo: { primary: 'yes' } }
+    expect(response).to have_http_status(:bad_request)
   end
 
   it 'rejects empty, corrupt, unsupported files and files over the size limit without storing them' do

@@ -20,7 +20,10 @@ class ProfilePhotosController < ApplicationController
   end
 
   def update
-    value = params.expect(profile_photo: [:public]).fetch(:public)
+    attributes = params.expect(profile_photo: %i[public primary])
+    return update_primary(attributes[:primary]) if attributes.key?(:primary)
+
+    value = attributes.fetch(:public)
     raise ActionController::BadRequest unless %w[0 1].include?(value)
 
     @photo.change_visibility(@user, value == '1')
@@ -33,6 +36,14 @@ class ProfilePhotosController < ApplicationController
   end
 
   private
+
+  def update_primary(value)
+    raise ActionController::BadRequest unless value == '1'
+    return head :not_found unless @photo.select_primary(@user).matched_count == 1
+
+    path = @user.id == current_user.id ? edit_profile_path : edit_admin_user_path(@user)
+    redirect_to path, notice: t('photos.primary_updated'), status: :see_other
+  end
 
   def find_gallery
     response.headers['Cache-Control'] = 'private, no-store'

@@ -4,7 +4,7 @@
 <%= form_with url: @booking ? program_organizer_booking_path(@program, @booking) : program_organizer_bookings_path(@program), method: @booking ? :patch : :post, scope: :booking do |form| %>
   <%= form.hidden_field :lock_version, value: values[:lock_version], id: nil if @booking %>
   <%= form.label :user_id, @program.participant_label.titleize %>
-  <%= form.select :user_id, @participants.map { |participant| [@program.no_consecutive_genders.any? ? "#{participant.name} (#{participant.gender&.capitalize || 'Gender not selected'})" : participant.name, participant.id] }, selected: values[:user_id], include_blank: "Choose #{@program.participant_article} #{@program.participant_label.downcase}" %>
+  <%= form.select :user_id, @participants.map { |participant| [participant_option_label(participant, show_gender: @program.no_consecutive_genders.any?), participant.id] }, selected: values[:user_id], include_blank: "Choose #{@program.participant_article} #{@program.participant_label.downcase}" %>
   <%= form.label :date, "Booking date" %>
   <%= form.date_field :date, value: values[:date], required: true %>
   <%= form.label :attendance, "Attendance" %>

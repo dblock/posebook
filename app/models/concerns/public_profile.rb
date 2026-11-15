@@ -12,6 +12,7 @@ module PublicProfile
     field :instagram_handle, type: String
     field :instagram_tagging_allowed, type: Mongoid::Boolean, default: false
     field :public_profile_private, type: Mongoid::Boolean, default: false
+    field :primary_profile_photo_id, type: BSON::ObjectId
     before_validation :normalize_public_profile
     before_save :synchronize_instagram_preferences
     validates :display_name, length: { maximum: 100 }, allow_nil: true
@@ -37,6 +38,10 @@ module PublicProfile
     return [] unless active? && !public_profile_private?
 
     profile_photos.select(&:public?)
+  end
+
+  def primary_profile_photo
+    profile_photos.find { |photo| photo.id == primary_profile_photo_id } || profile_photos.first
   end
 
   private

@@ -17,6 +17,21 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
     sign_in(organizer)
   end
 
+  it 'links model identity and private Instagram from rosters and booking history' do
+    participant.update!(instagram_handle: 'drawing.model', public_profile_private: true)
+    membership
+    track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-11-16'))
+    manage_participants
+    [program_participants_path(program), program_path(program, section: 'history')].each do |path|
+      get path
+      identity = response.parsed_body.at_css('.participant-identity')
+      expect(identity.at_css('strong a').text).to eq(participant.name)
+      expect(identity.at_css('strong a')['href']).to eq(participant_path(participant))
+      expect(identity.at_css('.participant-email')['href']).to eq(participant_path(participant))
+      expect(identity.at_css('a[target="_blank"]').text).to eq('@drawing.model')
+    end
+  end
+
   it 'loads booking state in a bounded number of database commands instead of querying each row' do
     8.times { grant_participant_access(program, create_user) }
     manage_participants
