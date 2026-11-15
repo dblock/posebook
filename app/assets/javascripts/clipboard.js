@@ -31,8 +31,8 @@
     const button = event.target.closest?.(".copy-button");
     if (!button || button.getAttribute("aria-busy") === "true") return;
     const feedback = button.parentElement.querySelector(".copy-feedback");
-    const field = button.dataset.copyTarget ? document.getElementById(button.dataset.copyTarget) : null;
-    const value = field ? field.value : button.dataset.copyValue;
+    const field = document.getElementById(button.dataset.copyTarget);
+    const value = field?.value;
     clearTimeout(resetTimers.get(button));
     button.textContent = "Copy";
     button.setAttribute("aria-busy", "true");

@@ -7,7 +7,7 @@
       <tbody>
         <% @users.each do |user| %>
           <tr>
-            <td><%= copyable(user.name, label: "name") %></td><td><%= copyable(user.email, label: "email") %></td><td><%= user.phone.present? ? copyable(user.phone, label: "phone number") : "Not provided" %></td>
+            <td><%= user.name %></td><td><%= user.email %></td><td><%= user.phone.presence || "Not provided" %></td>
             <td><%= user.roles.join(", ") %></td>
             <td><%= status_label(user.active? ? "Active" : "Inactive") %></td>
             <td>
