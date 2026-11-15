@@ -6,3 +6,10 @@ en:
     private_required: Provide a calendar ID and confirm that access is restricted.
     disconnect_first: Disconnect and remove old events before changing calendars.
     disconnected: Synchronization stopped. Existing Google events and invitations are unchanged.
+    response: "Google RSVP: %{status}"
+    checked: "Google RSVP last checked: %{time}"
+    responses:
+      needsAction: Pending
+      accepted: Accepted
+      tentative: Tentative
+      declined: Declined

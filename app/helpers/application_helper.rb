@@ -6,9 +6,9 @@ module ApplicationHelper
     'accepted' => 'success', 'public' => 'success', 'open' => 'success', 'enabled' => 'success',
     'invited' => 'success',
     'canceled' => 'danger', 'revoked' => 'danger', 'inactive' => 'danger',
-    'closed' => 'danger',
+    'closed' => 'danger', 'declined' => 'danger',
     'pending' => 'warning', 'paused' => 'warning', 'rescheduled' => 'warning', 'uninvited' => 'warning',
-    'booked' => 'warning'
+    'booked' => 'warning', 'tentative' => 'warning'
   }.freeze
 
   def status_label(status, **attributes)

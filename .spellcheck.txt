@@ -164,3 +164,7 @@ figcaption
 haspopup
 labelledby
 copyable
+rsvp
+needsAction
+cancelled
+tooltip

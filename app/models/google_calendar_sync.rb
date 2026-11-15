@@ -15,6 +15,9 @@ class GoogleCalendarSync
   field :last_error, type: String
   field :fingerprint, type: String
   field :synced_at, type: Time
+  %i[rsvp_status rsvp_calendar_id rsvp_fingerprint].each { |name| field name, type: String }
+  field :rsvp_checked_at, type: Time
+  field :rsvp_booking_id, type: BSON::ObjectId
   index({ due_at: 1, lease_until: 1 })
   index({ program_id: 1 })
 
@@ -56,7 +59,7 @@ class GoogleCalendarSync
   def deliver(token)
     connection = GoogleCalendarConnection.where(program_id: program_id, enabled: true).first
     return finish(token) unless connection
-    return retry_later(token, 'organizer access required') unless authorized?(connection)
+    return retry_later(token, 'organizer access required') unless connection.authorized?
 
     synchronize(connection, token)
   rescue StandardError => e
@@ -64,11 +67,15 @@ class GoogleCalendarSync
     retry_later(token, e.class.name)
   end
 
-  private
-
-  def authorized?(connection)
-    connection.connected_by.active? && program.managed_by?(connection.connected_by)
+  def event_id
+    "posebook#{id}"
   end
+
+  def payload_fingerprint(connection, payload = GoogleCalendarEvent.new(booking, connection).build)
+    Digest::SHA256.hexdigest("#{connection.calendar_id}:#{payload.to_json}")
+  end
+
+  private
 
   def synchronize(connection, token)
     return deliver_event(connection, token) unless booking.status == 'canceled'
@@ -79,13 +86,9 @@ class GoogleCalendarSync
 
   def deliver_event(connection, token)
     payload = GoogleCalendarEvent.new(booking, connection).build
-    digest = Digest::SHA256.hexdigest("#{connection.calendar_id}:#{payload.to_json}")
+    digest = payload_fingerprint(connection, payload)
     save_event(connection.service, connection.calendar_id, payload) unless digest == fingerprint
     finish(token, fingerprint: digest)
-  end
-
-  def event_id
-    "posebook#{id}"
   end
 
   def save_event(service, calendar_id, payload)
