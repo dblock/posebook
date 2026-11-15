@@ -3,6 +3,8 @@
   <p><%= form.label :name %><br><%= form.text_field :name, required: true, maxlength: 100 %></p>
   <p><%= form.label :custom_slug, "Slug" %><br><%= form.text_field :custom_slug, maxlength: 100, placeholder: venue.name.to_s.to_url %></p>
   <p><%= form.label :address %><br><%= form.text_area :address, required: true, maxlength: 500 %></p>
+  <p><%= form.label :google_maps_url, "Google Maps Link" %><br><%= form.url_field :google_maps_url, maxlength: 2048,
+                                                                                            placeholder: "https://maps.app.goo.gl/..." %><br><small>Optional and visible publicly. Paste a Google Maps place or share link for an exact location. When blank, the address is used to search Google Maps.</small></p>
   <p><%= form.label :instagram_handle, "Instagram" %><br><%= form.text_field :instagram_handle, maxlength: 200, placeholder: "@yourvenue" %><br><small>Optional and visible publicly.</small></p>
   <%= form.submit venue.persisted? ? "Save Venue" : "Create Venue" %>
 <% end %>

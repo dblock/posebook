@@ -85,6 +85,8 @@ System admins can edit any existing user's name, email, and phone, including ina
 
 Venues publish an optional normalized Instagram account and public photos, shared by their programs. The Photos tab displays the public gallery and authorized upload/delete controls; those mutations return to Photos. Programs retain their read-only venue photo previews. Admins and venue coordinators edit them; program coordinators cannot modify location information or photos. There is no venue photo-count cap: each photo has a separate `venue_photos` document. Processing, GridFS storage, public thumbnails, deletion, and no-cache image responses are unchanged. User galleries retain their ten-photo limit and privacy rules.
 
+Venues also expose a Google Maps link, using an optional validated Google Maps HTTPS place/share URL or an address-based search when unset. Only existing venue editors change it, and the change is audited. Public venue/program pages link to it without embedding a map or requesting location services. Google invitations retain the address in their Location field and include the venue name, address, and Maps link in the description. Existing upcoming meetings receive venue edits through the normal five-minute reconciliation and payload fingerprint, preserving event IDs and booking state; no geocoding API, new credential, or server-side URL fetch is introduced.
+
 The venue Instagram handle is audited with other venue settings. Photo metadata and image bytes are not part of the user/venue/program field audit; failed uploads remove their temporary GridFS files.
 
 ## User and Program Audit History

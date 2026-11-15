@@ -39,6 +39,7 @@ class GoogleCalendarEvent
     [
       'Private booking details. Do not share this event or make the calendar public.',
       program_start_details,
+      *venue_details,
       "Name: #{@user.name}", "Public name: #{@user.public_name}",
       "Email: #{@user.email}", "Phone (unverified): #{@user.phone}", "Gender: #{@user.gender}",
       *instagram_details,
@@ -52,6 +53,11 @@ class GoogleCalendarEvent
 
     start = @booking.scheduled_start.in_time_zone(@booking.time_zone)
     "#{@program.program_label.titleize} starts: #{start.strftime('%A, %B %-d, %Y at %-I:%M %p %Z')}"
+  end
+
+  def venue_details
+    venue = @program.venue
+    ["Venue: #{venue.name}", "Address: #{venue.address}", "Google Maps: #{venue.google_maps_location_url}"]
   end
 
   def program_link

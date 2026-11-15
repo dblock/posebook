@@ -1,4 +1,7 @@
 ActionMailer
+api
+gl
+geocoding
 AES
 plaintext
 TTL
