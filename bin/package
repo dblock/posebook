@@ -201,9 +201,9 @@ begin
 ensure
   if container
     puts docker!('logs', container)
-    docker!('rm', '--force', container)
+    docker!('rm', '--force', '--volumes', container)
   end
-  docker!('rm', '--force', database) if database
+  docker!('rm', '--force', '--volumes', database) if database
   docker!('network', 'rm', network) if network
   if !options[:image] && system('docker', 'image', 'inspect', image, out: File::NULL, err: File::NULL)
     docker!('image', 'rm', image)
