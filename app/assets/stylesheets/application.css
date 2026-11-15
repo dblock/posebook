@@ -894,6 +894,10 @@ tbody tr:last-child td {
   font-weight: normal;
 }
 
+.copy-visible-link {
+  overflow-wrap: anywhere;
+}
+
 .copy-field {
   position: relative;
   display: block;
