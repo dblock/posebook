@@ -54,9 +54,13 @@ class ParticipantApplicationWorkflow
       raise Invalid, 'Applications require an open program, verified account, and profile-sharing consent.'
     end
 
-    @application = ParticipantApplication.create!(program: @program, user: actor,
+    @application = ParticipantApplication.create!(program: @program, user: actor, **identity_snapshot(actor),
                                                   message: message, profile_shared_at: Time.current)
     record_event('submitted', actor)
+  end
+
+  def identity_snapshot(actor)
+    { name: actor.name, email: actor.email, gender: actor.gender }
   end
 
   def check_decision(status, version)

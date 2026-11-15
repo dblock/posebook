@@ -19,6 +19,7 @@
     <%= simple_format(@program.instructions) %>
   <% end %>
   <%= render "upcoming_booking" %>
+  <%= render "application_action" %>
   <% elsif @section == "calendar" %>
   <%= render "upcoming_booking" %>
   <%= render "calendar", calendar: @calendar, public_view: !@program_member %>

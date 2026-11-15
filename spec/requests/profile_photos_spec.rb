@@ -121,7 +121,7 @@ RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request 
     sign_in(participant)
     get participant_path(participant)
     expect(response.parsed_body.css('.profile-tabs a').map(&:text))
-      .to eq(['View', 'History', 'Account Details', 'Photos', 'Edit', 'Security'])
+      .to eq(['View', 'History', 'Account Details', 'Applications', 'Photos', 'Edit', 'Security'])
     expect(response.parsed_body.at_css('.profile-tabs [aria-current="page"]').text).to eq('Photos')
     expect(response.parsed_body.at_css('.breadcrumbs [aria-current="page"]').text).to eq('Photos')
     expect(response.parsed_body.at_css('form[action$="/photos"]')).to be_present

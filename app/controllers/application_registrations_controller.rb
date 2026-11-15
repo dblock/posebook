@@ -7,6 +7,7 @@ class ApplicationRegistrationsController < ApplicationController
   rescue_from Mongoid::Errors::Validations, with: :invalid_registration
 
   def new
+    session[:application_program] = @program.id.to_s unless current_user
     @registration = ApplicationRegistration.new(email: current_user&.email)
   end
 

@@ -1,0 +1,26 @@
+<main>
+  <%= render "programs/navigation", program: @program, active: "applications" %>
+  <h1>Applications to <%= @program.name %></h1>
+  <p>Intake is <%= @program.applications_enabled? && @program.booking_active? ? "open" : "closed" %>. Closing intake retains existing applications and does not prevent reconsideration.</p>
+  <p><%= link_to "Participation History", history_program_applications_path(@program) %></p>
+  <%= form_with url: program_applications_path(@program), method: :get do |form| %>
+    <p><%= form.label :status, "Status" %> <%= form.select :status, [["Pending", "pending"], ["Not Now", "declined"], ["Accepted", "accepted"], ["Withdrawn", "withdrawn"], ["All", "all"]], selected: @status %> <%= form.submit "Filter" %></p>
+  <% end %>
+  <% if @applications.empty? %><p>No applications in this view.</p><% else %>
+    <div class="table-scroll" role="region" aria-label="Applications" tabindex="0">
+      <table>
+        <thead><tr><th>Applicant</th><th>Status</th><th>Submitted</th><th>Actions</th></tr></thead>
+        <tbody>
+          <% @applications.each do |application| %>
+            <tr>
+              <td><%= participant_contact_label(application) %></td><td><%= application.status_label %></td>
+              <td><%= l(application.created_at.to_date, format: :long) %></td>
+              <td><%= link_to "Review", program_application_path(@program, application), class: "button-link" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+  <p><%= link_to "Previous", program_applications_path(@program, status: @status, page: @page - 1) if @page > 1 %> <%= link_to "Next", program_applications_path(@program, status: @status, page: @page + 1) if @more %></p>
+</main>

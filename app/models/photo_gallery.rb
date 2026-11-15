@@ -31,6 +31,8 @@ class PhotoGallery
     return @organizer unless @organizer.nil?
 
     program_ids = ProgramMembership.participants.where(user_id: user.id).pluck(:program_id)
+    program_ids += ParticipantApplication.where(user_id: user.id, :status.in => %w[pending declined],
+                                                :profile_shared_at.ne => nil).pluck(:program_id)
     @organizer = Program.managed_by(@viewer).exists?(:id.in => program_ids)
   end
 end

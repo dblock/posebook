@@ -1,0 +1,6 @@
+<% application = ParticipantApplication.where(program_id: @program.id, user_id: current_user.id).first if current_user %>
+<% if application %>
+  <p><%= link_to "Your Application: #{application.status_label}", program_participation_application_path(@program) %></p>
+<% elsif @program.applications_enabled? && @program.booking_active? && !@program_member %>
+  <p><%= link_to "Apply to Participate", new_program_participation_application_path(@program), class: "button-link" %></p>
+<% end %>

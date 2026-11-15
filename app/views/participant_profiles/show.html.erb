@@ -10,7 +10,7 @@
                                          target: "_blank", rel: "noopener noreferrer" %></dd>
       <% end %>
     </dl>
-    <p><%= pluralize(@photos.length, "photo") %>. Private photos are visible only to the account owner, system admins, and their program organizers.</p>
+    <p><%= pluralize(@photos.length, "photo") %>. Private photos are visible only to the account owner, system admins, their program organizers, and coordinators reviewing their consented applications.</p>
     <% if @user.public_profile_private? %>
       <p class="rescheduling-notice">Private Identity is on. All photos are hidden publicly, including photos marked Public.</p>
     <% end %>

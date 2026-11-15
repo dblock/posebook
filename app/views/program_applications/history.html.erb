@@ -1,0 +1,11 @@
+<main>
+  <%= render "programs/navigation", program: @program, active: "applications", detail: "Participation History" %>
+  <h1>Participation History</h1>
+  <p>Application decisions and accepted personal invitations retain their distinct origins. Earlier membership origins are not reconstructed.</p>
+  <% if @events.empty? %><p>No participation events yet.</p><% end %>
+  <% @events.each do |event| %>
+    <h2><%= participant_contact_label(@sources[event.source_id]) if @sources[event.source_id] %></h2>
+    <%= render "participant_applications/events", events: [event], private_notes: true, source: @sources[event.source_id] %>
+  <% end %>
+  <p><%= link_to "Previous", history_program_applications_path(@program, page: @page - 1) if @page > 1 %> <%= link_to "Next", history_program_applications_path(@program, page: @page + 1) if @more %></p>
+</main>

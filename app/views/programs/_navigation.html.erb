@@ -4,6 +4,7 @@
 <% actions = [["photos", "Photos", photos_program_path(program)]] %>
 <% if manager %>
   <% actions << ["participants", program.participant_label.pluralize.titleize, program_participants_path(program)] %>
+  <% actions << ["applications", "Applications", program_applications_path(program)] %>
   <% actions << ["edit", "Edit", edit_program_path(program)] %>
 <% end %>
 <% actions << ["coordinators", "Coordinators", program_coordinators_path(program)] if program.venue.coordinated_by?(current_user) %>

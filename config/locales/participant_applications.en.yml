@@ -1,0 +1,6 @@
+en:
+  participant_applications:
+    submitted: "Application submitted. You have not been enrolled or given booking access."
+    withdrawn: "Application withdrawn. Application-only profile review has ended; existing participant access is unchanged."
+    reviewed: "Application decision saved."
+    duplicate: "You already have an application for this program."
