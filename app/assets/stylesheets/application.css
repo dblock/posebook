@@ -238,6 +238,7 @@ nav {
 .flash,
 .form-errors,
 .attendance-panel,
+.participant-profile-card,
 .rescheduling-notice {
   padding: 1rem 1.25rem;
   border: 1px solid var(--line);
@@ -281,7 +282,8 @@ nav {
 }
 
 .upcoming-booking h2,
-.upcoming-booking h3 {
+.upcoming-booking h3,
+.participant-profile-card h2 {
   margin-top: 0;
 }
 
@@ -684,6 +686,33 @@ tbody tr:last-child td {
 
 .participant-pagination {
   margin: 0.75rem 0;
+}
+
+.participant-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  align-items: start;
+  gap: 2rem;
+}
+
+.participant-profile-card {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  overflow-wrap: anywhere;
+}
+
+.participant-profile-card dl {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+@media (max-width: 50rem) {
+  .participant-editor {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .participant-profile-card dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .participant-roster {

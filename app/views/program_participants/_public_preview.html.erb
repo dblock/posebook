@@ -1,0 +1,22 @@
+<% visible = participant.active? && !participant.public_profile_private? %>
+<section class="participant-profile-card" data-public-preview data-public-preview-visible="<%= visible %>">
+  <h2>Public Card Preview</h2>
+  <p>Public information only. Name changes are not saved until you choose Save <%= @program.participant_label.titleize %>.</p>
+  <% unless visible %><p><%= participant.active? ? "Private Identity hides public names, Instagram, and photos." : "This account is inactive and hidden publicly." %></p><% end %>
+  <p><strong data-public-preview-name aria-live="polite" aria-atomic="true"><%= visible ? participant.public_name.presence || "To be announced" : "To be announced" %></strong></p>
+  <% if visible && (url = participant.public_instagram_url) %>
+    <p><%= link_to "@#{participant.public_instagram_handle}", url, target: "_blank", rel: "noopener noreferrer" %></p>
+  <% end %>
+  <% photos = participant.public_photos %>
+  <% if photos.any? %>
+    <div class="photo-gallery">
+      <% photos.each_with_index do |photo, index| %>
+        <figure class="profile-photo">
+          <%= render "shared/photo_thumbnail", full_url: participant_photo_path(participant, photo),
+                     thumbnail_url: participant_photo_path(participant, photo, thumbnail: 1),
+                     description: "Public profile photo #{index + 1}" %>
+        </figure>
+      <% end %>
+    </div>
+  <% else %><p>No public photos.</p><% end %>
+</section>

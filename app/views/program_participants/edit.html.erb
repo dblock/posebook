@@ -1,16 +1,37 @@
+<% content_for :head do %>
+  <%= javascript_include_tag "participant-preview", defer: true %>
+<% end %>
 <main>
   <%= render "programs/navigation", program: @program, active: "participants", detail: "Edit #{@program.participant_label.titleize}" %>
   <h1>Edit <%= @program.participant_label.titleize %></h1>
   <%= render "shared/errors", record: @participant %>
   <%= render "shared/errors", record: @membership %>
-  <p>Both names apply across all programs. The account name identifies the participant privately and is the public fallback when no display name is set. Private Identity continues to hide public names.</p>
-  <% if @participant.public_profile_private? %><p class="rescheduling-notice">Private Identity is on. The public display name remains editable here but stays hidden publicly.</p><% end %>
-  <p>Coordinator notes apply only to this program. Only its coordinators and system administrators can see them, not the participant or coordinators of other programs.</p>
-  <%= form_with url: program_participant_path(@program, @membership), method: :patch, scope: :participant do |form| %>
-    <p><%= form.label :name, "Account Name" %><br><%= form.text_field :name, value: @participant.name, required: true, maxlength: 100 %></p>
-    <p><%= form.label :display_name, "Public Display Name" %><br><%= form.text_field :display_name, value: @participant.display_name, maxlength: 100 %></p>
-    <p><%= form.label :notes, "Coordinator Notes (Private to This Program)" %><br><%= form.text_area :notes, value: @membership.notes, rows: 6 %></p>
-    <%= form.submit "Save #{@program.participant_label.titleize}" %>
-  <% end %>
-  <p><%= link_to "Cancel", program_participants_path(@program) %> &middot; <%= link_to "View Photos", participant_path(@participant) %></p>
+  <div class="participant-editor" data-participant-editor>
+    <div>
+      <p>Both names apply across all programs. The account name identifies the participant privately and is the public fallback when no display name is set. Private Identity continues to hide public names.</p>
+      <% if @participant.public_profile_private? %><p class="rescheduling-notice">Private Identity is on. The public display name remains editable here but stays hidden publicly.</p><% end %>
+      <p>Coordinator notes apply only to this program. Only its coordinators and system administrators can see them, not the participant or coordinators of other programs.</p>
+      <%= form_with url: program_participant_path(@program, @membership), method: :patch, scope: :participant do |form| %>
+        <p><%= form.label :name, "Account Name" %><br><%= form.text_field :name, value: @participant.name, required: true, maxlength: 100 %></p>
+        <p><%= form.label :display_name, "Public Display Name" %><br><%= form.text_field :display_name, value: @participant.display_name, maxlength: 100 %></p>
+        <p><%= form.label :notes, "Coordinator Notes (Private to This Program)" %><br><%= form.text_area :notes, value: @membership.notes, rows: 6 %></p>
+        <%= form.submit "Save #{@program.participant_label.titleize}" %>
+      <% end %>
+      <p><%= link_to "Cancel", program_participants_path(@program) %> &middot; <%= link_to "View Photos", participant_path(@participant) %></p>
+    </div>
+    <aside aria-label="Current profile and public preview">
+      <%= render "public_preview", participant: @participant %>
+      <section class="participant-profile-card" data-current-profile>
+        <h2>Current Account Data</h2>
+        <p>Saved values. Contact and privacy settings are read-only here.</p>
+        <%= render "shared/participant_identity", participant: @current_participant %>
+        <dl>
+          <dt>Public Display Name</dt><dd><%= @current_participant.display_name.presence || "Not set (uses account name)" %></dd>
+          <dt>Phone</dt><dd><%= @current_participant.phone.presence || "Not provided" %></dd>
+          <dt>Public Identity</dt><dd><%= status_label(@current_participant.public_profile_private? ? "Private" : "Public") %></dd>
+          <dt>Instagram Tagging</dt><dd><%= status_label(@current_participant.instagram_tagging_allowed? ? "Enabled" : "Off") %></dd>
+        </dl>
+      </section>
+    </aside>
+  </div>
 </main>
