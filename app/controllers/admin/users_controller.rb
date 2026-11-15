@@ -35,8 +35,9 @@ module Admin
       raise ActionController::BadRequest unless %w[true false].include?(active)
 
       result = active == 'true' ? @user.reactivate : @user.deactivate
+      alert = @user.errors.full_messages.to_sentence.presence || t('accounts.status_update_failed')
       redirect_to admin_users_path,
-                  result ? { notice: t('accounts.status_updated') } : { alert: @user.errors.full_messages.to_sentence }
+                  result ? { notice: t('accounts.status_updated') } : { alert: alert }
     end
 
     def redirect_after_update
