@@ -2,7 +2,7 @@
 
 Rails.application.routes.draw do
   root 'pages#home'
-  %i[invitations google_calendar profile information].each { |routes| draw routes }
+  %i[invitations applications google_calendar profile information].each { |routes| draw routes }
   resource :session, only: %i[new create destroy]
   resources :participants, only: :show, controller: 'participant_profiles' do
     resources :photos, only: %i[show create update destroy], controller: 'profile_photos'

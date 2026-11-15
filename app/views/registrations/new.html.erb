@@ -1,6 +1,6 @@
 <main>
   <h1>Create Your Account</h1>
-  <p>The first registered user receives the system admin role. Later accounts require invitations.</p>
+  <p>The first registered user receives the system admin role. Later accounts require invitations or verified application registration at an open program.</p>
   <%= render "shared/errors", record: @user %>
   <%= form_with model: @user, url: registration_path do |form| %>
     <p><%= form.label :name %><br><%= form.text_field :name, required: true, autocomplete: "name", maxlength: 100 %></p>

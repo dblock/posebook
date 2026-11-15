@@ -21,6 +21,7 @@ RSpec.configure do |config|
     ProgramMembership.create_indexes
     ParticipantInvitation.create_indexes
     ParticipantApplication.create_indexes
+    ApplicationRegistration.create_indexes
     ParticipationEvent.create_indexes
     Booking.create_indexes
     BookingClaim.create_indexes

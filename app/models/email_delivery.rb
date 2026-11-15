@@ -7,7 +7,8 @@ class EmailDelivery
   class Unavailable < StandardError; end
   class Failed < StandardError; end
 
-  KINDS = %w[password_reset email_change participant_invitation coordinator_invitation booking_invitation].freeze
+  KINDS = %w[password_reset email_change participant_invitation coordinator_invitation booking_invitation
+             application_registration].freeze
 
   field :kind, type: String
   field :resource_id, type: BSON::ObjectId
@@ -32,7 +33,7 @@ class EmailDelivery
         result = new(kind: kind, resource_id: resource.id, expires_at: expires_at, grant_invited_at: grant_invited_at)
         result.token = token if token
         result.save!
-        job = EmailDeliveryJob.perform_later(result.id.to_s)
+        job = EmailDeliveryJob.perform_later(result.id.to_s).presence
         raise Unavailable, 'Email enqueue failed' unless job&.successfully_enqueued?
 
         result.update!(queued_job_id: job.provider_job_id)

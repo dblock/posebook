@@ -1,0 +1,31 @@
+<main>
+  <h1>Verify Your Email to Apply to <%= @program.name %></h1>
+  <p>This link verifies <%= @invitation.email %>. No participation or booking access is granted until a coordinator accepts your application.</p>
+  <%= render "shared/errors", record: @user %>
+  <% if current_user %>
+    <p>Signed in as <%= current_user.name %> (<%= current_user.email %>).</p>
+    <% if @invitation.acceptable_by?(current_user) %>
+      <%= form_with url: application_verification_path do |form| %>
+        <%= hidden_field_tag :token, @token %>
+        <%= form.submit "Verify Email and Continue" %>
+      <% end %>
+    <% else %>
+      <p>Sign out and use the account matching the email above.</p>
+      <%= button_to "Sign Out and Continue", session_path(application_registration_token: @token), method: :delete %>
+    <% end %>
+  <% else %>
+    <p><%= link_to "Sign In with an Existing Account", new_session_path %></p>
+    <h2>Create Your Account</h2>
+    <%= form_with model: @user, url: application_registration_account_path do |form| %>
+      <%= hidden_field_tag :token, @token %>
+      <p><%= form.label :name %><br><%= form.text_field :name, required: true, maxlength: 100, autocomplete: "name" %></p>
+      <p><%= form.label :email %><br><%= form.email_field :email, readonly: true, required: true, autocomplete: "email" %></p>
+      <p><%= form.label :phone %><br><%= form.telephone_field :phone, required: true, autocomplete: "tel", placeholder: "(212) 555-1234" %><br>Include the country code outside the US and Canada. Phone numbers are unverified.</p>
+      <%= render "shared/gender_field", form: form %>
+      <%= render "shared/public_profile_fields", form: form, self_service: true %>
+      <p><%= form.label :password %> (at least 12 characters)<br><%= form.password_field :password, required: true, minlength: 12, autocomplete: "new-password" %></p>
+      <p><%= form.label :password_confirmation %><br><%= form.password_field :password_confirmation, required: true, autocomplete: "new-password" %></p>
+      <%= form.submit "Create Account and Verify Email" %>
+    <% end %>
+  <% end %>
+</main>

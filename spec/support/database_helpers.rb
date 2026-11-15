@@ -80,11 +80,14 @@ module DatabaseHelpers
   end
 
   def track_participation_records
-    ids = tracked_records.grep(User).map(&:id)
-    records = [ParticipantApplication, ParticipationEvent].flat_map do |model|
-      model.where(:user_id.in => ids).to_a
-    end
-    tracked_records.concat(records - tracked_records)
+    scopes = [ParticipantApplication.where(:user_id.in => tracked_ids(User)),
+              ParticipationEvent.where(:user_id.in => tracked_ids(User)),
+              ApplicationRegistration.where(:program_id.in => tracked_ids(Program))]
+    tracked_records.concat(scopes.flat_map(&:to_a) - tracked_records)
+  end
+
+  def tracked_ids(model)
+    tracked_records.grep(model).map(&:id)
   end
 
   def destroy_tracked_record(record)

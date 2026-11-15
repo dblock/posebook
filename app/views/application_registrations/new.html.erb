@@ -1,0 +1,10 @@
+<main>
+  <%= render "programs/navigation", program: @program, active: "view", detail: "Prepare an Application" %>
+  <h1>Prepare an Application to <%= @program.name %></h1>
+  <p>First verify your email, then sign in or create your account. You can prepare your profile and photos before submitting an application. Verification alone does not grant participation or booking access.</p>
+  <%= render "shared/errors", record: @registration %>
+  <%= form_with url: program_application_registration_path(@program), scope: :application_registration do |form| %>
+    <p><%= form.label :email %><br><%= form.email_field :email, value: @registration.email, required: true, autocomplete: "email", maxlength: 254 %></p>
+    <%= form.submit "Send Verification Email" %>
+  <% end %>
+</main>
