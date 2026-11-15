@@ -35,6 +35,7 @@
     const value = field?.value;
     clearTimeout(resetTimers.get(button));
     button.textContent = "Copy";
+    button.disabled = true;
     button.setAttribute("aria-busy", "true");
     feedback.textContent = "";
     feedback.classList.remove("copy-error");
@@ -55,6 +56,7 @@
       field?.focus();
       field?.select();
     } finally {
+      button.disabled = false;
       button.removeAttribute("aria-busy");
     }
   });
