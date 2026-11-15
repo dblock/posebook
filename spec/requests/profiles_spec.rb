@@ -14,7 +14,7 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
 
   it 'requires authentication for all account pages and password changes' do
     create_user
-    [profile_path, edit_profile_path, security_profile_path, edit_password_path,
+    [profile_path, history_profile_path, edit_profile_path, security_profile_path, edit_password_path,
      new_account_deactivation_path].each do |path|
       get path
       expect(response).to redirect_to(new_session_path)
@@ -30,7 +30,7 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     expect(response.body).to include(user.name, user.email, 'Not provided')
     expect(response.parsed_body.css('main form')).to be_empty
     expect(response.parsed_body.css('.profile-tabs a').pluck('href'))
-      .to eq([profile_path, edit_profile_path, participant_path(user), security_profile_path])
+      .to eq([profile_path, history_profile_path, edit_profile_path, participant_path(user), security_profile_path])
   end
 
   it 'groups security forms while keeping profile editing separate and old security URLs usable' do

@@ -4,10 +4,8 @@
   <% if @programs.empty? %>
     <p>No programs assigned. Visit Venues to create a program or contact a coordinator for access.</p>
   <% else %>
-    <ul>
-      <% @programs.each do |program| %>
-        <li><%= link_to program.name, program %> - <%= program_schedule_summary(program) %></li>
-      <% end %>
-    </ul>
+    <div class="location-cards">
+      <% @programs.each do |program| %><%= render "card", program: program %><% end %>
+    </div>
   <% end %>
 </main>

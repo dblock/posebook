@@ -7,6 +7,7 @@ class Venue
   include Mongoid::Timestamps
   include Mongoid::Slug
   include HistoryTracking
+  include PrimaryPhoto
 
   GOOGLE_MAPS_PATHS = {
     'google.com' => %r{\A/maps(?:/|\z)}, 'www.google.com' => %r{\A/maps(?:/|\z)},
@@ -19,7 +20,6 @@ class Venue
   field :address, type: String
   field :instagram_handle, type: String
   field :google_maps_url, type: String
-  field :primary_photo_id, type: BSON::ObjectId
 
   slug :name, :custom_slug, history: true, reserve: Program::RESERVED_SLUGS, max_length: 100 do |venue|
     (venue.custom_slug.presence || venue.name).to_url
@@ -54,10 +54,6 @@ class Venue
 
   def google_maps_location_url
     google_maps_url.presence || "https://www.google.com/maps/search/?#{URI.encode_www_form(api: 1, query: address)}"
-  end
-
-  def primary_photo(photos = self.photos.order_by(created_at: :asc).to_a)
-    photos.find { |photo| photo.id == primary_photo_id } || photos.first
   end
 
   def public_instagram_handle

@@ -80,12 +80,16 @@ RSpec.describe 'Coordinator hierarchy', :aggregate_failures, :database, type: :r
     expect(coordinator.reload.roles).to be_empty
   end
 
-  it 'publishes location details and session links without private session information' do
+  it 'publishes location details and a separate program tab without private session information' do
     program
     get venue_path(venue)
-    expect(response.body).to include(venue.name, venue.address, program_path(program))
+    expect(response.body).to include(venue.name, venue.address, programs_venue_path(venue))
+    expect(response.body).not_to include(program_path(program))
     expect(response.body).not_to include('Pay', 'Booking History', 'Create Program', 'Program Coordinators')
     expect(response.parsed_body.css('[data-calendar], form')).to be_empty
-    expect(response.parsed_body.css('.venue-tabs a').map(&:text)).to eq(%w[View Photos])
+    expect(response.parsed_body.css('.venue-tabs a').map(&:text)).to eq(%w[View Programs Photos])
+    get programs_venue_path(venue)
+    expect(response.body).to include(program_path(program))
+    expect(response.body).not_to include('Pay', 'Booking History', 'Create Program')
   end
 end

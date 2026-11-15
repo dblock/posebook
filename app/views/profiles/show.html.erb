@@ -1,6 +1,9 @@
 <main>
   <%= render "navigation", active: "view" %>
   <h1>Profile</h1>
+  <%= render "bookings", dashboard: @dashboard %>
+  <details>
+  <summary>Account Details</summary>
   <dl>
     <dt>Name</dt><dd><%= @user.name %></dd>
     <dt>Email</dt><dd><%= @user.email %></dd>
@@ -29,4 +32,5 @@
       </div>
     </section>
   <% end %>
+  </details>
 </main>

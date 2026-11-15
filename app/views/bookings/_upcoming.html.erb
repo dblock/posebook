@@ -15,9 +15,7 @@
       <p class="upcoming-booking-date"><time datetime="<%= booking.scheduled_start.iso8601 %>"><%= booking.date.to_fs(:long) %> at <%= booking_time(booking) %></time></p>
       <% if local_assigns.fetch(:show_venue, false) %>
         <p><%= link_to program.venue.name, venue_path(program.venue) %></p>
-        <%= simple_format(program.address) %>
-        <p><%= link_to "View on Google Maps", program.venue.google_maps_location_url,
-                      target: "_blank", rel: "noopener noreferrer", class: "venue-google-maps" %></p>
+        <%= render "venues/information", venue: program.venue %>
       <% end %>
       <%= render "bookings/attendance", program: program, booking: booking, can_book: can_book %>
       <% if booking.rescheduling_locked? %>

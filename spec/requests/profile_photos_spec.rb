@@ -49,7 +49,7 @@ RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request 
     follow_redirect!
     image = response.parsed_body.at_css('.profile-photo img')
     expect(image.attributes.transform_values(&:value)).to include('width' => '400', 'height' => '400')
-    expect(response.body).to include('Make Public', 'Delete Photo', '1 of 10')
+    expect(response.body).to include('Make Public', 'Delete Photo', '1 photo')
     expect(response.parsed_body.css('.photo-actions button.secondary-action').map(&:text))
       .to contain_exactly('Make Public', 'Delete Photo')
     expect(response.parsed_body.at_css('.profile-photo .status-label-neutral').text).to eq('Private')
@@ -102,7 +102,7 @@ RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request 
   it 'keeps the owner photo editor in profile tabs and breadcrumbs' do
     sign_in(participant)
     get participant_path(participant)
-    expect(response.parsed_body.css('.profile-tabs a').map(&:text)).to eq(%w[View Edit Photos Security])
+    expect(response.parsed_body.css('.profile-tabs a').map(&:text)).to eq(%w[View History Edit Photos Security])
     expect(response.parsed_body.at_css('.profile-tabs [aria-current="page"]').text).to eq('Photos')
     expect(response.parsed_body.at_css('.breadcrumbs [aria-current="page"]').text).to eq('Photos')
     expect(response.parsed_body.at_css('form[action$="/photos"]')).to be_present
@@ -313,20 +313,23 @@ RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request 
     expect(stored_files.count).to eq(0)
   end
 
-  it 'enforces ten photos atomically under concurrent uploads and removes the losing upload files' do
+  it 'keeps all concurrent uploads beyond ten photos and continues offering uploads' do
     9.times { ProfilePhoto.add(participant.reload, photo_upload) }
     owners = Array.new(2) { User.find(participant.id).tap { |user| user.profile_photos.to_a } }
     uploads = Array.new(2) { photo_upload }
-    results = owners.zip(uploads).map do |owner, upload|
-      Thread.new do
-        ProfilePhoto.add(owner, upload)
-      rescue ProfileImage::Invalid
-        nil
-      end
-    end.map(&:value)
-    expect(results.compact.length).to eq(1)
-    expect(participant.reload.profile_photos.length).to eq(10)
-    expect(stored_files.count).to eq(20)
+    owners.zip(uploads).map { |owner, upload| Thread.new { ProfilePhoto.add(owner, upload) } }.each(&:value)
+    expect(participant.reload.profile_photos.length).to eq(11)
+    expect(stored_files.count).to eq(22)
+    sign_in(participant)
+    get participant_path(participant)
+    expect(response.parsed_body.at_css('input[type="file"]')).to be_present
+    expect(response.body).not_to include('Delete one before uploading')
+  end
+
+  it 'cleans up uploads if the owning account disappears before attachment' do
+    participant.destroy!
+    expect { ProfilePhoto.add(participant, photo_upload) }.to raise_error(ProfileImage::Invalid, /no longer available/)
+    expect(stored_files.count).to eq(0)
   end
 
   it 'allows replacement after deletion, removes both GridFS files and denies deleted URLs' do

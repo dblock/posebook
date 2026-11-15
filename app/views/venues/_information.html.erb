@@ -1,0 +1,6 @@
+<%= simple_format(venue.address) %>
+<p><%= link_to "View on Google Maps", venue.google_maps_location_url, class: "venue-google-maps",
+               target: "_blank", rel: "noopener noreferrer" %></p>
+<% if venue.public_instagram_url %>
+  <p><%= link_to "@#{venue.public_instagram_handle}", venue.public_instagram_url, target: "_blank", rel: "noopener noreferrer" %></p>
+<% end %>

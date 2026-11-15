@@ -5,6 +5,7 @@ class Program
   include Mongoid::Timestamps
   include Mongoid::Slug
   include HistoryTracking
+  include PrimaryPhoto
 
   TIME_ZONES = TZInfo::Timezone.all_identifiers.freeze
   RESERVED_SLUGS = %w[new edit admin assets rails up venues sessions programs profile password registration
@@ -31,13 +32,14 @@ class Program
 
   track_history on: %i[name program_label participant_label custom_slug _slugs time_zone pay instructions
                        booking_horizon_months available_weekdays start_time end_time no_consecutive_genders
-                       calendar_invitation_lead_minutes],
+                       calendar_invitation_lead_minutes primary_photo_id],
                 modifier_field_optional: true, modifier_field_inverse_of: nil, track_blank_changes: true
 
   has_many :memberships, class_name: 'ProgramMembership', inverse_of: :program,
                          dependent: :restrict_with_error
   belongs_to :venue, inverse_of: :programs
-  delegate :address, :photos, :public_instagram_handle, :public_instagram_url, to: :venue
+  delegate :address, :public_instagram_handle, :public_instagram_url, to: :venue
+  has_many :photos, class_name: 'ProgramPhoto', inverse_of: :program, dependent: :destroy
   has_many :participant_invitations, inverse_of: :program, dependent: :restrict_with_error
   has_many :bookings, inverse_of: :program, dependent: :restrict_with_error
   has_many :schedule_exceptions, class_name: 'ProgramScheduleException', inverse_of: :program,

@@ -1,0 +1,9 @@
+<main>
+  <%= render "navigation", venue: @venue, active: "programs" %>
+  <h1>Programs at <%= @venue.name %></h1>
+  <%= render "card", venue: @venue %>
+  <div class="location-cards">
+    <% @programs.each do |program| %><%= render "programs/card", program: program %><% end %>
+  </div>
+  <% if @programs.empty? %><p>No programs yet.</p><% end %>
+</main>

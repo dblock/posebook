@@ -1,4 +1,4 @@
-<% tabs = [["programs", "Programs", programs_path], ["venues", "Venues", venues_path]] %>
+<% tabs = [["venues", "Venues", venues_path]] %>
 <% tabs << ["new_venue", "Create Venue", new_venue_path] if current_user&.system_admin? %>
 <% breadcrumbs = active == "new_venue" ? [["Venues", venues_path], ["Create Venue", nil]] : [[active.titleize, nil]] %>
 <%= render "shared/page_navigation", breadcrumbs: breadcrumbs, tabs: tabs, active: active, tabs_class: "directory-tabs", label: "Directory navigation" %>

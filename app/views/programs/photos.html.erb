@@ -1,0 +1,5 @@
+<main>
+  <%= render "navigation", program: @program, active: "photos" %>
+  <h1><%= @program.name %> - Photos</h1>
+  <%= render "photos", program: @program, editable: current_user && @program.managed_by?(current_user) %>
+</main>

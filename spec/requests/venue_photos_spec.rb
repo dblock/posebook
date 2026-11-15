@@ -30,6 +30,23 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     VenuePhoto.storage.file_model.where('metadata.venue_id' => venue.id)
   end
 
+  it 'keeps the photo-led venue directory separate from public per-venue program tabs' do
+    photo
+    program = create_program(venue: venue, instructions: 'Private instructions')
+    sign_in(admin)
+    get venues_path
+    expect(response.parsed_body.at_css(".venue-card img[src='#{venue_photo_path(venue, photo, thumbnail: 1)}']"))
+      .to be_present
+    expect(response.parsed_body.at_css('.venue-card').text).to include(venue.address)
+    expect(response.body).not_to include(program.name, 'Private instructions')
+    expect(response.parsed_body.css('.directory-tabs a').map(&:text)).not_to include('Programs')
+    delete session_path
+    get programs_venue_path(venue)
+    expect(response.parsed_body.at_css('.venue-tabs [aria-current="page"]').text).to eq('Programs')
+    expect(response.parsed_body.at_css('.program-card').text).to include(program.name, venue.address)
+    expect(response.body).not_to include('Private instructions')
+  end
+
   it 'lets admins upload public venue photos and shows square thumbnails without guest edit controls' do
     sign_in(admin)
     post venue_photos_path(venue), params: { venue_photo: { file: photo_upload } }
@@ -50,7 +67,7 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
 
   it 'moves venue photos into a public tab without granting management access' do
     get venue_path(venue)
-    expect(response.parsed_body.css('.venue-tabs a').map(&:text)).to eq(%w[View Photos])
+    expect(response.parsed_body.css('.venue-tabs a').map(&:text)).to eq(%w[View Programs Photos])
     expect(response.parsed_body.at_css('.photo-gallery')).to be_nil
     get photos_venue_path(venue)
     expect(response.body).to include('No venue photos yet.')
@@ -58,8 +75,8 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     expect(response.parsed_body.css('main form')).to be_empty
     sign_in(admin)
     get edit_venue_path(venue)
-    expect(response.parsed_body.css('.venue-tabs a').map(&:text)).to eq(['View', 'Photos', 'Edit', 'Create Program',
-                                                                         'Coordinators'])
+    expect(response.parsed_body.css('.venue-tabs a').map(&:text))
+      .to eq(['View', 'Programs', 'Photos', 'Edit', 'Create Program', 'Coordinators'])
     expect(response.parsed_body.at_css('.venue-tabs [aria-current="page"]').text).to eq('Edit')
   end
 

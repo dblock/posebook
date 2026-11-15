@@ -1,5 +1,6 @@
 <main>
   <%= render "navigation", venue: @venue, active: "photos" %>
   <h1><%= @venue.name %> Photos</h1>
+  <%= render "card", venue: @venue %>
   <%= render "photos", venue: @venue, editable: @venue.coordinated_by?(current_user), show_empty: true %>
 </main>
