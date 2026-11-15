@@ -60,4 +60,5 @@
 - [#66](https://github.com/dblock/posebook/pull/66): Improve the contrast of available calendar badges - [@dblock](https://github.com/dblock).
 - [#67](https://github.com/dblock/posebook/pull/67): Require phone and gender for all accounts and backfill missing details - [@dblock](https://github.com/dblock).
 - [#68](https://github.com/dblock/posebook/pull/68): Default registration to Instagram tagging and require a handle when enabled - [@dblock](https://github.com/dblock).
+- [#69](https://github.com/dblock/posebook/pull/69): Accept common phone number formats and normalize stored numbers - [@dblock](https://github.com/dblock).
 - Your contribution here.

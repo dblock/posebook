@@ -8,7 +8,7 @@ Participant and venue/program coordinator invitations follow the same email rule
 
 Use **Profile** to edit your name, display name, phone, Instagram handle, and privacy preferences. Your display name defaults to your account name. Registration forms select Instagram tagging by default; enter a handle or clear the tagging checkbox. Instagram appears on public calendars only when tagging is enabled; **Keep all my information private** hides your name and Instagram from public pages while retaining saved preferences.
 
-Phone and gender are required for all accounts. Enter your phone in international format beginning with `+`; it is unverified and cannot be used for recovery or messaging. Gender is private. Existing accounts may have a migration placeholder for either field; check and update your profile.
+Phone and gender are required for all accounts. Phone numbers may include spaces, parentheses, periods, or dashes; ten-digit numbers are treated as US/Canada, and other numbers need a country code. Omit an optional trunk prefix such as `(0)`, or enter a significant zero without parentheses. Phone numbers are unverified and cannot be used for recovery or messaging. Gender is private. Existing accounts may have a migration placeholder for either field; check and update your profile.
 
 Use **Change Password** or **Deactivate Account** from your profile to manage account access. Changing your password signs out other sessions. Deactivation signs you out and retains your booking history.
 

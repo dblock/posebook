@@ -91,12 +91,13 @@ RSpec.describe 'Invitation recipient restrictions', :aggregate_failures, :databa
       get accept_path, params: { token: invitation.token }
       expect(response.parsed_body.at_css('#user_email')['readonly']).to be_nil
       expect(response.parsed_body.at_css('#user_name')['value']).to eq(invitation.name)
-      attributes = user_attributes
+      attributes = user_attributes(phone: '1 (212) 555-1234')
       post register_path, params: { token: invitation.token, user: attributes }
       user = track_record(User.find_by(email: attributes[:email]))
       track_granted_membership(user)
       expect(response).to redirect_to(destination)
       expect(invitation.reload.used_by_id).to eq(user.id)
+      expect(user.phone).to eq('+12125551234')
     end
 
     it 'shows logout guidance and rejects acceptance by a different signed-in account' do
