@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
 module ParticipantHelper
-  def participant_option_label(participant, show_gender: false)
-    parts = [participant.name, participant.email]
-    parts << "@#{participant.instagram_handle}" if participant.instagram_handle.present?
-    parts << (participant.gender&.capitalize || 'Gender not selected') if show_gender
-    parts.join(' - ')
+  def participant_contact_label(participant)
+    name = participant.name.presence
+    email = participant.email.presence
+    label = name && email ? "#{name} <#{email}>" : name || email || 'Personal invitation'
+    gender = participant.try(:gender).presence
+    gender ? "#{label} (#{gender.capitalize})" : label
   end
 end

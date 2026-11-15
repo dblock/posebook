@@ -25,9 +25,8 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
     [program_participants_path(program), program_path(program, section: 'history')].each do |path|
       get path
       identity = response.parsed_body.at_css('.participant-identity')
-      expect(identity.at_css('strong a').text).to eq(participant.name)
+      expect(identity.at_css('strong a').text).to eq("#{participant.name} <#{participant.email}> (Other)")
       expect(identity.at_css('strong a')['href']).to eq(participant_path(participant))
-      expect(identity.at_css('.participant-email')['href']).to eq(participant_path(participant))
       expect(identity.at_css('.participant-portrait')['href']).to eq(participant_path(participant))
       expect(identity.at_css('.participant-portrait img')['src']).to include('profile-placeholder')
       expect(identity.at_css('a[target="_blank"]').text).to eq('@drawing.model')
