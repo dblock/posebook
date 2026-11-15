@@ -87,4 +87,5 @@
 - [#93](https://github.com/dblock/posebook/pull/93): Keep roster actions to compact pause/resume controls and center smaller primary-photo buttons and labels - [@dblock](https://github.com/dblock).
 - [#97](https://github.com/dblock/posebook/pull/97): Remove temporary container volumes after packaging checks to prevent Docker disk buildup - [@dblock](https://github.com/dblock).
 - [#98](https://github.com/dblock/posebook/pull/98): Share request-local dashboards through a cached controller helper instead of the Rack environment - [@dblock](https://github.com/dblock).
+- [#100](https://github.com/dblock/posebook/pull/100): Reuse per-date schedule time calculations while rendering each calendar - [@dblock](https://github.com/dblock).
 - Your contribution here.
