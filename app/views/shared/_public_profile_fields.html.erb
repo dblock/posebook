@@ -9,9 +9,9 @@
     <p><%= form.label :display_name, "Display name (public, optional)" %><br><%= form.text_field :display_name, maxlength: 100 %><br>
       <small>This will be public in announcements and program calendars. Leave blank to use your name, which will then be public instead.</small>
     </p>
-    <p><%= form.label :instagram_handle, "Instagram handle (optional)" %><br><%= form.text_field :instagram_handle, placeholder: "@your_name", maxlength: 500 %><br>
-      <small>Enter a handle or paste an Instagram profile URL; only the handle is saved. Shown publicly when tagging is enabled below.</small>
+    <p><%= form.label :instagram_handle, "Instagram handle" %><br><%= form.text_field :instagram_handle, placeholder: "@your_name", maxlength: 500, data: { instagram_handle: true } %><br>
+      <small>Enter a handle or paste an Instagram profile URL; required when tagging is enabled below. Only the handle is saved.</small>
     </p>
-    <p><%= form.check_box :instagram_tagging_allowed %> <%= form.label :instagram_tagging_allowed, "Tag Instagram in announcements and program calendars" %></p>
+    <p><%= form.check_box :instagram_tagging_allowed, data: { instagram_tagging: true } %> <%= form.label :instagram_tagging_allowed, "Tag Instagram in announcements and program calendars" %></p>
   <% end %>
 </fieldset>

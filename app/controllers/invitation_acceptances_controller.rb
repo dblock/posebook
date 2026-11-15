@@ -10,7 +10,7 @@ class InvitationAcceptancesController < ApplicationController
     session.delete(:invitation_token)
     session.delete(:coordinator_invitation_token)
     session[invitation_session_key] = @token
-    @user = User.new(name: @invitation.name, email: @invitation.email)
+    @user = User.new(name: @invitation.name, email: @invitation.email, instagram_tagging_allowed: true)
   end
 
   def create
