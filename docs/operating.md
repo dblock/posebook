@@ -31,7 +31,7 @@ bin/dev
 
 Without SMTP configuration, account recovery reports that email is unavailable. SMS delivery is not implemented.
 
-Optional Google Calendar synchronization requires a Google OAuth web client, a private calendar per program, and a separate worker using the same MongoDB and encryption secret as the web app. See [Google Calendar Setup](google-calendar.md) for configuration, consent, deployment, and verification.
+Run the [shared background worker](background-jobs.md) with `bundle exec rake jobs:work` to process durable MongoDB-backed Active Jobs. It handles every queue by default; `JOB_QUEUES` can restrict dedicated workers to comma-separated queue names. Optional Google Calendar synchronization requires a Google OAuth web client and a private calendar per program; it uses this shared worker rather than a separate calendar worker. See [Google Calendar Setup](google-calendar.md) for configuration, consent, deployment, and verification.
 
 ## Production Operations
 

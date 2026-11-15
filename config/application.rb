@@ -16,7 +16,8 @@ module Posebook
     config.load_defaults 8.1
     config.autoload_lib(ignore: %w[assets tasks])
     config.time_zone = 'UTC'
-    config.active_job.queue_adapter = :async
+    config.active_job.queue_adapter = :delayed_job
+    config.active_job.log_arguments = false
     config.x.password_reset_delivery_enabled = true
     config.generators do |generators|
       generators.orm :mongoid

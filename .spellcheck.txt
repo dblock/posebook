@@ -4,6 +4,12 @@ Auth
 GCM
 OAuth
 backoff
+deduplicated
+enqueueing
+idempotency
+requeue
+SIGINT
+SIGTERM
 Posebook's
 ActiveJob
 ActiveJob's

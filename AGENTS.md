@@ -14,7 +14,7 @@ Venue photos use separate `VenuePhoto` documents and the same optimized GridFS i
 
 ## Invariants
 
-MongoDB is the only application database. Do not introduce Active Record, SQL-backed queues, or Redis without agreement. The scaffold's in-process ActiveJob adapter is not a durable reminder scheduler. Do not enable automated participant notifications/reminders until consent, opt-outs, retry behavior, and cancellation handling exist; explicitly requested transactional account/invitation email is separate.
+MongoDB is the only application database. Do not introduce Active Record, SQL-backed queues, or Redis without agreement. Active Job uses `delayed_job_mongoid` and the shared `jobs:work` worker; enqueue idempotent jobs with minimal serialized arguments, preserve transaction boundaries, and never log payloads or private exception messages. Calendar changes retain their transactional outbox. Do not enable automated participant notifications/reminders until consent, opt-outs, retry behavior, and cancellation handling exist; explicitly requested transactional account/invitation email is separate.
 
 Use one User model with roles. Only blank-installation registration grants `system_admin`; its fixed document ID makes competing claims atomic. Public registration must close afterward; subsequent accounts require invitations. Never accept role fields in public account forms. Keep password hashing and reset-token expiry/single-use behavior intact; password reset must atomically change the digest, remove the token, and invalidate all sessions. Provider messaging consent requirements apply to future participant notifications, not explicitly requested account recovery.
 
