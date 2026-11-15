@@ -156,7 +156,7 @@ module UserExperienceBenchmark
     def initialize(fixtures, samples:)
       @fixtures = fixtures
       @samples = samples
-      @program_path = "/sessions/#{fixtures.programs.first.to_param}"
+      @program_path = "/programs/#{fixtures.programs.first.to_param}"
       @venue_path = "/venues/#{fixtures.venues.first.to_param}"
       @month = Date.current.advance(months: 2).strftime('%Y-%m')
       @mongo_version = Mongoid.default_client.database.command(buildInfo: 1).first['version']

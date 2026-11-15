@@ -1,5 +1,9 @@
 # Upgrading
 
+## Program URLs
+
+Program URLs now use `/programs` instead of `/sessions`, including calendars, bookings, galleries, management, and Google Calendar settings. Creating a program uses `/venues/:venue_slug/programs/new` and posts to `/venues/:venue_slug/programs`. Update saved bookmarks, shared links, and external clients to the new prefix; old `/sessions` paths are not redirected or aliased. Authentication remains at `/session`, and the Google OAuth callback is unchanged. No database or slug migration is required.
+
 ## Queued Transactional Email
 
 Account recovery, email-change verification, participant/coordinator invitations, and invitations to book again now require the shared background worker. Deploy web and worker together with the same version, SMTP settings, `MAIL_FROM`, `APP_HOST`, and `SECRET_KEY_BASE`. Remove a calendar-only queue filter, include `mailers` in `JOB_QUEUES=calendar,mailers`, or add a dedicated mail worker before serving the new web version. Startup creates the encrypted email outbox indexes; no data migration is required.
@@ -20,7 +24,7 @@ These are placeholders, not verified contact details or confirmed genders. Ask a
 
 New programs default to **Program** and **Participant**, zero pay, Mondays at 09:00 UTC, and a six-month booking horizon. Existing stored labels, schedules, pay, memberships, and booking history are not rewritten. Configured gender rules and explicit organizer overrides remain supported.
 
-`APP_HOST` now defaults to `localhost`. Set it to your actual hostname for an external deployment, particularly if the installation previously relied on the old built-in hostname. Public `/sessions` URLs and authentication `/session` remain unchanged. No data migration is required.
+`APP_HOST` now defaults to `localhost`. Set it to your actual hostname for an external deployment, particularly if the installation previously relied on the old built-in hostname. Authentication remains at `/session`. No data migration is required.
 
 ## Optional Invitation Email Restrictions
 
@@ -38,4 +42,4 @@ The sole instance must deploy [PR #52](https://github.com/dblock/posebook/pull/5
 
 Current startup creates declared MongoDB indexes only. Historical conversion classes, rake tasks, tests, and schema flags are no longer shipped; there are no automatic collection/field/role conversions, Instagram data rewrites, or startup slug backfills. This removal does not delete stored accounts, venues, programs, photos, bookings, or audit history.
 
-Normal saves still generate and retain venue/program slugs, and normal profile input still accepts Instagram handles or profile URLs. Public program pages stay at `/sessions/:slug`, venues at `/venues/:slug`, and authentication at `/session`.
+Normal saves still generate and retain venue/program slugs, and normal profile input still accepts Instagram handles or profile URLs. Public program pages use `/programs/:slug`, venues use `/venues/:slug`, and authentication uses `/session`.

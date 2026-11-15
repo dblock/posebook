@@ -12,6 +12,6 @@ When an end time is provided, the calendar and booking details show the duration
 
 Your homepage lists your upcoming bookings in date/time order, with the venue's primary photo, address, and Google Maps link inside each booking card. The same date, attendance status, and booking buttons appear on the program's View and Calendar pages. **Change Date** and **Cancel Booking** retain their existing explanations and deadlines; attendance confirmation appears when its window opens.
 
-Location pages use `/venues/:slug`; calendars and bookings use `/sessions/:slug`. Previous slugs remain valid within those paths. Old root shortcuts and venue-nested calendar/booking links are not redirected.
+Location pages use `/venues/:slug`; calendars and bookings use `/programs/:slug`. Previous slugs remain valid within those paths. Old root shortcuts and venue-nested calendar/booking links are not redirected.
 
 Starting seven days before your booking, confirm that you will attend. Until five days before the booking, you can report that you can no longer make it and follow the rescheduling steps. After that cutoff, contact an organizer to reschedule; you can still confirm attendance or cancel.
