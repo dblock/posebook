@@ -493,16 +493,26 @@ input[type="submit"],
 
 button:hover:not(:disabled),
 input[type="submit"]:hover:not(:disabled),
-.button-link:hover {
+.button-link:hover:not([aria-disabled="true"]) {
   background: color-mix(in srgb, var(--color-primary) 85%, var(--color-secondary));
   color: var(--color-primary-content);
 }
 
 button:disabled,
-input[type="submit"]:disabled {
+input[type="submit"]:disabled,
+button[aria-busy="true"],
+input[aria-busy="true"],
+.button-link[aria-disabled="true"] {
   opacity: 0.5;
   cursor: not-allowed;
   box-shadow: none;
+}
+
+button[aria-busy="true"],
+input[aria-busy="true"],
+input[type="submit"][aria-busy="true"],
+.button-link[aria-busy="true"] {
+  cursor: progress;
 }
 
 form:not(.button_to) > p {
