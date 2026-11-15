@@ -1,0 +1,64 @@
+# frozen_string_literal: true
+
+class GoogleCalendarEvent
+  def initialize(booking, connection)
+    @booking = booking
+    @program = booking.program
+    @user = booking.user
+    @connection = connection
+  end
+
+  def build
+    Google::Apis::CalendarV3::Event.new(
+      summary: "#{@program.name} - #{@user.name}", status: 'confirmed',
+      description: description, location: @program.venue.address,
+      start: time(@booking.scheduled_start),
+      end: time(ending),
+      visibility: 'private', guests_can_modify: false, guests_can_invite_others: false,
+      guests_can_see_other_guests: false,
+      reminders: Google::Apis::CalendarV3::Event::Reminders.new(use_default: false),
+      attendees: attendee_emails.map { |email| Google::Apis::CalendarV3::EventAttendee.new(email: email) }
+    )
+  end
+
+  private
+
+  def ending
+    @booking.scheduled_ends_at || (@booking.scheduled_start + 1.hour)
+  end
+
+  def time(value)
+    Google::Apis::CalendarV3::EventDateTime.new(date_time: value.iso8601, time_zone: @booking.time_zone)
+  end
+
+  def description
+    [
+      'Private booking details. Do not share this event or make the calendar public.',
+      "Name: #{@user.name}", "Public name: #{@user.public_name}",
+      "Email: #{@user.email}", "Phone (unverified): #{@user.phone}", "Gender: #{@user.gender}",
+      *instagram_details,
+      "Private identity: #{@user.public_profile_private? ? 'Yes' : 'No'}",
+      "Posebook: #{program_link}"
+    ].compact.join("\n")
+  end
+
+  def program_link
+    Rails.application.routes.url_helpers.program_url(
+      @program, **Rails.application.config.action_mailer.default_url_options, section: 'calendar'
+    )
+  end
+
+  def instagram_details
+    handle = @user.public_instagram_handle
+    ["Instagram tagging: #{handle.present? ? 'Yes' : 'No'}", ("Instagram: @#{handle}" if handle.present?)]
+  end
+
+  def attendee_emails
+    User.active.where(:id.in => organizer_ids).pluck(:email).push(@user.email).uniq.sort
+  end
+
+  def organizer_ids
+    @program.memberships.coordinators.distinct(:user_id) +
+      @program.venue.memberships.coordinators.distinct(:user_id) + [@connection.connected_by_id]
+  end
+end

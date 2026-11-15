@@ -5,6 +5,7 @@ source 'https://rubygems.org'
 ruby '~> 4.0.9'
 
 gem 'bcrypt', '~> 3.1', '>= 3.1.22'
+gem 'google-apis-calendar_v3', '~> 0.58', require: 'google/apis/calendar_v3'
 gem 'mongoid', '~> 9.1', '>= 9.1.2'
 gem 'mongoid-grid_fs', '~> 2.6', require: 'mongoid/grid_fs'
 gem 'mongoid-history', '~> 0.9'

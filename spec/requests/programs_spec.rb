@@ -297,7 +297,7 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     user = create_user
     get program_path(program)
     links = response.parsed_body.css('main > p').find { |paragraph| paragraph.text.include?('Edit Program') }
-    expect(links.css('a').pluck('href')).to eq([edit_program_path(program)])
+    expect(links.css('a').pluck('href')).to eq([edit_program_path(program), program_google_calendar_path(program)])
     expect(response.body).to include(program_coordinators_path(program))
     expect(response.body).not_to include('Grant Schedule Access', 'Remove Schedule Access', user.email)
     get program_coordinators_path(program)
