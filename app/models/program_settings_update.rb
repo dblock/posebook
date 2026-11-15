@@ -10,10 +10,9 @@ class ProgramSettingsUpdate
 
   def call(attributes)
     with_schedule_lock do |session|
-      previous_time = @program.start_time
-      previous_end = @program.end_time
       @program.update!(attributes)
-      update_booking_times(session) if previous_time != @program.start_time || previous_end != @program.end_time
+      update_booking_times(session) if @program.saved_change_to_start_time? || @program.saved_change_to_end_time?
+      enqueue_calendar_changes(session) if @program.saved_change_to_calendar_invitation_lead_minutes?
     end
     @program
   rescue Mongoid::Errors::Validations => e
@@ -24,6 +23,13 @@ class ProgramSettingsUpdate
   end
 
   private
+
+  def enqueue_calendar_changes(session)
+    records = Booking.upcoming.where(program_id: @program.id)
+    records.each do |booking|
+      GoogleCalendarSync.enqueue(booking, session: session)
+    end
+  end
 
   def update_booking_times(session)
     schedule = ProgramSchedule.new(@program)

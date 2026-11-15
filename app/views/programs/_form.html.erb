@@ -14,6 +14,10 @@
   <p><%= form.label :end_time, "Regular end time (optional)" %><br><%= form.time_field :end_time, step: 60 %><br>
     <small>An earlier end time means the next day. Leave blank if the end time is not known.</small>
   </p>
+  <p><%= form.label :calendar_invitation_lead_minutes, "Calendar invitation lead time (minutes)" %><br>
+    <%= form.number_field :calendar_invitation_lead_minutes, min: 0, step: 1, required: true %><br>
+    <small>Google Calendar invitations start this many minutes before the booked <%= program.program_label.downcase %>. Defaults to 0. Booking times and calendar end times stay unchanged. Changing this also updates existing upcoming invitations.</small>
+  </p>
   <p><%= form.label :pay, "Pay (USD)" %><br><%= form.number_field :pay, min: 0, step: "0.01", required: true %></p>
   <p><%= form.label :booking_horizon_months, "Booking horizon (months)" %><br><%= form.number_field :booking_horizon_months, min: 1, required: true %></p>
   <fieldset>

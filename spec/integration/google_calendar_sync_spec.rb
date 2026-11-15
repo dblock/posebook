@@ -46,6 +46,7 @@ RSpec.describe GoogleCalendarSync, :aggregate_failures, :database do
                                            '@preview_model')
       expect(event.attendees.map(&:email)).to contain_exactly(participant.email, organizer.email)
       expect(event).to have_attributes(visibility: 'private', guests_can_invite_others: false)
+      expect(Time.iso8601(event.start.date_time)).to eq(booking.scheduled_start)
       expect(Time.iso8601(event.end.date_time) - Time.iso8601(event.start.date_time)).to eq(1.hour)
       expect(event.reminders.use_default).to be(false)
       expect(options[:send_updates]).to eq('all')
@@ -53,16 +54,98 @@ RSpec.describe GoogleCalendarSync, :aggregate_failures, :database do
     expect(described_class.find(booking.id).reload.due_at).to be_nil
   end
 
+  it 'starts invitations earlier while retaining actual booking and event end times' do
+    program.update!(calendar_invitation_lead_minutes: 30, end_time: '21:00')
+    booking = book
+    original = booking.attributes.slice('starts_at', 'scheduled_ends_at', 'ends_at', 'lock_version', 'time_changes')
+    described_class.process_next
+    expect(api).to have_received(:insert_event) do |_, event, **|
+      expect(Time.iso8601(event.start.date_time)).to eq(booking.scheduled_start - 30.minutes)
+      expect(Time.iso8601(event.end.date_time)).to eq(booking.scheduled_ends_at)
+      expect(event.description).to include('Program starts: Monday, November 23, 2026 at 6:30 PM EST')
+    end
+    expect(booking.reload.attributes.slice(*original.keys)).to eq(original)
+  end
+
+  it 'updates existing invitations with dated overrides without rewriting booking times' do
+    ProgramScheduleMutation.new(program: program, user: organizer).call(
+      date: '2026-11-23', mode: 'open', start_time: '20:00', end_time: '22:00', reason: 'Later session.'
+    )
+    booking = book
+    described_class.process_next
+    original = booking.attributes.slice('starts_at', 'scheduled_ends_at', 'ends_at', 'lock_version', 'time_changes')
+    updates = []
+    allow(api).to receive(:insert_event).and_raise(Google::Apis::ClientError.new('Conflict', status_code: 409))
+    allow(api).to receive(:update_event) { |_, _, event, **| updates << event }
+    ProgramSettingsUpdate.new(program: program, user: organizer).call(calendar_invitation_lead_minutes: 15)
+    expect(described_class.find(booking.id).due_at).to be_present
+    expect(updates).to be_empty
+    described_class.process_next
+    expect(Time.iso8601(updates.last.start.date_time)).to eq(booking.scheduled_start - 15.minutes)
+    expect(Time.iso8601(updates.last.end.date_time)).to eq(booking.scheduled_ends_at)
+    expect(updates.last.id).to eq("posebook#{booking.id}")
+    expect(booking.reload.attributes.slice(*original.keys)).to eq(original)
+  end
+
+  it 'moves an existing invitation back to the session start when lead time returns to zero' do
+    program.update!(calendar_invitation_lead_minutes: 15)
+    booking = book
+    described_class.process_next
+    allow(api).to receive(:insert_event).and_raise(Google::Apis::ClientError.new('Conflict', status_code: 409))
+    ProgramSettingsUpdate.new(program: program, user: organizer).call(calendar_invitation_lead_minutes: 0)
+    described_class.process_next
+    expect(api).to have_received(:update_event).with(
+      connection.calendar_id, "posebook#{booking.id}",
+      have_attributes(start: have_attributes(date_time: booking.scheduled_start.iso8601)), send_updates: 'all'
+    )
+  end
+
+  it 'subtracts elapsed minutes across local date boundaries and daylight saving changes' do
+    program.update!(start_time: '00:10', calendar_invitation_lead_minutes: 20)
+    booking = book
+    event = GoogleCalendarEvent.new(booking, connection).build
+    expect(Time.iso8601(event.start.date_time)).to eq(Time.utc(2026, 11, 23, 4, 50))
+    expect(Time.iso8601(event.end.date_time)).to eq(booking.scheduled_start + 1.hour)
+    mutation.cancel(booking: booking, reason: 'Different date.')
+    program.update!(start_time: '03:15', available_weekdays: ['0'], calendar_invitation_lead_minutes: 30)
+    spring_booking = track_booking(mutation.book(date: '2027-03-14'))
+    spring_event = GoogleCalendarEvent.new(spring_booking, connection).build
+    expect(Time.iso8601(spring_event.start.date_time)).to eq(Time.utc(2027, 3, 14, 6, 45))
+    expect(Time.iso8601(spring_event.end.date_time) - Time.iso8601(spring_event.start.date_time)).to eq(90.minutes)
+    expect(spring_event.start.time_zone).to eq('America/New_York')
+    expect(spring_booking.scheduled_start).to eq(Time.utc(2027, 3, 14, 7, 15))
+  end
+
+  it 'rolls back lead-time settings, audit entries, and queued changes if the outbox write fails' do
+    booking = book
+    described_class.process_next
+    pending = described_class.find(booking.id)
+    original_revision = pending.revision
+    original_history_count = program.history_tracks.count
+    allow(described_class).to receive(:enqueue).and_wrap_original do |enqueue, record, session:|
+      enqueue.call(record, session: session)
+      raise 'Synthetic outbox failure'
+    end
+    expect do
+      ProgramSettingsUpdate.new(program: program, user: organizer).call(calendar_invitation_lead_minutes: 15)
+    end.to raise_error(RuntimeError, 'Synthetic outbox failure')
+    expect(program.reload.calendar_invitation_lead_minutes).to eq(0)
+    expect(program.history_tracks.count).to eq(original_history_count)
+    expect(pending.reload).to have_attributes(revision: original_revision, due_at: nil)
+    expect(api).to have_received(:insert_event).once
+  end
+
   it 'moves the same event on reschedule and sends a cancellation for the replacement' do
+    program.update!(calendar_invitation_lead_minutes: 15)
     original = book
-    allow(api).to receive(:insert_event)
     described_class.process_next
     replacement = track_booking(mutation.change(booking: original, date: '2026-11-30', reason: 'Changed plans.'))
     allow(api).to receive(:insert_event).and_raise(Google::Apis::ClientError.new('Conflict', status_code: 409))
     described_class.process_next
     expect(api).to have_received(:update_event).with(
       connection.calendar_id, "posebook#{original.id}",
-      an_instance_of(Google::Apis::CalendarV3::Event), send_updates: 'all'
+      have_attributes(start: have_attributes(date_time: (replacement.scheduled_start - 15.minutes).iso8601)),
+      send_updates: 'all'
     )
     mutation.cancel(booking: replacement, reason: 'Canceled plans.')
     described_class.process_next
