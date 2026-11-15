@@ -5,6 +5,9 @@
 <section aria-label="<%= calendar.program.program_label.downcase %> calendar" data-calendar data-calendar-context="<%= calendar_access_context(public_view, manager: @program_coordinator, program: calendar.program, booking: @my_booking) %>">
   <h2><%= calendar.program.program_label.titleize %> Calendar</h2>
   <%= render "programs/regular_schedule", program: calendar.program %>
+  <% if calendar.first_date > calendar.today %>
+    <p class="booking-window-notice">Invited participants can book now for dates on or after <strong><%= calendar.first_date.strftime("%B %-d, %Y") %></strong>. Earlier sessions remain managed by the organizer.</p>
+  <% end %>
   <nav aria-label="Calendar months">
     <% if calendar.month > calendar.today.beginning_of_month %>
       <%= link_to "Previous Month", calendar_month_path(calendar, calendar.month - 1.month, @changing_booking), data: { calendar_navigation: true } %>

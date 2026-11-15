@@ -3,6 +3,43 @@
 require 'rails_helper'
 
 RSpec.describe 'Program management', :aggregate_failures, :database, type: :request do
+  it 'creates an optional first bookable date and lets assigned coordinators change, audit, and clear it' do
+    sign_in(create_user(roles: ['system_admin']))
+    venue = create_venue
+    post venue_programs_path(venue), params: { program: { name: 'Future program', first_bookable_date: '2027-01-01' } }
+    program = track_record(Program.find_by(name: 'Future program'))
+    expect(program.first_bookable_date).to eq(Date.new(2027, 1, 1))
+    organizer = create_user
+    grant_coordinator_access(program, organizer)
+    sign_in(organizer)
+    patch program_path(program), params: { program: { first_bookable_date: '2027-02-01' } }
+    expect(response).to redirect_to(program_path(program))
+    expect(program.reload.first_bookable_date).to eq(Date.new(2027, 2, 1))
+    expect(program.history_tracks.last.modified['first_bookable_date'].to_date).to eq(Date.new(2027, 2, 1))
+    expect(program.history_tracks.last.modifier_id).to eq(organizer.id)
+    get edit_program_path(program)
+    expect(response.parsed_body.at_css('#program_first_bookable_date')['value']).to eq('2027-02-01')
+    patch program_path(program), params: { program: { first_bookable_date: '' } }
+    expect(program.reload.first_bookable_date).to be_nil
+  end
+
+  it 'rejects malformed or impossible first bookable dates and denies unrelated coordinators' do
+    program = create_program(first_bookable_date: Date.new(2027, 1, 1))
+    sign_in(create_user(roles: ['system_admin']))
+    %w[invalid 2027-02-30 2027-13-01].each do |date|
+      patch program_path(program), params: { program: { first_bookable_date: date } }
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include('First bookable date is invalid')
+      expect(program.reload.first_bookable_date).to eq(Date.new(2027, 1, 1))
+    end
+    unrelated = create_user
+    grant_coordinator_access(create_program, unrelated)
+    sign_in(unrelated)
+    patch program_path(program), params: { program: { first_bookable_date: '' } }
+    expect(response).to have_http_status(:not_found)
+    expect(program.reload.first_bookable_date).to eq(Date.new(2027, 1, 1))
+  end
+
   it 'defaults the invitation lead-time field to zero and saves it when creating a program' do
     sign_in(create_user(roles: ['system_admin']))
     venue = create_venue

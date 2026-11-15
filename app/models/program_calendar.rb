@@ -6,11 +6,15 @@ class ProgramCalendar
   def initialize(program, month: nil)
     @program = program
     @today = Time.current.in_time_zone(program.time_zone).to_date
-    @last_date = today.advance(months: program.booking_horizon_months)
+    @last_date = first_date.advance(months: program.booking_horizon_months)
     @month = selected_month(month)
-    @schedule = ProgramSchedule.new(program, from: date_range.begin)
+    @schedule = ProgramSchedule.new(program, from: [today, date_range.begin].min)
     @starts = {}
     @ends = {}
+  end
+
+  def first_date
+    @first_date ||= [today, program.first_bookable_date].compact.max
   end
 
   def weeks
@@ -56,7 +60,7 @@ class ProgramCalendar
   def blocked_reason(date)
     return 'Inactive' unless program.booking_active?
 
-    return 'Outside booking window' unless date.between?(today, last_date)
+    return 'Outside booking window' unless date.between?(first_date, last_date)
 
     exception = schedule.exceptions[date]
     return "Closed: #{exception.reason}" if exception&.mode == 'closed'
@@ -101,8 +105,13 @@ class ProgramCalendar
 
   def selected_month(value)
     candidate = Date.iso8601("#{value}-01")
-    candidate.between?(today.beginning_of_month, last_date.beginning_of_month) ? candidate : today.beginning_of_month
+    if candidate.between?(today.beginning_of_month,
+                          last_date.beginning_of_month)
+      candidate
+    else
+      first_date.beginning_of_month
+    end
   rescue ArgumentError
-    today.beginning_of_month
+    first_date.beginning_of_month
   end
 end

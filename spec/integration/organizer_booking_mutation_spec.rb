@@ -25,6 +25,23 @@ RSpec.describe OrganizerBookingMutation, :aggregate_failures, :database do
     track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-11-16'))
   end
 
+  it 'respects the first bookable date for replacements while retaining earlier attendance controls' do
+    original = reserve
+    ProgramSettingsUpdate.new(program: program, user: organizer).call(first_bookable_date: '2027-01-01')
+    mutation.update(original.id, attributes)
+    expect(original.reload).to be_attendance_confirmed
+    expect { mutation.create(attributes.merge(date: '2026-12-28')) }.to raise_error(BookingMutation::Invalid)
+    version = original.lock_version
+    expect { mutation.update(original.id, attributes.merge(date: '2026-12-28', lock_version: version)) }
+      .to raise_error(BookingMutation::Invalid)
+    expect(original.reload.status).to eq('confirmed')
+    replacement = track_booking(
+      mutation.update(original.id, attributes.merge(date: '2027-01-04', lock_version: version))
+    )
+    expect(replacement.date).to eq(Date.new(2027, 1, 4))
+    expect(replacement.previous_booking).to eq(original)
+  end
+
   it 'rolls back a date replacement and its history when the destination is occupied' do
     original = reserve
     other = create_user

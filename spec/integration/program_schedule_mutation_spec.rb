@@ -21,6 +21,15 @@ RSpec.describe ProgramScheduleMutation, :aggregate_failures, :database do
     track_booking(BookingMutation.new(program: program, user: participant).book(date: date))
   end
 
+  it 'maintains earlier sessions and permits exceptions throughout a future-anchored horizon' do
+    program.update!(first_bookable_date: Date.new(2027, 1, 1))
+    expect(change_schedule(date: '2026-11-16').errors).to be_empty
+    expect(change_schedule(date: '2027-07-01').errors).to be_empty
+    expect(change_schedule(date: '2027-07-02').errors[:date]).to include('must be within the booking window')
+    expect(ProgramCalendar.new(program).blocked_reason(Date.new(2026, 11, 16))).to eq('Outside booking window')
+    expect(ProgramCalendar.new(program).blocked_reason(Date.new(2027, 7, 1))).to be_nil
+  end
+
   it 'opens an extra weekday at its specified local time without changing other dates' do
     change_schedule(date: '2026-11-17', start_time: '14:00')
     calendar = ProgramCalendar.new(program)

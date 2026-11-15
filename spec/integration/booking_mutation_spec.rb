@@ -17,6 +17,53 @@ RSpec.describe BookingMutation, :aggregate_failures, :database do
     program.bookings.each { |booking| track_booking(booking) }
   end
 
+  it 'rejects dates before the cutoff and books the extended horizon immediately' do
+    program = create_program(first_bookable_date: Date.new(2027, 1, 1), available_weekdays: %w[0 1 2 3 4 5 6])
+    user = create_user
+    grant_participant_access(program, user)
+    mutation = described_class.new(program: program, user: user)
+    %w[2026-12-31 2027-07-02].each do |date|
+      expect do
+        mutation.book(date: date)
+      end.to raise_error(described_class::Invalid, program.message('bookings.invalid_date'))
+    end
+    expect(program.bookings).to be_empty
+    expect(track_booking(mutation.book(date: '2027-07-01')).date).to eq(Date.new(2027, 7, 1))
+  end
+
+  it 'rechecks a changed first bookable date and retains the original booking after a rejected reschedule' do
+    program = create_program
+    user = create_user
+    grant_participant_access(program, user)
+    original = track_booking(attempt(program, user, '2026-11-23'))
+    mutation = described_class.new(program: program, user: user)
+    ProgramSettingsUpdate.new(program: program, user: create_user(roles: ['system_admin']))
+                         .call(first_bookable_date: '2027-01-01')
+    expect { mutation.change(booking: original, date: '2026-12-28', reason: 'Travel.') }
+      .to raise_error(described_class::Invalid, program.message('bookings.invalid_date'))
+    expect(original.reload.status).to eq('confirmed')
+    expect(BookingClaim.find_by(booking_id: original.id).date).to eq(original.date)
+    replacement = track_booking(mutation.change(booking: original, date: '2027-01-04', reason: 'Travel.'))
+    expect(replacement.previous_booking).to eq(original)
+    expect(original.reload.status).to eq('rescheduled')
+  end
+
+  it 'preserves attendance confirmation and cancellation for an existing booking before the new cutoff' do
+    program = create_program
+    user = create_user
+    grant_participant_access(program, user)
+    booking = track_booking(attempt(program, user, '2026-11-16'))
+    ProgramSettingsUpdate.new(program: program, user: create_user(roles: ['system_admin']))
+                         .call(first_bookable_date: '2027-01-01')
+    AttendanceMutation.new(program: program, user: user).confirm(booking.id, version: booking.lock_version)
+    expect(booking.reload).to be_attendance_confirmed
+    expect(booking.date).to eq(Date.new(2026, 11, 16))
+    described_class.new(program: program, user: user).cancel(booking: booking, reason: 'Travel.')
+    expect(booking.reload.status).to eq('canceled')
+    expect(BookingClaim.where(booking_id: booking.id)).to be_empty
+    expect(program.bookings.count).to eq(1)
+  end
+
   it 'allows a date change six local calendar days before the saved one-off booking' do
     program = create_program(time_zone: 'America/New_York', start_time: '18:30')
     user = create_user

@@ -20,6 +20,7 @@ class Program
   field :pay, type: BigDecimal, default: 0
   field :instructions, type: String
   field :booking_horizon_months, type: Integer, default: 6
+  field :first_bookable_date, type: Date
   field :available_weekdays, type: Array, default: ['1']
   field :no_consecutive_genders, type: Array, default: []
   field :start_time, type: String, default: '09:00'
@@ -33,7 +34,8 @@ class Program
   end
 
   track_history on: %i[name program_label participant_label custom_slug _slugs time_zone pay instructions
-                       booking_horizon_months available_weekdays start_time end_time no_consecutive_genders
+                       booking_horizon_months first_bookable_date available_weekdays start_time end_time
+                       no_consecutive_genders
                        calendar_invitation_lead_minutes primary_photo_id active],
                 modifier_field_optional: true, modifier_field_inverse_of: nil, track_blank_changes: true
 
@@ -64,6 +66,12 @@ class Program
   validates :pay, numericality: { greater_than_or_equal_to: 0 }
   validates :instructions, length: { maximum: 5000 }
   validates :booking_horizon_months, numericality: { only_integer: true, greater_than: 0 }
+  validate do
+    value = attributes_before_type_cast['first_bookable_date']
+    Date.iso8601(value) if value.is_a?(String) && value.present?
+  rescue ArgumentError
+    errors.add(:first_bookable_date, :invalid)
+  end
   validates :calendar_invitation_lead_minutes, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :start_time, format: { with: ProgramSchedule::TIME_FORMAT }
   validates :end_time, format: { with: ProgramSchedule::TIME_FORMAT }, allow_nil: true
@@ -80,22 +88,6 @@ class Program
   validate do
     errors.add(:no_consecutive_genders, :invalid) if (no_consecutive_genders - User::GENDERS).any?
   end
-  def self.visible_to(user)
-    return all if user.system_admin?
-
-    ids = ProgramMembership.where(user_id: user.id,
-                                  :roles.in => %w[program_coordinator
-                                                  participant]).distinct(:program_id)
-    where('$or' => [{ :id.in => ids }, { :venue_id.in => Venue.coordinated_by(user).distinct(:id) }])
-  end
-
-  def self.managed_by(user)
-    return all if user.system_admin?
-
-    ids = ProgramMembership.coordinators.where(user_id: user.id).distinct(:program_id)
-    where('$or' => [{ :id.in => ids }, { :venue_id.in => Venue.coordinated_by(user).distinct(:id) }])
-  end
-
   def participant?(user)
     memberships.participants.exists?(user_id: user.id)
   end

@@ -19,7 +19,12 @@
     <small>Google Calendar invitations start this many minutes before the booked <%= program.program_label.downcase %>. Defaults to 0. Booking times and calendar end times stay unchanged. Changing this also updates existing upcoming invitations.</small>
   </p>
   <p><%= form.label :pay, "Pay (USD)" %><br><%= form.number_field :pay, min: 0, step: "0.01", required: true %></p>
-  <p><%= form.label :booking_horizon_months, "Booking horizon (months)" %><br><%= form.number_field :booking_horizon_months, min: 1, required: true %></p>
+  <p><%= form.label :first_bookable_date, "First bookable date (optional)" %><br><%= form.date_field :first_bookable_date %><br>
+    <small>Earliest session date available for new bookings and date changes, in the program's time zone. Invited participants can book these dates now. Earlier sessions and existing bookings are retained. Leave blank for today's date.</small>
+  </p>
+  <p><%= form.label :booking_horizon_months, "Booking horizon (months)" %><br><%= form.number_field :booking_horizon_months, min: 1, required: true %><br>
+    <small>Calendar months from today, or from the first bookable date when it is in the future.</small>
+  </p>
   <fieldset>
     <legend>Available Weekdays</legend>
     <%= hidden_field_tag "program[available_weekdays][]", "" %>

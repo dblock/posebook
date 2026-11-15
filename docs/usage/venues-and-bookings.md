@@ -8,6 +8,8 @@ As a participant, choose an available date and confirm the date and time to make
 
 Inactive venues and programs are hidden publicly and cannot accept new bookings or date changes. If you have an upcoming booking, its pages remain available while signed in, and you can still confirm attendance or cancel. Your booking history is retained even after cancellation or completion.
 
+A program may set a first bookable date while its earlier sessions are managed manually. You can accept your invitation and book dates on or after that date immediately; you do not have to wait for it to arrive. The calendar opens at that month, and its booking horizon starts from that date while it is in the future. Earlier existing bookings remain visible and keep their attendance confirmation and cancellation controls.
+
 When an end time is provided, the calendar and booking details show the duration, and the booking completes at that time. An overnight session can end the next day. Without an end time, a booking completes at the end of its local date.
 
 Your homepage lists your upcoming bookings in date/time order, with the venue's primary photo, address, and Google Maps link inside each booking card. The same date, attendance status, and booking buttons appear on the program's View and Calendar pages. **Change Date** and **Cancel Booking** retain their existing explanations and deadlines; attendance confirmation appears when its window opens.
