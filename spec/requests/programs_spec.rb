@@ -87,7 +87,7 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     get program_coordinators_path(program)
     expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Coordinators')
     expect(response.parsed_body.css('.program-tabs a').map(&:text))
-      .to eq(['View', 'Calendar', 'Photos', 'History', 'Models', 'Coordinators', 'Edit', 'Google Calendar'])
+      .to eq(['View', 'Calendar', 'Photos', 'History', 'Models', 'Edit', 'Google Calendar', 'Coordinators'])
   end
 
   it 'places program settings and Google Calendar in tabs with matching breadcrumbs' do

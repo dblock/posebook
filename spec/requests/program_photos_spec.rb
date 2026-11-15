@@ -25,6 +25,20 @@ RSpec.describe 'Program photos', :aggregate_failures, :database, type: :request 
     ProgramPhoto.storage.file_model.where('metadata.program_id' => program.id)
   end
 
+  it 'groups program information and scoped configuration without exposing parent management' do
+    sign_in(coordinator)
+    get edit_program_path(program)
+    groups = response.parsed_body.css('.program-tabs .page-tab-group')
+    expect(groups.map { |group| group.css('a').map(&:text) })
+      .to eq([%w[View Calendar Photos History Participants], ['Edit', 'Google Calendar']])
+    expect(response.parsed_body.at_css('.program-tabs .tab-separator')['aria-hidden']).to eq('true')
+    expect(response.parsed_body.at_css('.breadcrumbs [aria-current="page"]').text).to eq('Edit')
+    delete session_path
+    get program_path(program)
+    expect(response.parsed_body.at_css('.tab-separator')).to be_nil
+    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to eq(%w[View Calendar Photos])
+  end
+
   it 'lets program coordinators upload a separate public gallery with primary-photo controls' do
     sign_in(coordinator)
     post program_photos_path(program), params: { program_photo: { file: photo_upload } }

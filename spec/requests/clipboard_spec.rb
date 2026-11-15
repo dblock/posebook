@@ -14,7 +14,7 @@ RSpec.describe 'Copy controls', :aggregate_failures, :database, type: :request d
     user = create_user(name: 'Avery <Artist> "Studio"', phone: '+12125551234', instagram_handle: '@alex.artist')
     user.set(pending_email: 'pending@example.test')
     sign_in(user)
-    get profile_path
+    get details_profile_path
     expect(response.parsed_body.css('.copy-button')).to be_empty
     expect(response.parsed_body.css('dd').text).to include(user.name, user.email, user.phone, '@alex.artist')
     expect(response.body).to include('pending@example.test')

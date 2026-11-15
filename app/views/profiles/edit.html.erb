@@ -14,6 +14,6 @@
     <p><%= label_tag "profile-current-password", "Current password (required for email changes)" %><br><%= password_field_tag "user[current_password]", nil, id: "profile-current-password", autocomplete: "current-password" %></p>
     <%= form.submit "Save Profile" %>
   <% end %>
-  <p><%= link_to "Cancel", profile_path %></p>
+  <p><%= link_to "Cancel", details_profile_path %></p>
   <%= render "shared/primary_profile_photo", user: @user %>
 </main>

@@ -24,6 +24,7 @@
           <%= link_to current_user.name, profile_path, class: "nav-account", aria: { label: "Profile for #{current_user.name}" } %>
           <div class="nav-links">
             <%= link_to "Venues", venues_path %>
+            <% if current_user.system_admin? %><%= link_to "Users", admin_users_path, aria: { current: ("page" if current_page?(admin_users_path)) } %><% end %>
             <%= button_to "Sign Out", session_path, method: :delete %>
           </div>
         <% end %>

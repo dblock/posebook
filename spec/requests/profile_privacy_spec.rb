@@ -15,7 +15,7 @@ RSpec.describe 'Public identity privacy', :aggregate_failures, :database, type: 
   it 'audits the owner choosing privacy without erasing saved sharing preferences' do
     sign_in(user)
     update_privacy('1')
-    expect(response).to redirect_to(profile_path)
+    expect(response).to redirect_to(details_profile_path)
     expect(user.reload).to have_attributes(public_name: 'To be announced', public_instagram_url: nil,
                                            public_instagram_handle: nil, display_name: 'Saved Public Name',
                                            instagram_tagging_allowed: true)
@@ -43,7 +43,7 @@ RSpec.describe 'Public identity privacy', :aggregate_failures, :database, type: 
     user.update!(public_profile_private: true)
     sign_in(user)
     update_privacy('0')
-    expect(response).to redirect_to(profile_path)
+    expect(response).to redirect_to(details_profile_path)
     expect(user.reload.public_name).to eq('Saved Public Name')
     expect(user.public_instagram_url).to eq('https://www.instagram.com/public.participant/')
     get edit_profile_path

@@ -68,11 +68,11 @@ RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request 
     expect(saved.bytes.bytesize).to be < upload.tempfile.size
   end
 
-  it 'shows private photos on the owner profile with full-image popup links' do
+  it 'keeps private photos in the owner gallery with full-image popup links' do
     photo
     participant.update!(public_profile_private: true)
     sign_in(participant)
-    get profile_path
+    get participant_path(participant)
     link = response.parsed_body.at_css('.profile-photo [data-photo-preview]')
     expect(link['href']).to eq(photo_url)
     expect(link['target']).to be_nil
@@ -82,11 +82,13 @@ RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request 
     expect(response.parsed_body.at_css('dialog')['aria-labelledby']).to eq('photo-preview-heading')
   end
 
-  it 'omits the photo section on an empty account profile' do
+  it 'keeps uploaded profile photos off the bookings and account details pages' do
+    photo
     sign_in(participant)
-    get profile_path
-    expect(response.parsed_body.at_css('#profile-photos-heading')).to be_nil
-    expect(response.parsed_body.css('.profile-photo')).to be_empty
+    [profile_path, details_profile_path].each do |path|
+      get path
+      expect(response.parsed_body.css('main .photo-gallery, main .profile-photo')).to be_empty
+    end
   end
 
   it 'uses the same popup links on public participant galleries' do
@@ -102,7 +104,8 @@ RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request 
   it 'keeps the owner photo editor in profile tabs and breadcrumbs' do
     sign_in(participant)
     get participant_path(participant)
-    expect(response.parsed_body.css('.profile-tabs a').map(&:text)).to eq(%w[View History Edit Photos Security])
+    expect(response.parsed_body.css('.profile-tabs a').map(&:text))
+      .to eq(['View', 'History', 'Account Details', 'Photos', 'Edit', 'Security'])
     expect(response.parsed_body.at_css('.profile-tabs [aria-current="page"]').text).to eq('Photos')
     expect(response.parsed_body.at_css('.breadcrumbs [aria-current="page"]').text).to eq('Photos')
     expect(response.parsed_body.at_css('form[action$="/photos"]')).to be_present

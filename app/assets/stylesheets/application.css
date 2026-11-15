@@ -163,6 +163,19 @@ nav {
   color: var(--color-secondary);
 }
 
+.page-tab-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 100%;
+}
+
+.tab-separator {
+  padding: 0 0.6rem;
+  opacity: 0.6;
+}
+
 .invitation-status {
   display: inline-flex;
   flex-wrap: wrap;

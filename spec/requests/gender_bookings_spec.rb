@@ -72,7 +72,7 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
     expect(response.parsed_body.at_css('[data-calendar]').text).not_to match(/gender|male|female/i)
     expect(calendar_day('2026-11-16').css('form')).to be_empty
     update_profile(gender: 'female')
-    expect(response).to redirect_to(profile_path)
+    expect(response).to redirect_to(details_profile_path)
     get program_path(program, section: 'calendar')
     expect(calendar_day('2026-11-16')['class']).to eq('available')
     expect(calendar_day('2026-11-16').css('form')).to be_present

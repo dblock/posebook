@@ -1,6 +1,6 @@
 <main>
+  <%= render "shared/page_navigation", breadcrumbs: [["Users", admin_users_path], [@user.name, participant_path(@user)], ["Edit", nil]], tabs: [["users", "Users", admin_users_path], ["photos", "Photos", participant_path(@user)]], actions: [["edit", "Edit", edit_admin_user_path(@user)]], active: "edit", tabs_class: "user-tabs", label: "User navigation" %>
   <h1>Edit User</h1>
-  <p><%= link_to "Manage Photos", participant_path(@user) %></p>
   <%= render "shared/errors", record: @user %>
   <p>Email changes apply immediately, sign the user out of all sessions, and cancel outstanding recovery and email-change links. The new address is not marked verified. Changing your own email requires signing in again.</p>
   <% if @user.pending_email.present? %>
