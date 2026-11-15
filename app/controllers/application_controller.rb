@@ -17,6 +17,10 @@ class ApplicationController < ActionController::Base
     @current_user ||= session_user || remembered_user
   end
 
+  def participant_dashboard
+    @participant_dashboard ||= ParticipantDashboard.new(current_user)
+  end
+
   def session_user
     return unless session[:user_id]
 

@@ -20,11 +20,15 @@ RSpec.describe 'User experience read performance', :aggregate_failures, :databas
   end
 
   it 'keeps dashboard database work bounded as the number of eligible programs grows' do
+    allow(ParticipantDashboard).to receive(:new).and_call_original
     programs = Array.new(12) { create_program }
     programs.each { |program| grant_participant_access(program, participant) }
     track_booking(BookingMutation.new(program: programs.first, user: participant).book(date: '2026-11-16'))
     sign_in(participant)
+    get root_path
+    expect(response.parsed_body.css('.upcoming-booking').size).to eq(1)
     result = commands { get profile_path }
+    expect(ParticipantDashboard).to have_received(:new).with(participant).twice
     expect(response.parsed_body.css('.bookable-programs .program-card').size).to eq(11)
     expect(response.parsed_body.css('.upcoming-booking').size).to eq(1)
     expect(result[:commands]).to be <= 25
