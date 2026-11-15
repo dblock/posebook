@@ -28,6 +28,17 @@ RSpec.describe 'Organizer bookings', :aggregate_failures, :database, type: :requ
     track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-11-16'))
   end
 
+  it 'identifies private models by name, email and Instagram in booking selectors' do
+    participant.update!(name: 'Drawing Model', instagram_handle: 'drawing.model', public_profile_private: true)
+    get new_program_organizer_booking_path(program)
+    option = response.parsed_body.at_css("#booking_user_id option[value='#{participant.id}']")
+    expect(option.text).to eq("Drawing Model - #{participant.email} - @drawing.model")
+    program.update!(no_consecutive_genders: ['other'])
+    get edit_program_organizer_booking_path(program, reserve)
+    expect(response.parsed_body.at_css("#booking_user_id option[value='#{participant.id}']").text)
+      .to end_with(' - Other')
+  end
+
   it 'creates a booking for an assigned participant without granting unrelated administrator permissions' do
     get new_program_organizer_booking_path(program)
     expect(response.body).to include('Schedule a Participant', participant.name)

@@ -146,10 +146,11 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
     sign_in(create_user(roles: ['system_admin']))
     get program_path(program, section: 'calendar')
     expect(response.parsed_body.at_css('[data-date="2026-11-16"]').text).to include(participant.name)
+    expect(response.body).not_to include('private_participant')
     get program_path(program, section: 'history')
     history = response.parsed_body.at_xpath('//section[h2="Program Booking History"]')
     expect(history.text).to include(participant.name)
-    expect(response.body).not_to include('private_participant')
+    expect(history.at_css('.participant-identity a[target="_blank"]').text).to eq('@private_participant')
   end
 
   it 'uses current public preferences and removes Instagram immediately after tagging is turned off' do

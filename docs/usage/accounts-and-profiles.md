@@ -16,4 +16,6 @@ Open the profile's **Security** tab for the **Change Password** and **Deactivate
 
 Your profile shows your uploaded photos, including private ones. Use the **Photos** tab to upload, delete, or change sharing preferences. Click a photo in any profile or venue gallery to preview the larger image without leaving the page. Close the preview with **Close**, Escape, or a click outside it.
 
+On **Edit Profile**, use **Set Primary Photo** to choose the thumbnail shown beside your name in organizers' model tables. Administrators can do the same on **Edit User**. The first uploaded photo is used by default, and deleting a primary photo falls back to the first remaining photo. Choosing a primary photo never makes it public. Model names and emails in private tables link to their profile and photos; Instagram accounts also appear in model selectors and private table rows.
+
 Use **Copy** beside contact details, Instagram handles, venue addresses, and venue/program links to copy the displayed value or share the page. Private invitation links have a **Copy** button inside the link box while first shown; keep those links private. The button changes to **Copied** for three seconds after copying, then returns to **Copy**. If your browser denies clipboard access, a message asks you to select and copy manually.

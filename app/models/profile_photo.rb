@@ -39,6 +39,13 @@ class ProfilePhoto
 
   def remove(owner)
     User.collection.find(_id: owner.id).update_one('$pull' => { profile_photos: { _id: id } })
+    User.collection.find(_id: owner.id, primary_profile_photo_id: id)
+        .update_one('$unset' => { primary_profile_photo_id: true })
     delete_files
+  end
+
+  def select_primary(owner)
+    User.collection.find(_id: owner.id, 'profile_photos._id' => id)
+        .update_one('$set' => { primary_profile_photo_id: id })
   end
 end

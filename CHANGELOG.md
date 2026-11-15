@@ -77,4 +77,5 @@
 - [#86](https://github.com/dblock/posebook/pull/86): Show models and organizers on the shared Google meeting guest list with the venue location - [@dblock](https://github.com/dblock).
 - [#87](https://github.com/dblock/posebook/pull/87): Queue all account and invitation email with encrypted tokens, fresh authorization checks, safe retries, and honest queued feedback - [@dblock](https://github.com/dblock).
 - [#88](https://github.com/dblock/posebook/pull/88): Place Google invitation response badges beside booking badges without a visible prefix - [@dblock](https://github.com/dblock).
+- [#89](https://github.com/dblock/posebook/pull/89): Show model names, Instagram accounts, linked profiles, and chosen primary photos in private tables and enlarge roster actions - [@dblock](https://github.com/dblock).
 - Your contribution here.

@@ -15,7 +15,7 @@
           <% @memberships.each do |membership| %>
             <% access = @roster.access_for(membership) %>
             <tr data-membership="<%= membership.id %>">
-              <td><strong><%= membership.user.name %></strong><br><span class="participant-email"><%= membership.user.email %></span></td>
+              <td><%= render "shared/participant_identity", participant: membership.user %></td>
               <td>
                 <% if access.booking && !access.paused? && membership.user.active? %>
                   <%= render "programs/booking_status", booking: access.booking, private_view: true %>

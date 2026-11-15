@@ -9,7 +9,7 @@
           <% @booking_history.each do |booking| %>
             <tr>
               <td><%= booking.date.iso8601 %><br><%= booking_time(booking) %><% if booking.previous_booking %><br>Moved from <%= booking.previous_booking.date.iso8601 %><% end %></td>
-              <% if @program_coordinator %><td><%= booking_participant_name(booking.user, manager: true) %></td><% end %>
+              <% if @program_coordinator %><td><%= render "shared/participant_identity", participant: booking.user %></td><% end %>
               <td>
                 <%= render "programs/booking_status", booking: booking, private_view: true %>
                 <% if @program_coordinator && booking.status == "confirmed" && booking.ends_at > Time.current %><%= link_to "Edit Booking", edit_program_organizer_booking_path(@program, booking) %><% end %>

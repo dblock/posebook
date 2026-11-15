@@ -15,4 +15,5 @@
     <%= form.submit "Save User" %>
   <% end %>
   <p><%= link_to "Cancel", admin_users_path %></p>
+  <%= render "shared/primary_profile_photo", user: @user %>
 </main>
