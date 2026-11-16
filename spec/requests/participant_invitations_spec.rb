@@ -31,7 +31,7 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     sign_in(admin)
     get program_participant_invitations_path(program)
     row = response.parsed_body.at_css("[data-invitation='#{invitation.id}']")
-    expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Invitations')
+    expect(response.parsed_body.at_css('.program-secondary-tabs [aria-current="page"]').text).to eq('Invitations')
     expect(row.text).to include('Invited Model <model@example.test>', admin.name, 'Accepted')
     expect(row.css('time').pluck('datetime'))
       .to eq([invitation.created_at, invitation.expires_at, invitation.used_at]
@@ -51,7 +51,7 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     [new_program_participant_invitation_path(program),
      program_participant_invitation_path(program, invitation)].each do |path|
       get path
-      expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Invitations')
+      expect(response.parsed_body.at_css('.program-secondary-tabs [aria-current="page"]').text).to eq('Invitations')
       expect(response.parsed_body.css('main a').pluck('href')).to include(program_participant_invitations_path(program))
     end
     expect(response.parsed_body.at_css('.invitation-recipient').text).to eq(invitation.email)

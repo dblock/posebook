@@ -1,15 +1,24 @@
-<% tabs = [["view", "View", venue_path(venue)]] %>
 <% manager = venue.coordinated_by?(current_user) %>
-<% actions = manager ? [["edit", "Edit", edit_venue_path(venue)]] : [] %>
-<% actions += [["photos", "Photos", photos_venue_path(venue)], ["programs", "Programs", programs_venue_path(venue)]] %>
-<% actions << ["new_program", "New Program", new_venue_program_path(venue)] if manager %>
+<% tabs = [["view", "Venue", venue_path(venue)], ["programs", "Programs", programs_venue_path(venue)],
+           ["photos", "Photos", photos_venue_path(venue)]] %>
+<% settings_tabs = manager ? [["edit", "Details", edit_venue_path(venue)]] : [] %>
 <% if current_user&.system_admin? %>
-  <% actions << ["coordinators", "Coordinators", (venue_coordinators_path(venue) if venue.memberships.coordinators.exists?)] %>
-  <% actions << ["invite_coordinator", "Invite a Coordinator", new_venue_coordinator_path(venue)] %>
-  <% actions << ["security", "Security", security_venue_path(venue)] %>
+  <% settings_tabs += [["coordinators", "Coordinators", venue_coordinators_path(venue)],
+                       ["security", "Security", security_venue_path(venue)]] %>
 <% end %>
+<% tabs << ["settings", "Settings", edit_venue_path(venue)] if manager %>
+<% secondary_active = active == "invite_coordinator" ? "coordinators" : active %>
+<% primary_active = settings_tabs.any? { |key, _, _| key == secondary_active } ? "settings" : active %>
+<% primary_active = "programs" if active == "new_program" %>
+<% primary = tabs.find { |key, _, _| key == primary_active } %>
+<% secondary_tabs = primary_active == "settings" ? settings_tabs : [] %>
 <% breadcrumbs = [["Venues", venues_path], [venue.name, venue_path(venue)]] %>
-<% section = (tabs + actions).find { |key, _, _| key == active } %>
+<% sections = tabs + settings_tabs + [["new_program", "New Program", new_venue_program_path(venue)],
+                                     ["invite_coordinator", "Invite a Coordinator", new_venue_coordinator_path(venue)]] %>
+<% section = sections.find { |key, _, _| key == active } %>
+<% breadcrumbs << [primary[1], primary[2]] if primary && primary_active != active %>
 <% breadcrumbs << [section[1], section[2]] if section && active != "view" %>
 <% breadcrumbs << [detail, nil] if local_assigns[:detail].present? && detail != section&.fetch(1) %>
-<%= render "shared/page_navigation", breadcrumbs: breadcrumbs, tabs: tabs, actions: actions, active: active, tabs_class: "venue-tabs", label: "Venue navigation" %>
+<%= render "shared/page_navigation", breadcrumbs: breadcrumbs, tabs: tabs, active: primary_active,
+           tabs_class: "venue-tabs", label: "Venue navigation", secondary_tabs: secondary_tabs,
+           secondary_active: secondary_active, secondary_label: "Venue settings navigation" %>

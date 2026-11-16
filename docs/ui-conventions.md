@@ -8,13 +8,15 @@ Use Title Case for headings, tabs, buttons, and links that act as buttons, for e
 
 ## Navigation
 
-Render Home breadcrumbs and tabs with `shared/page_navigation`. Tab bars are hidden for signed-out visitors. Program members see Program and Calendar, with Exceptions and History available to managers, followed by a separator and scoped management actions. The active tab sets `aria-current`. Manager-only blocks depend on controller-computed permissions such as `@program_coordinator`, never on hidden markup.
+Render Home breadcrumbs and tabs with `shared/page_navigation`, which uses `shared/page_tabs` for each navigation level. Tab bars are hidden for signed-out visitors. Venue primary tabs are Venue, Programs, Photos, and authorized Settings; program primary tabs are Program, Calendar, Photos, the configured plural participant label, and authorized Settings. Managers get secondary sections for Calendar, the participant group, and Settings; ordinary participants retain only Program, Calendar, and Photos. Pass the selected primary group as `active` and the current section as `secondary_active`, with a distinct `secondary_label` for its navigation landmark. Both levels set `aria-current` and wrap on narrow screens. Other pages retain their existing information/action separator. Manager-only blocks depend on permissions such as `@program_coordinator`, never on hidden markup.
 
 Use `shared/photo_series` inside a card's `data-photo-series` container to open its public primary photo and navigate the owner's remaining public photos. Use `shared/photo_thumbnail` inside `.photo-gallery` for gallery navigation. Both reuse the accessible photo-preview dialog, with wrapping previous/next buttons and arrow keys; placeholders remain ordinary links to their owner page.
 
 ## Actions
 
 Plain `button`, `input[type=submit]`, and `.button-link` elements are primary actions with a comfortable touch target. Use `.secondary-action` for less important actions; buttons inside tables are compact automatically. Group related actions in `.participant-actions`. `pending-controls.js` marks submitted forms busy and disables their buttons, so do not add per-page loading code.
+
+Keep New Program on the venue Programs page and Invite a Coordinator on coordinator lists, beside their headings in `.title-row`, rather than making creation actions primary tabs.
 
 ## Status and Identity
 
@@ -26,7 +28,7 @@ Wrap tables in `.table-scroll` with `role="region"`, an `aria-label`, and `tabin
 
 ## Forms and Feedback
 
-Forms without a table, gallery, or tabs narrow automatically to a readable width. Render validation errors with `shared/_errors`, which uses `role="alert"`. Flash messages use `role="alert"` or `role="status"` and float over the top of the page without shifting layout; notices dismiss after three seconds, alerts stay until dismissed. Scripts that update a page in place replace the contents of `[data-flash-messages]`.
+Forms without a table, gallery, or tabs narrow automatically to a readable width. Public application preparation is an exception: its heading and breadcrumbs use full page width while its email form is capped at 28rem and fits smaller screens. Render validation errors with `shared/_errors`, which uses `role="alert"`. Flash messages use `role="alert"` or `role="status"` and float over the top of the page without shifting layout; notices dismiss after three seconds, alerts stay until dismissed. Scripts that update a page in place replace the contents of `[data-flash-messages]`.
 
 ## Copying Links
 

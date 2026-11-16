@@ -55,7 +55,8 @@ RSpec.describe 'Venue and program activation', :aggregate_failures, :database, t
     get edit_venue_path(venue)
     expect(response.body).not_to include('Deactivate Venue')
     get security_venue_path(venue)
-    expect(response.parsed_body.at_css('.venue-tabs [aria-current="page"]').text).to eq('Security')
+    expect(response.parsed_body.at_css('.venue-tabs [aria-current="page"]').text).to eq('Settings')
+    expect(response.parsed_body.at_css('.venue-secondary-tabs [aria-current="page"]').text).to eq('Security')
     expect(response.body).to include('Deactivate Venue')
     patch venue_path(venue), params: { active: false }
     expect(response).to redirect_to(security_venue_path(venue))
@@ -71,7 +72,8 @@ RSpec.describe 'Venue and program activation', :aggregate_failures, :database, t
     patch program_path(program), params: { active: false }
     expect(response).to redirect_to(security_program_path(program))
     follow_redirect!
-    expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Security')
+    expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Settings')
+    expect(response.parsed_body.at_css('.program-secondary-tabs [aria-current="page"]').text).to eq('Security')
     expect(response.body).to include('Activate Program')
     get edit_program_path(program)
     expect(response.body).not_to include('Activate Program')

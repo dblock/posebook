@@ -115,8 +115,9 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     sign_in(admin)
     get edit_venue_path(venue)
     expect(response.parsed_body.css('.venue-tabs a').map(&:text))
-      .to eq(['View', 'Edit', 'Photos', 'Programs', 'New Program', 'Invite a Coordinator', 'Security'])
-    expect(response.parsed_body.at_css('.venue-tabs [aria-current="page"]').text).to eq('Edit')
+      .to eq(%w[Venue Programs Photos Settings])
+    expect(response.parsed_body.at_css('.venue-tabs [aria-current="page"]').text).to eq('Settings')
+    expect(response.parsed_body.css('.venue-secondary-tabs a').map(&:text)).to eq(%w[Details Coordinators Security])
   end
 
   it 'groups programs and photos with management while keeping write actions private' do
@@ -126,8 +127,13 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
       .to eq([['Venues'], ['Create Venue']])
     get edit_venue_path(venue)
     expect(response.parsed_body.css('.venue-tabs .page-tab-group').map { |group| group.css('a').map(&:text) })
-      .to eq([['View'], ['Edit', 'Photos', 'Programs', 'New Program', 'Invite a Coordinator', 'Security']])
-    expect(response.parsed_body.at_css('.venue-tabs [aria-current="page"]').text).to eq('Edit')
+      .to eq([%w[Venue Programs Photos Settings]])
+    expect(response.parsed_body.at_css('.venue-tabs [aria-current="page"]').text).to eq('Settings')
+    expect(response.parsed_body.at_css('.venue-secondary-tabs [aria-current="page"]').text).to eq('Details')
+    get programs_venue_path(venue)
+    expect(response.parsed_body.at_css('.title-row a.button-link')['href']).to eq(new_venue_program_path(venue))
+    get venue_coordinators_path(venue)
+    expect(response.parsed_body.at_css('.title-row a.button-link')['href']).to eq(new_venue_coordinator_path(venue))
     delete session_path
     get venue_path(venue)
     expect(response.parsed_body.at_css('.page-tabs')).to be_nil
@@ -180,6 +186,15 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     selected = response.parsed_body.at_css("[data-photo='#{second.id}']")
     expect(selected.at_css('figcaption').text).to include('Primary')
     expect(selected.text).not_to include('Make Primary')
+  end
+
+  it 'shows the Details section without exposing admin settings to venue coordinators' do
+    coordinator = create_user
+    grant_venue_access(venue, coordinator)
+    sign_in(coordinator)
+    get edit_venue_path(venue)
+    expect(response.parsed_body.at_css('.venue-tabs [aria-current="page"]').text).to eq('Settings')
+    expect(response.parsed_body.css('.venue-secondary-tabs a').map(&:text)).to eq(['Details'])
   end
 
   def expect_guest_cannot_view_private_photo(second)

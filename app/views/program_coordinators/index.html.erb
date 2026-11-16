@@ -1,6 +1,9 @@
 <main>
   <%= render "programs/navigation", program: @program, active: "coordinators" %>
-  <h1>Coordinators</h1>
+  <div class="title-row">
+    <h1>Coordinators</h1>
+    <%= link_to "Invite a Coordinator", new_program_coordinator_path(@program), class: "button-link" %>
+  </div>
   <%= render "programs/regular_schedule", program: @program %>
   <%= render "shared/coordinators_table", coordinators: @coordinators,
                                           remove_path: ->(membership) { program_coordinator_path(@program, membership) } %>

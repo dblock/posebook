@@ -1,4 +1,4 @@
-<main>
+<main class="application-registration">
   <%= render "programs/navigation", program: @program, active: "view", detail: "Prepare an Application" %>
   <h1>Prepare an Application to <%= @program.name %></h1>
   <% unless current_user %><p>Already have an account? <%= link_to "Sign In", new_session_path %>.</p><% end %>

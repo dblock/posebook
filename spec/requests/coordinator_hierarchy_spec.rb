@@ -60,7 +60,7 @@ RSpec.describe 'Coordinator hierarchy', :aggregate_failures, :database, type: :r
     sign_in(coordinator)
     get edit_program_path(program)
     expect(response).to have_http_status(:ok)
-    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to include('Edit', 'GCal')
+    expect(response.parsed_body.css('.program-secondary-tabs a').map(&:text)).to eq(['Details', 'Google Calendar'])
     get edit_program_path(sibling)
     expect(response).to have_http_status(:not_found)
     get edit_venue_path(venue)

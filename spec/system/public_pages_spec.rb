@@ -48,6 +48,20 @@ RSpec.describe 'Public pages', :aggregate_failures, :database, type: :system do
     end
   end
 
+  it 'keeps application preparation as wide as the public program at every viewport' do
+    program.update!(applications_enabled: true)
+    each_viewport do |viewport|
+      visit program_path(program)
+      width = width_of(page.find('main'))
+      visit new_program_application_registration_path(program)
+      expect(page).to have_field('Email')
+      expect(width_of(page.find('main'))).to eq(width)
+      expect(width_of(page.find_field('Email'))).to be < width if viewport == :desktop
+      expect_no_horizontal_overflow
+      capture_screenshot("application-preparation-#{viewport}")
+    end
+  end
+
   it 'shows managed programs instead of public sessions on the coordinator homepage' do
     coordinator = create_user(name: 'Studio Coordinator')
     grant_coordinator_access(program, coordinator)

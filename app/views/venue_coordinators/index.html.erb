@@ -1,6 +1,9 @@
 <main>
   <%= render "venues/navigation", venue: @venue, active: "coordinators" %>
-  <h1>Coordinators</h1>
+  <div class="title-row">
+    <h1>Coordinators</h1>
+    <%= link_to "Invite a Coordinator", new_venue_coordinator_path(@venue), class: "button-link" %>
+  </div>
   <%= render "shared/coordinators_table", coordinators: @coordinators,
                                           remove_path: ->(membership) { venue_coordinator_path(@venue, membership) } %>
 </main>
