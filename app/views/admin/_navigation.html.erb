@@ -1,0 +1,3 @@
+<%= render "shared/page_navigation", breadcrumbs: [[active == "history" ? "History" : "Users", nil]],
+           tabs: [["users", "Users", admin_users_path], ["history", "History", admin_history_path]],
+           active: active, tabs_class: "user-tabs", label: "Administrator navigation" %>

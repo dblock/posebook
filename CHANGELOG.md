@@ -129,4 +129,5 @@
 - [#143](https://github.com/dblock/posebook/pull/143): Reuse loaded participant program and venue documents while preserving canonical visibility checks - [@dblock](https://github.com/dblock).
 - [#144](https://github.com/dblock/posebook/pull/144): Validate private browser photo caches with variant-specific ETags while checking current access before every response - [@dblock](https://github.com/dblock).
 - [#145](https://github.com/dblock/posebook/pull/145): Replace numbered table pages with stable scoped mongoid-scroll cursors, preserving filters and actions across insertions and deletions - [@dblock](https://github.com/dblock).
+- [#146](https://github.com/dblock/posebook/pull/146): Add a private administrator History tab with linked audit actors and records, before/after values, and stable cursor navigation - [@dblock](https://github.com/dblock).
 - Your contribution here.
