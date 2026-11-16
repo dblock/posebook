@@ -46,6 +46,21 @@ body {
   margin-inline: auto;
 }
 
+.markdown-content {
+  overflow-wrap: anywhere;
+}
+
+.markdown-content pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.markdown-content blockquote {
+  margin-inline: 0;
+  padding-inline-start: 1rem;
+  border-inline-start: 3px solid var(--line);
+}
+
 .site-footer {
   border-top: 1px solid var(--line);
   padding: 1.25rem 2rem;

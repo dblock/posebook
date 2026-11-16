@@ -1,4 +1,15 @@
 ActionMailer
+ApplicationController
+blockquote
+br
+del
+html
+iframe
+ol
+onclick
+onerror
+pre
+ul
 CursorPage
 li
 ETag

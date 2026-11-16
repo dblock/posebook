@@ -5,6 +5,7 @@ source 'https://rubygems.org'
 ruby '~> 4.0.9'
 
 gem 'bcrypt', '~> 3.1', '>= 3.1.22'
+gem 'commonmarker', '~> 2.10', '>= 2.10.1'
 gem 'delayed_job_mongoid', '~> 3.0'
 gem 'google-apis-calendar_v3', '~> 0.58', require: 'google/apis/calendar_v3'
 gem 'mongoid', '~> 9.1', '>= 9.1.2'

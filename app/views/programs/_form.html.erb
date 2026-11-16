@@ -40,7 +40,9 @@
       <label><%= check_box_tag "program[no_consecutive_genders][]", gender, program.no_consecutive_genders.include?(gender), id: "no-consecutive-#{gender}" %> <%= gender.capitalize %></label>
     <% end %>
   </fieldset>
-  <p><%= form.label :instructions %><br><%= form.text_area :instructions, maxlength: 5000, rows: 4 %></p>
+  <p><%= form.label :instructions %><br><%= form.text_area :instructions, maxlength: 5000, rows: 4 %><br>
+    <small>Private to participants and coordinators. Supports Markdown: headings, lists, **bold**, *italic*, and [links](https://example.com).</small>
+  </p>
   <p><label><%= form.check_box :applications_enabled %> Accept Participation Applications</label><br>
     <small>Requires email and an active coordinator.</small>
     <% if program.persisted? %>
