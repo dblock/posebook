@@ -24,7 +24,7 @@ class UpcomingSessions
   end
 
   def sessions_for(program)
-    calendar = ProgramCalendar.new(program)
+    calendar = ProgramCalendar.new(program, exceptions: exceptions.fetch(program.id, []))
     (calendar.today..[calendar.today + @days, calendar.last_date].min).filter_map do |date|
       next unless calendar.session_on?(date) && calendar.starts_at(date) > Time.current
 
@@ -53,5 +53,17 @@ class UpcomingSessions
                        .only(:id, :program_id, :user_id, :display_name_override, :instagram_hidden)
                        .index_by { |membership| [membership.program_id, membership.user_id] }
     end
+  end
+
+  def exceptions
+    @exceptions ||= begin
+      from = @programs.map { |program| local_month_start(program) }.min
+      ProgramScheduleException.where(:program_id.in => @programs.map(&:id), :date.gte => from)
+                              .group_by(&:program_id)
+    end
+  end
+
+  def local_month_start(program)
+    Time.current.in_time_zone(program.time_zone).to_date.beginning_of_month.beginning_of_week(:sunday)
   end
 end

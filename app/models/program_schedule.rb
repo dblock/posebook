@@ -3,9 +3,13 @@
 class ProgramSchedule
   TIME_FORMAT = /\A(?:[01]\d|2[0-3]):[0-5]\d\z/
 
-  def initialize(program, from: Time.current.in_time_zone(program.time_zone).to_date)
+  def initialize(program, from: Time.current.in_time_zone(program.time_zone).to_date, exceptions: nil)
     @program = program
     @from = from
+    return unless exceptions
+
+    @exceptions = exceptions.select { |record| record.program_id == program.id && (!from || record.date >= from) }
+                            .index_by(&:date)
   end
 
   def exceptions
