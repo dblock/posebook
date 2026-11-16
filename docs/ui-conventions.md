@@ -28,7 +28,7 @@ Wrap tables in `.table-scroll` with `role="region"`, an `aria-label`, and `tabin
 
 ## Forms and Feedback
 
-Program instructions support Markdown while remaining private to participants and coordinators. Use `render_markdown` for formatted content: it preserves plain-text line breaks, sanitizes output, and excludes raw HTML and embedded images. Show a short formatting hint beside the editor. Markdown code blocks and long words must fit narrow viewports.
+Venue and program descriptions are public; program descriptions also appear on both application forms. Program instructions remain private to participants and coordinators. All three fields support Markdown through `render_markdown`: it preserves plain-text line breaks, sanitizes output, and excludes raw HTML and embedded images. Use `shared/description` for public descriptions, omitting blank sections. Label public/private visibility and show a short formatting hint beside each editor. Markdown code blocks and long words must fit narrow viewports. Pay stays member-only; booking horizon belongs in settings, not the overview or application forms.
 
 Forms without a table, gallery, or tabs narrow automatically to a readable width. Public application preparation is an exception: its heading and breadcrumbs use full page width while its email form is capped at 28rem and fits smaller screens. Render validation errors with `shared/_errors`, which uses `role="alert"`. Flash messages use `role="alert"` or `role="status"` and float over the top of the page without shifting layout; notices dismiss after three seconds, alerts stay until dismissed. Scripts that update a page in place replace the contents of `[data-flash-messages]`.
 

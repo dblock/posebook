@@ -1,6 +1,9 @@
 <%= render "shared/errors", record: program %>
 <%= form_with model: program.persisted? ? program : [program.venue, program] do |form| %>
   <p><%= form.label :name %><br><%= form.text_field :name, required: true, maxlength: 100 %></p>
+  <p><%= form.label :description %><br><%= form.text_area :description, maxlength: 5000, rows: 5 %><br>
+    <small>Public, including application forms. Supports Markdown: headings, lists, **bold**, *italic*, and [links](https://example.com).</small>
+  </p>
   <p><%= form.label :program_label, "Program Label" %><br><%= form.text_field :program_label, required: true, maxlength: 40 %><br><small>Such as Program or Workshop.</small></p>
   <p><%= form.label :participant_label, "Participant Label" %><br><%= form.text_field :participant_label, required: true, maxlength: 40 %><br><small>Such as Participant or Instructor.</small></p>
   <p><%= form.label :custom_slug, "Shortcut" %><br><%= form.text_field :custom_slug, maxlength: 100, placeholder: program.name.to_s.to_url %><br>

@@ -76,9 +76,10 @@ def create_current_records(container)
     User.create!(name: "Package Participant", email: "package@example.test", phone: "+12025550101",
                  password: "a sufficiently long package password", gender: "other",
                  instagram_handle: "package.participant", instagram_tagging_allowed: true)
-    venue = Venue.create!(name: "Package Venue", address: "Test")
+    venue = Venue.create!(name: "Package Venue", address: "Test", description: "**Public venue description**")
     Program.create!(name: "Package Program", venue: venue, pay: 150,
-                    program_label: "Workshop", participant_label: "Instructor", instructions: "Package instructions")
+                    program_label: "Workshop", participant_label: "Instructor", instructions: "Package instructions",
+                    description: "**Public program description**")
     Program.transaction { Program.create!(name: "Package Transaction", venue: venue); raise Mongoid::Errors::Rollback }
     raise "Rollback failed" if Program.where(name: "Package Transaction").exists?
   RUBY
@@ -192,8 +193,14 @@ begin
   check_markdown(container)
   response = request(port, '/programs/package-program')
   unless response.code == '200' && response.body.include?('Workshop Calendar') &&
-         !response.body.match?(/Regular Schedule/)
+         response.body.include?('<strong>Public program description</strong>') &&
+         !response.body.match?(/Regular Schedule|Package instructions|Booking Horizon|<dt>Pay/)
     raise 'The current program details did not render through its generated slug'
+  end
+
+  response = request(port, '/venues/package-venue')
+  unless response.code == '200' && response.body.include?('<strong>Public venue description</strong>')
+    raise 'The public venue description did not render'
   end
 
   response = request(port, '/programs/package-program?section=calendar')

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Program
+class Program # rubocop:disable Metrics/ClassLength -- Keep Mongoid field and audit declarations together.
   include Mongoid::Document
   include Mongoid::Timestamps
   include Mongoid::Slug
@@ -18,6 +18,7 @@ class Program
   field :custom_slug, type: String
   field :time_zone, type: String, default: 'UTC'
   field :pay, type: BigDecimal, default: 0
+  field :description, type: String
   field :instructions, type: String
   field :booking_horizon_months, type: Integer, default: 6
   field :first_bookable_date, type: Date
@@ -34,7 +35,7 @@ class Program
     (program.custom_slug.presence || program.name).to_url
   end
 
-  track_history on: %i[name program_label participant_label custom_slug _slugs time_zone pay instructions
+  track_history on: %i[name program_label participant_label custom_slug _slugs time_zone pay description instructions
                        booking_horizon_months first_bookable_date available_weekdays start_time end_time
                        no_consecutive_genders
                        calendar_invitation_lead_minutes primary_photo_id active applications_enabled],
@@ -65,7 +66,7 @@ class Program
   validates :custom_slug, length: { maximum: 100 }
   validates :time_zone, inclusion: { in: TIME_ZONES }
   validates :pay, numericality: { greater_than_or_equal_to: 0 }
-  validates :instructions, length: { maximum: 5000 }
+  validates :description, :instructions, length: { maximum: 5000 }
   validates :booking_horizon_months, numericality: { only_integer: true, greater_than: 0 }
   validate do
     value = attributes_before_type_cast['first_bookable_date']

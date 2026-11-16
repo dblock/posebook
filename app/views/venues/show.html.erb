@@ -3,6 +3,7 @@
   <div class="title-row"><h1><%= @venue.name %></h1><%= render "shared/copy_button", url: venue_url(@venue), label: "#{@venue.name} link" %></div>
   <% unless @venue.active? %><p role="status"><%= t('locations.inactive') %></p><% end %>
   <%= render "card", venue: @venue, show_title: false %>
+  <%= render "shared/description", location: @venue %>
   <% if @programs.any? %>
     <section aria-labelledby="venue-programs-heading">
       <h2 id="venue-programs-heading">Programs</h2>

@@ -35,13 +35,24 @@ RSpec.describe 'Coordinator hierarchy', :aggregate_failures, :database, type: :r
     expect(response).to have_http_status(:not_found)
   end
 
+  it 'lets admins create venues with public descriptions' do
+    sign_in(create_user(roles: ['system_admin']))
+    post venues_path, params: { venue: { name: "Studio #{SecureRandom.hex(4)}", address: 'Test address',
+                                         description: '**Public studio description**' } }
+    created = track_record(Venue.find(response.location.split('/').last))
+    expect(response).to redirect_to(venue_path(created))
+    expect(created.description).to eq('**Public studio description**')
+  end
+
   it 'allows venue coordinators to create sessions only at their own venue' do
     grant_venue_access(venue, coordinator)
     sign_in(coordinator)
     post venue_programs_path(venue),
-         params: { program: { name: 'Tuesday Booking', available_weekdays: ['2'] } }
+         params: { program: { name: 'Tuesday Booking', available_weekdays: ['2'],
+                              description: '**Public program description**' } }
     created = track_record(venue.programs.find_by(name: 'Tuesday Booking'))
     expect(response).to redirect_to(program_path(created))
+    expect(created.description).to eq('**Public program description**')
     post venue_programs_path(other_program.venue), params: { program: { name: 'Forbidden' } }
     expect(response).to have_http_status(:not_found)
     post venue_coordinators_path(venue), params: { email: coordinator.email }
