@@ -133,4 +133,15 @@ RSpec.describe 'User experience read performance', :aggregate_failures, :databas
     photo.update!(public: false)
     expect(venue.reload.public_photo_ids).to eq([next_photo.id])
   end
+
+  it 'batch loads only booked participant display overrides across public programs' do
+    programs = Array.new(10) { create_program }
+    programs.each_with_index do |program, index|
+      grant_participant_access(program, participant).update!(display_name_override: "Program Model #{index}")
+      track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-11-16'))
+    end
+    result = commands { get root_path }
+    expect(response.body).to include('Program Model 0', 'Program Model 9')
+    expect(result[:collections]['program_memberships']).to eq(1)
+  end
 end

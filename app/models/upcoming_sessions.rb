@@ -4,7 +4,7 @@
 class UpcomingSessions
   include Enumerable
 
-  Session = Data.define(:program, :calendar, :date, :starts_at, :booking)
+  Session = Data.define(:program, :calendar, :date, :starts_at, :booking, :membership)
   DAYS = 14
 
   def initialize(programs = Program.viewable_by(nil), days: DAYS)
@@ -28,14 +28,30 @@ class UpcomingSessions
     (calendar.today..[calendar.today + @days, calendar.last_date].min).filter_map do |date|
       next unless calendar.session_on?(date) && calendar.starts_at(date) > Time.current
 
-      Session.new(program: program, calendar: calendar, date: date, starts_at: calendar.starts_at(date),
-                  booking: bookings[[program.id, date]])
+      session_for(program, calendar, date)
     end
+  end
+
+  def session_for(program, calendar, date)
+    booking = bookings[[program.id, date]]
+    Session.new(program: program, calendar: calendar, date: date, starts_at: calendar.starts_at(date),
+                booking: booking, membership: (memberships[[program.id, booking.user_id]] if booking))
   end
 
   def bookings
     @bookings ||= Booking.where(:program_id.in => @programs.map(&:id), status: 'confirmed',
                                 :date.gte => Date.current - 1, :date.lte => Date.current + @days + 1)
                          .includes(:user).index_by { |booking| [booking.program_id, booking.date] }
+  end
+
+  def memberships
+    @memberships ||= begin
+      selectors = bookings.values.group_by(&:program_id).map do |program_id, records|
+        { program_id: program_id, :user_id.in => records.map(&:user_id).uniq }
+      end
+      ProgramMembership.participants.any_of(*selectors)
+                       .only(:id, :program_id, :user_id, :display_name_override, :instagram_hidden)
+                       .index_by { |membership| [membership.program_id, membership.user_id] }
+    end
   end
 end

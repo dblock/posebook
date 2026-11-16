@@ -69,6 +69,20 @@ RSpec.describe 'Homepage', :aggregate_failures, :database, type: :request do
     expect(response.body).not_to include('Real Name', 'real_model')
   end
 
+  it 'does not reuse revoked display overrides or retain stale overrides between requests' do
+    participant = create_user(display_name: 'Public Model', instagram_handle: 'public_model',
+                              instagram_tagging_allowed: true)
+    membership = grant_participant_access(program, participant)
+    membership.update!(display_name_override: 'Stage Name', instagram_hidden: true)
+    track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-11-16'))
+    get root_path
+    expect(session_rows.first.last).to eq('Stage Name')
+    membership.update!(roles: [])
+    get root_path
+    expect(session_rows.first.last).to include('Public Model', '@public_model')
+    expect(response.body).not_to include('Stage Name')
+  end
+
   it 'lists only the venue programs and sessions on its public page' do
     create_program(name: 'Elsewhere Mondays')
     create_program(name: 'Paused Mondays', venue: program.venue, active: false)

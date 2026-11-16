@@ -13,7 +13,7 @@
               <td><%= booking ? calendar_booking_time(booking) : scheduled_calendar_time(session.calendar, session.date) %></td>
               <td><%= link_to program.name, program_path(program) %></td>
               <% if show_venue %><td><%= link_to program.venue.name, venue_path(program.venue) %></td><% end %>
-              <td><% if booking&.user&.active? %><%= render "programs/booked_participant", booking: booking, program: program, manager: false %><% else %>To be announced<% end %></td>
+              <td><% if booking&.user&.active? %><%= render "programs/booked_participant", booking: booking, program: program, membership: session.membership, manager: false %><% else %>To be announced<% end %></td>
             </tr>
           <% end %>
         </tbody>
