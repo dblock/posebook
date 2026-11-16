@@ -1,6 +1,7 @@
 <main>
   <%= render "programs/navigation", program: @program, active: "view", detail: "Apply" %>
   <h1>Apply to <%= @program.name %></h1>
+  <%= render "shared/description", location: @program %>
   <p>Save a draft anytime and submit when ready. Drafts are private and deleted after 30 days.</p>
   <%= render "shared/errors", record: @application %>
   <% @user = @profile || current_user.dup %>

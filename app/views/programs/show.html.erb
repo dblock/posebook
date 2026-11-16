@@ -7,6 +7,7 @@
   <% end %>
   <% unless @program.booking_active? %><p role="status"><%= t('locations.inactive') %></p><% end %>
   <% if @section == "view" %>
+  <%= render "shared/description", location: @program %>
   <%= render "next_session" %>
   <%= render "calendar", calendar: @calendar, public_view: !@program_member, show_schedule: false %>
   <% if @program_coordinator %>
@@ -18,7 +19,6 @@
   <% if @program_member %>
     <dl>
       <dt>Pay</dt><dd><%= number_to_currency(@program.pay) %> USD</dd>
-      <dt>Booking Horizon</dt><dd><%= @program.booking_horizon_months %> months</dd>
     </dl>
   <% end %>
   <% if @program_member && @program.instructions.present? %>

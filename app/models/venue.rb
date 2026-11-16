@@ -16,6 +16,7 @@ class Venue
   }.freeze
 
   field :name, type: String
+  field :description, type: String
   field :custom_slug, type: String
   field :address, type: String
   field :instagram_handle, type: String
@@ -27,7 +28,8 @@ class Venue
   slug :name, :custom_slug, history: true, reserve: Program::RESERVED_SLUGS, max_length: 100 do |venue|
     (venue.custom_slug.presence || venue.name).to_url
   end
-  track_history on: %i[name custom_slug _slugs address instagram_handle google_maps_url primary_photo_id active],
+  track_history on: %i[name description custom_slug _slugs address instagram_handle google_maps_url
+                       primary_photo_id active],
                 modifier_field_optional: true, modifier_field_inverse_of: nil, track_blank_changes: true
 
   has_many :memberships, class_name: 'VenueMembership', inverse_of: :venue, dependent: :restrict_with_error
@@ -42,6 +44,7 @@ class Venue
     self.google_maps_url = google_maps_url.to_s.strip.presence
   end
   validates :name, presence: true, length: { maximum: 100 }
+  validates :description, length: { maximum: 5000 }
   validates :custom_slug, length: { maximum: 100 }
   validates :address, presence: true, length: { maximum: 500 }
   validates :google_maps_url, length: { maximum: 2048 }, allow_nil: true

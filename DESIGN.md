@@ -6,6 +6,8 @@ Posebook manages invitation-first participation in recurring programs. Payments,
 
 `Venue` is a physical location; `Program` owns a recurring schedule, time zone, pay, private instructions, booking rules, roster, invitations, and calendar. `Booking` is a retained dated reservation, not a separate event resource. Authentication sessions are unrelated to programs. Configurable program/participant labels change presentation, never roles or booking policy.
 
+Venues and programs have optional, audited public descriptions of at most 5,000 characters. Program descriptions also appear on application preparation and application forms. Descriptions and private program instructions share sanitized Markdown rendering; raw HTML, unsafe links, and embedded images are excluded. Existing instructions remain private and are never copied into descriptions. Pay is member-only, and the booking horizon appears only in settings.
+
 One `User` identity has independent venue and program memberships. Global roles contain only system-wide authority:
 
 | Role                | Authority                                                                                                    |

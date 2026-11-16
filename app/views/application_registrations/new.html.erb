@@ -1,6 +1,7 @@
 <main class="application-registration">
   <%= render "programs/navigation", program: @program, active: "view", detail: "Prepare an Application" %>
   <h1>Prepare an Application to <%= @program.name %></h1>
+  <%= render "shared/description", location: @program %>
   <% unless current_user %><p>Already have an account? <%= link_to "Sign In", new_session_path %>.</p><% end %>
   <%= render "shared/errors", record: @registration %>
   <%= form_with url: program_application_registration_path(@program), scope: :application_registration do |form| %>
