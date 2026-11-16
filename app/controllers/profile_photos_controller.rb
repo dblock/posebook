@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ProfilePhotosController < ApplicationController
+  include PhotoResponse
+
   before_action :require_authentication, except: :show
   before_action :find_gallery
   before_action :require_editor, except: :show
@@ -10,8 +12,7 @@ class ProfilePhotosController < ApplicationController
   rescue_from Mongo::Error, with: :storage_unavailable
 
   def show
-    send_data @photo.bytes(thumbnail: params[:thumbnail] == '1'),
-              type: 'image/webp', disposition: 'inline', filename: 'photo.webp'
+    send_photo(@photo)
   end
 
   def create

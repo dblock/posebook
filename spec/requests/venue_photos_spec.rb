@@ -157,10 +157,10 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     expect(response.parsed_body.at_css('.page-tabs')).to be_nil
   end
 
-  it 'serves full-size and square optimized WebP images publicly without persistent caching' do
+  it 'serves full-size and square optimized WebP images publicly with private cache validation' do
     get venue_photo_path(venue, photo)
     expect(response.media_type).to eq('image/webp')
-    expect(response.headers['Cache-Control']).to include('no-store')
+    expect(response.headers['Cache-Control']).to eq('max-age=0, private, must-revalidate')
     full = Vips::Image.new_from_buffer(response.body, '')
     expect([full.width, full.height]).to eq([600, 900])
     get venue_photo_path(venue, photo, thumbnail: 1)

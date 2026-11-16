@@ -280,7 +280,7 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     [nil, 1].each do |thumbnail|
       get participant_photo_path(applicant, photo.id, thumbnail: thumbnail)
       expect(response).to have_http_status(:ok)
-      expect(response.headers['Cache-Control']).to include('no-store')
+      expect(response.headers['Cache-Control']).to eq('max-age=0, private, must-revalidate')
     end
     patch participant_photo_path(applicant, photo.id), params: { profile_photo: { public: '1' } }
     expect(response).to have_http_status(:forbidden)
@@ -301,6 +301,20 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     end
     review('accepted')
     expect(program.participant?(applicant)).to be(false)
+  end
+
+  it 'denies a cached private applicant image after consent is withdrawn' do
+    photo = private_photo
+    application
+    sign_in(coordinator)
+    path = participant_photo_path(applicant, photo.id)
+    get path
+    etag = response.headers.fetch('ETag')
+    sign_in(applicant)
+    delete program_participation_application_path(program), params: { lock_version: 0 }
+    sign_in(coordinator)
+    get path, headers: { 'If-None-Match' => etag }
+    expect(response).to have_http_status(:not_found)
   end
 
   it 'retains submission identity but not later private name changes after withdrawal' do
