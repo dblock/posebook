@@ -175,4 +175,17 @@ RSpec.describe 'User experience read performance', :aggregate_failures, :databas
     expect(calendar.schedule.exceptions.keys).to contain_exactly(Date.new(2026, 11, 16), Date.new(2026, 12, 7))
     expect(calendar.session_on?(Date.new(2026, 12, 7))).to be(false)
   end
+
+  it 'reads binary photo chunks in order across cursor batches without repeated counts' do
+    payload = "\x00\xffbinary".b * 1152
+    file = track_record(ProfilePhoto.storage.file_model.create!(filename: 'photo.webp', chunkSize: 1024,
+                                                                length: payload.bytesize))
+    9.times do |index|
+      file.chunks.create!(n: index, data: BSON::Binary.new(payload.byteslice(index * 1024, 1024)))
+    end
+    photo = ProfilePhoto.new(image_id: file.id)
+    result = commands { expect(photo.bytes).to eq(payload) }
+    expect(result[:collections]['photos.files']).to eq(1)
+    expect(result[:collections]['photos.chunks']).to eq(2)
+  end
 end

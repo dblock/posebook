@@ -28,7 +28,9 @@ module PhotoFiles
   end
 
   def bytes(thumbnail: false)
-    self.class.storage.get(thumbnail ? thumbnail_id : image_id).data
+    file = self.class.storage.get(thumbnail ? thumbnail_id : image_id)
+    # Retain the existing reader's seven-chunk memory bound without counting each batch.
+    file.chunks.order_by(n: :asc).batch_size(7).each_with_object(+'') { |chunk, data| data << chunk.to_s }
   end
 
   def delete_files
