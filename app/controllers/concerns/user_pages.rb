@@ -10,7 +10,7 @@ module UserPages
   end
 
   def load_user_history(user)
-    @history = ParticipantHistory.new(user, page: params[:page])
+    @history = ParticipantHistory.new(user, cursor: params[:cursor])
     @bookings = @history.bookings
   end
 
@@ -20,10 +20,8 @@ module UserPages
   end
 
   def load_user_applications(user)
-    @page = [params[:page].to_i, 1].max
-    @applications = ParticipantApplication.where(user_id: user.id).includes(:program)
-                                          .order_by(created_at: :desc, id: :desc).skip((@page - 1) * 50).limit(51).to_a
-    @more = @applications.length > 50
-    @applications = @applications.first(50)
+    records = ParticipantApplication.where(user_id: user.id).includes(:program).order_by(created_at: :desc)
+    @pagination = CursorPage.new(records, cursor: params[:cursor])
+    @applications = @pagination.records
   end
 end

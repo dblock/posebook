@@ -73,8 +73,7 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
     manage_participants
     get program_participants_path(program)
     row = response.parsed_body.at_css("tr[data-membership='#{membership.id}']")
-    expect(row.at_css('td:nth-child(2) form')['action']).to eq(invite_program_participant_path(program, membership,
-                                                                                               page: 1))
+    expect(row.at_css('td:nth-child(2) form')['action']).to eq(invite_program_participant_path(program, membership))
     expect(row.at_css('.participant-actions').text).not_to include('View Photos', 'Invite to Book')
     expect(row.at_css('.participant-pause summary').text).to eq('Pause Participant')
     membership.update!(participant_paused: true, participant_pause_reason: 'Travel.')
@@ -140,35 +139,41 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
         .to eq(members.first(2).map { |item| item.id.to_s })
       expect(response.parsed_body.text).to include('3 total participants', '3 available',
                                                    'Invite All Available Participants (3)')
-      expect(response.parsed_body.at_css('a[rel="next"]')['href']).to eq(program_participants_path(program,
-                                                                                                   page: 2))
+      next_path = response.parsed_body.at_css('a[rel="next"]')['href']
+      expect(next_path).to start_with("#{program_participants_path(program)}?cursor=")
       expect(response.parsed_body.at_css('a[rel="prev"]')).to be_nil
-      get program_participants_path(program, page: 2)
+      get next_path
       expect(response.parsed_body.css('tr[data-membership]').pluck('data-membership')).to eq([members.last.id.to_s])
-      expect(response.parsed_body.at_css('a[rel="prev"]')['href']).to eq(program_participants_path(program,
-                                                                                                   page: 1))
+      previous_path = response.parsed_body.at_css('a[rel="prev"]')['href']
       expect(response.parsed_body.at_css('a[rel="next"]')).to be_nil
+      get previous_path
+      expect(response.parsed_body.css('tr[data-membership]').pluck('data-membership'))
+        .to eq(members.first(2).map { |item| item.id.to_s })
+      expect(response.parsed_body.at_css('a[rel="prev"]')).to be_nil
     end
 
     it 'invites all pages and retains the current page after individual and bulk actions' do
-      post invite_all_program_participants_path(program, page: 2)
-      expect(response).to redirect_to(program_participants_path(program, page: 2))
+      get program_participants_path(program)
+      get response.parsed_body.at_css('a[rel="next"]')['href']
+      cursor = URI.decode_www_form(URI(request.url).query).to_h.fetch('cursor')
+      post invite_all_program_participants_path(program, cursor: cursor)
+      expect(response).to redirect_to(program_participants_path(program, cursor: cursor))
       deliver_emails
       expect(ActionMailer::Base.deliveries.flat_map(&:to)).to match_array(members.map { |item| item.user.email })
-      post pause_program_participant_path(program, members.last, page: 2), params: { reason: 'Travel.' }
-      expect(response).to redirect_to(program_participants_path(program, page: 2))
+      post pause_program_participant_path(program, members.last, cursor: cursor), params: { reason: 'Travel.' }
+      expect(response).to redirect_to(program_participants_path(program, cursor: cursor))
       follow_redirect!
       expect(response.parsed_body.text).to include('3 total participants', '2 available', '1 paused')
       expect(response.parsed_body.at_css("tr[data-membership='#{members.last.id}'] summary").text).to eq('Pause Note')
     end
 
-    it 'clamps missing, invalid, and out-of-range pages to valid bounds' do
-      get program_participants_path(program, page: 999)
-      expect(response.body).to include('Page 2 of 2')
-      get program_participants_path(program, page: -1)
-      expect(response.body).to include('Page 1 of 2')
-      get program_participants_path(program, page: 'invalid')
-      expect(response.body).to include('Page 1 of 2')
+    it 'restarts invalid cursors and ignores legacy page numbers' do
+      [nil, 'invalid', { unexpected: 'value' }].each do |cursor|
+        get program_participants_path(program, page: 999, cursor: cursor)
+        expect(response.parsed_body.css('tr[data-membership]').pluck('data-membership'))
+          .to eq(members.first(2).map { |item| item.id.to_s })
+        expect(response.parsed_body.at_css('a[rel="prev"]')).to be_nil
+      end
     end
   end
 

@@ -243,7 +243,7 @@ module UserExperienceBenchmark
       user_id = @fixtures.users.first.id
       upcoming = Booking.upcoming.where(user_id: user_id, :program_id.in => @fixtures.programs.map(&:id))
       { profile_upcoming: explain(upcoming),
-        profile_history: explain(Booking.where(user_id: user_id).order_by(date: :desc, created_at: :desc, id: :desc)
+        profile_history: explain(Booking.where(user_id: user_id).order_by(date: :desc, id: :desc)
                                        .limit(ParticipantHistory::PER_PAGE)) }
     end
 

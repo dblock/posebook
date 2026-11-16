@@ -29,6 +29,7 @@ class ProgramMembership
 
   index({ program_id: 1, user_id: 1 }, unique: true)
   index({ user_id: 1, roles: 1 })
+  index({ program_id: 1, roles: 1, created_at: 1, _id: 1 })
   scope :coordinators, -> { where(:roles.in => ['program_coordinator']) }
   scope :participants, -> { where(:roles.in => ['participant']) }
   validate { errors.add(:roles, :invalid) unless (roles - %w[program_coordinator participant]).empty? }

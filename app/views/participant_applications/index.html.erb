@@ -7,5 +7,5 @@
       <li><%= link_to application.program.name, @user == current_user ? program_participation_application_path(application.program) : program_application_path(application.program, application) %> - <%= application.status_label %></li>
     <% end %>
   </ul>
-  <p><%= link_to "Previous", user_page_path(@user, "applications", page: @page - 1) if @page > 1 %> <%= link_to "Next", user_page_path(@user, "applications", page: @page + 1) if @more %></p>
+  <%= render "shared/pagination", pagination: @pagination, label: "Application pages" %>
 </main>

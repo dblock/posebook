@@ -23,12 +23,6 @@
       </table>
     </div>
   <% end %>
-  <% if @page > 1 || @more %>
-    <nav class="participant-pagination" aria-label="Application pages">
-      <% if @page > 1 %><%= link_to "Previous", program_applications_path(@program, status: @status, page: @page - 1), rel: "prev" %><% end %>
-      <span>Page <%= @page %></span>
-      <% if @more %><%= link_to "Next", program_applications_path(@program, status: @status, page: @page + 1), rel: "next" %><% end %>
-    </nav>
-  <% end %>
+  <%= render "shared/pagination", pagination: @pagination, label: "Application pages" %>
   <p><%= link_to "Participation History", history_program_applications_path(@program) %></p>
 </main>

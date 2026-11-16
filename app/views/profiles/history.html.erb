@@ -2,7 +2,7 @@
   <%= render "profiles/navigation", user: @user, active: "history" %>
   <h1>History</h1>
   <% if @bookings.any? %>
-    <p>Showing <%= @history.first_number %>&ndash;<%= @history.last_number %> of <%= @history.count %> bookings</p>
+    <p>Showing <%= @bookings.size %> of <%= @history.count %> bookings</p>
     <p class="scroll-hint">Scroll horizontally to view the full history.</p>
     <div class="table-scroll" role="region" aria-label="Booking history" tabindex="0">
       <table>
@@ -19,14 +19,8 @@
         </tbody>
       </table>
     </div>
-    <% if @history.total_pages > 1 %>
-      <nav class="participant-pagination" aria-label="Booking history pages">
-        <% if @history.page > 1 %><%= link_to "Previous", user_page_path(@user, "history", page: @history.page - 1), rel: "prev" %><% end %>
-        <span>Page <%= @history.page %> of <%= @history.total_pages %></span>
-        <% if @history.page < @history.total_pages %><%= link_to "Next", user_page_path(@user, "history", page: @history.page + 1), rel: "next" %><% end %>
-      </nav>
-    <% end %>
   <% else %>
     <p>No bookings yet.</p>
   <% end %>
+  <%= render "shared/pagination", pagination: @history.pagination, label: "Booking history pages" %>
 </main>

@@ -9,7 +9,7 @@ class ParticipantInvitation
   belongs_to :invited_by, class_name: 'User', inverse_of: nil
   field :name, type: String
   field :email, type: String
-  index({ program_id: 1, created_at: -1 })
+  index({ program_id: 1, created_at: -1, _id: -1 })
   validates :name, length: { maximum: 100 }, allow_nil: true
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, length: { maximum: 254 }, allow_nil: true
   before_validation { self.email = email.to_s.strip.downcase.presence }

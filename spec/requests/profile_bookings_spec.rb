@@ -85,15 +85,18 @@ RSpec.describe 'Profile bookings', :aggregate_failures, :database, type: :reques
     get history_profile_path(user_id: other.id)
     expect(response.parsed_body.css('tbody tr').size).to eq(1)
     expect(response.parsed_body.at_css('main p').text).to end_with('of 2 bookings')
-    expect(response.parsed_body.at_css('a[rel="next"]')['href']).to eq(history_profile_path(page: 2))
-    get history_profile_path(page: 2, user_id: other.id)
+    next_path = response.parsed_body.at_css('a[rel="next"]')['href']
+    expect(next_path).to start_with("#{history_profile_path}?cursor=")
+    get next_path, params: { user_id: other.id }
     expect(response.body).to include(exhausted.name, 'Completed')
     expect(response.body).not_to include('2026-12-14', other.email)
-    expect(response.parsed_body.at_css('a[rel="prev"]')['href']).to eq(history_profile_path(page: 1))
+    previous_path = response.parsed_body.at_css('a[rel="prev"]')['href']
+    expect(response.parsed_body.at_css('.participant-pagination a').text).to eq('First')
     expect(response.parsed_body.at_css('a[rel="next"]')).to be_nil
-    get history_profile_path(page: 999)
-    expect(response.body).to include('Page 2 of 2')
-    get history_profile_path(page: -1)
-    expect(response.body).to include('Page 1 of 2')
+    get previous_path
+    expect(response.body).to include(booked.name)
+    expect(response.parsed_body.at_css('a[rel="prev"]')).to be_nil
+    get history_profile_path(cursor: 'invalid', page: 999)
+    expect(response.body).to include(booked.name)
   end
 end

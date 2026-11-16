@@ -20,6 +20,8 @@ Most domain behavior lives in plain models named for the operation rather than i
 
 When a request reveals that this guidance, DESIGN, or a user guide failed to point to existing behavior, update that documentation in the same change so it is not rediscovered again.
 
+Use `CursorPage` with `mongoid-scroll` for paginated queries, never page-number offsets. Supply an authorized scope with one sort field and a matching compound index ending in `_id`. Its signed cursor is scope-bound, not an access grant; recheck current permissions on every request. Keep filters in navigation, reset cursors when filters change, and preserve cursors through table actions. Render `shared/pagination` outside nonempty-results blocks so empty ranges can return to First.
+
 ## Invariants
 
 MongoDB is the only application database. Do not introduce Active Record, SQL-backed queues, or Redis without agreement. Active Job uses `delayed_job_mongoid` and the shared `jobs:work` worker; enqueue idempotent jobs with minimal serialized arguments, preserve transaction boundaries, and never log payloads or private exception messages. Calendar changes retain their transactional outbox. Do not enable automated participant notifications/reminders until consent, opt-outs, retry behavior, and cancellation handling exist; explicitly requested transactional account/invitation/application-status email is separate.

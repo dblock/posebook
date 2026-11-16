@@ -18,7 +18,9 @@ class ParticipantApplication
   field :lock_version, type: Integer, default: 0
 
   index({ program_id: 1, user_id: 1 }, unique: true)
-  index({ program_id: 1, status: 1, created_at: -1 })
+  index({ program_id: 1, status: 1, created_at: -1, _id: -1 })
+  index({ program_id: 1, created_at: -1, _id: -1 })
+  index({ user_id: 1, created_at: -1, _id: -1 })
   index({ status: 1, created_at: 1 })
   validates :status, inclusion: { in: %w[draft pending accepted declined withdrawn] }
   validates :message, length: { maximum: 5000 }
