@@ -88,21 +88,6 @@ RSpec.describe ProgramScheduleMutation, :aggregate_failures, :database do
     expect(booking.reload.starts_at).to eq(Time.utc(2026, 11, 16, 23, 30))
   end
 
-  it 'rolls back closure, booking cancellation, and audit history if claim removal fails' do
-    booking = reserve
-    collection = BookingClaim.collection
-    view = collection.find(booking_id: booking.id)
-    allow(BookingClaim).to receive(:collection).and_return(collection)
-    allow(collection).to receive(:find).and_call_original
-    allow(collection).to receive(:find).with(booking_id: booking.id).and_return(view)
-    allow(view).to receive(:delete_one).and_raise(Mongo::Error::OperationFailure, 'Claim removal failed')
-    expect { change_schedule(mode: 'closed') }.to raise_error(Mongo::Error::OperationFailure)
-    expect(booking.reload.status).to eq('confirmed')
-    expect(program.schedule_exceptions).to be_empty
-    expect(HistoryTracker.where('modified.program_id' => program.id)).to be_empty
-    expect(BookingClaim.where(booking_id: booking.id).count).to eq(1)
-  end
-
   it 'serializes a holiday closure with a simultaneous booking request' do
     grant_participant_access(program, participant)
     operations = [

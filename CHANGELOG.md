@@ -131,4 +131,5 @@
 - [#145](https://github.com/dblock/posebook/pull/145): Replace numbered table pages with stable scoped mongoid-scroll cursors, preserving filters and actions across insertions and deletions - [@dblock](https://github.com/dblock).
 - [#146](https://github.com/dblock/posebook/pull/146): Add a private administrator History tab with linked audit actors and records, before/after values, and stable cursor navigation - [@dblock](https://github.com/dblock).
 - [#147](https://github.com/dblock/posebook/pull/147): Condense design and contributor documentation around current architecture, invariants, and working commands - [@dblock](https://github.com/dblock).
+- [#148](https://github.com/dblock/posebook/pull/148): Improve failure-path coverage and consolidate redundant persistence, account, and booking tests - [@dblock](https://github.com/dblock).
 - Your contribution here.

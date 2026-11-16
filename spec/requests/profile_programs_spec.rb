@@ -19,6 +19,8 @@ RSpec.describe 'Profile programs', :aggregate_failures, :database, type: :reques
     grant_coordinator_access(direct, user)
     sign_in(user)
     get programs_profile_path(program_id: foreign.id)
+    expect(response.parsed_body.at_css(".profile-tabs a[href='#{programs_profile_path}']").text).to eq('Programs')
+    expect(response.parsed_body.at_css('.breadcrumbs [aria-current="page"]').text).to eq('Programs')
     expect(program_names('managed')).to eq(%w[Alpha Beta Gamma])
     expect(response.parsed_body.css('.managed-programs .button-link').pluck('href'))
       .to eq([*inherited, direct].map { |program| program_path(program, section: 'calendar') })

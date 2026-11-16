@@ -53,26 +53,6 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     expect(response.body).not_to include(other.email)
   end
 
-  it 'lists programs the user can manage in a tab shown only to managers' do
-    user = create_user
-    venue = create_venue
-    venue_program = create_program(venue: venue)
-    coordinated = create_program
-    grant_participant_access(create_program, user)
-    sign_in(user)
-    get profile_path
-    expect(response.parsed_body.css('.profile-tabs .page-tab-disabled').map(&:text)).to include('Programs')
-    grant_venue_access(venue, user)
-    grant_coordinator_access(coordinated, user)
-    get profile_path
-    expect(response.parsed_body.at_css(".profile-tabs a[href='#{programs_profile_path}']").text).to eq('Programs')
-    expect(response.parsed_body.css('.profile-tabs .page-tab-disabled').map(&:text)).not_to include('Programs')
-    get programs_profile_path
-    expect(response.parsed_body.css('.program-card h2').map(&:text))
-      .to contain_exactly(venue_program.name, coordinated.name)
-    expect(response.parsed_body.at_css('.breadcrumbs [aria-current="page"]').text).to eq('Programs')
-  end
-
   it 'shows global roles on the profile' do
     sign_in(create_user(roles: ['system_admin']))
     get profile_path

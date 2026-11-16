@@ -24,6 +24,8 @@ RSpec.describe 'Accounts', :aggregate_failures, :database, type: :request do
   end
 
   it 'registers the first user with system admin roles and signs them in' do
+    get root_path
+    expect(response).to redirect_to(new_registration_path)
     post registration_path, params: { user: user_attributes }
     user = track_record(User.find(User::BOOTSTRAP_ID))
     follow_redirect!
@@ -112,14 +114,20 @@ RSpec.describe 'Accounts', :aggregate_failures, :database, type: :request do
     get new_session_path
     expect(response.body).to include('Sign In', 'Forgot your password?', 'Remember me')
     expect(response.parsed_body.at_css('input[type="checkbox"][name="remember_me"]')['checked']).to be_nil
-    brand = response.parsed_body.at_css('nav a.brand')
+    brand = response.parsed_body.at_css('nav[aria-label="Account"] a.brand')
     expect(brand['href']).to eq(root_path)
     expect(brand.text.strip).to eq('Posebook')
     expect(brand.at_css('img')['alt']).to eq('')
     expect(brand.at_css('img')['src']).to include('posebook-logo')
     favicon = response.parsed_body.at_css('link[rel="icon"]')
     expect(favicon['href']).to include('posebook-favicon')
-    expect(favicon['type']).to eq('image/png')
+    expect(response.parsed_body.root['data-theme']).to eq('caramellatte')
+    stylesheets = response.parsed_body.css('link[rel="stylesheet"]').pluck('href')
+    expect(stylesheets).to all(start_with('/assets/'))
+    theme = stylesheets.find { |path| path.include?('/caramellatte-') }
+    get theme
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include('--color-base-100')
   end
 
   it 'uses ordinary sessions and renews browser persistence only after explicit opt-in' do

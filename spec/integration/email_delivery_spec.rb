@@ -120,6 +120,27 @@ RSpec.describe EmailDelivery, :aggregate_failures, :database do
     expect(QueuedJob.where(queue: 'mailers')).to be_empty
   end
 
+  it 'rolls back account challenges when database enqueueing fails without exposing private error text' do
+    account = user
+    error = Mongo::Error::OperationFailure.new('Private database details')
+    allow(EmailDeliveryJob).to receive(:perform_later).and_raise(error)
+    expect { account.send_password_reset }.to raise_error(described_class::Unavailable, error.class.name)
+    expect(account.reload.password_reset_digest).to be_nil
+    expect(account.password_reset_expires_at).to be_nil
+    expect(described_class.where(resource_id: account.id)).to be_empty
+    expect(QueuedJob.where(queue: 'mailers')).to be_empty
+  end
+
+  it 'rejects an outbox write outside its required workflow transaction' do
+    described_class.with_session do |session|
+      expect do
+        described_class.enqueue_in_transaction('password_reset', user, session: session)
+      end.to raise_error(described_class::Unavailable, 'Email enqueue requires an active transaction')
+    end
+    expect(described_class.where(resource_id: user.id)).to be_empty
+    expect(QueuedJob.where(queue: 'mailers')).to be_empty
+  end
+
   it 'rejects stale email-change credentials after a password change' do
     stale = User.find(user.id)
     user.change_password(current_password: DatabaseHelpers::TEST_PASSWORD,
@@ -252,5 +273,20 @@ RSpec.describe EmailDelivery, :aggregate_failures, :database do
     delivery.queued_job_id = job.provider_job_id
     deliver_emails
     expect(ActionMailer::Base.deliveries).to be_empty
+  end
+
+  %w[participation_event participation_admission].each do |kind|
+    it "drops a queued #{kind} message when its source event no longer exists" do
+      event = track_record(ParticipationEvent.create!(program: program, user: user, actor: organizer,
+                                                      action: 'invitation_accepted', source_id: BSON::ObjectId.new))
+      delivery = track_record(described_class.create!(kind: kind, resource_id: event.id, recipient_id: organizer.id))
+      job = EmailDeliveryJob.perform_later(delivery.id.to_s)
+      delivery.update!(queued_job_id: job.provider_job_id)
+      event.destroy!
+      deliver_emails
+      expect(ActionMailer::Base.deliveries).to be_empty
+      expect(described_class.where(id: delivery.id)).to be_empty
+      expect(QueuedJob.where(id: job.provider_job_id)).to be_empty
+    end
   end
 end

@@ -181,6 +181,9 @@ RSpec.describe 'Google Calendar connections', :aggregate_failures, :database, ty
     connection = track_record(GoogleCalendarConnection.find_by(program_id: program.id))
     expect(connection.encrypted_refresh_token).not_to include('synthetic-refresh-token')
     expect(connection).to have_attributes(calendar_id: calendar_id, connected_by_id: organizer.id)
+    allow(GoogleCalendarConnection).to receive(:credentials).and_call_original
+    allow(GoogleCalendarConnection).to receive(:service).and_call_original
+    expect(connection.reload.service.authorization.refresh_token).to eq('synthetic-refresh-token')
     expect(GoogleCalendarSync.where(program_id: program.id).count).to eq(1)
     expect(response).to redirect_to(program_google_calendar_path(program))
     get google_calendar_callback_path, params: { state: state, code: 'synthetic-code' }

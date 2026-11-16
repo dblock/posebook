@@ -8,6 +8,19 @@ RSpec.describe 'Coordinator hierarchy', :aggregate_failures, :database, type: :r
   let(:other_program) { create_program }
   let(:coordinator) { create_user }
 
+  it 'keeps invalid venue creation and editing on their forms without changing stored locations' do
+    sign_in(create_user(roles: ['system_admin']))
+    get new_venue_path
+    expect(response).to have_http_status(:ok)
+    expect { post venues_path, params: { venue: { name: '', address: '' } } }.not_to change(Venue, :count)
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.parsed_body.text).to include("Name can't be blank", "Address can't be blank")
+    name = venue.name
+    patch venue_path(venue), params: { venue: { name: '' } }
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(venue.reload.name).to eq(name)
+  end
+
   it 'inherits every session at a coordinated venue without granting access elsewhere' do
     sibling = create_program(venue: venue)
     grant_venue_access(venue, coordinator)
