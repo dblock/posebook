@@ -100,13 +100,13 @@ RSpec.describe 'Account access management', :aggregate_failures, :database, type
     get admin_users_path
     expect(response.body).to include(user.email, 'Deactivate')
     patch admin_user_path(user), params: { active: false }
-    client.get(root_path)
+    client.get(profile_path)
     expect(client.response.location).to end_with(new_session_path)
     patch admin_user_path(user), params: { active: true }
     expect(user.reload).to be_active
     expect(user.roles).to eq([])
     sign_in(user, client: client)
-    client.get(root_path)
+    client.get(profile_path)
     expect(client.response).to have_http_status(:ok)
   end
 

@@ -94,7 +94,7 @@ RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request 
     expect(link['aria-haspopup']).to eq('dialog')
     expect(link.at_css('img')['src']).to include('thumbnail=1')
     expect(response.parsed_body.at_css('.profile-photo figcaption .status-label-private').text).to eq('Private')
-    expect(response.parsed_body.at_css('dialog')['aria-labelledby']).to eq('photo-preview-heading')
+    expect(response.parsed_body.at_css('dialog')['aria-label']).to eq('Photo preview')
   end
 
   it 'keeps uploaded profile photos off the bookings and account details pages' do

@@ -32,7 +32,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     other = create_user
     grant_participant_access(earlier_program, other)
     book('2026-11-30', user: other, at: earlier_program)
-    get root_path
+    get bookings_profile_path
     cards = response.parsed_body.css('.upcoming-booking')
     expect(cards.pluck('aria-labelledby'))
       .to eq(["upcoming-booking-#{earlier.id}", "upcoming-booking-#{later.id}"])
@@ -64,7 +64,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     earlier = book('2026-11-23', at: earlier_program)
     BookingMutation.new(program: program, user: participant).cancel(booking: later, reason: 'Plans changed.')
     travel_to earlier.ends_at
-    get root_path
+    get bookings_profile_path
     expect(response.parsed_body.css('.upcoming-booking')).to be_empty
   end
 
@@ -181,7 +181,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     expect(booking.user_id).to eq(participant.id)
     follow_redirect!
     expect(response.body).to include('Your program is booked.', 'Your Upcoming Booking',
-                                     'Contact an Organizer Before Rescheduling', 'Cancel Booking')
+                                     'Attendance Confirmation Needed', 'Cancel Booking')
     expect(response.body).not_to include('Reschedule')
     expect(response.parsed_body.css('.calendar form')).to be_empty
     get cancellation_program_booking_path(program, booking)

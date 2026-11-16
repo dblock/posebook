@@ -40,6 +40,15 @@ class SessionsController < ApplicationController
     application_return_path(user) || booking_return_path(session[:booking_program], user)
   end
 
+  def coordinator_return_path(user)
+    return if user.system_admin?
+
+    program = Program.managed_by(user).order_by(name: :asc).first
+    return program_path(program) if program
+
+    programs_profile_path if Venue.coordinated_by(user).exists?
+  end
+
   def sign_out_destination
     if params[:coordinator_invitation_token]
       return coordinator_invitation_path(token: params[:coordinator_invitation_token])
@@ -51,7 +60,9 @@ class SessionsController < ApplicationController
   end
 
   def booking_return_path(id, user)
-    id ? program_path(Program.visible_to(user).find(id), section: 'calendar') : root_path
+    return coordinator_return_path(user) || root_path unless id
+
+    program_path(Program.visible_to(user).find(id), section: 'calendar')
   rescue Mongoid::Errors::DocumentNotFound
     root_path
   end

@@ -29,7 +29,7 @@ RSpec.describe 'Accounts', :aggregate_failures, :database, type: :request do
     follow_redirect!
 
     expect(user).to be_system_admin
-    expect(response.body).to include('Welcome, Test Participant.', 'system admin role')
+    expect(response.body).to include('Your account has the system admin role.')
   end
 
   it 'renders errors without claiming the first user for invalid registration' do
@@ -78,11 +78,25 @@ RSpec.describe 'Accounts', :aggregate_failures, :database, type: :request do
   it 'supports normalized-email login and logout' do
     user = create_user
     post session_path, params: { email: " #{user.email.upcase} ", password: DatabaseHelpers::TEST_PASSWORD }
-    follow_redirect!
-    expect(response.body).to include('Welcome, Test Participant.')
+    expect(response).to redirect_to(root_path)
+    get profile_path
+    expect(response).to have_http_status(:ok)
     delete session_path
-    get root_path
+    get profile_path
     expect(response).to redirect_to(new_session_path)
+  end
+
+  it 'sends coordinators to their first program, or their programs list when they have none' do
+    venue = create_venue
+    coordinator = create_user
+    grant_venue_access(venue, coordinator)
+    sign_in(coordinator)
+    expect(response).to redirect_to(programs_profile_path)
+    delete session_path
+    create_program(name: 'Zebra Mondays', venue: venue)
+    first = create_program(name: 'Alpha Mondays', venue: venue)
+    sign_in(coordinator)
+    expect(response).to redirect_to(program_path(first))
   end
 
   it 'uses the same login error for unknown emails and incorrect passwords' do

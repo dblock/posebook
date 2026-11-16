@@ -1,23 +1,17 @@
 <main>
   <h1>Posebook</h1>
-  <p>Welcome, <%= current_user.name %>.</p>
-  <% participant_dashboard.upcoming_bookings.each do |booking| %>
-    <%= render "bookings/upcoming", program: booking.program, booking: booking,
-               can_book: participant_dashboard.access_for(booking.program_id).allowed?, show_venue: true %>
+  <% if current_user %><p>Welcome, <%= current_user.name %>.</p><% end %>
+  <% if @management_home %>
+    <h2>Programs You Manage</h2>
+    <%= render "programs/managed", programs: @managed_programs %>
+  <% elsif current_user %>
+    <%= render "profiles/bookings", dashboard: participant_dashboard, read_only: false, all_programs: true %>
+  <% else %>
+    <%= render "shared/upcoming_sessions", sessions: @sessions %>
   <% end %>
-  <% programs = participant_dashboard.bookable_programs %>
-  <% if programs.any? %><%= render "programs/bookable", programs: programs %><% end %>
-  <% if @managed_programs.any? %>
-    <section aria-labelledby="managed-programs-heading">
-      <h2 id="managed-programs-heading">Programs You Manage</h2>
-      <div class="location-cards managed-programs">
-        <% @managed_programs.each do |program| %><%= render "programs/card", program: program, managed: true %><% end %>
-      </div>
-    </section>
+  <% if current_user %>
+    <% if @management_home %><p><%= current_user.system_admin? ? "You have the system admin role." : "You have coordinator access." %></p><% end %>
+    <p><%= link_to "View Your Profile", profile_path %> for bookings, programs you can book, and history.</p>
+    <p><%= link_to "View Venues", venues_path %> to explore your venues and their programs.</p>
   <% end %>
-  <% if current_user.system_admin? %>
-    <p>You have the system admin role.</p>
-  <% end %>
-  <p><%= link_to "View Your Profile", profile_path %> for bookings, programs you can book, and history.</p>
-  <p><%= link_to "View Venues", venues_path %> to explore your venues and their programs.</p>
 </main>

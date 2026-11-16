@@ -1,7 +1,8 @@
 <% if (participant = booking.user)&.active? %>
   <% manager = local_assigns[:manager] %>
-  <% membership = @program&.participant_memberships_by_user&.[](participant.id) %>
+  <% program = local_assigns.fetch(:program, @program) %>
+  <% membership = program&.participant_memberships_by_user&.[](participant.id) %>
   <% name = booking_participant_name(participant, membership, manager: manager) %>
   <% handle = booking_participant_instagram_handle(participant, membership) %>
-  <div class="booked-participant"><%= manager || name != "To be announced" ? link_to(name, participant_path(participant)) : name %><% if handle %><br><%= link_to "@#{handle}", InstagramProfile.url(handle), target: "_blank", rel: "noopener noreferrer" %><% end %><% if manager && membership %><br><%= link_to "Edit #{@program.participant_label.titleize}", edit_program_participant_path(@program, membership) %><% end %></div>
+  <div class="booked-participant"><%= manager || name != "To be announced" ? link_to(name, participant_path(participant)) : name %><% if handle %><br><%= link_to "@#{handle}", InstagramProfile.url(handle), target: "_blank", rel: "noopener noreferrer" %><% end %><% if manager && membership %><br><%= link_to "Edit #{program.participant_label.titleize}", edit_program_participant_path(program, membership) %><% end %></div>
 <% end %>

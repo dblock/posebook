@@ -77,16 +77,17 @@ RSpec.describe 'Copy controls', :aggregate_failures, :database, type: :request d
       expect(response.body).to include('Invited email: manager@example.test')
     end
 
-    it "copies the canonical #{scope} URL without query strings while retaining public information" do
+    it "copies the canonical #{scope} URL without query strings while retaining authorized information" do
       program = create_program(program_label: 'Figure Drawing Session', instagram_handle: '@preview.studio')
       resource = scope == :venue ? program.venue : program
+      sign_in(admin)
       get polymorphic_path(resource), params: { token: 'private-token' }
       button = response.parsed_body.at_css('.copy-button')
       url = "#{request.base_url}#{polymorphic_path(resource)}"
       expect(button.text).to eq('Copy Link')
       expect(button['data-copy-link']).to eq(url)
       expect(button.key?('hidden')).to be(true)
-      expect(response.parsed_body.css('.copy-button').length).to eq(1)
+      expect(response.parsed_body.css('.title-row .copy-button').length).to eq(1)
       fallback = response.parsed_body.at_css('.copy-fallback')
       expect([fallback['href'], fallback.text]).to eq([url, url])
       expect(response.body).to include(resource.address)

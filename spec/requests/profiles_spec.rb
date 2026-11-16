@@ -88,7 +88,7 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     expect(response.parsed_body.css('main form').pluck('id')).to eq(%w[password-form deactivation-form])
     expect(response.parsed_body.at_css('.profile-tabs [aria-current="page"]').text).to eq('Security')
     expect(response.parsed_body.at_css('.breadcrumbs [aria-current="page"]').text).to eq('Security')
-    expect(response.parsed_body.css('.breadcrumbs a').map(&:text)).to eq(["#{user.name} (You)"])
+    expect(response.parsed_body.css('.breadcrumbs a').map(&:text)).to eq(['Home', "#{user.name} (You)"])
     { edit_password_path => 'change-password',
       new_account_deactivation_path => 'deactivate-account' }.each do |path, anchor|
       get path
@@ -295,7 +295,7 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     expect(response).to have_http_status(:ok)
     expect(response.body).to include('Password changed.')
     expect(response.parsed_body.css('main form')).to be_empty
-    other_client.get(root_path)
+    other_client.get(profile_path)
     expect(other_client.response.location).to end_with(new_session_path)
     expect(User.for_password_reset(token)).to be_nil
     expect(user.reload.authenticate('a brand new test password')).to eq(user)

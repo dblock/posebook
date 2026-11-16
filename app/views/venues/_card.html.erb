@@ -1,10 +1,13 @@
 <article class="location-card venue-card">
-  <% if local_assigns.fetch(:show_photo, true) %>
-    <% photo = venue.primary_photo %>
+  <% show_photo = local_assigns.fetch(:show_photo, true) %>
+  <% photo = venue.primary_photo if show_photo %>
+  <% if photo %>
+    <figure class="location-card-photo" data-photo-series>
+      <%= render "shared/photo_series", owner: venue, photo: photo, name: venue.name %>
+    </figure>
+  <% elsif show_photo == true %>
     <%= link_to venue_path(venue), class: "location-card-photo" do %>
-      <%= image_tag(photo ? venue_photo_path(venue, photo, thumbnail: 1) : "venue-placeholder.svg",
-                    width: 400, height: 400, loading: "lazy",
-                    alt: photo ? "#{venue.name} primary photo" : "No photo for #{venue.name}") %>
+      <%= image_tag "venue-placeholder.svg", width: 400, height: 400, loading: "lazy", alt: "No photo for #{venue.name}" %>
     <% end %>
   <% end %>
   <div class="location-card-summary">

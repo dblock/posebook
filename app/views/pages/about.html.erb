@@ -1,6 +1,11 @@
 <% content_for :title, "About | Posebook" %>
 
 <main class="information-page">
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <%= link_to "Home", root_path %>
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">About</span>
+  </nav>
   <h1>About Posebook</h1>
   <p>Posebook helps organizers and participants manage recurring programs, invitations, and bookings at venues. It provides shared calendars, participant profiles, and booking history, with optional Google Calendar synchronization.</p>
   <p>This service is operated by <%= link_to "Vestris LLC.", "https://www.vestris.com/", target: "_blank", rel: "noopener noreferrer" %></p>
@@ -22,5 +27,5 @@
   </ul>
 
   <h2>Contact</h2>
-  <p>For questions, private support requests, or privacy and legal inquiries, contact <%= mail_to "drawing@dblock.org" %>.</p>
+  <p>For questions, private support requests, or privacy and legal inquiries, contact <%= mail_to "dblock@vestris.com" %>.</p>
 </main>

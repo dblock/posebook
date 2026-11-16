@@ -1,5 +1,8 @@
 <% status = booking.display_status %>
-<%= status_label(status, class: ("attendance-confirmed" if status == "Confirmed")) if local_assigns.fetch(:show_status, true) %>
+<% if local_assigns.fetch(:show_status, true) %>
+  <% label = status_label(status, class: ("attendance-confirmed" if status == "Confirmed")) %>
+  <%= local_assigns[:booking_url] ? link_to(label, booking_url, aria: { label: "View booking on #{booking.date.to_fs(:long)}" }) : label %>
+<% end %>
 <% if local_assigns.fetch(:private_view, false) && (rsvp = google_calendar_rsvp(local_assigns.fetch(:program, @program), booking)) %>
   <span class="google-calendar-rsvp">
     <%= status_label(t("google_calendar.responses.#{rsvp.rsvp_status}"),
@@ -7,6 +10,6 @@
                      aria: { label: t("google_calendar.response", status: t("google_calendar.responses.#{rsvp.rsvp_status}")) }) %>
   </span>
 <% end %>
-<% if local_assigns.fetch(:private_view, false) && booking.attendance_overdue? %>
+<% if local_assigns.fetch(:private_view, false) && local_assigns.fetch(:show_warning, true) && booking.attendance_overdue? %>
   <small class="attendance-warning" role="status">Please contact an organizer ASAP.</small>
 <% end %>

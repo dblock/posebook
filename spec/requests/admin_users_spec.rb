@@ -47,11 +47,11 @@ RSpec.describe 'Administrator user editing', :aggregate_failures, :database, typ
     get participant_path(user)
     expect(response).to redirect_to(admin_user_path(user))
     get admin_user_path(user)
-    expect(response.parsed_body.css('.breadcrumbs a').map(&:text)).to eq(['Users'])
+    expect(response.parsed_body.css('.breadcrumbs a').map(&:text)).to eq(%w[Home Users])
     expect(response.parsed_body.at_css('.breadcrumbs [aria-current="page"]').text).to eq(user.name)
     expect_own_page_redirects(admin)
     get edit_profile_path
-    expect(response.parsed_body.css('.breadcrumbs a').map(&:text)).to eq(['Users', "#{admin.name} (You)"])
+    expect(response.parsed_body.css('.breadcrumbs a').map(&:text)).to eq(['Home', 'Users', "#{admin.name} (You)"])
     expect_user_cannot_access_admin(user, admin)
   end
 
@@ -156,7 +156,7 @@ RSpec.describe 'Administrator user editing', :aggregate_failures, :database, typ
     create_user(active: false)
     sign_in(create_user(roles: ['system_admin']))
     get admin_users_path
-    expect(response.parsed_body.css('.breadcrumbs [aria-hidden="true"]').map(&:text)).to eq(['>'])
+    expect(response.parsed_body.css('.breadcrumbs [aria-hidden="true"]').map(&:text)).to eq(['/', '>'])
     expect(response.parsed_body.css('td:nth-child(5) .status-label').map(&:text))
       .to contain_exactly('Active', 'Active', 'Inactive')
     expect(response.parsed_body.at_css('td:nth-child(5) .status-label-danger').text).to eq('Inactive')
@@ -240,7 +240,7 @@ RSpec.describe 'Administrator user editing', :aggregate_failures, :database, typ
                                            pending_email: nil, email_change_digest: nil, email_change_expires_at: nil)
     expect(User.for_password_reset(token)).to be_nil
     expect(ActionMailer::Base.deliveries).to be_empty
-    client.get(root_path)
+    client.get(profile_path)
     expect(client.response.location).to end_with(new_session_path)
     client.post(session_path, params: { email: user.email, password: DatabaseHelpers::TEST_PASSWORD })
     expect(client.response.location).to end_with(root_path)

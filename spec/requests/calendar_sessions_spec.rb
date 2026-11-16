@@ -122,7 +122,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     get program_path(program, section: 'calendar')
     expect(day('2026-11-17').text.strip).to eq('17')
     expect(day('2026-11-17').css('a, .status-label, small')).to be_empty
-    expect(day('2026-11-23').text).not_to include('Booked')
+    expect(day('2026-11-23').css('.status-label').text).to eq('Booked')
   end
 
   it 'retains booked, closed, and future states rather than treating them as empty days' do

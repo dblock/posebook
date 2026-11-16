@@ -43,7 +43,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
   end
 
   it 'offers confirmation and the usual rescheduling workflow seven days before participating' do
-    get root_path
+    get bookings_profile_path
     card = response.parsed_body.at_css('.upcoming-booking')
     expect(card.at_css('.upcoming-booking-countdown').text).to eq('In 7 days')
     expect(card.at_css('input[name="booking_version"]')['value']).to eq(booking.lock_version.to_s)
@@ -74,7 +74,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     end
   end
 
-  it 'hides the owner calendar badge while retaining booked status for managers and in history' do
+  it 'shows the booked badge to owners and managers in their calendar and history' do
     travel_to Time.utc(2026, 11, 13, 15)
     organizer = create_user
     grant_coordinator_access(program, organizer)
@@ -84,15 +84,15 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
       expect(status.css('.status-label').map(&:text)).to eq(['Booked'])
       get program_path(program, section: 'calendar')
       day = response.parsed_body.at_css(".calendar [data-date='#{booking.date.iso8601}']")
-      expect(day.css('.status-label').map(&:text)).to eq(viewer == participant ? [] : ['Booked'])
+      expect(day.css('.status-label').map(&:text)).to eq(['Booked'])
     end
   end
 
-  it 'retains the overdue warning on the owner calendar without a booked badge' do
+  it 'shows the booked badge alongside the overdue warning on the owner calendar' do
     travel_to Time.utc(2026, 11, 18, 5)
     get program_path(program, section: 'calendar')
     day = response.parsed_body.at_css(".calendar [data-date='#{booking.date.iso8601}']")
-    expect(day.css('.status-label')).to be_empty
+    expect(day.css('.status-label').map(&:text)).to eq(['Booked'])
     expect(day.at_css('.attendance-warning').text).to include('Please contact an organizer ASAP')
   end
 
@@ -136,7 +136,10 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     grant_coordinator_access(program, organizer)
     travel_to Time.utc(2026, 11, 18, 5)
     get program_path(program)
-    expect(response.body).to include('Please contact an organizer ASAP', organizer.email, organizer.phone)
+    expect(response.body).to include('Attendance Confirmation Needed', organizer.email, organizer.phone)
+    expect(response.parsed_body.at_css('.rescheduling-notice').text).not_to include('contact an organizer ASAP')
+    expect(response.parsed_body.at_css('.upcoming-booking .attendance-warning')).to be_nil
+    expect(response.parsed_body.at_css('.booking-actions button').text).to eq("I'll be there!")
     expect(response.body).not_to include('Reschedule')
     patch program_booking_path(program, booking),
           params: { date: '2026-11-30', reason: 'Travel.', booking_version: booking.lock_version }
@@ -144,7 +147,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     expect(booking.reload.status).to eq('confirmed')
     confirm_booking
     follow_redirect!
-    expect(response.body).not_to include('Please contact an organizer ASAP', 'Attendance not confirmed')
+    expect(response.body).not_to include('Attendance Confirmation Needed', 'Your attendance has not been confirmed.')
   end
 
   it 'shows urgent follow-up on manager calendars and rosters, not public calendars' do
@@ -198,7 +201,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     expect(booking.reload.attendance_confirmed?).to be(true)
     get program_path(program)
     expect(response.body).not_to include('Reschedule')
-    get root_path
+    get bookings_profile_path
     expect(response.body).to include('Your Upcoming Booking', 'Cancel Booking')
     expect(response.body).not_to include('Reschedule', 'On a break.')
   end

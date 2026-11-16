@@ -4,5 +4,5 @@
   <div class="location-cards">
     <% @venues.each do |venue| %><%= render "card", venue: venue %><% end %>
   </div>
-  <% if @venues.empty? %><p>No venues assigned. Contact a coordinator for access.</p><% end %>
+  <% if @venues.empty? %><p><%= current_user ? "No venues assigned. Contact a coordinator for access." : "No venues yet." %></p><% end %>
 </main>

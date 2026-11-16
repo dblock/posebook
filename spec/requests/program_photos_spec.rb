@@ -25,7 +25,7 @@ RSpec.describe 'Program photos', :aggregate_failures, :database, type: :request 
     ProgramPhoto.storage.file_model.where('metadata.program_id' => program.id)
   end
 
-  it 'uses a program placeholder only when neither the program nor its venue has a photo' do
+  it 'previews the program photo series, falling back to venue photos and then a placeholder' do
     get programs_venue_path(program.venue)
     portrait = response.parsed_body.at_css('.program-card .location-card-photo')
     expect(portrait['href']).to eq(program_path(program))
@@ -36,9 +36,12 @@ RSpec.describe 'Program photos', :aggregate_failures, :database, type: :request 
     expect(response.parsed_body.at_css('.program-card img')['src'])
       .to eq(venue_photo_path(program.venue, venue_photo, thumbnail: 1))
     photo
+    second = ProgramPhoto.add(program, photo_upload)
     get programs_venue_path(program.venue)
     expect(response.parsed_body.at_css('.program-card img')['src'])
       .to eq(program_photo_path(program, photo, thumbnail: 1))
+    expect(response.parsed_body.css('.program-card [data-photo-series] [data-photo-preview]').pluck('href'))
+      .to eq([program_photo_path(program, photo), program_photo_path(program, second)])
   end
 
   it 'groups program information and scoped configuration without exposing parent management' do
@@ -46,15 +49,13 @@ RSpec.describe 'Program photos', :aggregate_failures, :database, type: :request 
     get edit_program_path(program)
     groups = response.parsed_body.css('.program-tabs .page-tab-group')
     expect(groups.map { |group| group.css('a').map(&:text) })
-      .to eq([%w[View Calendar Exceptions History],
+      .to eq([%w[Program Calendar Exceptions History],
               %w[Edit Photos Participants Invitations Applications GCal]])
     expect(response.parsed_body.at_css('.program-tabs .tab-separator')['aria-hidden']).to eq('true')
     expect(response.parsed_body.at_css('.breadcrumbs [aria-current="page"]').text).to eq('Edit')
     delete session_path
     get program_path(program)
-    expect(response.parsed_body.at_css('.program-tabs .tab-separator')['aria-hidden']).to eq('true')
-    expect(response.parsed_body.css('.program-tabs .page-tab-group').map { |group| group.css('a').map(&:text) })
-      .to eq([%w[View Calendar], ['Photos']])
+    expect(response.parsed_body.at_css('.program-tabs')).to be_nil
   end
 
   it 'lets program coordinators upload a separate public gallery with primary-photo controls' do
@@ -145,19 +146,17 @@ RSpec.describe 'Program photos', :aggregate_failures, :database, type: :request 
     end
   end
 
-  it 'keeps program and venue photos off the program overview without removing their galleries' do
-    get program_path(program)
-    expect(response.parsed_body.css('main img, main [data-photo-preview]')).to be_empty
-    photo
+  it 'shows the program photo on the public overview only when available, without the venue card' do
     VenuePhoto.add(program.venue, photo_upload)
     get program_path(program)
-    expect(response.parsed_body.css('main img, main [data-photo-preview]')).to be_empty
-    expect(response.parsed_body.at_css('.venue-card').text).to include(program.venue.name, program.venue.address)
-    get photos_program_path(program)
-    expect(response.parsed_body.at_css('.program-photo img')['src'])
+    expect(response.parsed_body.css('main img, main [data-photo-preview], .venue-card')).to be_empty
+    photo
+    second = ProgramPhoto.add(program, photo_upload)
+    get program_path(program)
+    expect(response.parsed_body.at_css('.next-session img')['src'])
       .to eq(program_photo_path(program, photo, thumbnail: 1))
-    get photos_venue_path(program.venue)
-    expect(response.parsed_body.css('.venue-photo img').size).to eq(1)
+    expect(response.parsed_body.css('.next-session [data-photo-series] [data-photo-preview]').pluck('href'))
+      .to eq([program_photo_path(program, photo), program_photo_path(program, second)])
   end
 
   it 'requires authentication and program management for writes without granting venue editing' do

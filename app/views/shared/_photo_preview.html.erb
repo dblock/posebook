@@ -1,7 +1,11 @@
-<dialog class="photo-preview" data-photo-dialog aria-labelledby="photo-preview-heading">
-  <h2 id="photo-preview-heading" class="photo-preview-heading">Photo Preview</h2>
+<dialog class="photo-preview" data-photo-dialog aria-label="Photo preview">
   <button type="button" class="photo-preview-close" data-photo-close autofocus aria-label="Close">&times;</button>
   <p data-photo-error role="status" hidden>This photo is no longer available.</p>
-  <img data-photo-image alt="" hidden>
+  <div class="photo-preview-stage">
+    <button type="button" class="photo-preview-nav photo-preview-previous" data-photo-previous aria-label="Previous photo" hidden>&lsaquo;</button>
+    <img data-photo-image alt="" hidden>
+    <button type="button" class="photo-preview-nav photo-preview-next" data-photo-next aria-label="Next photo" hidden>&rsaquo;</button>
+  </div>
+  <p class="photo-preview-position" data-photo-position aria-live="polite" hidden></p>
 </dialog>
 <%= javascript_include_tag "photo-preview", defer: true %>

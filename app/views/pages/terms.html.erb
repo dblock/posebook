@@ -2,12 +2,15 @@
 
 <main class="information-page">
   <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <%= link_to "Home", root_path %>
+    <span aria-hidden="true">/</span>
     <%= link_to "About", about_path %>
-    <span>Terms of Service</span>
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">Terms of Service</span>
   </nav>
   <h1>Terms of Service</h1>
   <p>Last updated: November 14, 2026.</p>
-  <p>These terms are an agreement between you and Vestris LLC., the operator of this Posebook service. In these terms, "we" and "us" refer to Vestris LLC. By using the service, you agree to these terms. If you do not agree, do not use it. Questions about these terms can be sent to <%= mail_to "drawing@dblock.org" %>.</p>
+  <p>These terms are an agreement between you and Vestris LLC., the operator of this Posebook service. In these terms, "we" and "us" refer to Vestris LLC. By using the service, you agree to these terms. If you do not agree, do not use it. Questions about these terms can be sent to <%= mail_to "dblock@vestris.com" %>.</p>
 
   <h2>The Service</h2>
   <p>Posebook provides tools for recurring programs, invitations, participant profiles, and bookings. Program organizers remain responsible for their programs, venues, participation requirements, communications, and any arrangements made with participants. A booking in Posebook is a scheduling record, not a guarantee that a program will take place or that any separate payment or participation obligation has been fulfilled.</p>
@@ -38,6 +41,6 @@
   <p>To the extent permitted by applicable law, Vestris LLC. is not liable for indirect or consequential losses arising from use of the service, interrupted availability, missed communications, or arrangements between users. Nothing in these terms excludes rights, remedies, or liabilities that cannot lawfully be excluded.</p>
 
   <h2>Ending Use and Changes</h2>
-  <p>You may stop using Posebook and use its account-deactivation feature. Booking and audit records may remain as described in the Privacy Policy. For questions or requests about your account, contact <%= mail_to "drawing@dblock.org" %>.</p>
+  <p>You may stop using Posebook and use its account-deactivation feature. Booking and audit records may remain as described in the Privacy Policy. For questions or requests about your account, contact <%= mail_to "dblock@vestris.com" %>.</p>
   <p>We may revise these terms. The date above identifies the latest version. We will provide any notice required by law, and continued use after updated terms take effect is subject to those terms. The applicable law may give you additional rights.</p>
 </main>

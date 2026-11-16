@@ -1,9 +1,13 @@
 <% cancellation = local_assigns.fetch(:cancellation, false) %>
 <% title = cancellation ? "Contact an Organizer" : "Contact an Organizer Before Rescheduling" %>
+<% title = "Attendance Confirmation Needed" if local_assigns[:urgent] %>
 <aside class="rescheduling-notice" aria-label="<%= title %>">
   <h3><%= title %></h3>
-  <% if local_assigns.fetch(:urgent, false) %><p><strong>Please contact an organizer ASAP. Your attendance has not been confirmed.</strong></p><% end %>
-  <p>Your <%= program.program_label.downcase %> is five days away or sooner. Please also contact an organizer so we can find a replacement.</p>
+  <% if local_assigns[:urgent] %>
+    <p>Your <%= program.program_label.downcase %> is within five days. Please confirm that you will be there, or contact an organizer if you cannot make it so we can find a replacement.</p>
+  <% else %>
+    <p>Your <%= program.program_label.downcase %> is within five days. If you cannot make it, contact an organizer so we can find a replacement.</p>
+  <% end %>
   <% organizers = program_organizer_contacts(program) %>
   <% if organizers.any? %>
     <ul>

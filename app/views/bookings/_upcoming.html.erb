@@ -2,17 +2,18 @@
   <h2 id="upcoming-booking-<%= booking.id %>"><%= local_assigns[:read_only] ? "Upcoming Booking" : "Your Upcoming Booking" %></h2>
   <div class="upcoming-booking-details">
     <% if local_assigns.fetch(:show_venue, false) %>
-      <figure class="upcoming-booking-photo">
+      <figure class="upcoming-booking-photo" data-photo-series>
         <% if (photo = program.venue.primary_photo) %>
-          <%= render "shared/photo_thumbnail", full_url: venue_photo_path(program.venue, photo),
-                     thumbnail_url: venue_photo_path(program.venue, photo, thumbnail: 1),
-                     description: "#{program.venue.name} primary photo" %>
+          <%= render "shared/photo_series", owner: program.venue, photo: photo, name: program.venue.name %>
         <% else %>
           <%= link_to venue_path(program.venue) do %>
             <%= image_tag "venue-placeholder.svg", width: 400, height: 400,
                           loading: "lazy", alt: "No photo for #{program.venue.name}" %>
           <% end %>
         <% end %>
+        <figcaption>
+          <%= render "programs/booking_status", program: program, booking: booking %>
+        </figcaption>
       </figure>
     <% end %>
     <div class="upcoming-booking-summary">
@@ -25,15 +26,20 @@
         <%= render "venues/location", venue: program.venue %>
       <% end %>
       <% if local_assigns[:read_only] %>
-        <%= render "programs/booking_status", program: program, booking: booking, private_view: true %>
+        <%= render "programs/booking_status", program: program, booking: booking, private_view: true,
+                   show_status: !local_assigns.fetch(:show_venue, false) %>
       <% else %>
-        <%= render "bookings/attendance", program: program, booking: booking %>
+        <%= render "bookings/attendance", program: program, booking: booking,
+                   show_status: !local_assigns.fetch(:show_venue, false) %>
       <% end %>
       <% if booking.rescheduling_locked? && !local_assigns[:read_only] %>
         <%= render "bookings/rescheduling_notice", program: program, urgent: booking.attendance_overdue? %>
       <% end %>
       <% unless local_assigns[:read_only] %>
         <div class="booking-actions">
+          <% if booking.confirmation_open? && !booking.attendance_confirmed? %>
+            <%= button_to "I'll be there!", confirm_program_booking_path(program, booking), params: { booking_version: booking.lock_version } %>
+          <% end %>
           <% if can_book && !booking.rescheduling_locked? %>
             <%= link_to "Reschedule", edit_program_booking_path(program, booking), class: "button-link" %>
         <% end %>

@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe 'Homepage programs', :aggregate_failures, :database, type: :request do
+RSpec.describe 'Profile programs', :aggregate_failures, :database, type: :request do
   let(:user) { create_user }
 
   def program_names(section)
@@ -18,7 +18,7 @@ RSpec.describe 'Homepage programs', :aggregate_failures, :database, type: :reque
     grant_coordinator_access(inherited.first, user)
     grant_coordinator_access(direct, user)
     sign_in(user)
-    get root_path(program_id: foreign.id)
+    get programs_profile_path(program_id: foreign.id)
     expect(program_names('managed')).to eq(%w[Alpha Beta Gamma])
     expect(response.parsed_body.css('.managed-programs .button-link').pluck('href'))
       .to eq([*inherited, direct].map { |program| program_path(program, section: 'calendar') })
@@ -29,10 +29,10 @@ RSpec.describe 'Homepage programs', :aggregate_failures, :database, type: :reque
     program = create_program
     membership = grant_coordinator_access(program, user)
     sign_in(user)
-    get root_path
+    get programs_profile_path
     expect(program_names('managed')).to eq([program.name])
     membership.update!(roles: [])
-    get root_path
+    get programs_profile_path
     expect(response.parsed_body.at_css('.managed-programs')).to be_nil
   end
 
@@ -41,10 +41,9 @@ RSpec.describe 'Homepage programs', :aggregate_failures, :database, type: :reque
                 create_program(name: 'Beta', venue: create_venue(active: false))]
     programs.each { |program| grant_coordinator_access(program, user) }
     sign_in(user)
-    get root_path
+    get programs_profile_path
     expect(program_names('managed')).to eq(%w[Alpha Beta])
     expect(response.parsed_body.css('.managed-programs .status-label').map(&:text)).to eq(%w[Inactive Inactive])
-    expect(response.parsed_body.at_css('.bookable-programs')).to be_nil
   end
 
   it 'shows separate booking and management actions for an account with both roles' do
@@ -52,10 +51,11 @@ RSpec.describe 'Homepage programs', :aggregate_failures, :database, type: :reque
     grant_coordinator_access(program, user)
     grant_participant_access(program, user)
     sign_in(user)
-    get root_path
+    get bookings_profile_path
     expect(program_names('bookable')).to eq([program.name])
-    expect(program_names('managed')).to eq([program.name])
     expect(response.parsed_body.at_css('.bookable-programs .button-link').text).to eq('Choose a Date')
+    get programs_profile_path
+    expect(program_names('managed')).to eq([program.name])
     expect(response.parsed_body.at_css('.managed-programs .button-link').text).to eq('Manage Calendar')
   end
 
@@ -64,18 +64,19 @@ RSpec.describe 'Homepage programs', :aggregate_failures, :database, type: :reque
     coordinator = create_user
     grant_coordinator_access(program, coordinator)
     sign_in(user)
-    get root_path, params: { user_id: coordinator.id, roles: ['system_admin'], program_id: program.id }
-    expect(response.parsed_body.css('.managed-programs, .bookable-programs')).to be_empty
-    expect(response.body).not_to include(program.name, coordinator.email)
+    [bookings_profile_path, programs_profile_path].each do |path|
+      get path, params: { user_id: coordinator.id, roles: ['system_admin'], program_id: program.id }
+      expect(response.parsed_body.css('.managed-programs, .bookable-programs')).to be_empty
+      expect(response.body).not_to include(program.name, coordinator.email)
+    end
   end
 
   it 'lists every program for a system administrator without granting participant booking access' do
     programs = [create_program(name: 'Alpha'), create_program(name: 'Beta', active: false)]
     sign_in(create_user(roles: ['system_admin']))
-    get root_path
+    get programs_profile_path
     expect(program_names('managed')).to include(*programs.map(&:name))
     expect(program_names('managed').size).to eq(Program.count)
-    expect(response.parsed_body.at_css('.bookable-programs')).to be_nil
   end
 
   it 'lists future-opening bookable programs but excludes inactive programs and venues' do
@@ -83,11 +84,10 @@ RSpec.describe 'Homepage programs', :aggregate_failures, :database, type: :reque
                 create_program(venue: create_venue(active: false))]
     programs.each { |program| grant_participant_access(program, user) }
     sign_in(user)
-    get root_path
+    get bookings_profile_path
     expect(program_names('bookable')).to eq([programs.first.name])
     card = response.parsed_body.at_css('.bookable-programs .program-card')
     expect(card.at_css('img')['src']).to include('program-placeholder')
     expect(card.at_css('.button-link')['href']).to eq(program_path(programs.first, section: 'calendar'))
-    expect(response.parsed_body.at_css('.managed-programs')).to be_nil
   end
 end

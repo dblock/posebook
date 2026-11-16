@@ -106,7 +106,7 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
     get program_path(program, section: 'view', month: '2027-02')
     summary = response.parsed_body.at_css('.next-session')
     expect(summary.text).to include('Monday, December 14, 2026', 'December Participant')
-    expect(summary.at_css('p a')['href']).to eq(program_path(program, section: 'calendar', month: '2026-12'))
+    expect(summary.text).not_to include('View Calendar')
     expect(response.body).not_to include('Private schedule explanation.')
   end
 
@@ -117,7 +117,7 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
     summary = response.parsed_body.at_css('.next-session')
     expect(summary.text).to include('No scheduled sessions within the booking window.')
     expect(summary.at_css('time')).to be_nil
-    expect(summary.at_css('a')['href']).to eq(program_path(program, section: 'calendar'))
+    expect(response.parsed_body.at_css('[data-calendar]')).to be_present
   end
 
   it 'renders only the calendar for a matching public navigation context' do

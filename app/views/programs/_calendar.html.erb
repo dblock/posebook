@@ -4,7 +4,7 @@
 <% public_view = local_assigns.fetch(:public_view, true) %>
 <section aria-label="<%= calendar.program.program_label.downcase %> calendar" data-calendar data-calendar-context="<%= calendar_access_context(public_view, manager: @program_coordinator, program: calendar.program, booking: @my_booking) %>">
   <h2><%= calendar.program.program_label.titleize %> Calendar</h2>
-  <%= render "programs/regular_schedule", program: calendar.program %>
+  <% if local_assigns.fetch(:show_schedule, true) %><%= render "programs/regular_schedule", program: calendar.program %><% end %>
   <% if calendar.first_date > calendar.today %>
     <p class="booking-window-notice">Invited participants can book now for dates on or after <strong><%= calendar.first_date.strftime("%B %-d, %Y") %></strong>. Earlier sessions remain managed by the organizer.</p>
   <% end %>
@@ -17,7 +17,6 @@
       <%= link_to "Next Month", calendar_month_path(calendar, calendar.month + 1.month, @changing_booking), data: { calendar_navigation: true } %>
     <% end %>
   </nav>
-  <p>Dates and times use <%= calendar.program.time_zone %>.</p>
   <p class="scroll-hint">Scroll horizontally to view all days.</p>
   <div class="table-scroll" role="region" aria-label="Calendar dates" tabindex="0">
     <table class="calendar">
