@@ -192,6 +192,12 @@ begin
     raise 'The current program calendar did not render through its generated slug'
   end
 
+  response = request(port, '/programs/package-program/apply')
+  unless response.code == '200' && response.body.include?('Applications Closed') &&
+         response.body.include?('href="/programs/package-program"') && !response.body.match?(/Package instructions/)
+    raise 'The closed application landing page did not render safely'
+  end
+
   check_photos(container)
   check_venue_photos(container)
   check_monitoring(container)

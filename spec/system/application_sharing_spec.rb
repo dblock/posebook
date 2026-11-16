@@ -22,6 +22,13 @@ RSpec.describe 'Application sharing', :aggregate_failures, :database, type: :sys
       expect_no_horizontal_overflow
       capture_screenshot("application-sharing-#{viewport}")
     end
+
+    participant = create_user(name: 'Riley Participant')
+    grant_participant_access(program, participant)
+    click_on 'Sign Out'
+    sign_in_through_browser(participant)
+    visit program_path(program)
+    expect(page).to have_no_css('#application-sharing')
   end
 
   it 'copies the canonical link and keeps it visible when copying fails' do
@@ -47,21 +54,52 @@ RSpec.describe 'Application sharing', :aggregate_failures, :database, type: :sys
     end
   end
 
-  it 'labels the link Closed after intake is turned off and hides it from participants' do
+  it 'keeps closed links clickable and shows a helpful landing page at every viewport' do
     visit edit_program_path(program)
     expect(page).to have_text('Requires email and an active coordinator.')
     uncheck 'Accept Participation Applications'
     click_on 'Save Program'
     expect(page).to have_css('.flash', text: 'saved')
-    visit program_path(program)
-    expect(sharing).to have_text('Closed')
-    expect(sharing).to have_link(apply_url)
+    each_viewport do |viewport|
+      visit program_path(program)
+      expect(sharing).to have_text('Closed')
+      expect(sharing).to have_link(apply_url, href: apply_url)
+      sharing.click_link(apply_url)
+      expect(page).to have_css('h1', text: 'Applications Closed')
+      expect(page).to have_text('not currently accepting applications')
+      expect(page).to have_link('View Program', href: program_path(program))
+      expect_no_horizontal_overflow
+      capture_screenshot("application-closed-landing-#{viewport}")
+    end
+  end
 
-    participant = create_user(name: 'Riley Participant')
-    grant_participant_access(program, participant)
-    click_on 'Sign Out'
-    sign_in_through_browser(participant)
+  it 'keeps closed URLs copyable and usable without JavaScript' do
+    program.update!(applications_enabled: false)
     visit program_path(program)
-    expect(page).to have_no_css('#application-sharing')
+    stub_clipboard
+    sharing.click_on('Copy Link')
+    expect(sharing).to have_button('Copied')
+    expect(copied_text).to eq(apply_url)
+
+    without_javascript do
+      visit program_path(program)
+      expect(sharing).to have_text(apply_url)
+      expect(sharing).to have_link(apply_url, href: apply_url)
+      expect(sharing).to have_no_button('Copy Link')
+      sharing.click_link(apply_url)
+      expect(page).to have_css('h1', text: 'Applications Closed')
+      click_on 'View Program'
+      expect(page).to have_current_path(program_path(program))
+    end
+  end
+
+  it 'keeps the application URL clickable when the program or venue is inactive' do
+    [program, program.venue].each do |location|
+      location.update!(active: false)
+      visit program_path(program)
+      expect(sharing).to have_text('Closed')
+      expect(sharing).to have_link(apply_url, href: apply_url)
+      location.update!(active: true)
+    end
   end
 end
