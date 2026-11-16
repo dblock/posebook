@@ -78,6 +78,10 @@ module BrowserHelpers
     element.evaluate_script('this.getBoundingClientRect().top')
   end
 
+  def width_of(element)
+    element.evaluate_script('this.getBoundingClientRect().width')
+  end
+
   # Drags copies of one file under the given names onto the photo upload form; returns whether it was highlighted.
   def drop_files(path, names)
     page.execute_script(<<~JAVASCRIPT, Base64.strict_encode64(File.binread(path)), names)

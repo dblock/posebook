@@ -114,27 +114,35 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     sign_in(organizer)
     get program_participants_path(program)
     expect(response.parsed_body.css('.program-tabs .page-tab-group').map { |group| group.css('a').map(&:text) })
-      .to eq([%w[Program Calendar Exceptions History],
-              %w[Edit Photos Models Invitations Applications GCal]])
+      .to eq([%w[Program Calendar Photos Models Settings]])
     expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Models')
+    expect(response.parsed_body.css('.program-secondary-tabs a').map(&:text)).to eq(%w[Roster Invitations Applications])
+    expect(response.parsed_body.at_css('.program-secondary-tabs [aria-current="page"]').text).to eq('Roster')
     get program_coordinators_path(program)
     expect(response).to have_http_status(:forbidden)
+  end
 
+  it 'groups delegated coordinator access with settings even when the coordinator list is empty' do
+    program = create_program(participant_label: 'Model')
     sign_in(create_user(roles: ['system_admin']))
     get program_coordinators_path(program)
-    expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Coordinators')
+    expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Settings')
+    expect(response.parsed_body.at_css('.program-secondary-tabs [aria-current="page"]').text).to eq('Coordinators')
     expect(response.parsed_body.css('.program-tabs a').map(&:text))
-      .to eq(['Program', 'Calendar', 'Exceptions', 'History', 'Edit', 'Photos', 'Models', 'Invitations', 'Applications',
-              'Coordinators', 'Invite a Coordinator', 'Security', 'GCal'])
+      .to eq(%w[Program Calendar Photos Models Settings])
+    expect(response.parsed_body.css('.program-secondary-tabs a').map(&:text))
+      .to eq(['Details', 'Coordinators', 'Google Calendar', 'Security'])
+    expect(response.parsed_body.at_css('.title-row a.button-link')['href']).to eq(new_program_coordinator_path(program))
   end
 
   it 'places program settings and Google Calendar in tabs with matching breadcrumbs' do
     program = create_program(program_label: 'Workshop')
     sign_in(create_user(roles: ['system_admin']))
-    { edit_program_path(program) => 'Edit',
-      program_google_calendar_path(program) => 'GCal' }.each do |path, title|
+    { edit_program_path(program) => 'Details',
+      program_google_calendar_path(program) => 'Google Calendar' }.each do |path, title|
       get path
-      expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq(title)
+      expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Settings')
+      expect(response.parsed_body.at_css('.program-secondary-tabs [aria-current="page"]').text).to eq(title)
       breadcrumb = response.parsed_body.at_css('.breadcrumbs')
       expect(breadcrumb.at_css('[aria-current="page"]').text).to eq(title)
       expect(breadcrumb.css('a').pluck('href')).to include(venue_path(program.venue), program_path(program))
@@ -380,7 +388,7 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     expect(response.body).not_to include(other.name)
     get program_path(program)
     expect(response).to have_http_status(:ok)
-    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to include('Edit', 'GCal')
+    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to include('Settings')
     expect(response.body).not_to include('Existing user', 'Program Coordinators')
     get program_coordinators_path(program)
     expect(response).to have_http_status(:forbidden)
@@ -455,20 +463,32 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     expect(response.parsed_body.css('select[name="user_id"]')).to be_empty
   end
 
-  it 'links to organizer and settings pages in tabs without exposing controls on the program' do
+  it 'links to settings and contextual coordinator invitations without exposing controls on the program' do
     sign_in(create_user(roles: ['system_admin']))
     program = create_program
     user = create_user
     get program_path(program)
     links = response.parsed_body.css('.program-tabs a').pluck('href')
-    expect(links).to include(edit_program_path(program), program_google_calendar_path(program),
-                             new_program_coordinator_path(program))
+    expect(links).to include(edit_program_path(program))
+    expect(links).not_to include(program_google_calendar_path(program), new_program_coordinator_path(program))
     expect(response.parsed_body.css('main > p a').pluck('href')).not_to include(edit_program_path(program))
     expect(response.body).not_to include('Grant Schedule Access', 'Remove Schedule Access', user.email)
+    get edit_program_path(program)
+    expect(response.parsed_body.css('.program-secondary-tabs a').pluck('href'))
+      .to include(program_google_calendar_path(program), program_coordinators_path(program))
+  end
+
+  it 'keeps coordinator invitations in their settings group and private to delegating organizers' do
+    sign_in(create_user(roles: ['system_admin']))
+    program = create_program
+    user = create_user
+    get program_coordinators_path(program)
+    expect(response.parsed_body.at_css('.title-row a.button-link')['href']).to eq(new_program_coordinator_path(program))
     get new_program_coordinator_path(program)
     expect(response.body).to include('Invite a Coordinator', 'Continue')
     expect(response.body).not_to include(user.email)
-    expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Invite a Coordinator')
+    expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Settings')
+    expect(response.parsed_body.at_css('.program-secondary-tabs [aria-current="page"]').text).to eq('Coordinators')
     sign_in(user)
     get new_program_coordinator_path(program)
     expect(response).to have_http_status(:forbidden)

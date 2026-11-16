@@ -61,9 +61,13 @@ main {
   min-width: 0;
 }
 
-main:has(> form:not(.button_to)):not(:has(table, .photo-gallery, .page-tabs)) {
+main:has(> form:not(.button_to)):not(.application-registration):not(:has(table, .photo-gallery, .page-tabs)) {
   max-width: 42rem;
   margin-inline: auto;
+}
+
+.application-registration form {
+  max-width: 28rem;
 }
 
 h1,
@@ -162,6 +166,11 @@ nav {
 .page-tabs a[aria-current="page"] {
   border-bottom-color: var(--color-primary);
   color: var(--color-secondary);
+}
+
+.page-secondary-tabs {
+  margin-top: -1rem;
+  font-size: 0.9rem;
 }
 
 .page-tab-disabled {

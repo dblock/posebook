@@ -1,0 +1,14 @@
+<nav class="page-tabs <%= tabs_class %>" aria-label="<%= label %>">
+  <% [tabs, local_assigns.fetch(:actions, [])].reject(&:empty?).each_with_index do |group, index| %>
+    <div class="page-tab-group">
+      <% if index.positive? %><span class="tab-separator" aria-hidden="true">|</span><% end %>
+      <% group.each do |key, title, path| %>
+        <% if path %>
+          <%= link_to title, path, aria: { current: ("page" if active == key) } %>
+        <% else %>
+          <span class="page-tab-disabled" aria-disabled="true"><%= title %></span>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+</nav>

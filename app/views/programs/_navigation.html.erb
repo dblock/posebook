@@ -1,25 +1,38 @@
 <% manager = current_user && program.managed_by?(current_user) %>
-<% tabs = [["view", "Program", program_path(program)], ["calendar", "Calendar", program_path(program, section: "calendar")]] %>
+<% calendar_tabs = [["calendar", "Calendar", program_path(program, section: "calendar")]] %>
+<% models_tabs = [] %>
+<% settings_tabs = [] %>
 <% if manager %>
-  <% tabs << ["exceptions", "Exceptions", exceptions_program_schedule_path(program)] %>
-  <% tabs << ["history", "History", program_path(program, section: "history")] %>
-<% end %>
-<% actions = manager ? [["edit", "Edit", edit_program_path(program)]] : [] %>
-<% actions << ["photos", "Photos", photos_program_path(program)] %>
-<% if manager %>
-  <% actions << ["participants", program.participant_label.pluralize.titleize, program_participants_path(program)] %>
-  <% actions << ["invitations", "Invitations", program_participant_invitations_path(program)] %>
-  <% actions << ["applications", "Applications", program_applications_path(program)] %>
+  <% calendar_tabs += [["exceptions", "Schedule Exceptions", exceptions_program_schedule_path(program)],
+                       ["history", "History", program_path(program, section: "history")]] %>
+  <% models_tabs = [["participants", "Roster", program_participants_path(program)],
+                   ["invitations", "Invitations", program_participant_invitations_path(program)],
+                   ["applications", "Applications", program_applications_path(program)]] %>
+  <% settings_tabs = [["edit", "Details", edit_program_path(program)],
+                     ["google_calendar", "Google Calendar", program_google_calendar_path(program)]] %>
 <% end %>
 <% if program.venue.coordinated_by?(current_user) %>
-  <% actions << ["coordinators", "Coordinators", (program_coordinators_path(program) if program.memberships.coordinators.exists?)] %>
-  <% actions << ["invite_coordinator", "Invite a Coordinator", new_program_coordinator_path(program)] %>
-  <% actions << ["security", "Security", security_program_path(program)] %>
+  <% settings_tabs.insert(1, ["coordinators", "Coordinators", program_coordinators_path(program)]) %>
+  <% settings_tabs << ["security", "Security", security_program_path(program)] %>
 <% end %>
-<% actions << ["google_calendar", "GCal", program_google_calendar_path(program)] if manager %>
-<% tabs, actions = [], [] unless manager || (current_user && program.participant?(current_user)) %>
+<% tabs = [["view", "Program", program_path(program)], calendar_tabs.first,
+           ["photos", "Photos", photos_program_path(program)]] %>
+<% if manager %>
+  <% tabs += [["models", program.participant_label.pluralize.titleize, program_participants_path(program)],
+              ["settings", "Settings", edit_program_path(program)]] %>
+<% end %>
+<% groups = { "calendar" => calendar_tabs, "models" => models_tabs, "settings" => settings_tabs } %>
+<% secondary_active = active == "invite_coordinator" ? "coordinators" : active %>
+<% primary_active = groups.find { |_, entries| entries.any? { |key, _, _| key == secondary_active } }&.first || active %>
+<% secondary_tabs = manager ? groups.fetch(primary_active, []) : [] %>
+<% primary = tabs.find { |key, _, _| key == primary_active } %>
+<% tabs = [] unless manager || (current_user && program.participant?(current_user)) %>
 <% breadcrumbs = [["Venues", venues_path], [program.venue.name, venue_path(program.venue)], [program.name, program_path(program)]] %>
-<% section = (tabs + actions).find { |key, _, _| key == active } %>
+<% sections = tabs + groups.values.flatten(1) + [["invite_coordinator", "Invite a Coordinator", new_program_coordinator_path(program)]] %>
+<% section = sections.find { |key, _, _| key == active } %>
+<% breadcrumbs << [primary[1], primary[2]] if primary && primary_active != active %>
 <% breadcrumbs << [section[1], section[2]] if section && active != "view" %>
-<% breadcrumbs << [detail, nil] if local_assigns[:detail].present? && detail != section&.fetch(1) %>
-<%= render "shared/page_navigation", breadcrumbs: breadcrumbs, tabs: tabs, actions: actions, active: active, tabs_class: "program-tabs", label: "#{program.program_label.titleize} navigation" %>
+<% breadcrumbs << [detail, nil] if local_assigns[:detail].present? && ![section&.fetch(1), primary&.fetch(1)].include?(detail) %>
+<%= render "shared/page_navigation", breadcrumbs: breadcrumbs, tabs: tabs, active: primary_active,
+           tabs_class: "program-tabs", label: "#{program.program_label.titleize} navigation",
+           secondary_tabs: secondary_tabs, secondary_active: secondary_active, secondary_label: "#{primary&.fetch(1)} navigation" %>
