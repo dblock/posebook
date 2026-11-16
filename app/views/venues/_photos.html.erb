@@ -1,34 +1,5 @@
-<% photos = venue.photos.order_by(created_at: :asc).to_a %>
-<% primary_photo = venue.primary_photo(photos) %>
-<% if photos.any? || editable || local_assigns.fetch(:show_empty, false) %>
-  <section aria-labelledby="venue-photos-heading">
-    <h2 id="venue-photos-heading">Venue Photos</h2>
-    <% if editable %>
-      <p>All venue photos are public. There is no photo-count limit. Choose a primary photo for upcoming bookings on the homepage; otherwise, the first photo is used.</p>
-      <%= form_with url: venue_photos_path(venue), scope: :venue_photo, multipart: true do |form| %>
-        <p><%= form.label :file, "New Venue Photo" %><br><%= form.file_field :file, accept: "image/jpeg,image/png,image/webp", required: true %></p>
-        <%= form.submit "Upload Venue Photo" %>
-      <% end %>
-    <% end %>
-    <div class="photo-gallery">
-      <% photos.each_with_index do |photo, index| %>
-        <figure class="venue-photo profile-photo" data-photo="<%= photo.id %>">
-          <%= render "shared/photo_thumbnail", full_url: venue_photo_path(venue, photo),
-                     thumbnail_url: venue_photo_path(venue, photo, thumbnail: 1),
-                     description: "#{venue.name} photo #{index + 1}" %>
-          <% if editable %>
-            <% if photo == primary_photo %>
-              <figcaption class="photo-primary-control"><%= status_label("Primary") %></figcaption>
-            <% else %>
-              <div class="photo-primary-control">
-                <%= button_to "Set Primary Photo", venue_photo_path(venue, photo), method: :patch, class: "secondary-action" %>
-              </div>
-            <% end %>
-            <%= button_to "Delete Photo", venue_photo_path(venue, photo), method: :delete, class: "secondary-action" %>
-          <% end %>
-        </figure>
-      <% end %>
-    </div>
-    <% if photos.empty? %><p>No venue photos yet.</p><% end %>
-  </section>
-<% end %>
+<% photos = (editable ? venue.photos : venue.photos.visible).order_by(created_at: :asc).to_a %>
+<%= render "shared/photo_gallery", photos: photos, editable: editable, upload_url: venue_photos_path(venue), scope: :venue_photo,
+           photo_url: ->(photo, **options) { venue_photo_path(venue, photo, **options) },
+           description: ->(index) { "#{venue.name} photo #{index + 1}" },
+           primary_id: venue.primary_photo(photos)&.id, empty_text: "No venue photos yet.", figure_class: "venue-photo" %>

@@ -1,0 +1,5 @@
+<main data-edit-in-place>
+  <%= render "navigation", venue: @venue, active: "security" %>
+  <h1>Security</h1>
+  <%= render "shared/location_activation", location: @venue, path: venue_path(@venue), label: "Venue" %>
+</main>

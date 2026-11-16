@@ -1,0 +1,5 @@
+<main data-edit-in-place>
+  <%= render "navigation", program: @program, active: "security" %>
+  <h1>Security</h1>
+  <%= render "shared/location_activation", location: @program, path: program_path(@program), label: @program.program_label.titleize %>
+</main>

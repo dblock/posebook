@@ -27,9 +27,8 @@ RSpec.describe 'Account access management', :aggregate_failures, :database, type
     expect(response).to have_http_status(:unprocessable_content)
     expect(response.parsed_body.css('main form').pluck('id')).to eq(%w[password-form deactivation-form])
     details = response.parsed_body.at_css('#deactivate-account')
-    expect(details.text).to include('It does not delete your account.', 'will no longer be shared publicly',
-                                    'Existing bookings are not canceled.', 'authorized administrators and organizers')
-    expect(details.at_css('a')['href']).to eq(privacy_path(anchor: 'retention-and-your-choices'))
+    expect(details.text).to include('hides your public profile', "bookings aren't canceled")
+    expect(response.parsed_body.at_css('[data-flash-messages] .flash-alert').text).to eq('Current Password is invalid')
     expect(user.reload).to be_active
   end
 
@@ -68,7 +67,7 @@ RSpec.describe 'Account access management', :aggregate_failures, :database, type
     user = create_user(roles: ['system_admin'])
     sign_in(user)
     get security_profile_path
-    expect(response.body).to include('System admin accounts stay active')
+    expect(response.body).to include("System admin accounts can't be deactivated.")
     expect(response.parsed_body.at_css('#deactivation-form')).to be_nil
     expect(response.parsed_body.at_css('#password-form')).to be_present
     post account_deactivation_path, params: { current_password: DatabaseHelpers::TEST_PASSWORD }

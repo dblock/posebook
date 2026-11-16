@@ -13,7 +13,7 @@ class CoordinatorInvitationsController < ApplicationController
 
   def destroy
     result = @invitation.revoke
-    redirect_to polymorphic_path([@target, :coordinators]),
+    redirect_to new_polymorphic_path([@target, :coordinator]),
                 result ? { notice: t('invitations.revoked') } : { alert: t('invitations.not_pending') }
   end
 

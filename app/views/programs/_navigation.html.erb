@@ -1,15 +1,22 @@
 <% manager = current_user && program.managed_by?(current_user) %>
 <% tabs = [["view", "View", program_path(program)], ["calendar", "Calendar", program_path(program, section: "calendar")]] %>
-<% tabs << ["history", "History", program_path(program, section: "history")] if manager %>
-<% actions = [["photos", "Photos", photos_program_path(program)]] %>
+<% if manager %>
+  <% tabs << ["exceptions", "Exceptions", exceptions_program_schedule_path(program)] %>
+  <% tabs << ["history", "History", program_path(program, section: "history")] %>
+<% end %>
+<% actions = manager ? [["edit", "Edit", edit_program_path(program)]] : [] %>
+<% actions << ["photos", "Photos", photos_program_path(program)] %>
 <% if manager %>
   <% actions << ["participants", program.participant_label.pluralize.titleize, program_participants_path(program)] %>
-  <% actions << ["invitations", "#{program.participant_label.titleize} Invitations", program_participant_invitations_path(program)] %>
+  <% actions << ["invitations", "Invitations", program_participant_invitations_path(program)] %>
   <% actions << ["applications", "Applications", program_applications_path(program)] %>
-  <% actions << ["edit", "Edit", edit_program_path(program)] %>
 <% end %>
-<% actions << ["coordinators", "Coordinators", program_coordinators_path(program)] if program.venue.coordinated_by?(current_user) %>
-<% actions << ["google_calendar", "Google Calendar", program_google_calendar_path(program)] if manager %>
+<% if program.venue.coordinated_by?(current_user) %>
+  <% actions << ["coordinators", "Coordinators", (program_coordinators_path(program) if program.memberships.coordinators.exists?)] %>
+  <% actions << ["invite_coordinator", "Invite a Coordinator", new_program_coordinator_path(program)] %>
+  <% actions << ["security", "Security", security_program_path(program)] %>
+<% end %>
+<% actions << ["google_calendar", "GCal", program_google_calendar_path(program)] if manager %>
 <% breadcrumbs = [["Venues", venues_path], [program.venue.name, venue_path(program.venue)], [program.name, program_path(program)]] %>
 <% section = (tabs + actions).find { |key, _, _| key == active } %>
 <% breadcrumbs << [section[1], section[2]] if section && active != "view" %>

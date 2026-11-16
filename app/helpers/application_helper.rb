@@ -8,8 +8,16 @@ module ApplicationHelper
     'canceled' => 'danger', 'revoked' => 'danger', 'inactive' => 'danger',
     'closed' => 'danger', 'declined' => 'danger',
     'pending' => 'warning', 'paused' => 'warning', 'rescheduled' => 'warning', 'uninvited' => 'warning',
-    'booked' => 'warning', 'tentative' => 'warning'
+    'booked' => 'warning', 'tentative' => 'warning', 'private' => 'private'
   }.freeze
+
+  def user_page_path(user, page = 'profile', **params)
+    if user == current_user
+      page == 'profile' ? profile_path(**params) : public_send("#{page}_profile_path", **params)
+    else
+      page == 'profile' ? admin_user_path(user, **params) : public_send("#{page}_admin_user_path", user, **params)
+    end
+  end
 
   def status_label(status, **attributes)
     tone = STATUS_LABEL_TONES.fetch(status.to_s.downcase, 'neutral')

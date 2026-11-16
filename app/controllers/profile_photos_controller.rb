@@ -16,7 +16,7 @@ class ProfilePhotosController < ApplicationController
 
   def create
     ProfilePhoto.add(@user, params.expect(profile_photo: [:file]).fetch(:file))
-    redirect_to participant_path(@user), notice: t('photos.uploaded'), status: :see_other
+    redirect_to gallery_path, notice: t('photos.uploaded'), status: :see_other
   end
 
   def update
@@ -27,12 +27,12 @@ class ProfilePhotosController < ApplicationController
     raise ActionController::BadRequest unless %w[0 1].include?(value)
 
     @photo.change_visibility(@user, value == '1')
-    redirect_to participant_path(@user), notice: t('photos.updated'), status: :see_other
+    redirect_to gallery_path, notice: t('photos.updated'), status: :see_other
   end
 
   def destroy
     @photo.remove(@user)
-    redirect_to participant_path(@user), notice: t('photos.deleted'), status: :see_other
+    redirect_to gallery_path, notice: t('photos.deleted'), status: :see_other
   end
 
   private
@@ -41,8 +41,7 @@ class ProfilePhotosController < ApplicationController
     raise ActionController::BadRequest unless value == '1'
     return head :not_found unless @photo.select_primary(@user).matched_count == 1
 
-    path = @user.id == current_user.id ? edit_profile_path : edit_admin_user_path(@user)
-    redirect_to path, notice: t('photos.primary_updated'), status: :see_other
+    redirect_to gallery_path, notice: t('photos.primary_updated'), status: :see_other
   end
 
   def find_gallery
@@ -55,13 +54,17 @@ class ProfilePhotosController < ApplicationController
     head :forbidden unless @gallery.editable?
   end
 
+  def gallery_path
+    @user == current_user ? photos_profile_path : photos_admin_user_path(@user)
+  end
+
   def find_photo
     @photo = @gallery.photos.find { |photo| photo.id.to_s == params[:id] }
     head :not_found unless @photo
   end
 
   def invalid_upload(error)
-    redirect_to participant_path(@user), alert: error.message, status: :see_other
+    redirect_to gallery_path, alert: error.message, status: :see_other
   end
 
   def storage_unavailable(error)

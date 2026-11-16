@@ -114,8 +114,8 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     sign_in(organizer)
     get program_participants_path(program)
     expect(response.parsed_body.css('.program-tabs .page-tab-group').map { |group| group.css('a').map(&:text) })
-      .to eq([%w[View Calendar History],
-              ['Photos', 'Models', 'Model Invitations', 'Applications', 'Edit', 'Google Calendar']])
+      .to eq([%w[View Calendar Exceptions History],
+              %w[Edit Photos Models Invitations Applications GCal]])
     expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Models')
     get program_coordinators_path(program)
     expect(response).to have_http_status(:forbidden)
@@ -124,15 +124,15 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     get program_coordinators_path(program)
     expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Coordinators')
     expect(response.parsed_body.css('.program-tabs a').map(&:text))
-      .to eq(['View', 'Calendar', 'History', 'Photos', 'Models', 'Model Invitations', 'Applications', 'Edit',
-              'Coordinators', 'Google Calendar'])
+      .to eq(['View', 'Calendar', 'Exceptions', 'History', 'Edit', 'Photos', 'Models', 'Invitations', 'Applications',
+              'Coordinators', 'Invite a Coordinator', 'Security', 'GCal'])
   end
 
   it 'places program settings and Google Calendar in tabs with matching breadcrumbs' do
     program = create_program(program_label: 'Workshop')
     sign_in(create_user(roles: ['system_admin']))
     { edit_program_path(program) => 'Edit',
-      program_google_calendar_path(program) => 'Google Calendar' }.each do |path, title|
+      program_google_calendar_path(program) => 'GCal' }.each do |path, title|
       get path
       expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq(title)
       breadcrumb = response.parsed_body.at_css('.breadcrumbs')
@@ -379,7 +379,7 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     expect(response.body).not_to include(other.name)
     get program_path(program)
     expect(response).to have_http_status(:ok)
-    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to include('Edit', 'Google Calendar')
+    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to include('Edit', 'GCal')
     expect(response.body).not_to include('Existing user', 'Program Coordinators')
     get program_coordinators_path(program)
     expect(response).to have_http_status(:forbidden)
@@ -450,7 +450,7 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     grant_coordinator_access(program, user)
     user.set(active: false)
     get program_coordinators_path(program)
-    expect(response.parsed_body.text).to include('Inactive account', 'Remove Coordinator')
+    expect(response.parsed_body.at_css('.coordinator-list tbody').text).to include('Inactive', 'Remove Coordinator')
     expect(response.parsed_body.css('select[name="user_id"]')).to be_empty
   end
 
@@ -461,15 +461,15 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     get program_path(program)
     links = response.parsed_body.css('.program-tabs a').pluck('href')
     expect(links).to include(edit_program_path(program), program_google_calendar_path(program),
-                             program_coordinators_path(program))
+                             new_program_coordinator_path(program))
     expect(response.parsed_body.css('main > p a').pluck('href')).not_to include(edit_program_path(program))
     expect(response.body).not_to include('Grant Schedule Access', 'Remove Schedule Access', user.email)
-    get program_coordinators_path(program)
-    expect(response.body).to include('Invite or Promote a Coordinator', 'Continue')
+    get new_program_coordinator_path(program)
+    expect(response.body).to include('Invite a Coordinator', 'Continue')
     expect(response.body).not_to include(user.email)
-    expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Coordinators')
+    expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Invite a Coordinator')
     sign_in(user)
-    get program_coordinators_path(program)
+    get new_program_coordinator_path(program)
     expect(response).to have_http_status(:forbidden)
   end
 
@@ -502,7 +502,7 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     expect(response).to have_http_status(:ok)
     get "/#{previous}"
     expect(response).to have_http_status(:not_found)
-    get program_coordinators_path(program.reload)
+    get new_program_coordinator_path(program.reload)
     expect(response).to have_http_status(:ok)
     expect(response.parsed_body.at_css('main form')['action']).to eq('/programs/weekly-booking/coordinators')
   end

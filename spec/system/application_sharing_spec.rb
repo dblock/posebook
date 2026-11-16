@@ -49,9 +49,11 @@ RSpec.describe 'Application sharing', :aggregate_failures, :database, type: :sys
 
   it 'labels the link Closed after intake is turned off and hides it from participants' do
     visit edit_program_path(program)
-    expect(page).to have_text('Requires email delivery and an active coordinator.')
+    expect(page).to have_text('Requires email and an active coordinator.')
     uncheck 'Accept Participation Applications'
     click_on 'Save Program'
+    expect(page).to have_css('.flash', text: 'saved')
+    visit program_path(program)
     expect(sharing).to have_text('Closed')
     expect(sharing).to have_link(apply_url)
 

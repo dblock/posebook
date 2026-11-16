@@ -1,0 +1,7 @@
+<% if programs.empty? %>
+  <p>No programs to manage.</p>
+<% else %>
+  <div class="location-cards managed-programs">
+    <% programs.each do |program| %><%= render "programs/card", program: program, managed: true %><% end %>
+  </div>
+<% end %>

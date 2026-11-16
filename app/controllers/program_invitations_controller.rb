@@ -29,7 +29,7 @@ class ProgramInvitationsController < ApplicationController
   def create
     @invitation = @program.participant_invitations.new(params.expect(participant_invitation: %i[name email]))
     @invitation.invited_by = current_user
-    if delivery_available? && @invitation.save
+    if @invitation.save
       finish_creation
     else
       render :new, status: :unprocessable_content
@@ -55,16 +55,8 @@ class ProgramInvitationsController < ApplicationController
     @invitation = @program.participant_invitations.find(params.expect(:id))
   end
 
-  def delivery_available?
-    return true if @invitation.email.blank? || params[:send_email] != '1'
-    return true if Rails.configuration.x.password_reset_delivery_enabled
-
-    @invitation.errors.add(:base, t('invitations.delivery_unavailable'))
-    false
-  end
-
   def deliver_invitation
-    return unless @invitation.email.present? && params[:send_email] == '1'
+    return unless @invitation.email.present? && Rails.configuration.x.password_reset_delivery_enabled
 
     EmailDelivery.enqueue('participant_invitation', @invitation, token: @invitation.token,
                                                                  expires_at: @invitation.expires_at)

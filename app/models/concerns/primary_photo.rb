@@ -7,6 +7,8 @@ module PrimaryPhoto
     field :primary_photo_id, type: BSON::ObjectId
   end
 
+  PUBLIC_SELECTOR = { 'public' => { '$ne' => false } }.freeze
+
   module ClassMethods
     def preload_primary_photos(owners)
       owners = owners.to_a
@@ -35,8 +37,8 @@ module PrimaryPhoto
       ids = owners.filter_map(&:primary_photo_id)
       return {} if ids.empty?
 
-      association.klass.where(association.foreign_key => { '$in' => owners.map(&:id) },
-                              :id.in => ids).index_by(&:id)
+      association.klass.where(PUBLIC_SELECTOR).where(association.foreign_key => { '$in' => owners.map(&:id) },
+                                                     :id.in => ids).index_by(&:id)
     end
 
     def first_primary_photos(owners, association)
@@ -44,7 +46,7 @@ module PrimaryPhoto
 
       foreign_key = association.foreign_key
       pipeline = [
-        { '$match' => { foreign_key => { '$in' => owners.map(&:id) } } },
+        { '$match' => PUBLIC_SELECTOR.merge(foreign_key => { '$in' => owners.map(&:id) }) },
         { '$sort' => { foreign_key => 1, 'created_at' => 1 } },
         { '$group' => { '_id' => "$#{foreign_key}", 'photo_id' => { '$first' => '$_id' } } }
       ]
@@ -65,11 +67,12 @@ module PrimaryPhoto
   end
 
   def primary_photo(photos = nil)
-    return photos.find { |photo| photo.id == primary_photo_id } || photos.first if photos
+    return primary_photo_from(photos) if photos
     return @primary_photo_snapshot.last if primary_photo_loaded?
 
-    selected = self.photos.where(id: primary_photo_id).first if primary_photo_id
-    selected || self.photos.order_by(created_at: :asc).first
+    public_photos = self.photos.where(PUBLIC_SELECTOR)
+    selected = public_photos.where(id: primary_photo_id).first if primary_photo_id
+    selected || public_photos.order_by(created_at: :asc).first
   end
 
   def reload(...)
@@ -78,6 +81,11 @@ module PrimaryPhoto
   end
 
   private
+
+  def primary_photo_from(photos)
+    photos = photos.reject { |photo| photo.attributes['public'] == false }
+    photos.find { |photo| photo.id == primary_photo_id } || photos.first
+  end
 
   def primary_photo_loaded?
     @primary_photo_snapshot && @primary_photo_snapshot[0] == id && @primary_photo_snapshot[1] == primary_photo_id

@@ -23,6 +23,7 @@
         <% if current_user %>
           <%= link_to current_user.name, profile_path, class: "nav-account", aria: { label: "Profile for #{current_user.name}" } %>
           <div class="nav-links">
+            <%= link_to "Profile", profile_path, aria: { current: ("page" if current_page?(profile_path)) } %>
             <%= link_to "Venues", venues_path %>
             <% if current_user.system_admin? %><%= link_to "Users", admin_users_path, aria: { current: ("page" if current_page?(admin_users_path)) } %><% end %>
             <%= button_to "Sign Out", session_path, method: :delete %>
@@ -31,9 +32,12 @@
       </nav>
     </header>
     <div class="page-shell">
-      <% flash.each do |type, message| %>
-        <p class="flash <%= "flash-alert" if type == "alert" %>" role="<%= type == "alert" ? "alert" : "status" %>"><%= message %></p>
-      <% end %>
+      <div class="flash-messages" data-flash-messages>
+        <% flash.each do |type, message| %>
+          <p class="flash <%= "flash-alert" if type == "alert" %>" role="<%= type == "alert" ? "alert" : "status" %>"><%= message %></p>
+        <% end %>
+        <%= yield :flash %>
+      </div>
       <%= yield %>
     </div>
     <footer class="site-footer">
@@ -45,7 +49,9 @@
       </nav>
     </footer>
     <%= render "shared/photo_preview" %>
+    <%= javascript_include_tag "edit-in-place", defer: true %>
     <%= javascript_include_tag "pending-controls", defer: true %>
     <%= javascript_include_tag "clipboard", defer: true %>
+    <%= javascript_include_tag "flash", defer: true %>
   </body>
 </html>

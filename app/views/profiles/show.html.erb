@@ -1,5 +1,5 @@
 <main>
-  <%= render "navigation", active: "view" %>
+  <%= render "profiles/navigation", user: @user, active: "profile" %>
   <h1>Profile</h1>
-  <%= render "bookings", dashboard: participant_dashboard %>
+  <%= render "shared/account_details", user: @user, admin: @user != current_user %>
 </main>

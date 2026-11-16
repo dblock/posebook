@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
 class ApplicationDraft
-  PROFILE_FIELDS = %w[name phone gender display_name instagram_handle instagram_tagging_allowed
-                      public_profile_private].freeze
+  PROFILE_FIELDS = %w[name phone gender display_name instagram_handle instagram_tagging_allowed].freeze
 
   def initialize(program:, user:)
     @program = program

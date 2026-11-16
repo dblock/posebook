@@ -10,7 +10,7 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
   it 'formats invitation recipients from their available details without exposing matching accounts' do
     admin = create_user(roles: ['system_admin'])
     program = create_program
-    unknown = create_user(name: 'Private account name', gender: 'female', public_profile_private: true)
+    unknown = create_user(name: 'Private account name', gender: 'female')
     recipients = [{ name: 'Drawing <Model> & Artist', email: 'artist@example.test' },
                   { email: unknown.email }, { name: 'Named guest' }, {}]
     recipients.each { |attributes| create_participant_invitation(program, admin, **attributes) }
@@ -31,7 +31,7 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     sign_in(admin)
     get program_participant_invitations_path(program)
     row = response.parsed_body.at_css("[data-invitation='#{invitation.id}']")
-    expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Model Invitations')
+    expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Invitations')
     expect(row.text).to include('Invited Model <model@example.test>', admin.name, 'Accepted')
     expect(row.css('time').pluck('datetime'))
       .to eq([invitation.created_at, invitation.expires_at, invitation.used_at]
@@ -51,7 +51,7 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     [new_program_participant_invitation_path(program),
      program_participant_invitation_path(program, invitation)].each do |path|
       get path
-      expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Participant Invitations')
+      expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Invitations')
       expect(response.parsed_body.css('main a').pluck('href')).to include(program_participant_invitations_path(program))
     end
     expect(response.parsed_body.at_css('.invitation-recipient').text).to eq(invitation.email)
@@ -80,14 +80,15 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     grant_venue_access(program.venue, coordinator)
     sign_in(coordinator)
     get program_participant_invitations_path(program)
-    expect(response.body).to include('No invitations on this page.')
+    expect(response.body).to include('No invitations.')
+    expect(response.parsed_body.at_css('.participant-pagination')).to be_nil
     participant = create_user
     grant_participant_access(program, participant)
     sign_in(participant)
     get program_participant_invitations_path(program)
     expect(response).to have_http_status(:not_found)
     get program_path(program)
-    expect(response.parsed_body.css('.program-tabs a').map(&:text)).not_to include('Participant Invitations')
+    expect(response.parsed_body.css('.program-tabs a').map(&:text)).not_to include('Invitations')
   end
 
   it 'paginates tied invitation dates stably without losing older history' do
@@ -140,13 +141,13 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     expect(response.parsed_body.at_css('#invitation_link')).to be_nil
   end
 
-  it 'sends optional invitation email using the configured mail host' do
+  it 'sends invitation email when an address is given using the configured mail host' do
     admin = create_user(roles: ['system_admin'])
     sign_in(admin)
     program = create_program(start_time: '19:15', available_weekdays: ['2'],
                              time_zone: 'America/Los_Angeles')
     post program_participant_invitations_path(program),
-         params: { participant_invitation: { email: 'participant@example.test' }, send_email: '1' }
+         params: { participant_invitation: { email: 'participant@example.test' } }
     track_record(program.participant_invitations.first)
     mail = ActionMailer::Base.deliveries.last
     expect(mail).to be_nil
@@ -157,12 +158,12 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
                                          'Tuesday at 7:15 PM (America/Los_Angeles)', 'using participant@example.test')
   end
 
-  it 'creates a link without email or SMTP even when email delivery is checked' do
+  it 'creates a link without email or SMTP' do
     sign_in(create_user(roles: ['system_admin']))
     program = create_program
     allow(Rails.configuration.x).to receive(:password_reset_delivery_enabled).and_return(false)
     post program_participant_invitations_path(program),
-         params: { participant_invitation: { name: 'Invited Artist' }, send_email: '1' }
+         params: { participant_invitation: { name: 'Invited Artist' } }
     invitation = track_record(program.participant_invitations.first)
     follow_redirect!
     expect(response.parsed_body.at_css('#invitation_link')['value']).to include('/invitation?token=')
@@ -177,7 +178,7 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     allow(EmailDeliveryJob).to receive(:perform_later).and_raise(error)
     allow(NewRelic::Agent).to receive(:notice_error)
     post program_participant_invitations_path(program),
-         params: { participant_invitation: { email: 'participant@example.test' }, send_email: '1' }
+         params: { participant_invitation: { email: 'participant@example.test' } }
     track_record(program.participant_invitations.first)
     follow_redirect!
     expect(response.body).to include('Email could not be queued.')
@@ -185,16 +186,19 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     expect(NewRelic::Agent).to have_received(:notice_error).with(an_instance_of(EmailDelivery::Unavailable)).once
   end
 
-  it 'rejects invalid addresses and unavailable delivery without persisting an invitation' do
+  it 'rejects invalid addresses and still creates links when delivery is unavailable' do
     sign_in(create_user(roles: ['system_admin']))
     program = create_program
     post program_participant_invitations_path(program), params: { participant_invitation: { email: 'invalid' } }
     expect(response).to have_http_status(:unprocessable_content)
+    expect(program.participant_invitations).to be_empty
     allow(Rails.configuration.x).to receive(:password_reset_delivery_enabled).and_return(false)
     post program_participant_invitations_path(program),
-         params: { participant_invitation: { email: 'a@example.test' }, send_email: '1' }
-    expect(response).to have_http_status(:unprocessable_content)
-    expect(program.participant_invitations).to be_empty
+         params: { participant_invitation: { email: 'a@example.test' } }
+    invitation = track_record(program.participant_invitations.first)
+    expect(invitation.email).to eq('a@example.test')
+    deliver_emails
+    expect(ActionMailer::Base.deliveries).to be_empty
   end
 
   it 'does not let unassigned users or other sessions expose or revoke invitations' do

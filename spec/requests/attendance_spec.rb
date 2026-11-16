@@ -8,7 +8,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
   around { |example| travel_to(Time.utc(2026, 11, 13, 15)) { example.run } }
 
   let(:program) { create_program(time_zone: 'America/New_York', start_time: '18:30') }
-  let(:participant) { create_user(public_profile_private: true) }
+  let(:participant) { create_user }
   let(:booking) do
     grant_participant_access(program, participant)
     track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-11-23'))
@@ -45,11 +45,12 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
   it 'offers confirmation and the usual rescheduling workflow seven days before participating' do
     get root_path
     card = response.parsed_body.at_css('.upcoming-booking')
+    expect(card.at_css('.upcoming-booking-countdown').text).to eq('In 7 days')
     expect(card.at_css('input[name="booking_version"]')['value']).to eq(booking.lock_version.to_s)
     expect(card.at_css('form[action$="/confirm"]')).to be_present
-    expect(card.at_css('.button-link').text).to eq('I can no longer make it.')
+    expect(card.at_css('.button-link').text).to eq('Reschedule')
     get program_path(program)
-    expect(response.body).to include('I&#39;ll be there!', 'I can no longer make it.')
+    expect(response.body).to include('I&#39;ll be there!', 'Reschedule')
     confirm_booking
     follow_redirect!
     expect(response.body).to include('You&#39;re confirmed')
@@ -136,7 +137,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     travel_to Time.utc(2026, 11, 18, 5)
     get program_path(program)
     expect(response.body).to include('Please contact an organizer ASAP', organizer.email, organizer.phone)
-    expect(response.body).not_to include('I can no longer make it.')
+    expect(response.body).not_to include('Reschedule')
     patch program_booking_path(program, booking),
           params: { date: '2026-11-30', reason: 'Travel.', booking_version: booking.lock_version }
     expect(response).to have_http_status(:unprocessable_content)
@@ -196,10 +197,10 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     confirm_booking
     expect(booking.reload.attendance_confirmed?).to be(true)
     get program_path(program)
-    expect(response.body).not_to include('I can no longer make it.')
+    expect(response.body).not_to include('Reschedule')
     get root_path
     expect(response.body).to include('Your Upcoming Booking', 'Cancel Booking')
-    expect(response.body).not_to include('Change Date', 'I can no longer make it.', 'On a break.')
+    expect(response.body).not_to include('Reschedule', 'On a break.')
   end
 
   it 'reloads stale private summaries when confirmation changes during calendar navigation' do

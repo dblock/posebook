@@ -132,7 +132,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
                                                   mode: 'closed', reason: 'Private closure.'))
     sign_in(organizer_for)
     get program_path(program, section: 'calendar')
-    expect(day('2026-11-16').text).to include('Booked', booking.user.public_name, 'Edit Day')
+    expect(day('2026-11-16').text).to include('Booked', booking.user.name, 'Edit Day')
     expect(day('2026-11-17').text).to include('Blocked', 'Private closure.', 'Edit Day')
     program.update!(booking_horizon_months: 1)
     get program_path(program, month: '2026-12')
@@ -158,18 +158,18 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     expect(response.body).not_to include(booking.user.email, 'Your Upcoming Booking')
   end
 
-  it 'applies current public-profile privacy and Instagram preferences to past sessions' do
+  it 'applies current public names and Instagram preferences to past sessions' do
     public_booking = historical_booking('2026-11-02', display_name: 'Past Public Participant',
                                                       instagram_handle: 'past_artist', instagram_tagging_allowed: true)
-    hidden = historical_booking('2026-11-09', name: 'Private Past Participant', public_profile_private: true,
-                                              instagram_handle: 'hidden_past_artist', instagram_tagging_allowed: true)
+    named = historical_booking('2026-11-09', name: 'Private Past Participant', display_name: 'Past Display Name',
+                                             instagram_handle: 'past_artist_two', instagram_tagging_allowed: true)
     get program_path(program, section: 'calendar')
     expect(day('2026-11-02').text).to include('Past Public Participant', '@past_artist')
-    expect(day('2026-11-09').text).to include('To be announced')
-    expect(response.body).not_to include(hidden.user.name, 'hidden_past_artist', hidden.user.email)
+    expect(day('2026-11-09').text).to include('Past Display Name', '@past_artist_two')
+    expect(response.body).not_to include(named.user.name, named.user.email)
     public_booking.user.update!(instagram_tagging_allowed: false)
     get program_path(program, section: 'calendar')
-    expect(response.body).not_to include('@past_artist')
+    expect(day('2026-11-02').text).not_to include('@past_artist')
   end
 
   it 'does not publish canceled or foreign-session history when showing past sessions' do
@@ -187,7 +187,8 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     sign_in(organizer_for)
     get program_path(program, section: 'calendar')
     expect(day('2026-11-30').text).to include('Completed', 'Previous Month Participant')
-    expect(day('2026-11-30').css('a, form, button')).to be_empty
+    expect(day('2026-11-30').css('form, button')).to be_empty
+    expect(day('2026-11-30').css('a').map(&:text)).not_to include('Edit Booking', 'Edit Day')
     expect(day('2026-11-29').children).to be_empty
     expect(day('2026-12-01').children).to be_empty
   end
@@ -222,9 +223,8 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     booking = reserve('2026-12-28')
     sign_in(organizer_for)
     get program_path(program, month: '2027-01')
-    expect(day('2026-12-28').text).to include('Booked', '6:30 PM', booking.user.public_name)
-    expect(day('2026-12-28').at_css('a')['href']).to eq(edit_program_organizer_booking_path(program,
-                                                                                            booking))
+    expect(day('2026-12-28').text).to include('Booked', '6:30 PM', booking.user.name)
+    expect(day('2026-12-28').at_css("a[href='#{edit_program_organizer_booking_path(program, booking)}']")).to be_present
     expect(day('2027-02-01').text).to include('Available', '6:30 PM', 'Schedule Participant', 'Edit Day')
     path = day('2027-02-01').at_css('a')['href']
     expect(path).to eq(new_program_organizer_booking_path(program, date: '2027-02-01'))
@@ -257,9 +257,8 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     expect(day('2027-01-01').css('.status-label').text).to eq('Future')
   end
 
-  it 'retains public identity privacy and hides manager controls on leading bookings' do
+  it 'keeps blank public names anonymous and hides manager controls on leading bookings' do
     booking = reserve('2026-11-30')
-    booking.user.update!(public_profile_private: true)
     participant = create_user
     grant_participant_access(program, participant)
     [nil, participant].each do |viewer|
@@ -269,5 +268,18 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
       expect(day('2026-11-30').text).not_to include(booking.user.name, 'Future')
       expect(day('2026-11-30').css('a, form, button')).to be_empty
     end
+  end
+
+  it 'links participants to their public profile and coordinators to the participant editor' do
+    booking = reserve('2026-11-30')
+    booking.user.update!(display_name: 'Public Model')
+    membership = ProgramMembership.participants.find_by(program_id: program.id, user_id: booking.user_id)
+    get program_path(program, month: '2026-12')
+    expect(day('2026-11-30').css('.booked-participant a').pluck('href'))
+      .to eq([participant_path(booking.user)])
+    sign_in(organizer_for)
+    get program_path(program, month: '2026-12')
+    expect(day('2026-11-30').css('.booked-participant a').pluck('href'))
+      .to eq([participant_path(booking.user), edit_program_participant_path(program, membership)])
   end
 end

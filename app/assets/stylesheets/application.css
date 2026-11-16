@@ -146,13 +146,14 @@ nav {
 }
 
 .page-tabs {
-  gap: 0.25rem;
+  gap: 0.1rem;
   margin-bottom: 1.5rem;
   border-bottom: 1px solid var(--line);
 }
 
-.page-tabs a {
-  padding: 0.55rem 0.8rem;
+.page-tabs a,
+.page-tab-disabled {
+  padding: 0.5rem 0.5rem;
   border-bottom: 3px solid transparent;
   font-weight: 600;
   text-decoration: none;
@@ -163,21 +164,27 @@ nav {
   color: var(--color-secondary);
 }
 
+.page-tab-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .page-tab-group {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.1rem;
   max-width: 100%;
 }
 
 .tab-separator {
-  padding: 0 0.6rem;
+  padding: 0 0.35rem;
   opacity: 0.6;
 }
 
 .site-nav {
   gap: 1rem 2rem;
+  padding-block: 0.75rem;
 }
 
 .nav-links {
@@ -236,7 +243,6 @@ nav {
 }
 
 .flash,
-.form-errors,
 .attendance-panel,
 .participant-profile-card,
 .rescheduling-notice {
@@ -246,18 +252,48 @@ nav {
   background: var(--color-base-200);
 }
 
-.flash {
-  margin: 0 0 2rem;
+.flash-messages {
+  position: fixed;
+  z-index: 20;
+  top: 1rem;
+  right: 1rem;
+  left: 1rem;
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  pointer-events: none;
 }
 
-.flash-alert,
-.form-errors {
+.flash {
+  position: relative;
+  max-width: 32rem;
+  padding-right: 2.5rem;
+  margin: 0;
+  box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 15%);
+  pointer-events: auto;
+}
+
+.flash-dismiss {
+  position: absolute;
+  top: 0.15rem;
+  right: 0.2rem;
+  min-height: 0;
+  padding: 0.1rem 0.3rem;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.flash-alert {
   background: #f4dfd9;
   color: #7b3426;
   border-color: #984b3b;
 }
 
-.form-errors ul {
+.flash ul {
   margin: 0;
   padding-left: 1.25rem;
 }
@@ -271,6 +307,11 @@ nav {
 
 .rescheduling-notice h3 {
   margin-top: 0;
+}
+
+.rescheduling-notice ul {
+  padding-left: 0;
+  list-style: none;
 }
 
 .rescheduling-notice li {
@@ -355,7 +396,12 @@ nav {
 
 .upcoming-booking-date {
   margin-top: 0;
+  margin-bottom: 0.25rem;
   font-weight: 600;
+}
+
+.upcoming-booking-countdown {
+  margin-top: 0;
 }
 
 .booking-actions {
@@ -397,6 +443,11 @@ nav {
 .status-label-neutral {
   background: var(--color-base-200);
   color: var(--color-secondary);
+}
+
+.status-label-private {
+  background: var(--color-secondary);
+  color: var(--color-base-100);
 }
 
 .attendance-warning {
@@ -509,16 +560,9 @@ summary {
   font-weight: 600;
 }
 
-.public-sharing {
-  border: 0;
-  margin: 0;
-  padding: 0;
-  min-width: 0;
-}
 
-.public-sharing:disabled {
-  opacity: 0.55;
-}
+
+
 
 table {
   width: 100%;
@@ -550,7 +594,7 @@ th,
 td {
   padding: 0.9rem;
   border-bottom: 1px solid var(--line);
-  vertical-align: top;
+  vertical-align: middle;
 }
 
 th {
@@ -562,6 +606,14 @@ th {
 
 tbody tr:last-child td {
   border-bottom: 0;
+}
+
+table:not(.calendar) :is(th, td):not(:first-child) {
+  text-align: center;
+}
+
+table:not(.calendar) td:not(:first-child) .participant-actions {
+  justify-content: center;
 }
 
 [data-calendar] {
@@ -609,6 +661,10 @@ tbody tr:last-child td {
 .calendar a {
   display: block;
   margin-top: 0.4rem;
+}
+
+.calendar .booked-participant br {
+  display: none;
 }
 
 .calendar time a {
@@ -724,13 +780,13 @@ tbody tr:last-child td {
 .participant-roster th,
 .participant-roster td {
   padding: 0.9rem;
-  vertical-align: top;
+  vertical-align: middle;
   overflow-wrap: anywhere;
 }
 
 .participant-identity {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.75rem;
 }
 
@@ -751,21 +807,6 @@ tbody tr:last-child td {
   width: 4rem;
   height: 4rem;
   object-fit: cover;
-  border-radius: var(--radius-box);
-}
-
-.primary-photo-picker {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.primary-photo-picker figure {
-  margin: 0;
-}
-
-.primary-photo-picker img {
-  display: block;
   border-radius: var(--radius-box);
 }
 
@@ -796,16 +837,32 @@ tbody tr:last-child td {
 
 .participant-pause summary {
   font-size: 0.75rem;
+  list-style: none;
 }
 
-.photo-primary-control {
+.participant-pause form {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.participant-pause[open] summary {
+  display: none;
+}
+
+.participant-pause[open] form {
+  margin-top: 0;
+}
+
+.participant-pause-actions {
   display: flex;
   justify-content: center;
-  margin-top: 0.25rem;
+  gap: 0.4rem;
 }
 
-.photo-primary-control form {
-  margin: 0;
+.participant-pause summary::-webkit-details-marker {
+  display: none;
 }
 
 .photo-gallery {
@@ -820,21 +877,6 @@ tbody tr:last-child td {
   min-width: 0;
 }
 
-:is(.venue-photo, .program-photo) form {
-  display: flex;
-  justify-content: center;
-}
-
-:is(.venue-photo, .program-photo) .photo-primary-control {
-  align-items: center;
-  min-height: 1.75rem;
-  margin: 0.5rem 0;
-}
-
-:is(.venue-photo, .program-photo) .photo-primary-control .status-label {
-  margin: 0;
-}
-
 .profile-photo img {
   display: block;
   width: 100%;
@@ -845,11 +887,32 @@ tbody tr:last-child td {
   background: var(--color-base-200);
 }
 
+.profile-photo figcaption {
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
 .photo-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: center;
   gap: 0.5rem;
   margin-top: 0.5rem;
+}
+
+.photo-actions form {
+  width: calc(200% / 3);
+}
+
+.photo-drop-target {
+  border-radius: var(--radius-box);
+  outline: 2px dashed var(--color-primary);
+  outline-offset: 0.25rem;
+}
+
+.photo-actions button {
+  width: 100%;
+  white-space: nowrap;
 }
 
 .photo-preview {
@@ -868,12 +931,24 @@ tbody tr:last-child td {
 }
 
 .photo-preview-heading {
-  margin: 0 0 0.5rem;
+  margin: 0 2.5rem 0.75rem 0;
   font-size: 1.25rem;
 }
 
-.photo-preview button {
-  margin: 0 0 0.75rem;
+.photo-preview .photo-preview-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 2rem;
+  min-height: 2rem;
+  height: 2rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-base-content);
+  font-size: 1.5rem;
+  line-height: 1;
 }
 
 .photo-preview img {
@@ -892,6 +967,22 @@ tbody tr:last-child td {
 .copy-control {
   display: inline;
   font-weight: normal;
+}
+
+.title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.title-row h1 {
+  margin-bottom: 0;
+}
+
+.title-row .copy-fallback {
+  overflow-wrap: anywhere;
 }
 
 .copy-visible-link {
@@ -956,4 +1047,40 @@ table :is(button, input[type="submit"], .button-link) {
   top: 0;
   opacity: 0;
   pointer-events: none;
+}
+
+.user-accounts :is(th, td):not(:first-child) {
+  text-align: center;
+}
+
+.user-accounts :is(td:nth-child(3), .status-label) {
+  white-space: nowrap;
+}
+
+form > fieldset + [type="submit"] {
+  margin-top: 1rem;
+}
+
+.application-filter {
+  margin-top: 1.5rem;
+}
+
+.application-filter p {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.application-filter :is(select, input[type="submit"]) {
+  width: auto;
+  margin: 0;
+}
+
+.application-filter select {
+  min-width: min(16rem, 100%);
+}
+
+fieldset + fieldset {
+  margin-top: 1rem;
 }

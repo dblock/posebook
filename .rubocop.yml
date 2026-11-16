@@ -39,3 +39,8 @@ Style/Documentation:
     - 'app/**/*'
     - 'config/application.rb'
     - 'spec/support/**/*'
+
+Metrics/BlockLength:
+  Exclude:
+    # The routes table is a single declarative block that grows with the application.
+    - 'config/routes.rb'

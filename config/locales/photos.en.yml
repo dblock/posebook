@@ -1,10 +1,10 @@
 en:
   photos:
-    program_uploaded: "Program photo uploaded. It is visible publicly."
+    program_uploaded: "Program photo uploaded."
     program_primary_updated: "Primary program photo updated."
-    venue_uploaded: "Venue photo uploaded. It is visible publicly."
+    venue_uploaded: "Venue photo uploaded."
     venue_primary_updated: "Primary venue photo updated."
-    uploaded: "Photo uploaded. It is private until you choose Make Public."
+    uploaded: "Photo uploaded."
     updated: "Photo visibility updated."
     primary_updated: "Primary profile photo updated."
     deleted: "Photo deleted."

@@ -1,13 +1,14 @@
 # frozen_string_literal: true
 
 class ProgramsController < ApplicationController
+  include SlugConflictHandling
+
   before_action :remember_booking_destination, only: :show
   before_action :require_authentication, except: %i[show photos]
   before_action :find_venue, only: %i[new create]
-  before_action :find_program, only: %i[show photos edit update]
+  before_action :find_program, only: %i[show photos edit update security]
   before_action :prepare_program_access, only: :show
   before_action :prepare_program_page, only: :show
-  rescue_from Mongo::Error::OperationFailure, with: :handle_slug_conflict
   rescue_from LocationActivation::Forbidden, with: -> { head :forbidden }
   rescue_from LocationActivation::Invalid, with: -> { head :bad_request }
 
@@ -34,6 +35,10 @@ class ProgramsController < ApplicationController
 
   def edit; end
 
+  def security
+    head :forbidden unless @program.venue.coordinated_by?(current_user)
+  end
+
   def create
     @program = @venue.programs.new(program_params)
     if @program.save
@@ -59,7 +64,7 @@ class ProgramsController < ApplicationController
 
   def update_activation
     @program = LocationActivation.new(location: @program, user: current_user).call(params[:active])
-    redirect_to edit_program_path(@program), notice: t('locations.access_updated')
+    redirect_to security_program_path(@program), notice: t('locations.access_updated')
   end
 
   def prepare_program_access
@@ -97,13 +102,6 @@ class ProgramsController < ApplicationController
 
     session[:booking_program] = params[:id]
     require_authentication
-  end
-
-  def handle_slug_conflict(error)
-    raise error unless error.code == 11_000
-
-    @program.errors.add(:custom_slug, :taken)
-    render(action_name == 'create' ? :new : :edit, status: :unprocessable_content)
   end
 
   def load_calendar

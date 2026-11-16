@@ -1,0 +1,8 @@
+<p class="venue-location">
+  <% if local_assigns.fetch(:show_name, true) %><%= link_to venue.name, venue_path(venue) %><br><% end %>
+  <%= venue.address.to_s.split(/\s*\n\s*/).compact_blank.join(", ") %> ·
+  <%= link_to "Google Maps", venue.google_maps_location_url, class: "venue-google-maps", target: "_blank", rel: "noopener noreferrer" %>
+  <% if venue.public_instagram_url %>
+    · <%= link_to "@#{venue.public_instagram_handle}", venue.public_instagram_url, target: "_blank", rel: "noopener noreferrer" %>
+  <% end %>
+</p>

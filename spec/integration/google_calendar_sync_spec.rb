@@ -42,7 +42,7 @@ RSpec.describe GoogleCalendarSync, :aggregate_failures, :database do
     expect(api).to have_received(:insert_event).once do |calendar, event, options|
       expect(calendar).to eq(connection.calendar_id)
       expect(event.id).to eq("posebook#{booking.id}")
-      expect(event.description).to include(participant.phone, participant.email, 'Instagram tagging: Yes',
+      expect(event.description).to include(participant.display_phone, participant.email, 'Instagram tagging: Yes',
                                            '@preview_model')
       expect(event.attendees.map(&:email)).to contain_exactly(participant.email, organizer.email)
       expect(event).to have_attributes(visibility: 'private', guests_can_invite_others: false,
@@ -265,12 +265,10 @@ RSpec.describe GoogleCalendarSync, :aggregate_failures, :database do
     expect(api).to have_received(:delete_event)
   end
 
-  it 'keeps disabled connections and private Instagram preferences out of delivery' do
-    participant.update!(public_profile_private: true)
+  it 'keeps disabled connections out of delivery and includes consented Instagram' do
     booking = book
     event = GoogleCalendarEvent.new(booking, connection).build
-    expect(event.description).to include('Instagram tagging: No')
-    expect(event.description).not_to include('@preview_model')
+    expect(event.description).to include('Instagram tagging: Yes', '@preview_model')
     connection.update!(enabled: false)
     described_class.process_next
     expect(api).not_to have_received(:insert_event)

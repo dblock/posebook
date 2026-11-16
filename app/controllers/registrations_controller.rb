@@ -10,7 +10,7 @@ class RegistrationsController < ApplicationController
 
   def create
     attributes = params.expect(user: %i[name email phone gender password password_confirmation
-                                        display_name instagram_handle instagram_tagging_allowed public_profile_private])
+                                        display_name instagram_handle instagram_tagging_allowed])
     @user = User.bootstrap(attributes)
     if @user.persisted?
       start_session(@user)

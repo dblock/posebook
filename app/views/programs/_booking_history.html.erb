@@ -4,22 +4,22 @@
     <p class="scroll-hint">Scroll horizontally to view the full history.</p>
     <div class="table-scroll" role="region" aria-label="Booking history" tabindex="0">
       <table>
-        <thead><tr><th>Date / Time</th><% if @program_coordinator %><th><%= @program.participant_label.titleize %></th><% end %><th>Status</th><th>Explanation</th></tr></thead>
+        <thead><tr><th>Date / Time</th><% if @program_coordinator %><th><%= @program.participant_label.titleize %></th><% end %><th>Status</th><th>Explanation</th><% if @program_coordinator %><th>Details</th><% end %></tr></thead>
         <tbody>
           <% @booking_history.each do |booking| %>
             <tr>
               <td><%= booking.date.iso8601 %><br><%= booking_time(booking) %><% if booking.previous_booking %><br>Moved from <%= booking.previous_booking.date.iso8601 %><% end %></td>
               <% if @program_coordinator %><td><%= render "shared/participant_identity", participant: booking.user %></td><% end %>
-              <td>
-                <%= render "programs/booking_status", booking: booking, private_view: true %>
-                <% if @program_coordinator && booking.status == "confirmed" && booking.ends_at > Time.current %><%= link_to "Edit Booking", edit_program_organizer_booking_path(@program, booking) %><% end %>
-              </td>
+              <td><%= render "programs/booking_status", booking: booking, private_view: true %></td>
               <td>
                 <%= render "bookings/explanation", booking: booking %>
                 <% if @program_coordinator && booking.gender_override_reason.present? %>
                   <p>Gender-rule override: <%= booking.gender_override_reason %></p>
                 <% end %>
               </td>
+              <% if @program_coordinator %>
+                <td><% if booking.status == "confirmed" && booking.ends_at > Time.current %><%= link_to "Edit", edit_program_organizer_booking_path(@program, booking) %><% end %></td>
+              <% end %>
             </tr>
           <% end %>
         </tbody>

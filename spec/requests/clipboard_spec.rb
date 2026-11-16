@@ -14,9 +14,9 @@ RSpec.describe 'Copy controls', :aggregate_failures, :database, type: :request d
     user = create_user(name: 'Avery <Artist> "Studio"', phone: '+12125551234', instagram_handle: '@alex.artist')
     user.set(pending_email: 'pending@example.test')
     sign_in(user)
-    get details_profile_path
+    get profile_path
     expect(response.parsed_body.css('.copy-button')).to be_empty
-    expect(response.parsed_body.css('dd').text).to include(user.name, user.email, user.phone, '@alex.artist')
+    expect(response.parsed_body.css('dd').text).to include(user.name, user.email, user.display_phone, '@alex.artist')
     expect(response.body).to include('pending@example.test')
     expect(response.parsed_body.css('dd artist')).to be_empty
     expect(response.parsed_body.at_css('a[href="https://www.instagram.com/alex.artist/"]')).to be_present
@@ -46,7 +46,7 @@ RSpec.describe 'Copy controls', :aggregate_failures, :database, type: :request d
     unnamed = create_coordinator_invitation(program.venue, admin, email: nil, name: nil)
     restricted = create_coordinator_invitation(program.venue, admin, email: 'manager@example.test')
     sign_in(admin)
-    get venue_coordinators_path(program.venue)
+    get new_venue_coordinator_path(program.venue)
     expect(response.parsed_body.at_css("a[href='#{venue_coordinator_invitation_path(program.venue, named)}']").text)
       .to eq('Invited Manager')
     expect(response.parsed_body.at_css("a[href='#{venue_coordinator_invitation_path(program.venue, unnamed)}']").text)
@@ -100,7 +100,7 @@ RSpec.describe 'Copy controls', :aggregate_failures, :database, type: :request d
     sign_in(admin)
     get admin_users_path
     expect(response.parsed_body.css('.copy-button')).to be_empty
-    expect(response.body).to include(user.name, user.email, user.phone)
+    expect(response.body).to include(user.name, user.email, user.display_phone)
     sign_in(user)
     get admin_users_path
     expect(response).to have_http_status(:forbidden)

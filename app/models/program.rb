@@ -106,4 +106,9 @@ class Program
   def message(key, **)
     I18n.t(key, **terminology, **)
   end
+
+  def participant_memberships_by_user
+    @participant_memberships_by_user ||=
+      memberships.participants.only(:id, :user_id, :display_name_override, :instagram_hidden).index_by(&:user_id)
+  end
 end

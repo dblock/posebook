@@ -58,7 +58,7 @@ RSpec.describe 'Booking schedules', :aggregate_failures, :database, type: :reque
   it 'shows restored schedules with one word in the badge and explanations outside it' do
     sign_in(create_user(roles: ['system_admin']))
     save_day(mode: 'regular')
-    get program_schedule_path(program)
+    get exceptions_program_schedule_path(program)
     expect(response.parsed_body.css('.status-label').map(&:text)).to eq(['Regular'])
     expect(response.parsed_body.text).to include('schedule restored', 'Later start.')
   end

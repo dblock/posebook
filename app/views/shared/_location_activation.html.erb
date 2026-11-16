@@ -1,5 +1,4 @@
 <section class="location-activation" aria-label="<%= label %> access">
-  <h2><%= label %> Access</h2>
   <p><%= status_label(location.active? ? "Active" : "Inactive") %></p>
   <p>Deactivating hides this <%= label.downcase %> from public listings and blocks new bookings and date changes. Existing bookings, cancellations, and attendance confirmations remain available.</p>
   <%= button_to "#{location.active? ? "Deactivate" : "Activate"} #{label}", path, method: :patch,

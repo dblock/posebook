@@ -3,7 +3,7 @@
 module PublicProfile
   extend ActiveSupport::Concern
 
-  FIELDS = %i[display_name instagram_handle instagram_tagging_allowed public_profile_private].freeze
+  FIELDS = %i[display_name instagram_handle instagram_tagging_allowed].freeze
 
   included do
     embeds_many :profile_photos
@@ -11,7 +11,6 @@ module PublicProfile
     field :display_name, type: String
     field :instagram_handle, type: String
     field :instagram_tagging_allowed, type: Mongoid::Boolean, default: false
-    field :public_profile_private, type: Mongoid::Boolean, default: false
     field :primary_profile_photo_id, type: BSON::ObjectId
     before_validation :normalize_public_profile
     before_save :synchronize_instagram_preferences
@@ -21,9 +20,9 @@ module PublicProfile
   end
 
   def public_name
-    return 'To be announced' if !active? || public_profile_private?
+    return 'To be announced' unless active?
 
-    display_name.presence || name
+    display_name.presence || 'To be announced'
   end
 
   def public_instagram_url
@@ -31,17 +30,17 @@ module PublicProfile
   end
 
   def public_instagram_handle
-    InstagramProfile.normalize(instagram_handle) if active? && instagram_tagging_allowed? && !public_profile_private?
+    InstagramProfile.normalize(instagram_handle) if active? && instagram_tagging_allowed?
   end
 
   def public_photos
-    return [] unless active? && !public_profile_private?
+    return [] unless active?
 
     profile_photos.select(&:public?)
   end
 
   def primary_profile_photo
-    profile_photos.find { |photo| photo.id == primary_profile_photo_id } || profile_photos.first
+    profile_photos.find { |photo| photo.id == primary_profile_photo_id } || profile_photos.find(&:public?)
   end
 
   private

@@ -25,14 +25,10 @@ class ParticipantDetailsUpdate
   end
 
   def update_details(attributes)
-    participant = @membership.user
-    names = attributes.slice(:name, :display_name)
-    participant.assign_attributes(names)
+    @membership.display_name_override = attributes[:display_name] if attributes.key?(:display_name)
     @membership.notes = attributes[:notes] if attributes.key?(:notes)
-    valid_names = names.empty? || participant.valid?
-    return unless @membership.valid? && valid_names
-
-    participant.save! unless names.empty?
-    @membership.save!
+    @membership.instagram_hidden = attributes[:instagram_hidden] == '1' if attributes.key?(:instagram_hidden)
+    @membership.photos_hidden = attributes[:photos_hidden] == '1' if attributes.key?(:photos_hidden)
+    @membership.save! if @membership.valid?
   end
 end

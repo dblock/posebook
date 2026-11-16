@@ -6,7 +6,7 @@ require 'vips'
 RSpec.describe 'Participant applications', :aggregate_failures, :database, type: :request do
   let(:program) { create_program(applications_enabled: true, instructions: 'Private program instructions') }
   let(:applicant) do
-    create_user(name: 'Original Applicant', email_verified_at: Time.current, public_profile_private: true)
+    create_user(name: 'Original Applicant', email_verified_at: Time.current)
   end
   let(:coordinator) { create_user(name: 'Reviewing Coordinator') }
   let(:application) do
@@ -21,7 +21,9 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
       file.binmode.write(Vips::Image.black(40, 60).new_from_image([160, 80, 60]).write_to_buffer('.png'))
       file.flush
       upload = Rack::Test::UploadedFile.new(file.path, 'image/png')
-      ProfilePhoto.add(applicant, upload)
+      photo = ProfilePhoto.add(applicant, upload)
+      photo.change_visibility(applicant, false)
+      photo
     ensure
       upload&.tempfile&.close!
     end
@@ -168,6 +170,17 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     expect(response.body).not_to include(program.name, application.message)
   end
 
+  def expect_accepted_application_links
+    membership = program.memberships.participants.find_by(user_id: applicant.id)
+    expect(response.parsed_body.at_css("main a[href='#{edit_program_participant_path(program,
+                                                                                     membership)}']")).to be_present
+    expect_applicant_profile_link
+  end
+
+  def expect_applicant_profile_link
+    expect(response.parsed_body.at_css("main a[href='#{participant_path(applicant)}']").text).to eq('View Profile')
+  end
+
   it 'retains private Not Now history and accepts it later even with intake closed' do
     decline_application
     expect(application.reload.status).to eq('declined')
@@ -183,6 +196,7 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     get program_application_path(program, application)
     expect(response.body).to include('Application Submitted', 'Application: Not Now', 'Application Accepted')
     expect(response.body).not_to include('Private Reviewer Notes (Optional)')
+    expect_accepted_application_links
   end
 
   it 'shows applicant decisions without disclosing reviewer notes or identity' do
@@ -258,9 +272,11 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     get participant_photo_path(applicant, photo.id)
     expect(response).to have_http_status(:not_found)
     application
+    get program_application_path(program, application)
+    expect(response.parsed_body.css('.photo-gallery [data-photo]').pluck('data-photo')).to eq([photo.id.to_s])
+    expect(response.body).not_to include('Upload Photo')
     get participant_path(applicant)
-    expect(response.body).to include(applicant.email, 'Private', 'Profile photo 1')
-    expect(response.body).not_to include('Delete Photo', 'Upload Photo')
+    expect(response.body).not_to include(photo.id.to_s, 'Delete Photo', 'Upload Photo')
     [nil, 1].each do |thumbnail|
       get participant_photo_path(applicant, photo.id, thumbnail: thumbnail)
       expect(response).to have_http_status(:ok)
@@ -291,13 +307,13 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     application
     sign_in(applicant)
     delete program_participation_application_path(program), params: { lock_version: 0 }
-    applicant.update!(name: 'Later Private Identity')
+    applicant.update!(name: 'Later Account Name')
     sign_in(coordinator)
     get program_application_path(program, application)
     expect(response.body).to include('Original Applicant', 'Application Withdrawn')
-    expect(response.body).not_to include('Later Private Identity', 'Review Current Profile')
+    expect(response.body).not_to include('Later Account Name', 'photo-gallery')
     get history_program_applications_path(program)
-    expect(response.body).not_to include('Later Private Identity')
+    expect(response.body).not_to include('Later Account Name')
   end
 
   it 'lists only scoped applications and retains gender in the shared contact label' do
@@ -323,12 +339,12 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     application
     sign_in(coordinator)
     get edit_program_path(program)
-    expect(response.body).to include('Accept Participation Applications')
-    expect(response.body).to include(program_apply_url(program))
+    expect(response.body).to include('Accept Participation Applications', program_apply_url(program))
     patch program_path(program), params: { program: { applications_enabled: '0' } }
     expect(program.reload.applications_enabled?).to be(false)
     get program_applications_path(program)
-    expect(response.body).to include('Intake is closed', applicant.email)
+    expect(response.body).to include(applicant.email)
+    expect(response.parsed_body.at_css('main .status-label').text).to eq('Closed')
     sign_in(create_user)
     get program_path(program)
     expect(response.body).not_to include('Apply to Participate')

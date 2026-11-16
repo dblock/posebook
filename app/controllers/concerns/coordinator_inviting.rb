@@ -4,14 +4,16 @@ module CoordinatorInviting
   extend ActiveSupport::Concern
 
   included do
-    before_action :prepare_coordinator_page, only: %i[index create]
+    before_action :prepare_coordinator_page, only: %i[index new create]
   end
 
   def index; end
 
+  def new; end
+
   def create
     @invitation.assign_attributes(name: params[:name], email: invitee_email, invited_by: current_user)
-    return render :index, status: :unprocessable_content unless @invitation.valid?
+    return render :new, status: :unprocessable_content unless @invitation.valid?
 
     @existing_user = find_existing_user
     return handle_existing_user if @existing_user
@@ -27,8 +29,6 @@ module CoordinatorInviting
   end
 
   def finish_invitation
-    return invitation_error('invitations.delivery_unavailable') unless delivery_available?
-
     @invitation.save!
     queued = deliver_invitation
     flash[:invitation_link] = { 'id' => @invitation.id.to_s, 'token' => @invitation.token }
@@ -49,7 +49,7 @@ module CoordinatorInviting
 
   def handle_existing_user
     return invitation_error('coordinator_invitations.inactive') unless @existing_user.active?
-    return render :index unless params[:grant_access] == '1' || params[:user_id]
+    return render :new unless params[:grant_access] == '1' || params[:user_id]
 
     @invitation.grant_access(@existing_user)
     redirect_to polymorphic_path([@invitation.target, :coordinators]),
@@ -58,15 +58,11 @@ module CoordinatorInviting
 
   def invitation_error(key)
     @invitation.errors.add(:base, t(key))
-    render :index, status: :unprocessable_content
-  end
-
-  def delivery_available?
-    @invitation.email.blank? || params[:send_email] != '1' || Rails.configuration.x.password_reset_delivery_enabled
+    render :new, status: :unprocessable_content
   end
 
   def deliver_invitation
-    return unless @invitation.email.present? && params[:send_email] == '1'
+    return unless @invitation.email.present? && Rails.configuration.x.password_reset_delivery_enabled
 
     EmailDelivery.enqueue('coordinator_invitation', @invitation, token: @invitation.token,
                                                                  expires_at: @invitation.expires_at)

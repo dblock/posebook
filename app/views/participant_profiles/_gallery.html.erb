@@ -1,0 +1,5 @@
+<%= render "shared/photo_gallery", photos: @photos, editable: @gallery.editable?, upload_url: participant_photos_path(@user), scope: :profile_photo,
+           photo_url: ->(photo, **options) { participant_photo_path(@user, photo, **options) },
+           description: ->(index) { "Profile photo #{index + 1}" },
+           primary_id: (@user.primary_profile_photo&.id if @gallery.editable?),
+           show_status: @gallery.private_access? %>

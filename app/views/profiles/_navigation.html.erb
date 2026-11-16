@@ -1,6 +1,9 @@
-<% tabs = [["view", "View", profile_path], ["history", "History", history_profile_path], ["details", "Account Details", details_profile_path]] %>
-<% tabs << ["applications", "Applications", applications_profile_path] %>
-<% actions = [["photos", "Photos", participant_path(current_user)], ["edit", "Edit", edit_profile_path], ["security", "Security", security_profile_path]] %>
-<% breadcrumbs = [["Profile", profile_path]] %>
-<% breadcrumbs << [(tabs + actions).find { |key, _, _| key == active }[1], nil] unless active == "view" %>
+<% user = local_assigns[:user] || current_user %>
+<% own = user == current_user %>
+<% tabs = [["profile", "Profile"], ["bookings", "Bookings"], ["programs", "Programs"], ["applications", "Applications"], ["history", "History"]] %>
+<% actions = [["edit", "Edit"], ["photos", "Photos"], ["security", "Security"]] %>
+<% tabs, actions = [tabs, actions].map { |group| group.map { |key, title| [key, title, (user_page_path(user, key) if key == active || profile_tab_enabled?(key, user))] } } %>
+<% breadcrumbs = current_user.system_admin? ? [["Users", admin_users_path]] : [] %>
+<% breadcrumbs << [own ? "#{user.name} (You)" : user.name, (user_page_path(user) unless active == "profile")] %>
+<% breadcrumbs << [(tabs + actions).find { |key, _, _| key == active }[1], nil] unless active == "profile" %>
 <%= render "shared/page_navigation", breadcrumbs: breadcrumbs, tabs: tabs, actions: actions, active: active, tabs_class: "profile-tabs", label: "Profile navigation" %>

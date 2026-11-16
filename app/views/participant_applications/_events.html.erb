@@ -1,12 +1,17 @@
-<ol>
-  <% events.each do |event| %>
-    <li>
-      <strong><%= participation_event_label(event) %></strong> -
-      <time datetime="<%= event.created_at.iso8601 %>"><%= l(event.created_at.in_time_zone(@program.time_zone), format: :long) %></time>
-      <% if private_notes %>
-        by <%= participation_actor_label(event, local_assigns[:source]) %>
-        <% if event.notes.present? %><p><strong>Private Reviewer Notes:</strong> <%= event.notes %></p><% end %>
+<div class="table-scroll" role="region" aria-label="Application history" tabindex="0">
+  <table>
+    <thead><tr><th>Event</th><th>Date</th><% if private_notes %><th>By</th><th>Private Reviewer Notes</th><% end %></tr></thead>
+    <tbody>
+      <% events.each do |event| %>
+        <tr>
+          <td><%= participation_event_label(event) %></td>
+          <td><time datetime="<%= event.created_at.iso8601 %>"><%= l(event.created_at.in_time_zone(@program.time_zone), format: :long) %></time></td>
+          <% if private_notes %>
+            <td><%= participation_actor_label(event, local_assigns[:source]) %></td>
+            <td><%= event.notes %></td>
+          <% end %>
+        </tr>
       <% end %>
-    </li>
-  <% end %>
-</ol>
+    </tbody>
+  </table>
+</div>

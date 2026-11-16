@@ -3,7 +3,7 @@
 class ApplicationController < ActionController::Base
   REMEMBER_COOKIE = :_posebook_remember_me
 
-  helper_method :current_user
+  helper_method :current_user, :profile_tab_enabled?
   around_action :with_remembered_login
   around_action :with_history_actor
 
@@ -15,6 +15,16 @@ class ApplicationController < ActionController::Base
 
   def current_user
     @current_user ||= session_user || remembered_user
+  end
+
+  def profile_tab_enabled?(tab, user)
+    case tab
+    when 'bookings' then ProgramMembership.participants.exists?(user_id: user.id)
+    when 'history' then Booking.exists?(user_id: user.id)
+    when 'applications' then ParticipantApplication.exists?(user_id: user.id)
+    when 'programs' then Program.managed_by(user).exists?
+    else true
+    end
   end
 
   def participant_dashboard

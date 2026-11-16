@@ -1,5 +1,4 @@
 <p>
   <%= form.label :gender %><br>
-  <%= form.select :gender, User::GENDERS.map { |gender| [gender.capitalize, gender] }, { include_blank: "Select a gender" }, required: true %><br>
-  <small>Private.</small>
+  <%= form.select :gender, User::GENDERS.map { |gender| [gender.capitalize, gender] }, { include_blank: "Select a gender" }, required: true %>
 </p>

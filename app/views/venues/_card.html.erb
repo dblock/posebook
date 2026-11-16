@@ -10,6 +10,6 @@
   <div class="location-card-summary">
     <% unless venue.active? %><p><%= status_label("Inactive") %></p><% end %>
     <% if local_assigns.fetch(:show_title, true) %><h2><%= link_to venue.name, venue_path(venue) %></h2><% end %>
-    <%= render "venues/information", venue: venue %>
+    <%= render "venues/location", venue: venue, show_name: false %>
   </div>
 </article>

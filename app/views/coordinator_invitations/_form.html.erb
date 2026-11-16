@@ -11,11 +11,8 @@
     <% end %>
   </section>
 <% end %>
-<h2>Invite or Promote a Coordinator</h2>
-<p>Leave email blank to create a private invitation link for one person. Enter an email to restrict the link to that address; for a registered account, confirm management access instead. Links expire in 30 days.</p>
 <%= form_with url: polymorphic_path([@invitation.target, :coordinators]) do |form| %>
-  <p><%= form.label :name, "Name (optional, for new accounts)" %><br><%= form.text_field :name, value: @invitation.name, maxlength: 100 %></p>
-  <p><%= form.label :email, "Email (optional)" %><br><%= form.email_field :email, value: @invitation.email %></p>
-  <p><label><%= check_box_tag :send_email, "1", params[:send_email] == "1" %> Also send new-account invitations by email</label></p>
+  <p><%= form.label :name, "Name" %><br><%= form.text_field :name, value: @invitation.name, maxlength: 100 %></p>
+  <p><%= form.label :email, "Email (optional)" %><br><%= form.email_field :email, value: @invitation.email %><br><small>Leave blank to create a private invitation link.</small></p>
   <%= form.submit "Continue" %>
 <% end %>

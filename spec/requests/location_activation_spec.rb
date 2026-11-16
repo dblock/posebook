@@ -18,19 +18,47 @@ RSpec.describe 'Venue and program activation', :aggregate_failures, :database, t
     track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-11-16'))
   end
 
-  it 'reserves venue activation for system admins and audits the actor' do
+  def expect_coordinator_cannot_activate_venue
     grant_venue_access(venue, coordinator)
     sign_in(coordinator)
     get edit_venue_path(venue)
-    expect(response.body).not_to include('Deactivate Venue')
+    expect(response.body).not_to include('Deactivate Venue', 'Security')
+    expect_venue_activation_forbidden
+  end
+
+  def expect_venue_activation_forbidden
+    get security_venue_path(venue)
+    expect(response).to have_http_status(:forbidden)
     patch venue_path(venue), params: { active: false }
     expect(response).to have_http_status(:forbidden)
+  end
+
+  def expect_program_coordinator_cannot_activate_program
+    grant_coordinator_access(program, coordinator)
+    sign_in(coordinator)
+    get program_path(program)
+    expect(response.parsed_body.css('.program-tabs a').map(&:text)).not_to include('Security')
+    expect_program_activation_forbidden
+  end
+
+  def expect_program_activation_forbidden
+    get security_program_path(program)
+    expect(response).to have_http_status(:forbidden)
+    patch program_path(program), params: { active: false }
+    expect(response).to have_http_status(:forbidden)
+  end
+
+  it 'reserves venue activation for system admins and audits the actor' do
+    expect_coordinator_cannot_activate_venue
     expect(venue.reload).to be_active
     sign_in(admin)
     get edit_venue_path(venue)
+    expect(response.body).not_to include('Deactivate Venue')
+    get security_venue_path(venue)
+    expect(response.parsed_body.at_css('.venue-tabs [aria-current="page"]').text).to eq('Security')
     expect(response.body).to include('Deactivate Venue')
     patch venue_path(venue), params: { active: false }
-    expect(response).to redirect_to(edit_venue_path(venue))
+    expect(response).to redirect_to(security_venue_path(venue))
     expect(venue.reload).not_to be_active
     expect(venue.history_tracks.last).to have_attributes(modified: { 'active' => false }, modifier_id: admin.id)
     patch venue_path(venue), params: { active: true }
@@ -38,15 +66,15 @@ RSpec.describe 'Venue and program activation', :aggregate_failures, :database, t
   end
 
   it 'allows venue coordinators but not program coordinators to change program activation' do
-    grant_coordinator_access(program, coordinator)
-    sign_in(coordinator)
-    get edit_program_path(program)
-    expect(response.body).not_to include('Deactivate Program')
-    patch program_path(program), params: { active: false }
-    expect(response).to have_http_status(:forbidden)
+    expect_program_coordinator_cannot_activate_program
     grant_venue_access(venue, coordinator)
     patch program_path(program), params: { active: false }
-    expect(response).to redirect_to(edit_program_path(program))
+    expect(response).to redirect_to(security_program_path(program))
+    follow_redirect!
+    expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Security')
+    expect(response.body).to include('Activate Program')
+    get edit_program_path(program)
+    expect(response.body).not_to include('Activate Program')
     expect(program.reload).not_to be_active
     expect(program.history_tracks.last).to have_attributes(modified: { 'active' => false },
                                                            modifier_id: coordinator.id)
@@ -102,7 +130,7 @@ RSpec.describe 'Venue and program activation', :aggregate_failures, :database, t
     expect(response.body).to include(venue.name, 'Inactive')
     get program_path(program)
     expect(response.body).to include('Your Upcoming Booking', 'Inactive')
-    expect(response.body).not_to include('Change Date')
+    expect(response.body).not_to include('Reschedule')
   end
 
   it 'keeps inactive venues and programs available to their program managers' do

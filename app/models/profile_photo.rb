@@ -9,7 +9,7 @@ class ProfilePhoto
 
   def self.add(user, upload)
     buffers = ProfileImage.new(upload).buffers
-    photo = new
+    photo = new(public: true)
     photo.write_files(buffers, user_id: user.id)
     photo.attach(user)
     photo
@@ -28,6 +28,10 @@ class ProfilePhoto
   def change_visibility(owner, value)
     User.collection.find(_id: owner.id, 'profile_photos._id' => id)
         .update_one('$set' => { 'profile_photos.$.public' => value })
+    return if value
+
+    User.collection.find(_id: owner.id, primary_profile_photo_id: id)
+        .update_one('$unset' => { primary_profile_photo_id: true })
   end
 
   def remove(owner)
@@ -39,6 +43,6 @@ class ProfilePhoto
 
   def select_primary(owner)
     User.collection.find(_id: owner.id, 'profile_photos._id' => id)
-        .update_one('$set' => { primary_profile_photo_id: id })
+        .update_one('$set' => { primary_profile_photo_id: id, 'profile_photos.$.public' => true })
   end
 end

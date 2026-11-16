@@ -8,18 +8,26 @@ Rails.application.routes.draw do
     resources :photos, only: %i[show create update destroy], controller: 'profile_photos'
   end
   resource :email_change, only: %i[show update]
-  namespace(:admin) { resources :users, only: %i[index edit update] }
+  namespace :admin do
+    resources :users, only: %i[index show edit update] do
+      member do
+        %i[bookings programs applications history photos security].each { |page| get page }
+        post :password_reset
+      end
+    end
+  end
   resources :venues, except: :destroy do
-    %i[photos programs].each { |page| get page, on: :member }
+    %i[photos programs security].each { |page| get page, on: :member }
     resources :photos, only: %i[show create update destroy], controller: 'venue_photos'
-    resources :coordinators, only: %i[index create destroy], controller: 'venue_coordinators'
+    resources :coordinators, only: %i[index new create destroy], controller: 'venue_coordinators'
     resources :coordinator_invitations, only: %i[show destroy]
     resources :programs, only: %i[new create]
   end
   resources :programs, only: %i[index show edit update] do
     get :photos, on: :member
+    get :security, on: :member
     resources :photos, only: %i[show create update destroy], controller: 'program_photos'
-    resource :schedule, controller: 'program_schedules', only: %i[show update]
+    resource(:schedule, controller: 'program_schedules', only: %i[show update]) { get :exceptions }
     resources(:organizer_bookings, only: %i[new create edit update]) { post :cancel, on: :member }
     resources :participants, controller: 'program_participants', only: %i[index edit update] do
       post :invite_all, on: :collection
@@ -30,7 +38,7 @@ Rails.application.routes.draw do
       get :cancellation, on: :member
       %i[cancel confirm].each { |action| post action, on: :member }
     end
-    resources :coordinators, controller: 'program_coordinators', only: %i[index create destroy]
+    resources :coordinators, controller: 'program_coordinators', only: %i[index new create destroy]
     resources :coordinator_invitations, only: %i[show destroy]
   end
   resources :password_resets, param: :token, only: %i[new create edit update]

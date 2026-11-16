@@ -17,7 +17,7 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
   end
 
   def reserve(date, gender: 'male')
-    user = create_user(gender: gender, public_profile_private: true)
+    user = create_user(gender: gender)
     grant_participant_access(program, user)
     track_booking(BookingMutation.new(program: program, user: user).book(date: date))
   end
@@ -72,7 +72,7 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
     expect(response.parsed_body.at_css('[data-calendar]').text).not_to match(/gender|male|female/i)
     expect(calendar_day('2026-11-16').css('form')).to be_empty
     update_profile(gender: 'female')
-    expect(response).to redirect_to(details_profile_path)
+    expect(response).to redirect_to(profile_path)
     get program_path(program, section: 'calendar')
     expect(calendar_day('2026-11-16')['class']).to eq('available')
     expect(calendar_day('2026-11-16').css('form')).to be_present
@@ -108,7 +108,7 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
     admin = create_user(roles: ['system_admin'])
     sign_in(admin)
     patch admin_user_path(participant), params: { user: { gender: 'other' } }
-    expect(response).to redirect_to(admin_users_path)
+    expect(response).to redirect_to(edit_admin_user_path(participant))
     expect(participant.reload.gender).to eq('other')
     expect(participant.history_tracks.last.modifier_id).to eq(admin.id)
   end

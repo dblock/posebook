@@ -1,9 +1,12 @@
 <main>
   <%= render "navigation", program: @program, active: @section, detail: (@section.titleize unless @section == "view") %>
+  <% if @section == "view" %>
+  <div class="title-row"><h1><%= @program.name %></h1><%= render "shared/copy_button", url: program_url(@program), label: "#{@program.name} link" %></div>
+  <% else %>
   <h1><%= @program.name %></h1>
+  <% end %>
   <% unless @program.booking_active? %><p role="status"><%= t('locations.inactive') %></p><% end %>
   <% if @section == "view" %>
-  <p><%= render "shared/copy_button", url: program_url(@program), label: "#{@program.name} link" %></p>
   <% if @program_coordinator %>
     <p id="application-sharing"><strong>Application Link</strong> <%= status_label(@program.applications_enabled? && @program.booking_active? ? "Open" : "Closed") %><br>
       <%= render "shared/copy_button", url: program_apply_url(@program), label: "application link", show_link: true %>
@@ -19,7 +22,7 @@
       <dt>Booking Horizon</dt><dd><%= @program.booking_horizon_months %> months</dd>
     <% end %>
   </dl>
-  <% if @program_member %>
+  <% if @program_member && @program.instructions.present? %>
     <h2>Instructions</h2>
     <%= simple_format(@program.instructions) %>
   <% end %>
@@ -36,6 +39,5 @@
   <% end %>
   <% else %>
     <%= render "booking_history" %>
-    <p>Changes and cancellations require an explanation and retain every booking record. Automated reminders are not available yet.</p>
   <% end %>
 </main>

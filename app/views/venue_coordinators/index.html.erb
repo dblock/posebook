@@ -1,13 +1,6 @@
 <main>
   <%= render "venues/navigation", venue: @venue, active: "coordinators" %>
-  <h1>Venue Coordinators at <%= @venue.name %></h1>
-  <%= render "coordinator_invitations/form" %>
-  <h2>Current Coordinators</h2>
-  <% @coordinators.each do |membership| %>
-    <p><%= membership.user.name %> (<%= membership.user.email %>)</p>
-    <%= button_to "Remove Coordinator", venue_coordinator_path(@venue, membership), method: :delete %>
-  <% end %>
-  <%= render "coordinator_invitations/history" %>
-  <p>Only system admins assign venue coordinators. Venue coordinators manage this venue and all its programs.</p>
-  <p><%= link_to "Back to Venue", venue_path(@venue) %></p>
+  <h1>Coordinators</h1>
+  <%= render "shared/coordinators_table", coordinators: @coordinators,
+                                          remove_path: ->(membership) { venue_coordinator_path(@venue, membership) } %>
 </main>

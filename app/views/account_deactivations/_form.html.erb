@@ -1,12 +1,9 @@
   <% if @user.system_admin? %>
-    <p>System admin accounts stay active until role transfer is available, so administrator access cannot be lost.</p>
+    <p>System admin accounts can't be deactivated.</p>
   <% else %>
-    <p>Deactivation signs you out on all devices and prevents sign-in, password recovery, and new bookings. It does not delete your account.</p>
-    <p>Your name, Instagram, and photos will no longer be shared publicly. Your account, photos, and booking history are retained privately, with access restricted to authorized administrators and organizers. We do not sell your personal information.</p>
-    <p>Existing bookings are not canceled. Contact your organizer about upcoming bookings before deactivating. Private calendar invitations may still be updated for those bookings; information already sent by email or to Google Calendar cannot be recalled here.</p>
-    <p>A system admin can reactivate your account, restoring your saved sharing preferences. Read our <%= link_to "Privacy Policy", privacy_path(anchor: "retention-and-your-choices") %> for retention details and privacy requests.</p>
-    <%= form_with url: account_deactivation_path, id: "deactivation-form" do |form| %>
-      <p><%= form.label :current_password, for: "deactivate-current-password" %><br><%= form.password_field :current_password, id: "deactivate-current-password", required: true, autocomplete: "current-password" %></p>
+    <p>Signs you out everywhere and hides your public profile. Your account and history are kept privately, and bookings aren't canceled.</p>
+    <%= form_with url: account_deactivation_path, id: "deactivation-form", data: { navigate: true } do |form| %>
+      <p><%= form.label :current_password, "Current Password", for: "deactivate-current-password" %><br><%= form.password_field :current_password, id: "deactivate-current-password", required: true, autocomplete: "current-password" %></p>
       <%= form.submit "Deactivate My Account" %>
     <% end %>
   <% end %>

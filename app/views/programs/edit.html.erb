@@ -1,7 +1,6 @@
-<main>
+<main data-edit-in-place>
   <%= render "navigation", program: @program, active: "edit" %>
   <h1>Edit <%= @program.program_label.titleize %></h1>
   <% unless @program.venue.active? %><p role="status"><%= @program.message('locations.venue_inactive') %></p><% end %>
   <%= render "form", program: @program %>
-  <%= render "shared/location_activation", location: @program, path: program_path(@program), label: @program.program_label.titleize if @program.venue.coordinated_by?(current_user) %>
 </main>

@@ -13,6 +13,7 @@ class AccountDeactivationsController < ApplicationController
       reset_session
       redirect_to new_session_path, notice: t('accounts.deactivated')
     else
+      @user.errors.add(:current_password, :invalid) if @user.errors.empty?
       render 'profiles/security', status: :unprocessable_content
     end
   end

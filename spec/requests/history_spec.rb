@@ -9,7 +9,7 @@ RSpec.describe 'Stored audit history', :aggregate_failures, :database, type: :re
     sign_in(user)
     patch profile_path, params: { user: { name: 'Updated Profile', email: user.email,
                                           modifier_id: other.id, version: 999 } }
-    expect(response).to redirect_to(details_profile_path)
+    expect(response).to redirect_to(profile_path)
     change = user.history_tracks.last
     expect(change.modified).to eq('name' => 'Updated Profile')
     expect(change).to have_attributes(modifier_id: user.id, version: 2)

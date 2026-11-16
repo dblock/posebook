@@ -8,21 +8,146 @@ RSpec.describe 'Administrator user editing', :aggregate_failures, :database, typ
                                                 .merge(attributes) }
   end
 
-  it 'shows Users only in the administrator header and groups user photo viewing apart from editing' do
+  def expect_own_page_redirects(admin)
+    { admin_user_path(admin) => profile_path, edit_admin_user_path(admin) => edit_profile_path,
+      photos_admin_user_path(admin) => photos_profile_path, security_admin_user_path(admin) => security_profile_path,
+      history_admin_user_path(admin) => history_profile_path }.each do |path, own_path|
+      get path
+      expect(response).to redirect_to(own_path)
+    end
+  end
+
+  def profile_tabs
+    nav = response.parsed_body.at_css('.profile-tabs')
+    [nav.css('.page-tab-group').map { |group| group.css('a, .page-tab-disabled').map(&:text) },
+     nav.css('.page-tab-disabled').map(&:text), nav.at_css('[aria-current="page"]').text]
+  end
+
+  def expect_user_cannot_access_admin(user, admin)
+    sign_in(user)
+    get profile_path
+    expect(response.parsed_body.at_css("header a[href='#{admin_users_path}']")).to be_nil
+    expect_user_admin_routes_forbidden(admin)
+  end
+
+  def expect_user_admin_routes_forbidden(admin)
+    get admin_users_path
+    expect(response).to have_http_status(:forbidden)
+    get bookings_admin_user_path(admin)
+    expect(response).to have_http_status(:forbidden)
+  end
+
+  it 'shows Users only in the administrator header and redirects admins to their own profile pages' do
     admin = create_user(roles: ['system_admin'])
     user = create_user
     sign_in(admin)
     get profile_path
     expect(response.parsed_body.at_css("header a[href='#{admin_users_path}']").text).to eq('Users')
     expect(response.parsed_body.css('.profile-tabs a').map(&:text)).not_to include('Users')
-    get edit_admin_user_path(user)
-    expect(response.parsed_body.css('.breadcrumbs [aria-hidden="true"]').map(&:text)).to all(eq('/'))
-    expect(response.parsed_body.css('.user-tabs .page-tab-group').map { |group| group.css('a').map(&:text) })
-      .to eq([%w[Users Photos], ['Edit']])
-    sign_in(user)
-    get profile_path
-    expect(response.parsed_body.at_css("header a[href='#{admin_users_path}']")).to be_nil
-    get admin_users_path
+    get participant_path(user)
+    expect(response).to redirect_to(admin_user_path(user))
+    get admin_user_path(user)
+    expect(response.parsed_body.css('.breadcrumbs a').map(&:text)).to eq(['Users'])
+    expect(response.parsed_body.at_css('.breadcrumbs [aria-current="page"]').text).to eq(user.name)
+    expect_own_page_redirects(admin)
+    get edit_profile_path
+    expect(response.parsed_body.css('.breadcrumbs a').map(&:text)).to eq(['Users', "#{admin.name} (You)"])
+    expect_user_cannot_access_admin(user, admin)
+  end
+
+  def grant_profile_access(*accounts)
+    accounts.each do |account|
+      program = create_program
+      grant_participant_access(program, account)
+      grant_coordinator_access(create_program, account)
+    end
+  end
+
+  def expect_matching_tabs(page, user)
+    own_path = page == 'profile' ? profile_path : public_send("#{page}_profile_path")
+    admin_path = page == 'profile' ? admin_user_path(user) : public_send("#{page}_admin_user_path", user)
+    own = tabs_for(own_path)
+    expect(tabs_for(admin_path)).to eq(own)
+    expect_admin_tab_links(user)
+  end
+
+  def expect_admin_tab_links(user)
+    expect(response.parsed_body.css('.profile-tabs a').pluck('href'))
+      .to all(start_with(admin_user_path(user)))
+  end
+
+  def tabs_for(path)
+    get path
+    expect(response).to have_http_status(:ok)
+    profile_tabs
+  end
+
+  it 'matches the profile tabs for admin user pages' do
+    admin = create_user(roles: ['system_admin'])
+    user = create_user
+    grant_profile_access(admin, user)
+    sign_in(admin)
+    pages = %w[profile bookings programs applications history edit photos security]
+    pages.each do |page|
+      expect_matching_tabs(page, user)
+    end
+    expect(profile_tabs.first).to eq([%w[Profile Bookings Programs Applications History], %w[Edit Photos Security]])
+  end
+
+  it 'shows another user bookings without booking controls' do
+    user = create_user
+    program = create_program
+    grant_participant_access(program, user)
+    track_booking(BookingMutation.new(program: program, user: user)
+                   .book(date: Date.current.next_occurring(:monday).iso8601))
+    sign_in(create_user(roles: ['system_admin']))
+    get bookings_admin_user_path(user)
+    expect(response.parsed_body.at_css('.upcoming-booking h2').text).to eq('Upcoming Booking')
+    expect(response.body).not_to include('Cancel Booking', 'Reschedule', 'Choose a Date', "I'll be there!")
+  end
+
+  it 'lets admins send another user a password reset email from Security' do
+    user = create_user
+    sign_in(create_user(roles: ['system_admin']))
+    get security_admin_user_path(user)
+    expect(response.parsed_body.css('main button').map(&:text)).to eq(['Send Password Reset Email', 'Deactivate'])
+    expect(response.body).not_to include('Change Password', 'Deactivate My Account')
+    ActionMailer::Base.deliveries.clear
+    post password_reset_admin_user_path(user)
+    expect(response).to redirect_to(security_admin_user_path(user))
+    expect(flash[:notice]).to eq("Password reset email queued for #{user.email}.")
+    deliver_emails
+    expect(ActionMailer::Base.deliveries.last.to).to eq([user.email])
+    sign_in(create_user)
+    post password_reset_admin_user_path(user)
+    expect(response).to have_http_status(:forbidden)
+  end
+
+  it 'lets admins deactivate and reactivate another user from Security' do
+    user = create_user
+    admin = create_user(roles: ['system_admin'])
+    sign_in(admin)
+    patch admin_user_path(user), params: { active: false, return_to: 'security' }
+    expect(response).to redirect_to(security_admin_user_path(user))
+    expect(user.reload).not_to be_active
+    get security_admin_user_path(user)
+    expect(response.parsed_body.css('main button').map(&:text)).to eq(['Reactivate'])
+    patch admin_user_path(user), params: { active: true, return_to: 'security' }
+    expect(user.reload).to be_active
+    get security_admin_user_path(create_user(roles: ['system_admin']))
+    expect(response.body).to include('Administrator accounts cannot be deactivated.')
+  end
+
+  it 'shows all account information only to admins' do
+    user = create_user(name: 'Shown User', phone: '2125551234', gender: 'female', instagram_handle: 'shown.user',
+                       pending_email: 'next@example.test', active: false)
+    sign_in(create_user(roles: ['system_admin']))
+    get admin_user_path(user)
+    details = response.parsed_body.at_css('.account-details').text
+    expect(details).to include('Inactive', 'Shown User', user.email, 'Female', '@shown.user')
+    expect(response.body).to include('next@example.test')
+    sign_in(create_user)
+    get admin_user_path(user)
     expect(response).to have_http_status(:forbidden)
   end
 
@@ -41,14 +166,31 @@ RSpec.describe 'Administrator user editing', :aggregate_failures, :database, typ
       .to contain_exactly('Reactivate', 'Deactivate')
   end
 
+  def expect_admin_row_links(row, admin)
+    expect(row.css("a[href='#{admin_user_path(admin)}']").map(&:text)).to include("#{admin.name} (You)", admin.email)
+  end
+
+  def expect_admin_edit_link(row, admin)
+    expect(row.css('a').find { |link| link.text == 'Edit' }['href']).to eq(edit_admin_user_path(admin))
+  end
+
+  def expect_admin_user_row(admin)
+    own_row = response.parsed_body.at_css("#user_#{admin.id}")
+    expect_admin_row_links(own_row, admin)
+    expect(own_row.text).to include("#{admin.name} (You)", admin.email)
+    expect_admin_edit_link(own_row, admin)
+  end
+
   it 'shows linked placeholder portraits only for users without a profile photo' do
     user = create_user(name: 'Participant With Photo')
-    photo = user.profile_photos.create!
+    photo = user.profile_photos.create!(public: true)
     without_photo = create_user(name: 'Participant Without Photo')
-    sign_in(create_user(roles: ['system_admin']))
+    admin = create_user(roles: ['system_admin'])
+    sign_in(admin)
     get admin_users_path
-    portrait = response.parsed_body.at_css(".participant-portrait[href='#{participant_path(user)}'] img")
-    placeholder = response.parsed_body.at_css(".participant-portrait[href='#{participant_path(without_photo)}'] img")
+    expect_admin_user_row(admin)
+    portrait = response.parsed_body.at_css(".participant-portrait[href='#{admin_user_path(user)}'] img")
+    placeholder = response.parsed_body.at_css(".participant-portrait[href='#{admin_user_path(without_photo)}'] img")
     expect(portrait['src']).to eq(participant_photo_path(user, photo, thumbnail: 1))
     expect(portrait['alt']).to eq("Profile photo of #{user.name}")
     expect(placeholder['src']).to include('profile-placeholder')
@@ -76,9 +218,9 @@ RSpec.describe 'Administrator user editing', :aggregate_failures, :database, typ
     expect(response.parsed_body.css('main input[type=password]')).to be_empty
     update_user(user, name: 'Edited Participant', email: " #{user.email.upcase} ", phone: '1 (212) 555-1234',
                       roles: ['system_admin'], active: false, password: 'a forbidden password change')
-    expect(response).to redirect_to(admin_users_path)
+    expect(response).to redirect_to(edit_admin_user_path(user))
     follow_redirect!
-    expect(response.body).to include('User information saved.', 'Edited Participant', '+12125551234')
+    expect(response.body).to include('User information saved.', 'Edited Participant', '+1 (212) 555-1234')
     expect(user.reload).to have_attributes(name: 'Edited Participant', phone: '+12125551234', roles: [],
                                            active: true, session_version: version)
     expect(user.authenticate(DatabaseHelpers::TEST_PASSWORD)).to eq(user)
@@ -93,7 +235,7 @@ RSpec.describe 'Administrator user editing', :aggregate_failures, :database, typ
     sign_in(create_user(roles: ['system_admin']))
     ActionMailer::Base.deliveries.clear
     update_user(user, email: ' New-Address@Example.Test ')
-    expect(response).to redirect_to(admin_users_path)
+    expect(response).to redirect_to(edit_admin_user_path(user))
     expect(user.reload).to have_attributes(email: 'new-address@example.test', email_verified_at: nil,
                                            pending_email: nil, email_change_digest: nil, email_change_expires_at: nil)
     expect(User.for_password_reset(token)).to be_nil
@@ -111,7 +253,7 @@ RSpec.describe 'Administrator user editing', :aggregate_failures, :database, typ
     expect(response.parsed_body.css('input[name="user[instagram_tagging_allowed]"]')).not_to be_empty
     update_user(user, display_name: 'Alex Participant', instagram_handle: '@Alex.Participant',
                       instagram_tagging_allowed: '1')
-    expect(response).to redirect_to(admin_users_path)
+    expect(response).to redirect_to(edit_admin_user_path(user))
     expect(user.reload.public_name).to eq('Alex Participant')
     expect(user.instagram_handle).to eq('alex.participant')
     expect(user.public_instagram_url).to eq('https://www.instagram.com/alex.participant/')
@@ -183,7 +325,7 @@ RSpec.describe 'Administrator user editing', :aggregate_failures, :database, typ
     sign_in(create_user(roles: ['system_admin']))
     user = create_user(active: false, pending_email: 'pending@example.test', email_change_digest: 'pending')
     update_user(user, name: 'Updated Inactive Participant')
-    expect(response).to redirect_to(admin_users_path)
+    expect(response).to redirect_to(edit_admin_user_path(user))
     expect(user.reload).to have_attributes(name: 'Updated Inactive Participant', active: false,
                                            pending_email: 'pending@example.test', email_change_digest: 'pending')
   end

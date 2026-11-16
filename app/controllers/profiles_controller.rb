@@ -1,28 +1,31 @@
 # frozen_string_literal: true
 
 class ProfilesController < ApplicationController
+  include UserPages
+
   helper_method :participant_dashboard
   before_action :require_authentication
   before_action -> { @user = current_user }
 
   def show; end
 
-  def history
-    @history = ParticipantHistory.new(@user, page: params[:page])
-    @bookings = @history.bookings
-  end
+  def bookings = load_user_bookings(@user)
+
+  def history = load_user_history(@user)
 
   def edit; end
 
-  def details; end
+  def details = redirect_to(profile_path)
 
   def security; end
 
+  def programs = load_user_programs(@user)
+
   def update
     attributes = params.expect(user: %i[name email phone gender current_password display_name instagram_handle
-                                        instagram_tagging_allowed public_profile_private]).to_h.symbolize_keys
+                                        instagram_tagging_allowed]).to_h.symbolize_keys
     if (updated = @user.update_profile(attributes))
-      redirect_to details_profile_path,
+      redirect_to profile_path,
                   notice: t(updated.is_a?(EmailDelivery) ? 'profiles.updated_email_queued' : 'profiles.updated')
     else
       render :edit, status: :unprocessable_content

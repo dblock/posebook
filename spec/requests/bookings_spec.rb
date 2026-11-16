@@ -38,7 +38,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
       .to eq(["upcoming-booking-#{earlier.id}", "upcoming-booking-#{later.id}"])
     expect(cards.first.text).to include('November 23, 2026', '8:00 PM - 10:00 PM', earlier_program.address)
     expect(cards.first.at_css('.venue-google-maps')['href']).to eq(earlier_program.venue.google_maps_location_url)
-    expect(cards.first.css('.booking-actions .button-link').map(&:text)).to eq(['Change Date', 'Cancel Booking'])
+    expect(cards.first.css('.booking-actions .button-link').map(&:text)).to eq(['Reschedule', 'Cancel Booking'])
     expect(response.body).not_to include(other.email, 'November 30, 2026', 'Confirmation opens',
                                          'You can have one upcoming booking')
   end
@@ -51,7 +51,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
       card = response.parsed_body.at_css('.upcoming-booking')
       expect(card.at_css('time').text).to include('December 07, 2026', '6:30 PM')
       expect(card.at_css('time')['datetime']).to eq(later.scheduled_start.iso8601)
-      expect(card.css('.booking-actions .button-link').map(&:text)).to eq(['Change Date', 'Cancel Booking'])
+      expect(card.css('.booking-actions .button-link').map(&:text)).to eq(['Reschedule', 'Cancel Booking'])
       expect(response.body).not_to include('Confirmation opens', 'You can have one upcoming booking')
     end
   end
@@ -182,8 +182,10 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     follow_redirect!
     expect(response.body).to include('Your program is booked.', 'Your Upcoming Booking',
                                      'Contact an Organizer Before Rescheduling', 'Cancel Booking')
-    expect(response.body).not_to include('Change Date')
+    expect(response.body).not_to include('Reschedule')
     expect(response.parsed_body.css('.calendar form')).to be_empty
+    get cancellation_program_booking_path(program, booking)
+    expect(response.parsed_body.at_css('.rescheduling-notice h3').text).to eq('Contact an Organizer')
     post program_bookings_path(program), params: confirmed_booking('2026-11-23')
     follow_redirect!
     expect(response.body).to include('You already have an upcoming booking')
@@ -313,7 +315,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     sign_in(other)
     get program_path(program, section: 'calendar')
     expect(response.body).to include(participant.public_name)
-    expect(response.body).not_to include(participant.email, 'Change Date')
+    expect(response.body).not_to include(participant.email, 'Reschedule')
     get edit_program_booking_path(program, original)
     expect(response).to have_http_status(:not_found)
     post cancel_program_booking_path(program, original),
@@ -341,7 +343,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     original = book('2026-11-23')
     program.update!(available_weekdays: ['2'])
     get program_path(program)
-    expect(response.body).to include('Your Upcoming Booking', 'Change Date', 'Cancel Booking')
+    expect(response.body).to include('Your Upcoming Booking', 'Reschedule', 'Cancel Booking')
     expect(original.reload.status).to eq('confirmed')
     patch program_booking_path(program, original),
           params: { date: '2026-11-24', reason: 'New session weekday.', booking_version: original.lock_version }

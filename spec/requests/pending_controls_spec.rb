@@ -16,7 +16,7 @@ RSpec.describe 'Pending action feedback', :aggregate_failures, :database, type: 
   it 'enables shared feedback on uploads and small action forms while retaining no-script submission' do
     user = create_user
     sign_in(user)
-    get participant_path(user)
+    get photos_profile_path
     expect(response.parsed_body.at_css('script[src*="/pending-controls-"][defer]')).to be_present
     upload = response.parsed_body.at_css('input[type="file"]').ancestors('form').first
     expect(upload.at_css('input[type="file"]')).to be_present

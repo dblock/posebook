@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
 class VenuesController < ApplicationController
+  include SlugConflictHandling
+
   before_action :require_authentication, except: %i[show photos programs]
-  before_action :require_system_admin, only: %i[new create]
-  before_action :find_venue, only: %i[show photos programs edit update]
-  rescue_from Mongo::Error::OperationFailure, with: :handle_slug_conflict
+  before_action :require_system_admin, only: %i[new create security]
+  before_action :find_venue, only: %i[show photos programs edit update security]
   rescue_from LocationActivation::Forbidden, with: -> { head :forbidden }
   rescue_from LocationActivation::Invalid, with: -> { head :bad_request }
 
@@ -27,6 +28,8 @@ class VenuesController < ApplicationController
   end
 
   def edit; end
+
+  def security; end
 
   def create
     @venue = Venue.new(venue_params)
@@ -51,7 +54,7 @@ class VenuesController < ApplicationController
 
   def update_activation
     @venue = LocationActivation.new(location: @venue, user: current_user).call(params[:active])
-    redirect_to edit_venue_path(@venue), notice: t('locations.access_updated')
+    redirect_to security_venue_path(@venue), notice: t('locations.access_updated')
   end
 
   def find_venue
@@ -63,12 +66,5 @@ class VenuesController < ApplicationController
 
   def venue_params
     params.expect(venue: %i[name custom_slug address instagram_handle google_maps_url])
-  end
-
-  def handle_slug_conflict(error)
-    raise error unless error.code == 11_000
-
-    @venue.errors.add(:custom_slug, :taken)
-    render(action_name == 'create' ? :new : :edit, status: :unprocessable_content)
   end
 end

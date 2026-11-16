@@ -1,6 +1,5 @@
 <main>
   <h1>Posebook</h1>
-  <p>Invitation-based registration and booking for recurring programs.</p>
   <p>Welcome, <%= current_user.name %>.</p>
   <% participant_dashboard.upcoming_bookings.each do |booking| %>
     <%= render "bookings/upcoming", program: booking.program, booking: booking,
@@ -21,5 +20,4 @@
   <% end %>
   <p><%= link_to "View Your Profile", profile_path %> for bookings, programs you can book, and history.</p>
   <p><%= link_to "View Venues", venues_path %> to explore your venues and their programs.</p>
-  <p>Accept a personal invitation to join a program, then choose an available booking date. Automated reminders are not available yet.</p>
 </main>

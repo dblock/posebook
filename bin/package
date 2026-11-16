@@ -75,7 +75,7 @@ def create_current_records(container)
   source = <<~RUBY
     User.create!(name: "Package Participant", email: "package@example.test", phone: "+12025550101",
                  password: "a sufficiently long package password", gender: "other",
-                 instagram_handle: "package.participant", instagram_tagging_allowed: true, public_profile_private: true)
+                 instagram_handle: "package.participant", instagram_tagging_allowed: true)
     venue = Venue.create!(name: "Package Venue", address: "Test")
     Program.create!(name: "Package Program", venue: venue, pay: 150,
                     program_label: "Workshop", participant_label: "Instructor", instructions: "Package instructions")
@@ -89,7 +89,7 @@ def check_existing_records(container)
   source = <<~RUBY
     user = User.find_by(email: "package@example.test")
     raise "Profile preferences changed" unless user.instagram_handle == "package.participant" &&
-      user.instagram_tagging_allowed? && user.public_profile_private?
+      user.instagram_tagging_allowed?
     venue = Venue.find("package-venue")
     program = Program.find("package-program")
     raise "Program settings changed" unless program.venue_id == venue.id && program.pay == 150 &&

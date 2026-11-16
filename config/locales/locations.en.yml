@@ -5,3 +5,19 @@ en:
     venue_inactive: "The venue is inactive. A system administrator must activate it before this %{program_label} can accept new bookings."
   bookings:
     inactive_program: "This %{program_label} is inactive and cannot accept new bookings or date changes."
+  mongoid:
+    attributes:
+      program_membership:
+        display_name_override: Display Name
+        instagram_hidden: Hide Instagram Handle
+        photos_hidden: Hide Photos
+      program:
+        custom_slug: Shortcut
+        instagram_handle: Instagram Handle
+      user:
+        current_password: Current Password
+        display_name: Display Name
+        instagram_handle: Instagram Handle
+      venue:
+        custom_slug: Shortcut
+        instagram_handle: Instagram Handle

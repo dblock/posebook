@@ -12,6 +12,11 @@ class ProgramSchedulesController < ApplicationController
     load_schedule
   end
 
+  def exceptions
+    load_schedule
+    @exceptions = @program.schedule_exceptions.where(:date.gte => @calendar.today).order_by(date: :asc)
+  end
+
   def update
     @exception = ProgramScheduleMutation.new(program: @program,
                                              user: current_user).call(schedule_params)
@@ -36,7 +41,6 @@ class ProgramSchedulesController < ApplicationController
 
   def load_schedule
     @calendar = ProgramCalendar.new(@program)
-    @exceptions = @program.schedule_exceptions.where(:date.gte => @calendar.today).order_by(date: :asc)
   end
 
   def show_conflict(error)
