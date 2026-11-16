@@ -9,6 +9,7 @@ Rails.application.routes.draw do
   end
   resource :email_change, only: %i[show update]
   namespace :admin do
+    get 'history', to: 'history#index', as: :history
     resources :users, only: %i[index show edit update] do
       member do
         %i[bookings programs applications history photos security].each { |page| get page }

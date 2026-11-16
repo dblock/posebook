@@ -1,0 +1,41 @@
+<main>
+  <%= render "admin/navigation", active: "history" %>
+  <h1>History</h1>
+  <% if @entries.empty? %>
+    <p>No changes in this view.</p>
+  <% else %>
+    <p class="scroll-hint">Scroll horizontally to view changes and their authors.</p>
+    <div class="table-scroll" role="region" aria-label="Audit history" tabindex="0">
+      <table class="audit-history">
+        <thead><tr><th>Time (UTC)</th><th>Who</th><th>What</th><th>Action</th><th>Changes</th></tr></thead>
+        <tbody>
+          <% @entries.each do |entry| %>
+            <% changes = @history.changes_for(entry) %>
+            <tr data-history="<%= entry.id %>">
+              <td><%= time_tag entry.created_at.utc, format: :long %></td>
+              <td><%= audit_actor(entry, @history) %></td>
+              <td><%= audit_subject(entry, @history) %></td>
+              <td><%= audit_action(entry) %></td>
+              <td>
+                <% if changes.any? %>
+                  <details>
+                    <summary><%= changes.keys.map(&:humanize).to_sentence %></summary>
+                    <dl class="audit-changes">
+                      <% changes.each do |field, values| %>
+                        <dt><strong><%= field.humanize %></strong></dt>
+                        <dd>Before: <%= audit_value(values[:from]) %><br>After: <%= audit_value(values[:to]) %></dd>
+                      <% end %>
+                    </dl>
+                  </details>
+                <% else %>
+                  No displayable field changes.
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+  <%= render "shared/pagination", pagination: @history.pagination, label: "Audit history pages" %>
+</main>

@@ -626,6 +626,19 @@ table {
   overflow-wrap: normal;
 }
 
+.audit-changes {
+  display: block;
+  min-width: 16rem;
+  max-width: 32rem;
+  text-align: left;
+}
+
+.audit-changes dd {
+  margin: 0 0 0.75rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 th,
 td {
   padding: 0.9rem;

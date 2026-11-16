@@ -25,7 +25,10 @@
           <div class="nav-links">
             <%= link_to "Profile", profile_path, aria: { current: ("page" if current_page?(profile_path)) } %>
             <%= link_to "Venues", venues_path %>
-            <% if current_user.system_admin? %><%= link_to "Users", admin_users_path, aria: { current: ("page" if current_page?(admin_users_path)) } %><% end %>
+            <% if current_user.system_admin? %>
+              <%= link_to "Users", admin_users_path, aria: { current: ("page" if current_page?(admin_users_path)) } %>
+              <%= link_to "History", admin_history_path, aria: { current: ("page" if current_page?(admin_history_path)) } %>
+            <% end %>
             <%= button_to "Sign Out", session_path, method: :delete %>
           </div>
         <% elsif !current_page?(new_session_path) %>
