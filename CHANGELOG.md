@@ -123,4 +123,5 @@
 - [#136](https://github.com/dblock/posebook/pull/136): Add public upcoming sessions, role-specific homepages, venue programs and sessions, streamlined program and booking cards, photo preview navigation, coordinator sign-in destinations, Home breadcrumbs, and updated contact information - [@dblock](https://github.com/dblock).
 - [#137](https://github.com/dblock/posebook/pull/137): Regroup venue and program navigation into primary tabs and scoped sections, move creation actions beside page headings, and keep application preparation full-width with a compact email field - [@dblock](https://github.com/dblock).
 - [#139](https://github.com/dblock/posebook/pull/139): Batch public photo preview IDs across card lists and fallback venues, and benchmark current homepages and the actual Profile Bookings route - [@dblock](https://github.com/dblock).
+- [#140](https://github.com/dblock/posebook/pull/140): Batch public session participant display overrides without loading entire program rosters - [@dblock](https://github.com/dblock).
 - Your contribution here.
