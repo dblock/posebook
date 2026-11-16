@@ -12,12 +12,12 @@ class VenuesController < ApplicationController
   def index
     records = Venue.viewable_by(current_user)
     records = Venue.visible_to(current_user).and(records.selector) if current_user
-    @venues = Venue.preload_primary_photos(records.order_by(name: :asc))
+    @venues = Venue.preload_primary_photos(records.order_by(name: :asc), series: true)
   end
 
   def show
     records = Program.viewable_by(current_user).where(venue_id: @venue.id)
-    @programs = Program.preload_primary_photos(records.includes(:venue).order_by(name: :asc))
+    @programs = Program.preload_primary_photos(records.includes(:venue).order_by(name: :asc), series: true)
     @sessions = UpcomingSessions.new(Program.viewable_by(nil).where(venue_id: @venue.id)).to_a
   end
 
@@ -25,7 +25,7 @@ class VenuesController < ApplicationController
 
   def programs
     records = Program.viewable_by(current_user).where(venue_id: @venue.id)
-    @programs = Program.preload_primary_photos(records.includes(:venue).order_by(name: :asc))
+    @programs = Program.preload_primary_photos(records.includes(:venue).order_by(name: :asc), series: true)
   end
 
   def new

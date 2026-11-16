@@ -183,15 +183,17 @@ module UserExperienceBenchmark
     end
 
     def pages
-      participant_pages + public_pages + [['Model Roster', client(@fixtures.users.last),
-                                           "#{@program_path}/participants"]]
+      admin = client(@fixtures.users.last)
+      participant_pages + public_pages + [['Admin Home', admin, '/'],
+                                          ['Model Roster', admin, "#{@program_path}/participants"]]
     end
 
     def participant_pages
       participant = client(@fixtures.users.first)
       photo = @fixtures.users.first.reload.primary_profile_photo
       thumbnail = "/participants/#{@fixtures.users.first.id}/photos/#{photo.id}?thumbnail=1"
-      [['Venue Directory', participant, '/venues'], ['Profile Bookings', participant, '/profile'],
+      [['Venue Directory', participant, '/venues'], ['Participant Home', participant, '/'],
+       ['Profile', participant, '/profile'], ['Profile Bookings', participant, '/profile/bookings'],
        ['Booking History', participant, '/profile/history'],
        ['Booking Calendar', participant, "#{@program_path}?section=calendar&month=#{@month}"],
        ['Profile Thumbnail', participant, thumbnail]]
@@ -200,7 +202,8 @@ module UserExperienceBenchmark
     def public_pages
       guest = client
       thumbnail = "#{@venue_path}/photos/#{@fixtures.venues.first.primary_photo.id}?thumbnail=1"
-      [['Venue Programs', guest, "#{@venue_path}/programs"],
+      [['Public Home', guest, '/'], ['Venue Overview', guest, @venue_path],
+       ['Program Overview', guest, @program_path], ['Venue Programs', guest, "#{@venue_path}/programs"],
        ['Public Calendar', guest, "#{@program_path}?section=calendar&month=#{@month}"],
        ['Venue Photos', guest, "#{@venue_path}/photos"], ['Venue Thumbnail', guest, thumbnail]]
     end
@@ -208,7 +211,8 @@ module UserExperienceBenchmark
     def measure(name, client, path)
       client.get(path)
       results = Array.new(@samples) { request(client, path) }
-      { name: name, median_ms: percentile(results.pluck(:ms), 0.5), p95_ms: percentile(results.pluck(:ms), 0.95),
+      { name: name, path: path, median_ms: percentile(results.pluck(:ms), 0.5),
+        p95_ms: percentile(results.pluck(:ms), 0.95),
         allocations: percentile(results.pluck(:allocations), 0.5), bytes: client.response.body.bytesize,
         database: results.min_by { |result| result[:ms] }.fetch(:database) }
     end

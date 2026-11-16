@@ -14,7 +14,7 @@ class ProgramsController < ApplicationController
 
   def index
     records = Program.visible_to(current_user).and(Program.viewable_by(current_user).selector)
-    @programs = Program.preload_primary_photos(records.includes(:venue).order_by(name: :asc))
+    @programs = Program.preload_primary_photos(records.includes(:venue).order_by(name: :asc), series: true)
   end
 
   def show
