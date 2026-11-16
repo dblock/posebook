@@ -571,6 +571,7 @@ PLATFORMS
 DEPENDENCIES
   bcrypt (~> 3.1, >= 3.1.22)
   capybara (~> 3.40)
+  commonmarker (~> 2.10, >= 2.10.1)
   cuprite (~> 0.20, >= 0.20.1)
   danger (~> 9.6, >= 9.6.2)
   danger-changelog (~> 0.10)

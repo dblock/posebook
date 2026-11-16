@@ -23,7 +23,7 @@
   <% end %>
   <% if @program_member && @program.instructions.present? %>
     <h2>Instructions</h2>
-    <%= simple_format(@program.instructions) %>
+    <%= render_markdown(@program.instructions) %>
   <% end %>
   <%= render "upcoming_booking" %>
   <%= render "application_action" %>

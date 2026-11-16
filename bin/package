@@ -99,6 +99,14 @@ def check_existing_records(container)
   docker!('exec', container, './bin/docker-entrypoint', 'bundle', 'exec', 'rails', 'runner', source)
 end
 
+def check_markdown(container)
+  source = <<~RUBY
+    rendered = ApplicationController.helpers.render_markdown("**Package instructions**")
+    raise "Packaged Markdown did not render" unless rendered.include?("<strong>Package instructions</strong>")
+  RUBY
+  docker!('exec', container, 'bundle', 'exec', 'rails', 'runner', source)
+end
+
 options = {}
 OptionParser.new do |parser|
   parser.on('--image IMAGE', 'Test an existing local image') { |value| options[:image] = value }
@@ -181,6 +189,7 @@ begin
 
   create_current_records(container)
   check_existing_records(container)
+  check_markdown(container)
   response = request(port, '/programs/package-program')
   unless response.code == '200' && response.body.include?('Workshop Calendar') &&
          !response.body.match?(/Regular Schedule/)
