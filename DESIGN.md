@@ -159,6 +159,8 @@ Venues publish an optional normalized Instagram account and photos. Venue and pr
 
 Venues also expose a Google Maps link, using an optional validated Google Maps HTTPS place/share URL or an address-based search when unset. Only existing venue editors change it, and the change is audited. Public venue/program pages link to it without embedding a map or requesting location services. Google invitations retain the address in their Location field and include the venue name, address, and Maps link in the description. Existing upcoming meetings receive venue edits through the normal five-minute reconciliation and payload fingerprint, preserving event IDs and booking state; no geocoding API, new credential, or server-side URL fetch is introduced.
 
+Image reads concatenate ordered GridFS chunks through a seven-chunk cursor batch instead of repeatedly counting chunks. The stored file lookup, full response bytes, authorization, and no-cache behavior remain unchanged; this is database cursor batching, not HTTP response streaming.
+
 The venue Instagram handle is audited with other venue settings. Photo metadata and image bytes are not part of the user/venue/program field audit; failed uploads remove their temporary GridFS files.
 
 ## User and Program Audit History
