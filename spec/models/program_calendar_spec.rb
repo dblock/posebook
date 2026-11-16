@@ -171,4 +171,17 @@ RSpec.describe ProgramCalendar, :aggregate_failures do
       expect(schedule.ends_at(Date.new(2027, 3, 13)) - schedule.starts_at(Date.new(2027, 3, 13))).to eq(3.5.hours)
     end
   end
+
+  it 'uses supplied exceptions only for the owning program and the calendar window, including later dates' do
+    travel_to Time.utc(2026, 11, 16, 15) do
+      later = ProgramScheduleException.new(program: program, date: Date.new(2026, 12, 7), mode: 'closed')
+      past = ProgramScheduleException.new(program: program, date: Date.new(2026, 10, 26), mode: 'closed')
+      foreign = ProgramScheduleException.new(program: Program.new, date: Date.new(2026, 11, 23), mode: 'closed')
+      calendar = described_class.new(program, exceptions: [later, past, foreign])
+      expect(calendar.schedule.exceptions.values).to eq([later])
+      expect(calendar.session_on?(later.date)).to be(false)
+      expect(calendar.session_on?(foreign.date)).to be(true)
+      expect(ProgramSchedule.new(program, from: nil, exceptions: [past]).exceptions.values).to eq([past])
+    end
+  end
 end

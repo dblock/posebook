@@ -3,12 +3,12 @@
 class ProgramCalendar
   attr_reader :program, :today, :last_date, :month, :schedule
 
-  def initialize(program, month: nil)
+  def initialize(program, month: nil, exceptions: nil)
     @program = program
     @today = Time.current.in_time_zone(program.time_zone).to_date
     @last_date = first_date.advance(months: program.booking_horizon_months)
     @month = selected_month(month)
-    @schedule = ProgramSchedule.new(program, from: [today, date_range.begin].min)
+    @schedule = ProgramSchedule.new(program, from: [today, date_range.begin].min, exceptions: exceptions)
     @starts = {}
     @ends = {}
   end

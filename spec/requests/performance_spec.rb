@@ -144,4 +144,35 @@ RSpec.describe 'User experience read performance', :aggregate_failures, :databas
     expect(response.body).to include('Program Model 0', 'Program Model 9')
     expect(result[:collections]['program_memberships']).to eq(1)
   end
+
+  it 'batch loads schedule exceptions while preserving scoped closures, overnight openings and fresh requests' do
+    create_user
+    programs = Array.new(10) { create_program }
+    closure = track_record(ProgramScheduleException.create!(program: programs.first, date: '2026-11-16',
+                                                            mode: 'closed', reason: 'Closed.'))
+    track_record(ProgramScheduleException.create!(program: programs.last, date: '2026-11-17', mode: 'open',
+                                                  start_time: '23:00', end_time: '01:00', reason: 'Extra session.'))
+    result = commands { get root_path }
+    rows = response.parsed_body.css('.upcoming-sessions tbody tr')
+    opening = rows.find { |row| row.text.include?(programs.last.name) && row.text.include?('Tue, Nov 17') }
+    expect(rows.find { |row| row.text.include?(programs.first.name) }.text).to include('Mon, Nov 23')
+    expect(opening.text).to include('11:00 PM', 'next day')
+    expect(result[:collections]['program_schedule_exceptions']).to eq(1)
+    closure.update!(mode: 'regular')
+    get root_path
+    first = response.parsed_body.css('.upcoming-sessions tbody tr')
+                    .find { |row| row.text.include?(programs.first.name) }
+    expect(first.text).to include('Mon, Nov 16')
+  end
+
+  it 'retains the local calendar window and later exceptions across a server month boundary' do
+    program = create_program(time_zone: 'America/New_York')
+    %w[2026-11-16 2026-12-07].each do |date|
+      track_record(ProgramScheduleException.create!(program: program, date: date, mode: 'closed', reason: 'Closed.'))
+    end
+    travel_to Time.utc(2026, 12, 1, 1)
+    calendar = UpcomingSessions.new(Program.where(id: program.id)).first.calendar
+    expect(calendar.schedule.exceptions.keys).to contain_exactly(Date.new(2026, 11, 16), Date.new(2026, 12, 7))
+    expect(calendar.session_on?(Date.new(2026, 12, 7))).to be(false)
+  end
 end
