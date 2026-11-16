@@ -1,12 +1,12 @@
 # Contributing
 
-See [Operating Posebook](docs/operating.md) for application setup, configuration, and production operations.
+Read [Design](DESIGN.md), [Coding Guidance](AGENTS.md), and, for interface work, [UI Conventions](docs/ui-conventions.md). [Operating Posebook](docs/operating.md) covers configuration and deployment; [Background Jobs](docs/background-jobs.md), [Google Calendar Setup](docs/google-calendar.md), and [Upgrading](UPGRADING.md) cover their respective operations.
 
 ## Setup and Validation
 
-Install Ruby 4.0.9, Bundler, MongoDB 8.0, Docker, and libvips. Use only MongoDB 8.0 for tests to match the deployment target. No production service credentials are required. Install libvips with `brew install vips` on macOS or `sudo apt-get install libvips42t64` on Ubuntu 24.04/Debian 13; production Docker stages install it automatically.
+Install Ruby 4.0.9, Bundler, MongoDB 8.0, Docker, libvips, and Chrome/Chromium for browser tests. Tests target MongoDB 8.0, matching deployment. On macOS, install libvips with `brew install vips`; on Ubuntu 24.04/Debian 13, use `sudo apt-get install libvips42t64`. No production credentials are needed.
 
-Use an existing local MongoDB server or start a dedicated development container on an unused port:
+Use an existing replica set or create a dedicated local container on an unused port:
 
 ```sh
 docker run --detach --name posebook-mongo --publish 127.0.0.1:27017:27017 mongo:8.0 --replSet rs0 --bind_ip_all
@@ -17,86 +17,54 @@ bundle exec rake lint
 bundle exec rake package
 ```
 
-Wait for a writable replica-set primary before setup. If port 27017 is occupied, use an existing replica set or run MongoDB on the same unused port inside and outside the container, advertise that address in the replica-set configuration, and export `MONGODB_URI` and `MONGODB_TEST_URI` with `?replicaSet=rs0`. Do not use `directConnection=true`: the Ruby driver treats it as standalone topology and refuses transactions. Do not overwrite another project's containers. Stop your development container with `docker stop posebook-mongo` when no longer needed.
+Wait for a writable primary before setup. For another port, use the same port inside/outside the container and advertise it in the replica-set configuration; set `MONGODB_URI` and `MONGODB_TEST_URI` with `?replicaSet=rs0`. Never use `directConnection=true`, which disables driver transactions. Do not overwrite another project's container; stop your own with `docker stop posebook-mongo` when done.
 
-Run tests and lint before every development push, including amendments. Run packaging validation before committing packaging, runtime dependency, configuration, or HTTP entry-point changes. Passing final checks can be reused for a push only while the validated content and configuration are unchanged.
+Run affected tests while developing, then final tests and lint before committing/pushing. Documentation-only changes need lint. Run packaging before committing changes to packaging, runtime dependencies, configuration, or HTTP entry points. Reuse passing results while the tested content/configuration is unchanged; do not wait for CI after successful local checks.
 
-`bundle exec rake spec` writes HTML line/branch coverage to `coverage/index.html` and LCOV to `coverage/lcov.info`. `bundle exec rake package` builds the production Docker image, runs it against an isolated MongoDB 8.0 container, checks index setup, first-user registration, compiled stylesheet, and `/up`, then removes its own image, containers, anonymous volumes, and network. Cleanup targets only resources created by that invocation, including after a failed check; it does not prune shared Docker resources or existing volumes. This is application packaging, not gem publication.
+`bundle exec rake lint` checks Ruby, Markdown prose, embedded Ruby, spelling, and YAML workflow display names. Use Title Case headings/display names and one source line per Markdown paragraph. Review `.spellcheck.txt` additions. For Ruby offenses, start with `bundle exec rubocop -a`; review corrections and any generated configuration rather than broadly disabling cops.
 
-CI builds the production image with Docker layer caching, then runs the same checks using `ruby bin/package --image posebook-package:TAG`. This mode requires an already built local image, skips only the build, and preserves the supplied image; it still creates and removes its own database, application container, and network. Test setup overlaps the MongoDB image download with image-processing library installation. Superseded PR test/lint/package runs are canceled, but default-branch runs are not.
+`bundle exec rake package` builds the production image and tests it against isolated MongoDB, including indexes, transaction rollback, first-user registration, compiled CSS, and `/up`. It cleans up only its own image, containers, volumes, and network. CI uses `ruby bin/package --image posebook-package:TAG` to check an already built local image without deleting it.
 
-`bundle exec rake lint` includes RuboCop, prose, embedded Ruby in Markdown, spelling, and a YAML-aware workflow display-name checker. Use Title Case headings and workflow/job/step names, preserve proper names and identifiers, and keep Markdown paragraphs on one source line. Add only reviewed domain terms to `.spellcheck.txt`.
+## Tests
 
-For Ruby lint failures, run `bundle exec rubocop -a` and review safe corrections. Fix remaining offenses when practical; otherwise use `bundle exec rubocop --auto-gen-config`, review its output and inheritance, and avoid broad handwritten cop exclusions.
+Tests require a separate `MONGODB_TEST_URI` named `posebook_test` or beginning with `posebook_test_`; they never fall back to the development URI. Use real MongoDB transactions, indexes, and libvips processing, but fake external providers. Track fixtures and remove only owned records/files, never collections or databases. Development mail appears in `tmp/mail` when the worker runs; tests use in-memory delivery.
+
+Add focused behavioral tests for changed permissions, concurrency, time zones, errors, and other relevant boundaries. Booking requests must carry explicit displayed revisions; reload fixtures only when modeling a fresh view. Booking cleanup uses exact owned IDs because normal deletion is guarded. Audit cleanup disables tracking and removes only owned history entries.
+
+`bundle exec rake spec` writes line/branch coverage to `coverage/index.html` and `coverage/lcov.info`. Inspect meaningful gaps without adding trivial assertions or excluding runtime code.
+
+CI keeps Test, Lint, and Package separate, uses explicit inline `matrix.entry` combinations, and reports Coveralls coverage. Danger runs only in PR CI; inspect its actual result. Its changelog check is a reminder, not format validation.
+
+### Browser Tests
+
+`bundle exec rspec spec/system` drives headless Chrome through Capybara/Cuprite against an in-process Puma server and the test database; the full suite includes these specs. Set `BROWSER_PATH` for a nonstandard Chrome/Chromium binary.
+
+Create fixtures with database helpers and `track_record` records created through browser flows; tracking is not automatic. `spec/support/browser_helpers.rb` supplies sign-in, desktop/phone/narrow viewports, overflow checks, disabled JavaScript, clipboard stubs, and screenshots. Set `BROWSER_SCREENSHOTS=tmp/screenshots` for captures; never commit them. Embed meaningful interface captures as GitHub-hosted PR attachments and verify their published URLs.
 
 ## Performance Benchmarks
 
-Run the reproducible request benchmark against MongoDB 8.0 in an explicitly disposable benchmark database:
+Use an explicitly disposable local benchmark database:
 
 ```sh
 MONGODB_TEST_URI='mongodb://127.0.0.1:27017/posebook_test_benchmark?replicaSet=rs0' bundle exec ruby bin/benchmark --samples 5
 ```
 
-The command refuses non-test environments and database names outside `posebook_test_benchmark` or its underscore-prefixed variants. It creates 20 venues, 60 programs, 50 synthetic users, 3,000 memberships, 12,240 historical/upcoming bookings, and eight real optimized photos per location. It cleans up only its own records and files, including after failures; it never deletes collections or sends messages. Use a dedicated local database, not production credentials. Fixture creation uses raw writes only for owned synthetic memberships and booking snapshots.
+The command accepts only `posebook_test_benchmark` or underscore-prefixed variants, creates a synthetic multi-program corpus with booking history and real optimized photos, and cleans up only its records/files. It sends no messages and never deletes collections.
 
-JSON output identifies the actual request path and includes warm request median/percentile estimates, Ruby allocations, response bytes, read-command counts by collection, database time, and indexed query work. It covers public, participant, and administrator homepages; venue and program overviews; the venue directory; profile details, bookings, and history; venue programs/photos; public and booking calendars; the model roster; and public/private thumbnails. Profile Bookings measures `/profile/bookings`, not the account-details page at `/profile`. Setup, login, warm-up, browser, and network time are excluded. Compare results on the same machine and corpus; small samples and shared-machine load make timings indicative, not production guarantees. History measurements reflect its first 50-record page; all older bookings remain accessible through pagination. Regression specs enforce bounded database work rather than flaky latency thresholds.
-
-## Tests
-
-Request specs exercise the actual Rails routes and views. The Mongoid integration spec writes and reads a real document against `MONGODB_TEST_URI`; it removes only its own record. The test helper rejects database names other than `posebook_test` or names beginning with `posebook_test_`, and never uses `MONGODB_URI` as the test fallback.
-
-Account specs cover first-user races, closed public registration, hashed passwords, login/logout, recovery, expired/replayed reset links, concurrent consumption, and session revocation. Remembered-login tests check restoration after ordinary-session expiry and after decades without an application deadline, renewable browser persistence, tampered credentials, account switching, logout and failed login, invitation continuity, and password/email revocation including the current browser's remembered choice. Test records are explicitly tracked and removed, never globally purged. Setup and test commands create participant indexes. Tests lower BCrypt's cost; production keeps the default. Development email is written to `tmp/mail`, and tests never contact SMTP.
-
-Account-settings tests cover profile permissions, verified email changes, conflicting claims, password changes, session revocation, and inactive-account access. System admin accounts remain protected from deactivation. Tests for independent browser sessions inspect each client's own status and location; request redirect matchers use the default client.
-
-Admin user-editing tests cover authorization, allowed contact fields, immediate email changes, program/challenge revocation, competing email claims, inactive accounts, self-edits, and preserving access controls. Admin email changes do not contact an email provider or mark an address verified.
-
-Public-profile tests cover name fallback, handle-only Instagram storage from handles/profile URLs, safe derived links, default-off tagging, audited preferences, admin preference editing, and paired handle/tagging writes across stale edits. Keep these tests free of Instagram network calls. Normal profile input still accepts handles and profile URLs; no historical data conversion runs at startup.
-
-Invitation tests cover optional-email bearer links and email-bound registration/login consistently for participant, venue-coordinator, and program-coordinator invitations, including wrong-account logout/return, forged registration addresses, and fresh stored-recipient checks. Coordinator tests also cover explicit existing-account promotion, retained participant grants, parent/peer delegation limits, scoped private history/revocation, disabled/failed email delivery, and loss of sender authority. Use real replica-set transactions to cover single-use competing acceptance and rollback of account/token changes when role assignment fails. Preserve existing token format, expiry, and consumed history.
-
-Photo request tests use real libvips processing and MongoDB GridFS. Cover square thumbnails, preserved proportions, orientation, metadata removal, actual file type/size/dimension validation, per-photo sharing and identity overrides, owner/admin/organizer boundaries, direct-image authorization, deletion, failed-write cleanup, and concurrent uploads beyond ten photos. Synthetic images only; removing an owned test user also removes its owned photo files.
-
-Public-profile tests cover name fallback to "To be announced", handle-only Instagram storage from handles/profile URLs, safe derived links, default-off tagging, audited preferences, admin preference editing, and paired handle/tagging writes across stale edits. A one-time retirement migration preserves legacy private users by clearing display names, disabling Instagram tagging, and making their photos private before removing the old field. Browser checks exercise tagging-required behavior, no-JavaScript saves, and public calendar output.
-
-Public-program tests cover anonymous and unrelated signed-in visitors, all program URL forms, public name fallback, opted-in Instagram and immediate revocation, inactive-account anonymity, and exclusion of contacts, pay, instructions, canceled records, foreign program bookings, internal reasons, and management controls. Public visibility must not grant membership or weaken private endpoints. Browser checks must exercise calendar-only navigation plus full-page replacement after login or role changes.
-
-Audit-history tests cover user/program settings, original/modified values, actors across independent requests and system writes, secret exclusion, no-op/failed saves, retained deletion snapshots, account activation, concurrent email confirmation, and transactional rollback. Use ordinary saves for audited changes; atomic/raw writes bypass `mongoid-history`. Cleanup disables tracking and removes only audit records for owned fixture IDs, never the whole history collection.
-
-Program tests cover configuration validation, decimal pay, cross-program isolation, scoped admin/coordinator mutations, inactive accounts, inherited permissions, revocation, and concurrent duplicate role grants against the real unique index. Track membership records before deleting their related fixtures. Do not grant global privileges to represent local schedule access.
-
-Slug tests cover name defaults, editable values, history, duplicate/reserved names, ID-shaped values, unique-index conflicts, scoped lookup, and nested management URLs. Production packaging boots an empty database, creates current users, venues, and programs through normal saves, and checks generated slugs and preserved settings across repeat startup. No retired migrations or startup slug backfills are part of the current application.
-
-Invitation tests use a MongoDB 8.0 replica set and exercise single-use consumption, transaction rollback under competing account claims, scoped access, existing-account login returns, optional email delivery, expiry/revocation, and preserving membership roles. Track newly accepted accounts and memberships before fixture cleanup. No tests send external messages.
-
-Booking tests exercise real unique claim indexes, competing participants/dates, failed-reschedule rollback, required explanations, retained history, private program/user scope, settings changes, time-zone snapshots, and expiry rollover. Cover competing replacements/attendance/cancellations, stale and missing form revisions, legacy records without versions, time changes invalidating old forms, and version rollback. Submit explicit versions for edit/cancel/confirm requests; reload only when intentionally representing a fresh view. Track booking records and their disposable claims. Production code never deletes booking history; test cleanup uses exact owned booking IDs through the collection API because normal model deletion is guarded. Never purge the booking collection.
-
-booking-schedule tests cover organizer scope, start-time display/editing, one-off availability, holiday closure/cancellation, restoring regular rules, retained time changes, daylight-saving gaps/offsets, rollback, and bookings racing closures/time changes. Use the shared program schedule lock for every scheduling mutation; a read-only availability check is insufficient under concurrent writes. Track exception records before fixture cleanup so their related program and audit entries can be removed safely.
-
-Participant-access tests cover one completed booking per grant, cancellation/rescheduling permission, individual/bulk invitation email, booked/paused/inactive exclusions, private pause explanations, preserved reservations, resume without renewal, legacy reservations, program isolation, login return scope, email failure, and pause/booking races. Do not send mail inside retrying transactions. Participant membership alone must not permit another booking after completion.
-
-Workflow checker specs exercise valid and invalid human-readable names, ignored identifiers, malformed YAML, and real command exit statuses. Keep fixtures isolated and never delete shared databases or collections. New implementation tests should cover meaningful behavior, authorization boundaries, concurrency, time zones, and errors; use fake delivery providers instead of sending real emails or texts.
-
-Prefer focused tests during development, then final checks before committing. Aim for close to complete line and branch coverage of project-owned runtime code during initial implementation, without trivial tests or excluding meaningful logic. Report remaining gaps. CI keeps Test, Lint, and Package separate, uses explicit `matrix.entry` inline combinations, and reports coverage to Coveralls when the service is available.
-
-Danger runs in PR CI, not as a routine local validation command. Inspect its actual PR result. The Dangerfile uses `danger-changelog`'s update reminder only: its default format parser does not accept this project's dash-style placeholder. The initial scaffold has no changelog entry.
-
-Venue and program photo tests cover public full/thumbnail reads, scoped manager upload/deletion, primary-photo selection/fallback, cross-location IDs, invalid files, removal and failed-save cleanup, storage error reporting, and more than ten photos with concurrent uploads/settings changes. Their standalone metadata documents keep the photo count independent of MongoDB's location-document size. Shared image-file code must preserve user gallery privacy and atomic concurrent uploads without application count caps. Venue Instagram tests cover normalized handles/profile URLs, invalid accounts, clearing links, and public safe new-tab links.
-
-### Browser Tests
-
-System specs in `spec/system` drive headless Google Chrome through Capybara and Cuprite against an in-process Puma server and the same `MONGODB_TEST_URI` database; `bundle exec rake spec` runs them with everything else. Install Chrome locally, or set `BROWSER_PATH` to a Chrome or Chromium binary. Run only browser specs with `bundle exec rspec spec/system`. Records created by the browser are not tracked automatically: create fixtures with the database helpers or `track_record` anything a browser flow creates. Cleanup reloads tracked records and fails loudly when one cannot be removed. Helpers in `spec/support/browser_helpers.rb` cover browser sign-in, desktop/phone/narrow viewports, horizontal-overflow checks, disabled JavaScript, and a page-only clipboard stub that never touches the host clipboard. Set `BROWSER_SCREENSHOTS=tmp/screenshots` to save full-page captures for PR descriptions; screenshots are never committed. Follow [UI Conventions](docs/ui-conventions.md) when changing views.
+JSON reports request paths, warm latency estimates, allocations, response size, collection read counts, database time, and indexed query work across public/participant/admin pages and images. Setup, login, warm-up, browser, and network time are excluded. Compare on the same machine/corpus; shared load and small samples make timings indicative. Regression tests enforce bounded database work rather than latency thresholds.
 
 ## Pull Requests
 
-Read [DESIGN.md](DESIGN.md) and [AGENTS.md](AGENTS.md). Verify current stable versions and compatibility when adding or updating tools. Work on `<username>/<topic>` branches from `master` in the existing checkout; create separate worktrees only for parallel tasks. For dependent work, branch from the preceding PR, target that branch, and link PRs bottom to top using native GitHub stacks. Inspect status and worktrees before switching and preserve unrelated changes.
+Use `<username>/<topic>` branches in the existing checkout, starting from `master` or the prerequisite PR branch. Inspect status and worktrees before switching; preserve unrelated work. Create separate sibling worktrees only for parallel tasks. Dependent PRs target the preceding branch and use native GitHub stack registration.
 
-Prefer one coherent commit per PR, allowing multiple commits when independently reviewable. AI-assisted commits include the Copilot co-author trailer, and AI-authored PRs/comments disclose AI authorship on behalf of `@dblock`. Squash-merge PRs and never use merge commits. No direct default-branch development pushes or force-pushes to `master`.
+Keep each PR to one coherent commit. AI-assisted commits include the Copilot co-author trailer; AI-authored descriptions/comments disclose AI acting on behalf of `@dblock`. Use rebase merges, never squash or merge commits. Do not merge or deploy without explicit authorization, or push development changes directly to `master`.
 
-Amending or squashing task-owned PR commits needs no further approval. Verify branch ownership, record the remote tip, reconcile remote changes, run checks, then use an explicit `--force-with-lease` against that SHA. Never rewrite another contributor's work.
+Before rewriting a task-owned branch, verify ownership, record its fetched remote tip, reconcile remote changes, and validate. Push with an explicit `--force-with-lease` against that SHA; never rewrite another contributor's work or force-push `master`.
 
-After an authorized merge, fetch with pruning and verify the PR's merged state on GitHub. Inspect dirty checkouts and dependent stacked PRs before switching to `master` and removing clean, unnecessary task-owned worktrees and local branches. Use `git branch -D` only after confirming the merge and that no unmerged work or dependencies would be lost. Report blocked cleanup; never discard work.
+After an authorized merge, fetch/prune and verify merged state on GitHub. Inspect dirty checkouts and dependent PRs before removing only clean, unnecessary task-owned worktrees/branches. Never discard work or delete branches with active dependencies.
 
-Update affected documentation and keep DESIGN current rather than retaining obsolete decisions. Add features, improvements, and fixes to [CHANGELOG.md](CHANGELOG.md) using `- [#123](https://github.com/dblock/posebook/pull/123): Description - [@dblock](https://github.com/dblock).` with the actual PR and contributor. Append entries chronologically immediately above the placeholder. Predict the next PR number before opening, then verify and correct it. Initial scaffolding and typo-only changes need no entry. Document required manual data migrations in the affected technical documentation.
+Keep documentation focused: Design for architecture/invariants, guides for usage/operations, and this file for development commands. Remove superseded proposals and implementation diaries. Verify current stable versions and compatibility when updating tools/dependencies.
 
-Use closing references for issues rather than closing them manually. Production is continuously updated; there are no per-release version bumps, tags, or package publications. Do not merge or manually deploy without explicit authorization. See [Operating Posebook](docs/operating.md).
+Add meaningful features, fixes, and improvements above the placeholder in [Changelog](CHANGELOG.md), using `- [#123](https://github.com/dblock/posebook/pull/123): Description - [@dblock](https://github.com/dblock).` with actual attribution. Predict the PR number before opening, then verify/correct it. Scaffolding and typo-only changes need no entry. Use closing issue references rather than closing implementation issues manually.
+
+Production is continuously updated, without release versions, tags, or registry publication. Document required manual migrations in Upgrading; deployment authorization is separate from development.
