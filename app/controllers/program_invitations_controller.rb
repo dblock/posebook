@@ -9,11 +9,9 @@ class ProgramInvitationsController < ApplicationController
   before_action :find_invitation, only: %i[show destroy]
 
   def index
-    @page = [params[:page].to_i, 1].max
-    @invitations = @program.participant_invitations.includes(:invited_by)
-                           .order_by(created_at: :desc, id: :desc).skip((@page - 1) * 50).limit(51).to_a
-    @more = @invitations.length > 50
-    @invitations = @invitations.first(50)
+    records = @program.participant_invitations.includes(:invited_by).order_by(created_at: :desc)
+    @pagination = CursorPage.new(records, cursor: params[:cursor])
+    @invitations = @pagination.records
   end
 
   def show
@@ -38,7 +36,7 @@ class ProgramInvitationsController < ApplicationController
 
   def destroy
     result = @invitation.revoke
-    redirect_to program_participant_invitations_path(@program, page: params[:page]),
+    redirect_to program_participant_invitations_path(@program, cursor: params[:cursor]),
                 result ? { notice: t('invitations.revoked') } : { alert: t('invitations.not_pending') }
   end
 

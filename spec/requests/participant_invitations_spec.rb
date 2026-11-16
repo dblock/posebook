@@ -99,29 +99,36 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     get program_participant_invitations_path(program)
     first = response.parsed_body.css('tbody tr').pluck('data-invitation')
     expect(first).to eq(invitations.reverse.first(50).map { |invitation| invitation.id.to_s })
-    expect(response.parsed_body.at_css('a[rel="next"]')['href'])
-      .to eq(program_participant_invitations_path(program, page: 2))
-    get program_participant_invitations_path(program, page: 2)
+    next_path = response.parsed_body.at_css('a[rel="next"]')['href']
+    create_participant_invitation(program, admin, created_at: Time.utc(2026, 11, 15))
+    invitations.last.destroy!
+    get next_path
     expect(response.parsed_body.css('tbody tr').pluck('data-invitation')).to eq([invitations.first.id.to_s])
-    expect(response.parsed_body.at_css('a[rel="prev"]')['href'])
-      .to eq(program_participant_invitations_path(program, page: 1))
+    previous_path = response.parsed_body.at_css('a[rel="prev"]')['href']
     expect(response.parsed_body.at_css('a[rel="next"]')).to be_nil
+    get previous_path
+    expected = program.participant_invitations.order_by(created_at: :desc, id: :desc).limit(50).pluck(:id)
+    expect(response.parsed_body.css('tbody tr').pluck('data-invitation')).to eq(expected.map(&:to_s))
   end
 
-  it 'normalizes invalid page inputs, retains empty pages, and returns revocations to their page' do
+  it 'retains empty pages and returns revocations to their cursor' do
+    stub_const('CursorPage::PER_PAGE', 1)
     admin = create_user(roles: ['system_admin'])
     program = create_program
-    invitation = create_participant_invitation(program, admin)
+    invitation = create_participant_invitation(program, admin, created_at: 1.day.ago)
+    create_participant_invitation(program, admin)
     sign_in(admin)
-    [-1, 'invalid'].each do |page|
-      get program_participant_invitations_path(program, page: page)
-      expect(response.parsed_body.css('tbody tr').length).to eq(1)
-    end
-    get program_participant_invitations_path(program, page: 999)
-    expect(response.body).to include('No invitations on this page.')
-    delete program_participant_invitation_path(program, invitation, page: 2)
-    expect(response).to redirect_to(program_participant_invitations_path(program, page: 2))
+    get program_participant_invitations_path(program)
+    next_path = response.parsed_body.at_css('a[rel="next"]')['href']
+    get next_path
+    delete response.parsed_body.at_css('tbody form')['action']
+    expect(response).to redirect_to(next_path)
     expect(invitation.reload.status).to eq('Revoked')
+    invitation.destroy!
+    get next_path
+    expect(response.body).to include('No invitations on this page.')
+    expect(response.parsed_body.at_css('.participant-pagination a')['href'])
+      .to eq(program_participant_invitations_path(program))
   end
 
   it 'allows a scoped organizer to create a private link without an email address' do
@@ -337,7 +344,7 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     expect(status.at_css('.status-label').text).to eq('Pending')
     expect(row.at_css('form button.secondary-action').text).to eq('Revoke')
     expect(row.at_css('form')['action'])
-      .to eq(program_participant_invitation_path(invitation.program, invitation, page: 1))
+      .to eq(program_participant_invitation_path(invitation.program, invitation))
     delete program_participant_invitation_path(invitation.program, invitation)
     expect(response).to redirect_to(program_participant_invitations_path(invitation.program))
     expect(invitation.reload.status).to eq('Revoked')

@@ -62,10 +62,8 @@ class ProgramApplicationsController < ApplicationController
   end
 
   def page_of(records)
-    @page = [params[:page].to_i, 1].max
-    results = records.order_by(created_at: :desc, id: :desc).skip((@page - 1) * 50).limit(51).to_a
-    @more = results.length > 50
-    results.first(50)
+    @pagination = CursorPage.new(records.order_by(created_at: :desc), cursor: params[:cursor])
+    @pagination.records
   end
 
   def decision_error(error)

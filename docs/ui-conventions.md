@@ -24,7 +24,7 @@ Show states with the `status_label` helper, which maps statuses to success, dang
 
 ## Tables
 
-Wrap tables in `.table-scroll` with `role="region"`, an `aria-label`, and `tabindex="0"`, preceded by a `.scroll-hint` that appears on narrow screens. Render an empty-state paragraph instead of an empty table, and paginate long lists with `nav.participant-pagination`. See `app/views/program_invitations/index.html.erb` for the canonical example. Table cells are vertically centered, except calendar days, which align to the top.
+Wrap tables in `.table-scroll` with `role="region"`, an `aria-label`, and `tabindex="0"`, preceded by a `.scroll-hint` that appears on narrow screens. Render an empty-state paragraph instead of an empty table, and paginate long lists with `CursorPage` and `shared/pagination`, which renders `nav.participant-pagination` with First/Previous/Next links. Keep navigation outside the nonempty-results block so emptied cursor ranges still have a First link. Do not display page numbers or absolute row ranges: insertions and deletions change those positions. Preserve the cursor in table actions and redirects, and reset it when changing filters. See `app/views/program_invitations/index.html.erb` for the canonical example. Table cells are vertically centered, except calendar days, which align to the top.
 
 ## Forms and Feedback
 

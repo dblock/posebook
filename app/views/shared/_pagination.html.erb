@@ -1,0 +1,9 @@
+<% previous_cursor = pagination.previous_cursor %>
+<% next_cursor = pagination.next_cursor %>
+<% if pagination.cursor || previous_cursor || next_cursor %>
+  <nav class="participant-pagination" aria-label="<%= label %>">
+    <% if pagination.cursor %><%= link_to "First", cursor_page_path %><% end %>
+    <% if previous_cursor %><%= link_to "Previous", cursor_page_path(previous_cursor), rel: "prev" %><% end %>
+    <% if next_cursor %><%= link_to "Next", cursor_page_path(next_cursor), rel: "next" %><% end %>
+  </nav>
+<% end %>

@@ -3,7 +3,7 @@
   <h1>Invitations</h1>
   <p><%= link_to "Invite #{@program.participant_article} #{@program.participant_label.titleize}", new_program_participant_invitation_path(@program), class: "button-link" %></p>
   <% if @invitations.empty? %>
-    <p>No invitations<%= " on this page" if @page > 1 %>.</p>
+    <p>No invitations<%= " on this page" if @pagination.cursor %>.</p>
   <% else %>
     <p class="scroll-hint">Scroll horizontally to view invitation dates and actions.</p>
     <div class="table-scroll" role="region" aria-label="<%= @program.participant_label.titleize %> invitations" tabindex="0">
@@ -22,7 +22,7 @@
                 <div class="participant-actions">
                   <%= link_to "View", program_participant_invitation_path(@program, invitation), class: "button-link", aria: { label: "View invitation for #{invitation.name.presence || invitation.email.presence || 'participant'}" } %>
                   <% if invitation.status == "Pending" %>
-                    <%= button_to "Revoke", program_participant_invitation_path(@program, invitation, page: @page), method: :delete, class: "secondary-action", aria: { label: "Revoke invitation for #{invitation.name.presence || invitation.email.presence || 'participant'}" } %>
+                    <%= button_to "Revoke", program_participant_invitation_path(@program, invitation, cursor: @pagination.cursor), method: :delete, class: "secondary-action", aria: { label: "Revoke invitation for #{invitation.name.presence || invitation.email.presence || 'participant'}" } %>
                   <% end %>
                 </div>
               </td>
@@ -32,11 +32,5 @@
       </table>
     </div>
   <% end %>
-  <% if @page > 1 || @more %>
-    <nav class="participant-pagination" aria-label="Invitation pages">
-      <% if @page > 1 %><%= link_to "Previous", program_participant_invitations_path(@program, page: @page - 1), rel: "prev" %><% end %>
-      <span>Page <%= @page %></span>
-      <% if @more %><%= link_to "Next", program_participant_invitations_path(@program, page: @page + 1), rel: "next" %><% end %>
-    </nav>
-  <% end %>
+  <%= render "shared/pagination", pagination: @pagination, label: "Invitation pages" %>
 </main>

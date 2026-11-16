@@ -13,7 +13,7 @@ class ParticipationEvent
   field :action, type: String
   field :source_id, type: BSON::ObjectId
   field :notes, type: String
-  index({ program_id: 1, created_at: -1 })
+  index({ program_id: 1, created_at: -1, _id: -1 })
   index({ source_id: 1, created_at: 1 })
   validates :action, inclusion: { in: ACTIONS }
   validates :source_id, presence: true

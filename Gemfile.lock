@@ -310,6 +310,9 @@ GEM
       easy_diff
       mongoid (>= 3.0)
       mongoid-compatibility (>= 0.5.1)
+    mongoid-scroll (2.0.1)
+      i18n
+      mongoid (>= 6.0)
     mongoid-slug (7.1.0)
       mongoid (>= 7.0)
       stringex (~> 2.0)
@@ -577,6 +580,7 @@ DEPENDENCIES
   mongoid (~> 9.1, >= 9.1.2)
   mongoid-grid_fs (~> 2.6)
   mongoid-history (~> 0.9)
+  mongoid-scroll (~> 2.0, >= 2.0.1)
   mongoid-slug (~> 7.1)
   newrelic_rpm (~> 10.9)
   propshaft (~> 1.3, >= 1.3.2)
@@ -701,6 +705,7 @@ CHECKSUMS
   mongoid-compatibility (1.1.0) sha256=c62b337fd198940c4996100c2c9978fbff097336f3ae2ff5bc98946137ee6949
   mongoid-grid_fs (2.6.0) sha256=59a16bce6b77a222eceb35259a6eee1ae561d8498ea708bacd9114afd6107d9e
   mongoid-history (0.9.0) sha256=2edf25d5eb66b8afb4e11f1a42c9952d7e1e233ba251faec9dc8d3b9f8266a4d
+  mongoid-scroll (2.0.1) sha256=37e73dd9e629101cae523dd65e877e561e418c3eb92c7e368246aa077a3eed27
   mongoid-slug (7.1.0) sha256=cbc65c1aae3a125ac1a16b705ceadffe39bf14567789ff5cbae30cc4ab2fc5cb
   moxml (0.6.9) sha256=98ade5db899231f430d0727452d30eb3aa48eadc3e1b8f4cacc701dd2e48efd2
   multi_json (1.21.2) sha256=245531eaf54bdba57aba515ff08b4503505c5e09911daa89c5a561e2f85bea8e

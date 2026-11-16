@@ -22,7 +22,7 @@ RSpec.describe BookingAccess, :aggregate_failures, :database do
   end
 
   def roster_access
-    roster = ProgramRoster.new(program, page: 1)
+    roster = ProgramRoster.new(program)
     member = roster.memberships.find { |item| item.id == membership.id }
     roster.access_for(member)
   end
