@@ -118,10 +118,10 @@ RSpec.describe 'Program photos', :aggregate_failures, :database, type: :request 
     expect(response).to have_http_status(:bad_request)
   end
 
-  it 'serves public optimized full images and square thumbnails without caching' do
+  it 'serves public optimized full images and square thumbnails with private cache validation' do
     get program_photo_path(program, photo)
     expect(response.media_type).to eq('image/webp')
-    expect(response.headers['Cache-Control']).to include('no-store')
+    expect(response.headers['Cache-Control']).to eq('max-age=0, private, must-revalidate')
     full = Vips::Image.new_from_buffer(response.body, '')
     expect([full.width, full.height]).to eq([600, 900])
     get program_photo_path(program, photo, thumbnail: 1)

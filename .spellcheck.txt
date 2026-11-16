@@ -1,4 +1,7 @@
 ActionMailer
+ETag
+ETags
+revalidate
 api
 gl
 geocoding

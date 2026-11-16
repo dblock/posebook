@@ -169,7 +169,7 @@ RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request 
                                          'Delete Photo')
     get photo_url
     expect(response.media_type).to eq('image/webp')
-    expect(response.headers['Cache-Control']).to include('no-store')
+    expect(response.headers['Cache-Control']).to eq('max-age=0, private, must-revalidate')
     expect(Vips::Image.new_from_buffer(response.body, '').height).to eq(900)
   end
 
