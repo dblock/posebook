@@ -90,32 +90,54 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     expect(response).to redirect_to(program_path(program))
   end
 
-  it 'blocks shareable links when either the program or its venue is inactive' do
+  def expect_closed_landing
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include('Applications Closed', 'View Program', program_path(program))
+  end
+
+  it 'shows only a generic closed landing when either the program or its venue is inactive' do
     program.update!(active: false)
     get program_apply_path(program)
-    expect(response).to have_http_status(:not_found)
+    expect_closed_landing
+    expect(response.body).not_to include(program.name, program.instructions)
     program.update!(active: true)
     program.venue.update!(active: false)
     get program_apply_path(program)
-    expect(response).to have_http_status(:not_found)
+    expect_closed_landing
+  end
+
+  it 'shows a closed landing for guests and signed-in applicants without creating application records' do
+    program.update!(applications_enabled: false)
+    get program_apply_path(program)
+    expect_closed_landing
+    sign_in(applicant)
+    expect do
+      get program_apply_path(program)
+    end.not_to change(ParticipantApplication, :count)
+    expect_closed_landing
+    expect(ApplicationRegistration.where(program_id: program.id)).not_to exist
+    expect(response.parsed_body.css('main form')).to be_empty
+    expect(response.headers['Cache-Control']).to include('private', 'no-store')
   end
 
   it 'keeps intake off by default and lets coordinators toggle each program independently' do
     other = create_program
     grant_coordinator_access(other, coordinator)
     get program_apply_path(other)
-    expect(response).to have_http_status(:not_found)
+    expect(response).to have_http_status(:ok)
     sign_in(coordinator)
     patch program_path(program), params: { program: { applications_enabled: '0' } }
     patch program_path(other), params: { program: { applications_enabled: '1' } }
     expect(program.reload.applications_enabled?).to be(false)
     expect(other.reload.applications_enabled?).to be(true)
     get program_apply_path(program)
-    expect(response).to have_http_status(:not_found)
+    expect_closed_landing
     get program_apply_path(other)
     expect(response).to redirect_to(new_program_application_registration_path(other))
     patch program_path(program), params: { program: { applications_enabled: '1' } }
     expect(program.reload.applications_enabled?).to be(true)
+    get program_apply_path(program)
+    expect(response).to redirect_to(new_program_application_registration_path(program))
   end
 
   it 'requires verification before allowing submission' do
@@ -363,7 +385,7 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     get program_path(program)
     expect(response.body).not_to include('Apply to Participate')
     get program_apply_path(program)
-    expect(response).to have_http_status(:not_found)
+    expect_closed_landing
     post program_participation_application_path(program),
          params: { participant_application: { consent: '1' } }
     expect(response).to have_http_status(:not_found)

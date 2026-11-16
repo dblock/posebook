@@ -1,0 +1,6 @@
+<main>
+  <%= render "shared/page_navigation", breadcrumbs: [["Applications Closed", nil]], tabs: [] %>
+  <h1>Applications Closed</h1>
+  <p>This <%= @program.program_label.downcase %> is not currently accepting applications.</p>
+  <p><%= link_to "View #{@program.program_label.titleize}", program_path(@program) %></p>
+</main>

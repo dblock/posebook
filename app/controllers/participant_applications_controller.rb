@@ -86,7 +86,11 @@ class ParticipantApplicationsController < ApplicationController
   end
 
   def require_verified_applicant
-    return head :not_found unless @program.applications_enabled? && @program.booking_active?
+    unless @program.applications_enabled? && @program.booking_active?
+      return render :closed if action_name == 'apply'
+
+      return head :not_found
+    end
     return if current_user&.email_verified_at
 
     session[:application_program] = @program.id.to_s unless current_user
