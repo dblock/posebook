@@ -68,6 +68,16 @@ RSpec.describe 'Administrator audit history', :aggregate_failures, :database, ty
       .to include(program_schedule_path(program, date: exception.date.iso8601))
   end
 
+  it 'retains a revoked membership history link without offering unavailable participant settings' do
+    membership = grant_participant_access(create_program, create_user)
+    membership.update!(roles: [])
+    sign_in(admin)
+    get admin_history_path
+    row = history_row(membership.history_tracks.last)
+    expect(row.css('a').pluck('href')).to include(admin_user_path(membership.user), program_path(membership.program))
+    expect(row.css('a').pluck('href')).not_to include(edit_program_participant_path(membership.program, membership))
+  end
+
   it 'retains deletion snapshots and missing actors without broken links or record lookup errors' do
     user = create_user(name: 'Retained Subject')
     actor = create_user(name: 'Former Editor')
@@ -89,11 +99,15 @@ RSpec.describe 'Administrator audit history', :aggregate_failures, :database, ty
     chain = [{ name: 'User', id: admin.id }, { name: 'photos', id: BSON::ObjectId.new }]
     embedded = track_record(HistoryTracker.create!(association_chain: chain, action: 'update',
                                                    modified: { name: 'hidden payload' }))
+    missing = track_record(HistoryTracker.create!(association_chain: [], action: 'update',
+                                                  modified: { name: 'hidden payload' }))
     sign_in(admin)
     get admin_history_path
     expect(history_row(entry).text).to include('No displayable field changes.', 'Unavailable')
     expect(history_row(embedded).text).to include('No displayable field changes.', 'Unavailable')
-    expect(response.body).not_to include('hidden payload', 'Unknown')
+    expect(history_row(missing).text).to include('Unknown record', 'No displayable field changes.', 'Unavailable')
+    expect(history_row(entry).text).not_to include('Unknown')
+    expect(response.body).not_to include('hidden payload')
   end
 
   it 'paginates without shifting after later changes and never writes an audit entry for viewing' do

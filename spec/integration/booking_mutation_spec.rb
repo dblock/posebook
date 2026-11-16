@@ -160,12 +160,47 @@ RSpec.describe BookingMutation, :aggregate_failures, :database do
 
   it 'keeps the one-upcoming-booking rule program-local' do
     user = create_user
-    programs = Array.new(2) { create_program }
+    venue = create_venue
+    programs = Array.new(2) { create_program(venue: venue) }
     programs.each do |program|
       grant_participant_access(program, user)
       expect(track_booking(attempt(program, user, '2026-11-16'))).to be_persisted
     end
     expect(Booking.upcoming.where(user_id: user.id).count).to eq(2)
+    expect(BookingClaim.where(user_id: user.id).count).to eq(2)
+    expect { described_class.new(program: programs.first, user: user).book(date: '2026-11-23') }
+      .to raise_error(described_class::Invalid)
+  end
+
+  it 'rejects sibling, revoked, and inactive participant access before writing bookings' do
+    user = create_user
+    program = create_program
+    membership = grant_participant_access(program, user)
+    sibling = create_program(venue: program.venue)
+    expect { described_class.new(program: sibling, user: user).book(date: '2026-11-16') }
+      .to raise_error(described_class::Invalid, program.message('bookings.participant_required'))
+    mutation = described_class.new(program: program, user: user)
+    membership.update!(roles: [])
+    expect { mutation.book(date: '2026-11-16') }.to raise_error(described_class::Invalid)
+    membership.update!(roles: ['participant'])
+    user.deactivate
+    expect { mutation.book(date: '2026-11-16') }.to raise_error(described_class::Invalid)
+    expect(Booking.where(user_id: user.id)).to be_empty
+    expect(BookingClaim.where(user_id: user.id)).to be_empty
+  end
+
+  it 'rolls back cancellation and its revision when the booking claim has disappeared' do
+    program = create_program
+    user = create_user
+    grant_participant_access(program, user)
+    booking = track_booking(attempt(program, user, '2026-11-16'))
+    version = booking.lock_version
+    BookingClaim.where(booking_id: booking.id).delete_all
+    expect do
+      described_class.new(program: program, user: user).cancel(booking: booking, reason: 'Travel.')
+    end.to raise_error(described_class::Conflict)
+    expect(booking.reload).to have_attributes(status: 'confirmed', lock_version: version, reason: nil)
+    expect(program.bookings.count).to eq(1)
   end
 
   it 'preserves booking dates and UTC expiry across daylight saving and session time-zone edits' do

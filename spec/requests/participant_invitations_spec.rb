@@ -262,6 +262,9 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
   it 'returns an existing account to its invitation after login' do
     user = create_user
     invitation = create_participant_invitation(create_program, create_user(roles: ['system_admin']))
+    post invitation_path, params: { token: invitation.token }
+    expect(response).to redirect_to(new_session_path)
+    expect(invitation.reload.used_at).to be_nil
     get invitation_path(token: invitation.token)
     sign_in(user)
     expect(response).to redirect_to(invitation_path(token: invitation.token))
@@ -293,6 +296,40 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     expect(User.where(email: attributes[:email])).to be_empty
     expect(ParticipantInvitation.available(invitation.token)).to be_present
     expect(invitation.program.memberships).to be_empty
+  end
+
+  %i[accept register].each do |action|
+    it "rejects #{action} when an invitation expires between authorization and its transaction" do
+      invitation = create_participant_invitation(create_program, create_user(roles: ['system_admin']))
+      sign_in(create_user) if action == :accept
+      allow(InvitationAcceptance).to receive(:new).and_wrap_original do |original, **arguments|
+        invitation.set(expires_at: 1.minute.ago)
+        original.call(**arguments)
+      end
+      path = action == :accept ? invitation_path : invited_registration_path
+      expect do
+        post path, params: { token: invitation.token, user: user_attributes }
+      end.not_to change(User, :count)
+      expect(response).to have_http_status(:gone)
+      expect(invitation.reload.used_at).to be_nil
+      expect(invitation.program.memberships).to be_empty
+    end
+  end
+
+  it 'retains the registration form after a uniqueness conflict without exposing database details' do
+    invitation = create_participant_invitation(create_program, create_user(roles: ['system_admin']))
+    error = Mongo::Error::OperationFailure.new('Private database details')
+    allow(error).to receive(:code).and_return(11_000)
+    attributes = user_attributes
+    acceptance = instance_double(InvitationAcceptance, user: User.new(attributes))
+    allow(InvitationAcceptance).to receive(:new).and_return(acceptance)
+    allow(acceptance).to receive(:call).and_raise(error)
+    post invited_registration_path, params: { token: invitation.token, user: attributes }
+    expect(response).to have_http_status(:conflict)
+    expect(response.parsed_body.text).to include(I18n.t('invitations.conflict'))
+    expect(response.body).not_to include(error.message)
+    expect(response.parsed_body.at_css('#user_email')['value']).to eq(attributes[:email])
+    expect(invitation.reload.used_at).to be_nil
   end
 
   it 'retains a signed-in invitation for retry when coordinator notifications cannot queue' do

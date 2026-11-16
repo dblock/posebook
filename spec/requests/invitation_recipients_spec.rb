@@ -80,6 +80,9 @@ RSpec.describe 'Invitation recipient restrictions', :aggregate_failures, :databa
     it 'allows an existing account to accept a blank-email link' do
       invitation = recipient_invitation(' ')
       sign_in(recipient)
+      post register_path, params: { token: invitation.token }
+      expect(response).to redirect_to("#{accept_path}?token=#{invitation.token}")
+      expect(invitation.reload.used_at).to be_nil
       post accept_path, params: { token: invitation.token }
       track_granted_membership(recipient)
       expect(response).to redirect_to(destination)

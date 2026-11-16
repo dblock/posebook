@@ -75,6 +75,21 @@ RSpec.describe 'Booking schedules', :aggregate_failures, :database, type: :reque
     expect(program.schedule_exceptions).to be_empty
   end
 
+  it 'renders a claim conflict and rolls back closure, booking changes, revisions, and audit history' do
+    participant = create_user
+    grant_participant_access(program, participant)
+    booking = track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-11-16'))
+    revision = program.reload.schedule_revision
+    BookingClaim.where(booking_id: booking.id).delete_all
+    sign_in(create_user(roles: ['system_admin']))
+    expect { save_day(mode: 'closed') }.not_to change(HistoryTracker, :count)
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.parsed_body.text).to include(program.message('bookings.conflict'))
+    expect(program.schedule_exceptions).to be_empty
+    expect(program.reload.schedule_revision).to eq(revision)
+    expect(booking.reload).to have_attributes(status: 'confirmed', reason: nil, lock_version: 0)
+  end
+
   it 'edits the default start time through session settings and displays the saved time' do
     sign_in(create_user(roles: ['system_admin']))
     patch program_path(program), params: { program: { start_time: '19:15' } }
