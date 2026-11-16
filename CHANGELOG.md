@@ -126,4 +126,5 @@
 - [#140](https://github.com/dblock/posebook/pull/140): Batch public session participant display overrides without loading entire program rosters - [@dblock](https://github.com/dblock).
 - [#141](https://github.com/dblock/posebook/pull/141): Batch public session schedule exceptions while preserving program scope, local calendar windows, and later schedule changes - [@dblock](https://github.com/dblock).
 - [#142](https://github.com/dblock/posebook/pull/142): Read ordered photo chunks through cursor batches without repeated database counts - [@dblock](https://github.com/dblock).
+- [#143](https://github.com/dblock/posebook/pull/143): Reuse loaded participant program and venue documents while preserving canonical visibility checks - [@dblock](https://github.com/dblock).
 - Your contribution here.

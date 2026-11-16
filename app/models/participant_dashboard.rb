@@ -37,7 +37,10 @@ class ParticipantDashboard
 
   def participating_programs
     @participating_programs ||= begin
-      programs = Program.viewable_by(@user).where(:id.in => memberships.keys).includes(:venue).order_by(name: :asc)
+      ids = Program.viewable_by(@user).where(:id.in => memberships.keys).distinct(:id).to_set
+      programs = memberships.values.filter_map do |membership|
+        membership.program if ids.include?(membership.program_id)
+      end.sort_by(&:name)
       Program.preload_primary_photos(programs, series: true)
     end
   end
