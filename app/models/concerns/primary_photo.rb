@@ -10,7 +10,7 @@ module PrimaryPhoto
   PUBLIC_SELECTOR = { 'public' => { '$ne' => false } }.freeze
 
   module ClassMethods
-    def preload_primary_photos(owners)
+    def preload_primary_photos(owners, series: false)
       owners = owners.to_a
       return owners if owners.empty?
 
@@ -19,7 +19,8 @@ module PrimaryPhoto
       missing = owners.reject { |owner| photos.key?(owner.id) }
       photos.merge!(first_primary_photos(missing, association))
       owners.each { |owner| owner.preload_primary_photo(photos[owner.id]) }
-      preload_fallback_venues(owners)
+      preload_photo_series(owners, association) if series
+      preload_fallback_venues(owners, series: series)
       owners
     end
 
@@ -54,11 +55,21 @@ module PrimaryPhoto
       association.klass.where(:id.in => ids).index_by { |photo| photo[foreign_key] }
     end
 
-    def preload_fallback_venues(owners)
+    def preload_photo_series(owners, association)
+      owners = owners.select(&:primary_photo)
+      return if owners.empty?
+
+      foreign_key = association.foreign_key
+      photos = association.klass.where(PUBLIC_SELECTOR).where(foreign_key => { '$in' => owners.map(&:id) })
+                          .order_by(created_at: :asc).pluck(foreign_key, :id).group_by(&:first)
+      owners.each { |owner| owner.preload_public_photo_ids(photos.fetch(owner.id, []).map(&:last)) }
+    end
+
+    def preload_fallback_venues(owners, series:)
       return unless reflect_on_association(:venue)
 
       venues = owners.filter_map { |owner| owner.venue unless owner.primary_photo }.uniq(&:id)
-      Venue.preload_primary_photos(venues)
+      Venue.preload_primary_photos(venues, series: series)
     end
   end
 
@@ -75,8 +86,20 @@ module PrimaryPhoto
     selected || public_photos.order_by(created_at: :asc).first
   end
 
+  def preload_public_photo_ids(ids)
+    @public_photo_ids_snapshot = [id, primary_photo_id, ids]
+  end
+
+  def public_photo_ids
+    unless @public_photo_ids_snapshot&.first(2) == [id, primary_photo_id]
+      preload_public_photo_ids(photos.where(PUBLIC_SELECTOR).order_by(created_at: :asc).pluck(:id))
+    end
+    @public_photo_ids_snapshot.last
+  end
+
   def reload(...)
     @primary_photo_snapshot = nil
+    @public_photo_ids_snapshot = nil
     super
   end
 

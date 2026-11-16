@@ -43,6 +43,7 @@ RSpec.describe UserExperienceBenchmark, :aggregate_failures, :database do
       [UserExperienceBenchmark::Runner.new(fixtures, samples: 1).run, fixtures]
     end
     expect(report[:pages].pluck(:name)).to include('Profile Bookings', 'Booking Calendar', 'Venue Thumbnail')
+    expect(report[:pages].find { |page| page[:name] == 'Profile Bookings' }[:path]).to eq('/profile/bookings')
     expect(Booking.where(:program_id.in => fixtures.programs.map(&:id))).to be_empty
     expect(Program.where(:id.in => fixtures.programs.map(&:id))).to be_empty
     expect(Venue.where(:id.in => fixtures.venues.map(&:id))).to be_empty

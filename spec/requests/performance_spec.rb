@@ -90,4 +90,47 @@ RSpec.describe 'User experience read performance', :aggregate_failures, :databas
     get bookings_profile_path
     expect(response.body).to include(foreign.email)
   end
+
+  it 'batch loads public preview IDs without mixing owners, exposing private photos, or changing primary order' do
+    venues = Array.new(4) { create_venue }
+    photos = venues.map do |venue|
+      public_photos = Array.new(2) { track_record(VenuePhoto.create!(venue: venue)) }
+      track_record(VenuePhoto.create!(venue: venue, public: false))
+      venue.update!(primary_photo_id: public_photos.last.id)
+      public_photos.reverse
+    end
+    sign_in(create_user(roles: ['system_admin']))
+    result = commands { get venues_path }
+    venues.zip(photos).each do |venue, series|
+      card = response.parsed_body.at_css(".venue-card a[href='#{venue_path(venue)}']").ancestors('.venue-card').first
+      expect(card.css('[data-photo-preview]').pluck('href')).to eq(series.map { |photo|
+        venue_photo_path(venue, photo)
+      })
+    end
+    expect(result[:collections]['venue_photos']).to be <= 2
+  end
+
+  it 'batch loads fallback venue series even when programs have no photos of their own' do
+    venue = create_venue
+    photo = track_record(VenuePhoto.create!(venue: venue))
+    programs = Array.new(4) { create_program(venue: venue) }
+    ids = nil
+    result = commands do
+      Program.preload_primary_photos(programs, series: true)
+      ids = programs.map { |program| program.venue.public_photo_ids }
+    end
+    expect(ids).to all(eq([photo.id]))
+    expect(result[:collections]['venue_photos']).to be <= 3
+  end
+
+  it 'refreshes preview IDs on owner reload and after a primary preference changes' do
+    venue = create_venue
+    photo = track_record(VenuePhoto.create!(venue: venue))
+    Venue.preload_primary_photos([venue], series: true)
+    next_photo = track_record(VenuePhoto.create!(venue: venue))
+    venue.primary_photo_id = photo.id
+    expect(venue.public_photo_ids).to eq([photo.id, next_photo.id])
+    photo.update!(public: false)
+    expect(venue.reload.public_photo_ids).to eq([next_photo.id])
+  end
 end

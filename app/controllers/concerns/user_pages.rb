@@ -16,7 +16,7 @@ module UserPages
 
   def load_user_programs(user)
     scope = Program.managed_by(user).and(Program.viewable_by(current_user).selector)
-    @programs = Program.preload_primary_photos(scope.includes(:venue).order_by(name: :asc))
+    @programs = Program.preload_primary_photos(scope.includes(:venue).order_by(name: :asc), series: true)
   end
 
   def load_user_applications(user)

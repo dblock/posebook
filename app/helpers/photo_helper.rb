@@ -6,6 +6,6 @@ module PhotoHelper
   end
 
   def public_photo_series(owner, primary)
-    owner.photos.where(PrimaryPhoto::PUBLIC_SELECTOR).where(:id.ne => primary.id).order_by(created_at: :asc)
+    owner.public_photo_ids.reject { |id| id == primary.id }
   end
 end

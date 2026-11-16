@@ -19,7 +19,7 @@ class PagesController < ApplicationController
 
   def prepare_management_home
     programs = Program.managed_by(current_user).includes(:venue).order_by(name: :asc)
-    @managed_programs = Program.preload_primary_photos(programs)
+    @managed_programs = Program.preload_primary_photos(programs, series: true)
     @management_home = current_user.system_admin? || @managed_programs.any? ||
                        Venue.coordinated_by(current_user).exists?
   end
