@@ -188,4 +188,30 @@ RSpec.describe 'User experience read performance', :aggregate_failures, :databas
     expect(result[:collections]['photos.files']).to eq(1)
     expect(result[:collections]['photos.chunks']).to eq(2)
   end
+
+  it 'retains inactive participant programs only when booked or managed and refreshes visibility' do
+    program = create_program(name: 'Public Mondays')
+    grant_participant_access(program, participant)
+    booked = create_program(name: 'Booked Mondays')
+    grant_participant_access(booked, participant)
+    track_booking(BookingMutation.new(program: booked, user: participant).book(date: '2026-11-16'))
+    booked.update!(active: false)
+    managed = create_program(name: 'Managed Mondays', active: false)
+    grant_participant_access(managed, participant)
+    grant_coordinator_access(managed, participant)
+    grant_participant_access(create_program(name: 'Hidden Mondays', active: false), participant)
+    expect(ParticipantDashboard.new(participant).participating_programs.map(&:name))
+      .to eq(['Booked Mondays', 'Managed Mondays', 'Public Mondays'])
+    program.update!(active: false)
+    expect(ParticipantDashboard.new(participant).participating_programs.map(&:name))
+      .to eq(['Booked Mondays', 'Managed Mondays'])
+  end
+
+  it 'reuses loaded participant program venues instead of reading them again for homepage cards' do
+    Array.new(10) { create_program }.each { |program| grant_participant_access(program, participant) }
+    sign_in(participant)
+    result = commands { get root_path }
+    expect(response.parsed_body.css('.participant-programs h2 a').size).to eq(10)
+    expect(result[:collections]['venues']).to be <= 5
+  end
 end
