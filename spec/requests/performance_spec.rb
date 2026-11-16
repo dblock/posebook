@@ -25,22 +25,20 @@ RSpec.describe 'User experience read performance', :aggregate_failures, :databas
     programs.each { |program| grant_participant_access(program, participant) }
     track_booking(BookingMutation.new(program: programs.first, user: participant).book(date: '2026-11-16'))
     sign_in(participant)
-    { root_path => 2, bookings_profile_path => 3 }.each do |path, booking_commands|
-      result = commands { get path }
-      expect(response.parsed_body.css('.bookable-programs .program-card').size).to eq(11)
-      expect(response.parsed_body.css('.upcoming-booking').size).to eq(1)
-      expect(result[:commands]).to be <= 25
-      expect(result[:collections]['bookings']).to eq(booking_commands)
-      expect(result[:collections]['users']).to eq(1)
-    end
-    expect(ParticipantDashboard).to have_received(:new).with(participant).twice
+    result = commands { get bookings_profile_path }
+    expect(response.parsed_body.css('.bookable-programs .program-card').size).to eq(11)
+    expect(response.parsed_body.css('.upcoming-booking').size).to eq(1)
+    expect(result[:commands]).to be <= 25
+    expect(result[:collections]['bookings']).to eq(3)
+    expect(result[:collections]['users']).to eq(1)
+    expect(ParticipantDashboard).to have_received(:new).with(participant).once
   end
 
-  it 'batch loads managed programs, parent venues, and fallback photos on the homepage' do
+  it 'batch loads managed programs, parent venues, and fallback photos on the programs tab' do
     programs = Array.new(12) { create_program }
     programs.each { |program| grant_coordinator_access(program, participant) }
     sign_in(participant)
-    result = commands { get root_path }
+    result = commands { get programs_profile_path }
     expect(response.parsed_body.css('.managed-programs .program-card').size).to eq(12)
     expect(result[:commands]).to be <= 25
     expect(result[:collections]['users']).to eq(1)

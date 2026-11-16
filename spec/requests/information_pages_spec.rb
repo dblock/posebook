@@ -14,9 +14,10 @@ RSpec.describe 'Public information pages', :aggregate_failures, :database, type:
       expect(response).to have_http_status(:ok)
       page = response.parsed_body
       expect(page.at_css('main h1').text).to eq(title)
+      expect(page.at_css('.breadcrumbs a')['href']).to eq(root_path)
       expect(page.at_css('main').text).to include('Vestris LLC.')
       expect(page.at_css('footer nav span').text).to eq("Copyright \u00a9 2027 Vestris LLC.")
-      expect(page.at_css('main a[href="mailto:drawing@dblock.org"]')).to be_present
+      expect(page.at_css('main a[href="mailto:dblock@vestris.com"]')).to be_present
       expect(page.css('footer a').pluck('href')).to contain_exactly(about_path, privacy_path, terms_path)
     end
   end
@@ -32,10 +33,8 @@ RSpec.describe 'Public information pages', :aggregate_failures, :database, type:
     expect(response.body).to include('GitHub issues are public.')
   end
 
-  it 'keeps the home page protected and provides the same information links for signed-in users' do
+  it 'provides the same information links for signed-in users' do
     user = create_user
-    get root_path
-    expect(response).to redirect_to(new_session_path)
     sign_in(user)
     get root_path
     expect(response).to have_http_status(:ok)

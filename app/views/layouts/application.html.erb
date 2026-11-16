@@ -28,6 +28,10 @@
             <% if current_user.system_admin? %><%= link_to "Users", admin_users_path, aria: { current: ("page" if current_page?(admin_users_path)) } %><% end %>
             <%= button_to "Sign Out", session_path, method: :delete %>
           </div>
+        <% elsif !current_page?(new_session_path) %>
+          <div class="nav-links">
+            <%= link_to "Sign In", new_session_path, class: "button-link" %>
+          </div>
         <% end %>
       </nav>
     </header>

@@ -29,6 +29,34 @@ RSpec.describe 'Photo actions', :aggregate_failures, :database, type: :system do
     participant.reload.profile_photos.last
   end
 
+  def expect_card_series(path, selector, sources, viewport = :desktop)
+    visit path
+    find("#{selector} [data-photo-preview]", visible: true).click
+    dialog = find('[data-photo-dialog]')
+    expect_preview_photo(dialog, sources.first, '1 of 2')
+    dialog.find('[data-photo-next]').click
+    expect_preview_photo(dialog, sources.last, '2 of 2')
+    expect_no_horizontal_overflow
+    capture_screenshot("card-preview-#{selector.delete('.')}-#{viewport}")
+    dialog.send_keys(:escape)
+  end
+
+  def expect_preview_photo(dialog, source, position)
+    expect(dialog).to have_css("img[src$='#{source}']").and have_text(position)
+  end
+
+  def card_photos(owner)
+    type = owner.is_a?(Venue) ? VenuePhoto : ProgramPhoto
+    first, primary, private_photo = Array.new(3) do
+      type.add(owner, Rack::Test::UploadedFile.new(image_file, 'image/png'))
+    end
+    private_photo.update!(public: false)
+    owner.update!(primary_photo_id: primary.id)
+    [primary, first].map do |photo|
+      owner.is_a?(Venue) ? venue_photo_path(owner, photo) : program_photo_path(owner, photo)
+    end
+  end
+
   it 'uploads, toggles visibility, and sets the primary profile photo without reloading the page' do
     first = ProfilePhoto.add(participant, Rack::Test::UploadedFile.new(image_file, 'image/png'))
     sign_in_through_browser(participant)
@@ -50,6 +78,55 @@ RSpec.describe 'Photo actions', :aggregate_failures, :database, type: :system do
     expect(page).to have_css('.profile-photo', count: 1)
     expect(participant.reload.profile_photos.map(&:id)).to eq([first.id])
     expect_unchanged_page
+  end
+
+  it 'steps through the photo gallery from the preview popup' do
+    venue = create_venue
+    photos = Array.new(3) { VenuePhoto.add(venue, Rack::Test::UploadedFile.new(image_file, 'image/png')) }
+    visit photos_venue_path(venue)
+    sources = photos.map { |photo| venue_photo_path(venue, photo) }
+    figure(photos.first).find('[data-photo-preview]').click
+    dialog = find('[data-photo-dialog]')
+    expect(dialog).to have_css("img[src$='#{sources[0]}']").and have_text('1 of 3')
+    dialog.find('[data-photo-next]').click
+    expect(dialog).to have_css("img[src$='#{sources[1]}']").and have_text('2 of 3')
+    dialog.send_keys(:right)
+    expect(dialog).to have_css("img[src$='#{sources[2]}']")
+    dialog.send_keys(:right)
+    expect(dialog).to have_css("img[src$='#{sources[0]}']")
+    dialog.find('[data-photo-previous]').click
+    expect(dialog).to have_css("img[src$='#{sources[2]}']").and have_text('3 of 3')
+  end
+
+  it 'navigates only public photos from venue, program, and next session cards at every viewport' do
+    program = create_program
+    venue_sources = card_photos(program.venue)
+    program_sources = card_photos(program)
+    each_viewport do |viewport|
+      expect_card_series(venue_path(program.venue), '.venue-card', venue_sources, viewport)
+      expect_card_series(venue_path(program.venue), '.program-card', program_sources, viewport)
+      expect_card_series(program_path(program), '.next-session', program_sources, viewport)
+    end
+  end
+
+  it 'navigates venue photos from an upcoming booking card' do
+    program = create_program
+    sources = card_photos(program.venue)
+    grant_participant_access(program, participant)
+    date = ((Date.current + 1)..(Date.current + 7)).find { |day| day.cwday == 1 }
+    track_booking(BookingMutation.new(program: program, user: participant).book(date: date.iso8601))
+    sign_in_through_browser(participant)
+    expect_card_series(bookings_profile_path, '.upcoming-booking', sources)
+  end
+
+  it 'opens the card primary image directly without JavaScript' do
+    venue = create_venue
+    sources = card_photos(venue)
+    without_javascript do
+      visit venue_path(venue)
+      find('.venue-card [data-photo-preview]', visible: true).click
+      expect(page).to have_current_path(sources.first)
+    end
   end
 
   it 'uploads and sets the primary venue photo without reloading the page' do

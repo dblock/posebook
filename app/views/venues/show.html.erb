@@ -3,4 +3,13 @@
   <div class="title-row"><h1><%= @venue.name %></h1><%= render "shared/copy_button", url: venue_url(@venue), label: "#{@venue.name} link" %></div>
   <% unless @venue.active? %><p role="status"><%= t('locations.inactive') %></p><% end %>
   <%= render "card", venue: @venue, show_title: false %>
+  <% if @programs.any? %>
+    <section aria-labelledby="venue-programs-heading">
+      <h2 id="venue-programs-heading">Programs</h2>
+      <div class="location-cards">
+        <% @programs.each do |program| %><%= render "programs/card", program: program %><% end %>
+      </div>
+    </section>
+  <% end %>
+  <%= render "shared/upcoming_sessions", sessions: @sessions, show_venue: false %>
 </main>

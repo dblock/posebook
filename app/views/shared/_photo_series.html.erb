@@ -1,0 +1,5 @@
+<%= render "shared/photo_thumbnail", full_url: owner_photo_path(owner, photo), thumbnail_url: owner_photo_path(owner, photo, thumbnail: 1),
+           description: "#{name} primary photo" %>
+<% public_photo_series(owner, photo).each do |other| %>
+  <%= link_to "", owner_photo_path(owner, other), hidden: true, data: { photo_preview: true, photo_description: "#{name} photo" } %>
+<% end %>

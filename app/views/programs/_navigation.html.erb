@@ -1,5 +1,5 @@
 <% manager = current_user && program.managed_by?(current_user) %>
-<% tabs = [["view", "View", program_path(program)], ["calendar", "Calendar", program_path(program, section: "calendar")]] %>
+<% tabs = [["view", "Program", program_path(program)], ["calendar", "Calendar", program_path(program, section: "calendar")]] %>
 <% if manager %>
   <% tabs << ["exceptions", "Exceptions", exceptions_program_schedule_path(program)] %>
   <% tabs << ["history", "History", program_path(program, section: "history")] %>
@@ -17,6 +17,7 @@
   <% actions << ["security", "Security", security_program_path(program)] %>
 <% end %>
 <% actions << ["google_calendar", "GCal", program_google_calendar_path(program)] if manager %>
+<% tabs, actions = [], [] unless manager || (current_user && program.participant?(current_user)) %>
 <% breadcrumbs = [["Venues", venues_path], [program.venue.name, venue_path(program.venue)], [program.name, program_path(program)]] %>
 <% section = (tabs + actions).find { |key, _, _| key == active } %>
 <% breadcrumbs << [section[1], section[2]] if section && active != "view" %>

@@ -35,6 +35,13 @@ class ParticipantDashboard
     end
   end
 
+  def participating_programs
+    @participating_programs ||= begin
+      programs = Program.viewable_by(@user).where(:id.in => memberships.keys).includes(:venue).order_by(name: :asc)
+      Program.preload_primary_photos(programs)
+    end
+  end
+
   def managed_program_ids
     @managed_program_ids ||= if upcoming_bookings.empty?
                                []

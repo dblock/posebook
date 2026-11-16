@@ -8,7 +8,9 @@ Use Title Case for headings, tabs, buttons, and links that act as buttons, for e
 
 ## Navigation
 
-Render breadcrumbs and tabs with `shared/page_navigation`. Program tabs are View, Calendar, and History, followed by a separator and management actions that only managers see. The active tab sets `aria-current`. Manager-only blocks depend on controller-computed permissions such as `@program_coordinator`, never on hidden markup.
+Render Home breadcrumbs and tabs with `shared/page_navigation`. Tab bars are hidden for signed-out visitors. Program members see Program and Calendar, with Exceptions and History available to managers, followed by a separator and scoped management actions. The active tab sets `aria-current`. Manager-only blocks depend on controller-computed permissions such as `@program_coordinator`, never on hidden markup.
+
+Use `shared/photo_series` inside a card's `data-photo-series` container to open its public primary photo and navigate the owner's remaining public photos. Use `shared/photo_thumbnail` inside `.photo-gallery` for gallery navigation. Both reuse the accessible photo-preview dialog, with wrapping previous/next buttons and arrow keys; placeholders remain ordinary links to their owner page.
 
 ## Actions
 

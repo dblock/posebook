@@ -84,13 +84,13 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
   it 'separates public view and calendar while keeping history private' do
     program = create_program(program_label: 'Session', participant_label: 'Model', instructions: 'Private instructions')
     get program_path(program)
-    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to eq(%w[View Calendar Photos])
-    expect(response.body).not_to include('Private instructions', 'Program Calendar')
+    expect(response.parsed_body.at_css('.program-tabs')).to be_nil
+    expect(response.body).to include('Session Calendar')
+    expect(response.body).not_to include('Private instructions')
     get program_path(program, section: 'history')
     expect(response).to have_http_status(:not_found)
     get program_path(program, section: 'calendar')
     expect(response.body).to include('Session Calendar')
-    expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Calendar')
     breadcrumb = response.parsed_body.at_css('nav[aria-label="Breadcrumb"]').text
     expect(breadcrumb).to include(program.venue.name, program.name)
   end
@@ -102,7 +102,7 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     sign_in(participant)
     get program_path(program, section: 'history')
     expect(response.body).to include('Your Booking History')
-    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to eq(%w[View Calendar Photos])
+    expect(response.parsed_body.css('.program-tabs a').map(&:text)).to eq(%w[Program Calendar Photos])
     get program_participants_path(program)
     expect(response).to have_http_status(:not_found)
   end
@@ -114,7 +114,7 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     sign_in(organizer)
     get program_participants_path(program)
     expect(response.parsed_body.css('.program-tabs .page-tab-group').map { |group| group.css('a').map(&:text) })
-      .to eq([%w[View Calendar Exceptions History],
+      .to eq([%w[Program Calendar Exceptions History],
               %w[Edit Photos Models Invitations Applications GCal]])
     expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Models')
     get program_coordinators_path(program)
@@ -124,7 +124,7 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     get program_coordinators_path(program)
     expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Coordinators')
     expect(response.parsed_body.css('.program-tabs a').map(&:text))
-      .to eq(['View', 'Calendar', 'Exceptions', 'History', 'Edit', 'Photos', 'Models', 'Invitations', 'Applications',
+      .to eq(['Program', 'Calendar', 'Exceptions', 'History', 'Edit', 'Photos', 'Models', 'Invitations', 'Applications',
               'Coordinators', 'Invite a Coordinator', 'Security', 'GCal'])
   end
 
@@ -204,6 +204,9 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
   it 'links venue and program visitors to an encoded address search when no Maps link is configured' do
     venue = create_venue(address: "123 Drawing Street & Studio #2\nNew York, NY")
     program = create_program(venue: venue)
+    coordinator = create_user
+    grant_coordinator_access(program, coordinator)
+    sign_in(coordinator)
     [venue_path(venue), program_path(program)].each do |path|
       get path
       link = response.parsed_body.at_css('.venue-google-maps')
@@ -300,9 +303,7 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     program = create_program(start_time: '19:15', time_zone: 'America/Los_Angeles',
                              available_weekdays: %w[3 1])
     sign_in(create_user(roles: ['system_admin']))
-    [programs_path, program_path(
-      program
-    ), program_participants_path(program), program_coordinators_path(program),
+    [programs_path, program_participants_path(program), program_coordinators_path(program),
      new_program_participant_invitation_path(
        program
      ), program_schedule_path(program)].each do |path|

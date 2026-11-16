@@ -120,4 +120,5 @@
 - [#133](https://github.com/dblock/posebook/pull/133): Add a headless Chrome browser test harness and document UI conventions - [@dblock](https://github.com/dblock).
 - [#134](https://github.com/dblock/posebook/pull/134): Direct contributors to check for existing behavior before building and map where it lives - [@dblock](https://github.com/dblock).
 - [#135](https://github.com/dblock/posebook/pull/135): Trim interface text, unify profile and admin tabs, add public participant profiles, per-program participant overrides, an Exceptions tab, no-reload photo actions and booking card polish - [@dblock](https://github.com/dblock).
+- [#136](https://github.com/dblock/posebook/pull/136): Add public upcoming sessions, role-specific homepages, venue programs and sessions, streamlined program and booking cards, photo preview navigation, coordinator sign-in destinations, Home breadcrumbs, and updated contact information - [@dblock](https://github.com/dblock).
 - Your contribution here.

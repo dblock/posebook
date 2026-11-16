@@ -53,13 +53,11 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     date = (Date.current..(Date.current + 7)).find { |day| day.cwday == 1 && day > Date.current }
     track_booking(BookingMutation.new(program: program, user: participant).book(date: date.iso8601))
     sign_in(participant)
-    [root_path, bookings_profile_path].each do |path|
-      get path
-      portrait = response.parsed_body.at_css('.upcoming-booking-photo')
-      expect(portrait.at_css('img')['src']).to include('venue-placeholder')
-      expect(portrait.at_css('a')['href']).to eq(venue_path(venue))
-      expect(portrait.at_css('[data-photo-preview]')).to be_nil
-    end
+    get bookings_profile_path
+    portrait = response.parsed_body.at_css('.upcoming-booking-photo')
+    expect(portrait.at_css('img')['src']).to include('venue-placeholder')
+    expect(portrait.at_css('a')['href']).to eq(venue_path(venue))
+    expect(portrait.at_css('[data-photo-preview]')).to be_nil
     get program_path(program, section: 'calendar')
     expect(response.parsed_body.at_css('.upcoming-booking-photo')).to be_nil
   end
@@ -76,8 +74,6 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     expect(response.parsed_body.css('.directory-tabs a').map(&:text)).not_to include('Programs')
     delete session_path
     get programs_venue_path(venue)
-    expect(response.parsed_body.at_css('.venue-tabs .page-tab-group:last-child [aria-current="page"]').text)
-      .to eq('Programs')
     expect(response.parsed_body.css('.venue-card')).to be_empty
     expect(response.parsed_body.at_css('.program-card').text).to include(program.name, venue.address)
     expect(response.body).not_to include('Private instructions')
@@ -109,10 +105,9 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     expect(image.parent['target']).to be_nil
   end
 
-  it 'moves venue photos into a public tab without granting management access' do
+  it 'keeps venue photos on a public page without granting management access' do
     get venue_path(venue)
-    expect(response.parsed_body.css('.venue-tabs a').map(&:text)).to eq(%w[View Photos Programs])
-    expect(response.parsed_body.at_css('.photo-gallery')).to be_nil
+    expect(response.parsed_body.at_css('.venue-tabs, .photo-gallery')).to be_nil
     get photos_venue_path(venue)
     expect(response.body).to include('No venue photos yet.')
     expect(response.parsed_body.at_css('.breadcrumbs [aria-current="page"]').text).to eq('Photos')
@@ -135,9 +130,25 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     expect(response.parsed_body.at_css('.venue-tabs [aria-current="page"]').text).to eq('Edit')
     delete session_path
     get venue_path(venue)
-    expect(response.parsed_body.at_css('.venue-tabs .tab-separator')['aria-hidden']).to eq('true')
-    expect(response.parsed_body.css('.venue-tabs .page-tab-group').map { |group| group.css('a').map(&:text) })
-      .to eq([['View'], %w[Photos Programs]])
+    expect(response.parsed_body.at_css('.page-tabs')).to be_nil
+  end
+
+  it 'previews every public venue photo from the venue card' do
+    photo
+    second = VenuePhoto.add(venue, photo_upload)
+    get venues_path
+    expect(response.parsed_body.css('.venue-card [data-photo-series] [data-photo-preview]').pluck('href'))
+      .to eq([venue_photo_path(venue, photo), venue_photo_path(venue, second)])
+  end
+
+  it 'lists every active venue to guests' do
+    venue
+    hidden = create_venue(name: 'Hidden Venue', active: false)
+    get venues_path
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body.css('.venue-card h2 a').map(&:text)).to include(venue.name)
+    expect(response.body).not_to include(hidden.name)
+    expect(response.parsed_body.at_css('.page-tabs')).to be_nil
   end
 
   it 'serves full-size and square optimized WebP images publicly without persistent caching' do
@@ -237,7 +248,7 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     date = (Date.current..(Date.current + 7)).find { |day| day.cwday == 1 && day > Date.current }
     track_booking(BookingMutation.new(program: program, user: participant).book(date: date.iso8601))
     sign_in(participant)
-    get root_path
+    get bookings_profile_path
     card = response.parsed_body.at_css('.upcoming-booking')
     expect(card.at_css('.upcoming-booking-photo img')['src']).to eq(venue_photo_path(venue, second, thumbnail: 1))
     expect(card.at_css('.upcoming-booking-photo a')['href']).to eq(venue_photo_path(venue, second))

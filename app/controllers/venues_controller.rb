@@ -3,18 +3,23 @@
 class VenuesController < ApplicationController
   include SlugConflictHandling
 
-  before_action :require_authentication, except: %i[show photos programs]
+  before_action :require_authentication, except: %i[index show photos programs]
   before_action :require_system_admin, only: %i[new create security]
   before_action :find_venue, only: %i[show photos programs edit update security]
   rescue_from LocationActivation::Forbidden, with: -> { head :forbidden }
   rescue_from LocationActivation::Invalid, with: -> { head :bad_request }
 
   def index
-    records = Venue.visible_to(current_user).and(Venue.viewable_by(current_user).selector)
+    records = Venue.viewable_by(current_user)
+    records = Venue.visible_to(current_user).and(records.selector) if current_user
     @venues = Venue.preload_primary_photos(records.order_by(name: :asc))
   end
 
-  def show; end
+  def show
+    records = Program.viewable_by(current_user).where(venue_id: @venue.id)
+    @programs = Program.preload_primary_photos(records.includes(:venue).order_by(name: :asc))
+    @sessions = UpcomingSessions.new(Program.viewable_by(nil).where(venue_id: @venue.id)).to_a
+  end
 
   def photos; end
 

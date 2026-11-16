@@ -5,4 +5,19 @@
              read_only: local_assigns[:read_only] %>
 <% end %>
 <% if bookings.empty? %><p>No upcoming bookings.</p><% end %>
-<%= render "programs/bookable", programs: dashboard.bookable_programs, read_only: local_assigns[:read_only] %>
+<% if local_assigns[:all_programs] %>
+  <% programs = dashboard.participating_programs %>
+  <% if programs.any? %>
+    <section aria-labelledby="participant-programs-heading">
+      <h2 id="participant-programs-heading">Your Programs</h2>
+      <div class="location-cards participant-programs">
+        <% programs.each do |program| %>
+          <%= render "programs/card", program: program,
+                     bookable: bookings.none? { |booking| booking.program_id == program.id } && dashboard.access_for(program.id).allowed? %>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+<% else %>
+  <%= render "programs/bookable", programs: dashboard.bookable_programs, read_only: local_assigns[:read_only] %>
+<% end %>

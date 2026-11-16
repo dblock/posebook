@@ -2,7 +2,11 @@
 
 [Back to Posebook](../../README.md)
 
-Choose **Venues** in the top menu to see your venues with their primary photo and location details. Open a venue, then choose **Programs** for the programs there or **Photos** for its gallery. Anyone with a venue link can view its address, Instagram, programs, and photos. A program link opens its details; choose **Calendar** for the public schedule or **Photos** for its independent gallery. Open your profile through your account name for current bookings, programs you can book, and **History** across all your programs. Lists and booking actions require sign-in and the appropriate access. Public calendars show only active participants' public names and opted-in Instagram handles; blank display names and inactive accounts appear as **To be announced**.
+The homepage lists upcoming sessions across active programs over the next two weeks for guests, with links to their program and venue. Signed-in participants see their own upcoming bookings and eligible programs to book; administrators and coordinators instead see **Programs You Manage**, including inactive programs they manage. Signed-in homepages retain a welcome message and links to your profile and venues. **Venues** lists all active venues for signed-out visitors and assigned venues for signed-in accounts. A venue page shows its address, Instagram, programs, and upcoming sessions. A program page shows its Next Session card and calendar; venue details, pay, booking horizon, instructions, and booking controls require membership. Public calendars show only active participants' public names and opted-in Instagram handles; blank display names and inactive accounts appear as **To be announced**.
+
+Signed-out pages hide tab bars and provide a **Sign In** button in the header. Signed-in members can choose **Program**, **Calendar**, and **Photos** on their programs. Open your profile through your account name for **Bookings**, programs you can book, **Programs** you manage, and **History** across all your programs. Booking actions require the appropriate access. Click a card or gallery photo to enlarge it, then use the previous/next arrows or keyboard arrow keys to navigate its series; cards show only public photos. Without JavaScript, the photo opens directly.
+
+Participants' homepages show **Your Programs** for every viewable program they belong to, including booked and paused programs, not only programs currently available to book. **Choose a Date** appears only with unused, active booking access and no current booking. Inactive pages retain their existing access limits; a membership alone does not make an inactive program publicly viewable. Profile **Bookings** keeps its separate eligible-program list.
 
 As a participant, choose an available date and confirm the date and time to make a booking. You can have one upcoming booking per recurring program, including multiple programs at the same venue. Invitations are program-specific, with no additional cross-program date/time conflict restriction. Use **Reschedule** or **Cancel Booking** on your booking to update plans, and provide a short explanation when prompted. Dates and times follow the program's time zone. All accounts require a private gender selection; programs may additionally enable gender rules.
 
@@ -12,10 +16,14 @@ A program may set a first bookable date while its earlier sessions are managed m
 
 When an end time is provided, the calendar and booking details show the duration, and the booking completes at that time. An overnight session can end the next day. Without an end time, a booking completes at the end of its local date.
 
-Your homepage lists your upcoming bookings in date/time order, with the venue's primary photo, address, and Google Maps link inside each booking card. The same date, attendance status, and booking buttons appear on the program's View and Calendar pages. **Reschedule** and **Cancel Booking** retain their existing explanations and deadlines; attendance confirmation appears when its window opens.
+Your profile's **Bookings** tab lists your upcoming bookings in date/time order, with the venue's primary photo, address, and Google Maps link inside each booking card. The same date, attendance status, and booking buttons appear on the program's Program and Calendar pages. **Reschedule** and **Cancel Booking** retain their existing explanations and deadlines; attendance confirmation appears when its window opens.
 
 Below upcoming bookings, **Programs You Can Book** lists programs where you have an unused active booking invitation and no current booking; it is hidden when there are none. Choose **Choose a Date** to open that program's calendar, including when its first bookable date is in the future. Paused, exhausted, revoked, and inactive access does not appear. The same booking list remains available on your profile.
 
 Location pages use `/venues/:slug`; calendars and bookings use `/programs/:slug`. Previous slugs remain valid within those paths. Old root shortcuts and venue-nested calendar/booking links are not redirected.
 
 Starting seven days before your booking, confirm that you will attend. Until five days before the booking, you can report that you can no longer make it and follow the rescheduling steps. After that cutoff, contact an organizer to reschedule; you can still confirm attendance or cancel.
+
+Upcoming booking cards place the booking status under their picture and group **I'll be there!** with **Cancel Booking**. When the organizer-contact notice is shown, the attendance-confirmation request appears inside that notice instead of being repeated above it.
+
+Click your upcoming booking's status label in the calendar to open its booking card on the program page.

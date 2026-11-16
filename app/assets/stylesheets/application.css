@@ -113,7 +113,7 @@ a:hover {
 }
 
 section {
-  margin-block: 2.5rem;
+  margin-block: 1.5rem;
 }
 
 dt,
@@ -299,17 +299,29 @@ nav {
 }
 
 .rescheduling-notice {
-  margin: 1rem 0;
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
   border: 1px solid #d6bd80;
   border-left-width: 4px;
   background: #fff3d4;
 }
 
-.rescheduling-notice h3 {
-  margin-top: 0;
+.rescheduling-notice h3,
+.rescheduling-notice p,
+.rescheduling-notice ul {
+  margin: 0;
+}
+
+.rescheduling-notice > * + * {
+  margin-top: 0.625rem;
+}
+
+.rescheduling-notice h3 + * {
+  margin-top: 1rem;
 }
 
 .rescheduling-notice ul {
+  margin-top: 1rem;
   padding-left: 0;
   list-style: none;
 }
@@ -342,7 +354,7 @@ nav {
   border: 1px solid var(--line);
   border-radius: var(--radius-box);
   background: var(--color-base-200);
-  margin-block: 1.5rem;
+  margin-block: 0.75rem;
 }
 
 .location-cards .location-card {
@@ -351,6 +363,7 @@ nav {
 
 .location-card-photo {
   flex: 0 1 12rem;
+  margin: 0;
 }
 
 .location-card-photo img {
@@ -363,6 +376,10 @@ nav {
 .location-card-summary {
   flex: 1 1 20rem;
   min-width: 0;
+}
+
+.location-card-summary > :last-child {
+  margin-bottom: 0;
 }
 
 .location-card h2,
@@ -389,6 +406,11 @@ nav {
   border-radius: var(--radius-box);
 }
 
+.upcoming-booking-photo figcaption {
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
 .upcoming-booking-summary {
   flex: 1 1 20rem;
   min-width: 0;
@@ -407,8 +429,13 @@ nav {
 .booking-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.75rem;
   margin-top: 1rem;
+}
+
+.booking-actions > form {
+  margin: 0;
 }
 
 .status-label {
@@ -617,6 +644,7 @@ table:not(.calendar) td:not(:first-child) .participant-actions {
 }
 
 [data-calendar] {
+  margin-block: 0.75rem;
   padding: 1.5rem;
   border: 1px solid var(--line);
   border-radius: var(--radius-box);
@@ -930,11 +958,6 @@ table:not(.calendar) td:not(:first-child) .participant-actions {
   background: rgb(0 0 0 / 65%);
 }
 
-.photo-preview-heading {
-  margin: 0 2.5rem 0.75rem 0;
-  font-size: 1.25rem;
-}
-
 .photo-preview .photo-preview-close {
   position: absolute;
   top: 0.5rem;
@@ -958,6 +981,33 @@ table:not(.calendar) td:not(:first-child) .participant-actions {
   max-width: 100%;
   max-height: calc(100dvh - 10rem);
   object-fit: contain;
+  min-width: 0;
+}
+
+.photo-preview-stage {
+  margin-top: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.photo-preview .photo-preview-nav {
+  flex: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  min-height: 2.5rem;
+  margin: 0;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.photo-preview-position {
+  margin: 0.5rem 0 0;
+  text-align: center;
+  font-size: 0.9rem;
 }
 
 .photo-preview [hidden] {

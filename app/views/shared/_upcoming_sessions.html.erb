@@ -1,0 +1,25 @@
+<%# locals: (sessions:, show_venue: true) %>
+<section aria-labelledby="upcoming-sessions-heading">
+  <h2 id="upcoming-sessions-heading">Upcoming Sessions</h2>
+  <% if sessions.any? %>
+    <div class="table-scroll" role="region" aria-label="Upcoming sessions" tabindex="0">
+      <table class="upcoming-sessions">
+        <thead><tr><th scope="col">Date</th><th scope="col">Time</th><th scope="col">Program</th><% if show_venue %><th scope="col">Venue</th><% end %><th scope="col">Booked</th></tr></thead>
+        <tbody>
+          <% sessions.each do |session| %>
+            <% program, booking = session.program, session.booking %>
+            <tr>
+              <td><time datetime="<%= (booking&.scheduled_start || session.starts_at).iso8601 %>"><%= session.date.strftime("%a, %b %-d") %></time></td>
+              <td><%= booking ? calendar_booking_time(booking) : scheduled_calendar_time(session.calendar, session.date) %></td>
+              <td><%= link_to program.name, program_path(program) %></td>
+              <% if show_venue %><td><%= link_to program.venue.name, venue_path(program.venue) %></td><% end %>
+              <td><% if booking&.user&.active? %><%= render "programs/booked_participant", booking: booking, program: program, manager: false %><% else %>To be announced<% end %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p>No sessions in the next two weeks.</p>
+  <% end %>
+</section>
