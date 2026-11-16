@@ -5,8 +5,7 @@
     <p><%= form.label :password %><br><%= form.password_field :password, required: true, autocomplete: "current-password" %></p>
     <p>
       <%= form.check_box :remember_me, checked: params[:remember_me] == "1" %>
-      <%= form.label :remember_me, "Remember me" %><br>
-      <small>Use only on a device you trust.</small>
+      <%= form.label :remember_me, "Remember me" %>
     </p>
     <%= form.submit "Sign In" %>
   <% end %>

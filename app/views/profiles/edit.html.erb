@@ -1,5 +1,5 @@
-<main>
-  <%= render "navigation", active: "edit" %>
+<main data-edit-in-place>
+  <%= render "profiles/navigation", user: @user, active: "edit" %>
   <h1>Edit Profile</h1>
   <%= render "shared/errors", record: @user %>
   <% if @user.pending_email.present? %>
@@ -8,12 +8,11 @@
   <%= form_with model: @user, url: profile_path, method: :patch, id: "profile-form" do |form| %>
     <p><%= form.label :name %><br><%= form.text_field :name, required: true, autocomplete: "name", maxlength: 100 %></p>
     <p><%= form.label :email %><br><%= form.email_field :email, value: @user.pending_email.presence || @user.email, required: true, autocomplete: "email" %></p>
-    <p><%= form.label :phone %><br><%= form.telephone_field :phone, required: true, autocomplete: "tel", placeholder: "(212) 555-1234" %><br>Include the country code outside the US and Canada. Phone recovery is not available yet.</p>
+    <p><%= form.label :phone %><br><%= form.telephone_field :phone, required: true, autocomplete: "tel", placeholder: "+1 (212) 555-1234" %></p>
     <%= render "shared/gender_field", form: form %>
-    <%= render "shared/public_profile_fields", form: form, self_service: true %>
-    <p><%= label_tag "profile-current-password", "Current password (required for email changes)" %><br><%= password_field_tag "user[current_password]", nil, id: "profile-current-password", autocomplete: "current-password" %></p>
+    <%= render "shared/public_profile_fields", form: form %>
+    <p><%= label_tag "profile-current-password", "Current Password (required for email changes)" %><br><%= password_field_tag "user[current_password]", nil, id: "profile-current-password", autocomplete: "current-password" %></p>
     <%= form.submit "Save Profile" %>
   <% end %>
-  <p><%= link_to "Cancel", details_profile_path %></p>
-  <%= render "shared/primary_profile_photo", user: @user %>
+  <p><%= link_to "Cancel", profile_path %></p>
 </main>

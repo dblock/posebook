@@ -57,7 +57,7 @@ RSpec.describe 'Accounts', :aggregate_failures, :database, type: :request do
     attributes = user_attributes(instagram_tagging_allowed: '1')
     post registration_path, params: { user: attributes }
     expect(response).to have_http_status(:unprocessable_content)
-    expect(response.parsed_body.text).to include("Instagram handle can't be blank")
+    expect(response.parsed_body.text).to include("Instagram Handle can't be blank")
     post registration_path, params: { user: attributes.merge(instagram_handle: 'https://example.com/artist') }
     expect(response).to have_http_status(:unprocessable_content)
     post registration_path, params: { user: attributes.merge(instagram_handle: '@Preview.Artist') }

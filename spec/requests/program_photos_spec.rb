@@ -46,8 +46,8 @@ RSpec.describe 'Program photos', :aggregate_failures, :database, type: :request 
     get edit_program_path(program)
     groups = response.parsed_body.css('.program-tabs .page-tab-group')
     expect(groups.map { |group| group.css('a').map(&:text) })
-      .to eq([%w[View Calendar History],
-              ['Photos', 'Participants', 'Participant Invitations', 'Applications', 'Edit', 'Google Calendar']])
+      .to eq([%w[View Calendar Exceptions History],
+              %w[Edit Photos Participants Invitations Applications GCal]])
     expect(response.parsed_body.at_css('.program-tabs .tab-separator')['aria-hidden']).to eq('true')
     expect(response.parsed_body.at_css('.breadcrumbs [aria-current="page"]').text).to eq('Edit')
     delete session_path
@@ -65,12 +65,56 @@ RSpec.describe 'Program photos', :aggregate_failures, :database, type: :request 
     expect(program.venue.photos).to be_empty
     get photos_program_path(program)
     expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Photos')
-    expect(response.parsed_body.at_css('.program-photo .status-label').text).to eq('Primary')
-    expect(response.body).to include('Upload Program Photo', 'Delete Photo')
+    expect(response.parsed_body.at_css('.program-photo figcaption').text).to include('Public', 'Primary')
+    expect(response.body).to include('Upload Photo', 'Delete Photo')
     delete session_path
     get photos_program_path(program)
     expect(response.parsed_body.at_css('.program-photo img')).to be_present
-    expect(response.body).not_to include('Upload Program Photo', 'Delete Photo', coordinator.email)
+    expect(response.body).not_to include('Upload Photo', 'Delete Photo', coordinator.email)
+  end
+
+  def expect_guest_cannot_view_private_photo(second)
+    delete session_path
+    get photos_program_path(program)
+    expect(response.parsed_body.css('[data-photo]').pluck('data-photo')).to eq([second.id.to_s])
+    expect_private_photo_not_found
+  end
+
+  def expect_private_photo_not_found
+    get program_photo_path(program, photo)
+    expect(response).to have_http_status(:not_found)
+  end
+
+  def expect_primary_photo_changes
+    patch program_photo_path(program, photo), params: { program_photo: { primary: '1' } }
+    expect(photo.reload).to be_public
+    expect(program.reload.primary_photo).to eq(photo)
+    clear_primary_photo
+  end
+
+  def clear_primary_photo
+    patch program_photo_path(program, photo), params: { program_photo: { public: '0' } }
+    expect(program.reload.primary_photo_id).to be_nil
+  end
+
+  it 'lets program managers keep photos private from guests, cards, and the primary selection' do
+    photo
+    second = ProgramPhoto.add(program, photo_upload)
+    sign_in(coordinator)
+    patch program_photo_path(program, photo), params: { program_photo: { public: '0' } }
+    expect(response).to redirect_to(photos_program_path(program))
+    expect(photo.reload).not_to be_public
+    expect(program.reload.primary_photo).to eq(second)
+    get photos_program_path(program)
+    expect(response.parsed_body.at_css("[data-photo='#{photo.id}'] figcaption").text).to include('Private')
+    expect(response.parsed_body.at_css("[data-photo='#{photo.id}']").text).to include('Make Public')
+    get programs_venue_path(program.venue)
+    expect(response.parsed_body.at_css("img[src='#{program_photo_path(program, second, thumbnail: 1)}']")).to be_present
+    expect_guest_cannot_view_private_photo(second)
+    sign_in(coordinator)
+    expect_primary_photo_changes
+    patch program_photo_path(program, photo), params: { program_photo: { public: 'maybe' } }
+    expect(response).to have_http_status(:bad_request)
   end
 
   it 'serves public optimized full images and square thumbnails without caching' do
@@ -88,7 +132,7 @@ RSpec.describe 'Program photos', :aggregate_failures, :database, type: :request 
     photo
     second = ProgramPhoto.add(program, photo_upload)
     sign_in(coordinator)
-    patch program_photo_path(program, second)
+    patch program_photo_path(program, second), params: { program_photo: { primary: '1' } }
     expect(response).to redirect_to(photos_program_path(program))
     expect(program.reload.primary_photo).to eq(second)
     change = program.history_tracks.last

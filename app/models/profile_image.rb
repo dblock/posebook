@@ -30,7 +30,7 @@ class ProfileImage
 
   def validate_upload(upload)
     unless upload.respond_to?(:tempfile) && upload.tempfile.size.between?(1, MAX_BYTES)
-      raise Invalid, 'Choose a JPEG, PNG, or WebP photo up to 10 MB.'
+      raise Invalid, 'Choose a JPEG, PNG, or WebP photo no larger than 10 MB.'
     end
 
     return if CONTENT_TYPES.include?(Marcel::MimeType.for(upload.tempfile))
@@ -41,7 +41,7 @@ class ProfileImage
   def validate_source
     return if LOADERS.include?(@source.get('vips-loader')) && @source.width * @source.height <= MAX_PIXELS
 
-    raise Invalid, 'Choose a JPEG, PNG, or WebP photo no larger than 40 megapixels.'
+    raise Invalid, 'Choose a JPEG, PNG, or WebP photo no larger than 10 MB.'
   end
 
   def encode(image)

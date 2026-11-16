@@ -1,6 +1,6 @@
 <main>
   <%= render "navigation", venue: @venue, active: "programs" %>
-  <h1>Programs at <%= @venue.name %></h1>
+  <h1>Programs</h1>
   <div class="location-cards">
     <% @programs.each do |program| %><%= render "programs/card", program: program %><% end %>
   </div>

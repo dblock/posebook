@@ -20,7 +20,7 @@
     <% end %>
     <%= render "programs/booked_participant", booking: booking, manager: @program_coordinator if booking %>
     <% if booking && @program_coordinator && booking.ends_at > Time.current %><%= link_to "Edit Booking", edit_program_organizer_booking_path(calendar.program, booking) %><% end %>
-    <% if reason && reason != label && !no_session && !(public_view && booking) %><small><%= reason %></small><% end %>
+    <% if reason && reason != label && !no_session && !(booking && (public_view || @program_coordinator)) %><small><%= reason %></small><% end %>
     <% if reason != "Future" && !public_view && calendar.schedule.exceptions[date]&.mode == "open" %><small><%= calendar.schedule.exceptions[date].reason %></small><% end %>
     <% if !reason && @changing_booking %>
       <%= button_tag "Choose", type: "submit", form: "booking-change-form", name: "date", value: date.iso8601, aria: { label: "Choose #{date.iso8601}" } %>

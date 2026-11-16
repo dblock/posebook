@@ -1,0 +1,25 @@
+<main data-edit-in-place>
+  <%= render "profiles/navigation", user: @user, active: "security" %>
+  <h1>Security</h1>
+  <section id="reset-password" aria-labelledby="reset-password-heading">
+    <h2 id="reset-password-heading">Reset Password</h2>
+    <% if @user.active? %>
+      <p>Email <%= @user.email %> a link to choose a new password. The link expires in 30 minutes.</p>
+      <%= button_to "Send Password Reset Email", password_reset_admin_user_path(@user) %>
+    <% else %>
+      <p>Reactivate this account before resetting its password.</p>
+    <% end %>
+  </section>
+  <section id="account-access" aria-labelledby="account-access-heading">
+    <h2 id="account-access-heading">Account Access</h2>
+    <% if !@user.active? %>
+      <p>This account is inactive and cannot sign in.</p>
+      <%= button_to "Reactivate", admin_user_path(@user), method: :patch, params: { active: true, return_to: "security" } %>
+    <% elsif @user.system_admin? %>
+      <p>Administrator accounts cannot be deactivated.</p>
+    <% else %>
+      <p>Deactivating signs this user out everywhere and prevents sign-in and password recovery.</p>
+      <%= button_to "Deactivate", admin_user_path(@user), method: :patch, params: { active: false, return_to: "security" } %>
+    <% end %>
+  </section>
+</main>

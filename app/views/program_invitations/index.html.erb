@@ -1,10 +1,9 @@
 <main>
   <%= render "programs/navigation", program: @program, active: "invitations" %>
-  <h1><%= @program.participant_label.titleize %> Invitations at <%= @program.name %></h1>
+  <h1>Invitations</h1>
   <p><%= link_to "Invite #{@program.participant_article} #{@program.participant_label.titleize}", new_program_participant_invitation_path(@program), class: "button-link" %></p>
-  <p>Personal invitations let one person join this <%= @program.program_label.downcase %>. Invited dates show link creation, not proof of email delivery. Times use <%= @program.time_zone %>.</p>
   <% if @invitations.empty? %>
-    <p>No invitations on this page.</p>
+    <p>No invitations<%= " on this page" if @page > 1 %>.</p>
   <% else %>
     <p class="scroll-hint">Scroll horizontally to view invitation dates and actions.</p>
     <div class="table-scroll" role="region" aria-label="<%= @program.participant_label.titleize %> invitations" tabindex="0">
@@ -33,9 +32,11 @@
       </table>
     </div>
   <% end %>
-  <nav class="participant-pagination" aria-label="Invitation pages">
-    <% if @page > 1 %><%= link_to "Previous", program_participant_invitations_path(@program, page: @page - 1), rel: "prev" %><% end %>
-    <span>Page <%= @page %></span>
-    <% if @more %><%= link_to "Next", program_participant_invitations_path(@program, page: @page + 1), rel: "next" %><% end %>
-  </nav>
+  <% if @page > 1 || @more %>
+    <nav class="participant-pagination" aria-label="Invitation pages">
+      <% if @page > 1 %><%= link_to "Previous", program_participant_invitations_path(@program, page: @page - 1), rel: "prev" %><% end %>
+      <span>Page <%= @page %></span>
+      <% if @more %><%= link_to "Next", program_participant_invitations_path(@program, page: @page + 1), rel: "next" %><% end %>
+    </nav>
+  <% end %>
 </main>

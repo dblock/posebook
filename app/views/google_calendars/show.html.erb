@@ -1,13 +1,11 @@
 <main>
   <%= render "programs/navigation", program: @program, active: "google_calendar" %>
   <h1>Google Calendar</h1>
-  <p>Synchronize booked slots for <%= @program.name %> to a private Google calendar. Events include the model's private name, phone, email, gender, and Instagram tagging preferences. The model and organizers receive invitations, updates, and cancellations.</p>
-  <p>Only grant calendar access to authorized organizers. Do not use a public calendar. Calendar guests must not forward these private details. Google reminders are disabled.</p>
   <% if @connection&.enabled? %>
     <p>Connected calendar: <%= @connection.calendar_id %></p>
     <p><%= @pending_count %> booking changes awaiting synchronization.</p>
     <%= button_to "Disconnect Google Calendar", program_google_calendar_path(@program), method: :delete %>
-    <p>Disconnecting stops synchronization but does not remove existing Google events or invitations. Reconnecting a different calendar leaves events in the old calendar; remove those manually first.</p>
+    <p><small>Disconnecting leaves existing events.</small></p>
   <% end %>
   <% if GoogleCalendarConnection.configured? %>
     <%= form_with scope: :google_calendar, url: program_google_calendar_path(@program) do |form| %>
@@ -15,8 +13,9 @@
       <p><label><%= form.check_box :private_calendar, required: true %> This calendar is private and shared only with authorized organizers.</label></p>
       <%= form.submit @connection&.enabled? ? "Reconnect Google Calendar" : "Connect Google Calendar" %>
     <% end %>
+  <% elsif current_user.system_admin? %>
+    <p>Google Calendar is not available. Set <code>GOOGLE_CALENDAR_CLIENT_ID</code>, <code>GOOGLE_CALENDAR_CLIENT_SECRET</code>, and <code>GOOGLE_CALENDAR_REDIRECT_URI</code> to enable it; see <%= link_to "Google Calendar setup", "https://github.com/dblock/posebook/blob/master/docs/google-calendar.md" %>.</p>
   <% else %>
-    <p>An administrator must configure the Google OAuth client and start the calendar worker before connecting.</p>
+    <p>Google Calendar is not available. Ask an administrator to enable it.</p>
   <% end %>
-  <p><%= link_to "Back to Calendar", program_path(@program, section: "calendar") %></p>
 </main>

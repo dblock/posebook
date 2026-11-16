@@ -5,7 +5,7 @@
   <%= form.hidden_field :lock_version, value: values[:lock_version], id: nil if @booking %>
   <%= form.label :user_id, @program.participant_label.titleize %>
   <%= form.select :user_id, @participants.map { |participant| [participant_contact_label(participant), participant.id] }, selected: values[:user_id], include_blank: "Choose #{@program.participant_article} #{@program.participant_label.downcase}" %>
-  <%= form.label :date, "Booking date" %>
+  <%= form.label :date, "Booking Date" %>
   <%= form.date_field :date, value: values[:date], required: true %>
   <%= form.label :attendance, "Attendance" %>
   <%= form.select :attendance, [["Booked", "unconfirmed"], ["Confirmed", "confirmed"]], selected: values[:attendance] %>
@@ -24,7 +24,7 @@
   <h2>Cancel Booking</h2>
   <%= form_with url: cancel_program_organizer_booking_path(@program, @booking), scope: :booking do |form| %>
     <%= form.hidden_field :lock_version, value: values[:lock_version], id: nil %>
-    <%= form.label :reason, "Cancellation explanation", for: "booking-cancellation-reason" %>
+    <%= form.label :reason, "Cancellation Explanation", for: "booking-cancellation-reason" %>
     <%= form.text_area :reason, id: "booking-cancellation-reason", required: true, maxlength: 2000, rows: 2 %>
     <%= form.submit "Cancel Booking" %>
   <% end %>

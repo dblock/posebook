@@ -20,8 +20,16 @@ class VenuePhotosController < ApplicationController
   end
 
   def update
-    @venue.update!(primary_photo_id: @photo.id)
-    redirect_to photos_venue_path(@venue), notice: t('photos.venue_primary_updated'), status: :see_other
+    attributes = params.expect(venue_photo: %i[public primary])
+    if attributes[:primary] == '1'
+      @photo.select_primary
+      redirect_to photos_venue_path(@venue), notice: t('photos.venue_primary_updated'), status: :see_other
+    else
+      raise ActionController::BadRequest unless %w[0 1].include?(attributes[:public])
+
+      @photo.change_visibility(attributes[:public] == '1')
+      redirect_to photos_venue_path(@venue), notice: t('photos.updated'), status: :see_other
+    end
   end
 
   def destroy
@@ -39,7 +47,8 @@ class VenuePhotosController < ApplicationController
   end
 
   def find_photo
-    @photo = @venue.photos.find(params.expect(:id))
+    scope = @venue.coordinated_by?(current_user) ? @venue.photos : @venue.photos.visible
+    @photo = scope.find(params.expect(:id))
   end
 
   def invalid_upload(error)

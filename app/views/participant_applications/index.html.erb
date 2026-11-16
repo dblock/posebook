@@ -1,11 +1,11 @@
 <main>
-  <%= render "profiles/navigation", active: "applications" %>
-  <h1>Your Applications</h1>
-  <% if @applications.empty? %><p>No applications yet. Browse <%= link_to "Venues", venues_path %> to find programs accepting applications.</p><% end %>
+  <%= render "profiles/navigation", user: @user, active: "applications" %>
+  <h1>Applications</h1>
+  <% if @applications.empty? && @user == current_user %><p>Browse <%= link_to "Venues", venues_path %> to find programs accepting applications.</p><% end %>
   <ul>
     <% @applications.each do |application| %>
-      <li><%= link_to application.program.name, program_participation_application_path(application.program) %> - <%= application.status_label %></li>
+      <li><%= link_to application.program.name, @user == current_user ? program_participation_application_path(application.program) : program_application_path(application.program, application) %> - <%= application.status_label %></li>
     <% end %>
   </ul>
-  <p><%= link_to "Previous", applications_profile_path(page: @page - 1) if @page > 1 %> <%= link_to "Next", applications_profile_path(page: @page + 1) if @more %></p>
+  <p><%= link_to "Previous", user_page_path(@user, "applications", page: @page - 1) if @page > 1 %> <%= link_to "Next", user_page_path(@user, "applications", page: @page + 1) if @more %></p>
 </main>

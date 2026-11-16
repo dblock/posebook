@@ -1,7 +1,8 @@
 <% bookings = dashboard.upcoming_bookings %>
 <% bookings.each do |booking| %>
   <%= render "bookings/upcoming", program: booking.program, booking: booking,
-             can_book: dashboard.access_for(booking.program_id).allowed?, show_venue: true %>
+             can_book: dashboard.access_for(booking.program_id).allowed?, show_venue: true,
+             read_only: local_assigns[:read_only] %>
 <% end %>
 <% if bookings.empty? %><p>No upcoming bookings.</p><% end %>
-<%= render "programs/bookable", programs: dashboard.bookable_programs %>
+<%= render "programs/bookable", programs: dashboard.bookable_programs, read_only: local_assigns[:read_only] %>

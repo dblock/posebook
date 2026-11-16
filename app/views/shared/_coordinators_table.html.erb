@@ -1,0 +1,18 @@
+<% if coordinators.any? %>
+  <div class="table-scroll" role="region" aria-label="Coordinators" tabindex="0">
+    <table class="coordinator-list">
+      <thead><tr><th>Coordinator</th><th>Status</th><th>Remove</th></tr></thead>
+      <tbody>
+        <% coordinators.each do |membership| %>
+          <tr data-membership="<%= membership.id %>">
+            <td><%= membership.user.name %><br><%= mail_to membership.user.email %></td>
+            <td><%= status_label(membership.user.active? ? "Active" : "Inactive") %></td>
+            <td><%= button_to "Remove Coordinator", remove_path.call(membership), method: :delete, class: "secondary-action" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <p>No coordinators yet.</p>
+<% end %>

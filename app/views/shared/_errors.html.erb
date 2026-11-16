@@ -1,9 +1,16 @@
 <% if record.errors.any? %>
-  <div class="form-errors" role="alert">
-    <ul>
-      <% record.errors.full_messages.each do |message| %>
-        <li><%= message %></li>
-      <% end %>
-    </ul>
-  </div>
+  <% content_for :flash do %>
+    <% messages = record.errors.full_messages %>
+    <% if messages.one? %>
+      <p class="flash flash-alert" role="alert"><%= messages.first %></p>
+    <% else %>
+      <div class="flash flash-alert" role="alert">
+        <ul>
+          <% messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+  <% end %>
 <% end %>

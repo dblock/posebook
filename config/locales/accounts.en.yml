@@ -16,7 +16,7 @@ en:
     manager_required: Schedule access is required.
     attendance_required: Choose whether attendance is confirmed.
     organizer_created: Booking created by an organizer.
-    organizer_saved: Booking saved. Previous bookings and attendance changes remain in the history.
+    organizer_saved: Booking saved.
     participant_required: Accept a %{participant_label} invitation for this %{program_label} before booking.
     gender_required: Select a gender in the %{participant_label}'s profile to book with this %{program_label}'s gender rules.
     gender_restricted: Unavailable under this %{program_label}'s consecutive-gender rule.
@@ -31,7 +31,6 @@ en:
     conflict: Another request claimed this email or membership. Try again, or sign in with an existing account.
     email_mismatch: must match the invited email address
     wrong_account: "This invitation is for %{email}. Sign out and sign in using that email address, or register with it."
-    delivery_unavailable: Email delivery needs an address and configured SMTP. Uncheck email delivery to share a link instead.
     delivery_failed: Email could not be queued. Copy the personal link and share it directly instead.
     subject: "You are invited as %{participant_article} %{participant_label} at %{program}"
   accounts:
@@ -55,6 +54,7 @@ en:
   password_resets:
     unavailable: Password reset email is not configured. Contact the organizer.
     queued: If that account exists, password reset instructions have been queued for email.
+    admin_queued: Password reset email queued for %{email}.
     failed: Email could not be queued. Please try again later.
     updated: Password updated. Sign in with your new password.
     invalid: This reset link is invalid or expired.

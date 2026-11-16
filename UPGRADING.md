@@ -16,11 +16,15 @@ Requests now report email queued rather than sent. Existing token lifetimes are 
 
 ## Instagram Tagging
 
-First-user and invitation registration forms now select Instagram tagging by default and require a valid handle when selected. Users can clear the checkbox. Existing accounts and their saved preferences are unchanged; no migration is required. If a new user selects private identity and the browser omits the disabled public-sharing fields, tagging is off until explicitly enabled.
+First-user and invitation registration forms select Instagram tagging by default and require a valid handle when selected. Users can clear the checkbox. Existing account preferences remain unchanged except for users who selected the retired private identity option; run the explicit retirement task below before starting this version.
 
 ## Required Phone and Gender
 
 Before serving this version, stop all application writers, back up MongoDB, and run `bundle exec rake users:backfill_required_details` using the new application image and the production `MONGODB_URI`. The command runs explicitly, not at startup. It fills only blank phone values with the fictional US number `+12025550100` and only blank gender values with `male`, including inactive accounts; existing values are preserved. Each changed account is saved with audit history in its own transaction. If a validation or database error stops the command, fix it and rerun; completed accounts are skipped. Do not start the new application until it succeeds.
+
+## Retiring Private Identity
+
+Before serving this version, also run `bundle exec rake users:retire_private_identity` using the new application image and production `MONGODB_URI`. This explicit, repeatable task uses raw MongoDB updates: users whose legacy field is true have their display name cleared, Instagram tagging disabled, and every embedded profile photo marked private; the field is then unset from every user document. Stop all application writers and back up MongoDB before running it, and do not start the new application until it succeeds.
 
 These are placeholders, not verified contact details or confirmed genders. Ask affected users to update their profiles. The default gender can affect consecutive-gender booking rules; review affected bookings and scheduling decisions. New registrations and profile edits now require both fields; formatted phone input is normalized to international format. Phone verification and messaging remain unavailable.
 

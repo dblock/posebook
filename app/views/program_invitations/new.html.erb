@@ -3,11 +3,9 @@
   <h1>Invite <%= @program.participant_article %> <%= @program.participant_label.titleize %> to <%= @program.name %></h1>
   <%= render "programs/regular_schedule", program: @program %>
   <%= render "shared/errors", record: @invitation %>
-  <p>Create a single-use personal link to share privately. Leave email blank to let the recipient use any account, or enter an email to restrict acceptance to that address. Links expire in 30 days.</p>
   <%= form_with model: @invitation, url: program_participant_invitations_path(@program) do |form| %>
-    <p><%= form.label :name, "Name or handle (optional)" %><br><%= form.text_field :name, maxlength: 100 %></p>
-    <p><%= form.label :email, "Email (optional)" %><br><%= form.email_field :email %></p>
-    <p><label><%= check_box_tag :send_email, "1", params[:send_email] == "1" %> Also send the invitation by email</label></p>
+    <p><%= form.label :name, "Name or Handle" %><br><%= form.text_field :name, maxlength: 100 %></p>
+    <p><%= form.label :email, "Email (optional)" %><br><%= form.email_field :email, aria: { describedby: "invitation-email-hint" } %><br><small id="invitation-email-hint">Leave email blank to let the recipient use any account.</small></p>
     <%= form.submit "Create Invitation" %>
   <% end %>
   <p><%= link_to "Cancel", program_participant_invitations_path(@program) %></p>

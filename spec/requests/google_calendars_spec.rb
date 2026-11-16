@@ -111,10 +111,10 @@ RSpec.describe 'Google Calendar connections', :aggregate_failures, :database, ty
     user = booking.user
     grant_coordinator_access(program, user)
     sign_in(user)
-    get profile_path
+    get bookings_profile_path
     expect(response.parsed_body.at_css('.google-calendar-rsvp .status-label').text).to eq('Declined')
     program.memberships.find_by(user_id: user.id).revoke_coordinator_access
-    get profile_path
+    get bookings_profile_path
     expect(response.parsed_body.at_css('.google-calendar-rsvp')).to be_nil
   end
 
@@ -148,6 +148,19 @@ RSpec.describe 'Google Calendar connections', :aggregate_failures, :database, ty
     expect(response.body).to include('Google Calendar', 'private')
     expect(response.parsed_body.at_css('[name="google_calendar[private_calendar]"][type="checkbox"]')['required'])
       .to be_present
+  end
+
+  it 'explains unavailable Google access with configuration details only for administrators' do
+    ENV.delete('GOOGLE_CALENDAR_CLIENT_ID')
+    sign_in(organizer)
+    get program_google_calendar_path(program)
+    expect(response.body).to include('Google Calendar is not available. Ask an administrator to enable it.')
+    expect(response.body).not_to include('GOOGLE_CALENDAR_CLIENT_ID')
+    expect(response.parsed_body.at_css('[name="google_calendar[calendar_id]"]')).to be_nil
+    sign_in(create_user(roles: ['system_admin']))
+    get program_google_calendar_path(program)
+    expect(response.body).to include('Google Calendar is not available.', 'GOOGLE_CALENDAR_CLIENT_ID')
+    expect(response.body).not_to include('Ask an administrator')
   end
 
   it 'requires explicit private-calendar confirmation before redirecting to Google' do

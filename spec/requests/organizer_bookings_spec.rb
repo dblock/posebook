@@ -29,8 +29,7 @@ RSpec.describe 'Organizer bookings', :aggregate_failures, :database, type: :requ
   end
 
   it 'uses the same escaped name, email, and gender label with and without gender rules' do
-    participant.update!(name: 'Drawing <Model> & Artist', instagram_handle: 'drawing.model',
-                        public_profile_private: true)
+    participant.update!(name: 'Drawing <Model> & Artist', instagram_handle: 'drawing.model')
     get new_program_organizer_booking_path(program)
     option = response.parsed_body.at_css("#booking_user_id option[value='#{participant.id}']")
     expect(option.text).to eq("Drawing <Model> & Artist <#{participant.email}> (Other)")

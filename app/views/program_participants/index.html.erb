@@ -4,13 +4,12 @@
   <%= render "programs/regular_schedule", program: @program %>
   <p class="participant-counts"><strong><%= @roster.counts[:total] %> total <%= @program.participant_label.pluralize.downcase %></strong> &middot; <%= @roster.counts[:available] %> <%= status_label("available") %> &middot; <%= @roster.counts[:booked] %> <%= status_label("booked") %> &middot; <%= @roster.counts[:paused] %> <%= status_label("paused") %> &middot; <%= @roster.counts[:inactive] %> <%= status_label("inactive") %></p>
   <%= button_to "Invite All Available #{@program.participant_label.pluralize.titleize} (#{@roster.counts[:available]})", invite_all_program_participants_path(@program, page: @roster.page), disabled: @roster.counts[:available].zero? %>
-  <p>Invites available <%= @program.participant_label.pluralize.downcase %> across <strong>all pages</strong>, not just the <%= @program.participant_label.pluralize.downcase %> shown below.</p>
   <% if @memberships.any? %>
     <p>Showing <%= @roster.first_number %>&ndash;<%= @roster.last_number %> of <%= @roster.counts[:total] %> <%= @program.participant_label.pluralize.downcase %></p>
     <p class="scroll-hint">Scroll horizontally to view <%= @program.participant_label.downcase %> access and actions.</p>
     <div class="table-scroll" role="region" aria-label="<%= @program.program_label.titleize %> <%= @program.participant_label.pluralize.downcase %>" tabindex="0">
       <table class="participant-roster">
-        <thead><tr><th><%= @program.participant_label.titleize %></th><th>Booking Access</th><th>Actions</th></tr></thead>
+        <thead><tr><th><%= @program.participant_label.titleize %></th><th>Booking Access</th><th>Pause</th><th>Details</th></tr></thead>
         <tbody>
           <% @memberships.each do |membership| %>
             <% access = @roster.access_for(membership) %>
@@ -31,7 +30,7 @@
                   <% if access.booking&.attendance_overdue? %><small class="attendance-warning" role="status">Please contact an organizer ASAP.</small><% end %>
                 <% end %>
                 <% if membership.participant_pause_reason.present? %>
-                  <details><summary>Pause note</summary><p>Last pause: <%= membership.participant_pause_reason %></p></details>
+                  <details><summary>Pause Note</summary><p>Last pause: <%= membership.participant_pause_reason %></p></details>
                 <% end %>
                 <% if membership.user.active? && !access.paused? && !access.booking %>
                   <%= button_to "Invite to Book", invite_program_participant_path(@program, membership, page: @roster.page), class: "secondary-action" %>
@@ -39,21 +38,24 @@
               </td>
               <td>
                 <div class="participant-actions">
-                  <%= link_to "Edit #{@program.participant_label.titleize}", edit_program_participant_path(@program, membership), class: "button-link" %>
                   <% if access.paused? %>
                     <%= button_to "Resume #{@program.participant_label.titleize}", resume_program_participant_path(@program, membership, page: @roster.page), class: "secondary-action" %>
                   <% else %>
                     <details class="participant-pause">
-                      <summary>Pause <%= @program.participant_label.titleize %></summary>
+                      <summary class="button-link">Pause <%= @program.participant_label.titleize %></summary>
                       <%= form_with url: pause_program_participant_path(@program, membership, page: @roster.page) do |form| %>
-                        <%= form.label :reason, "Pause explanation", for: "pause-reason-#{membership.id}" %>
-                        <%= form.text_area :reason, id: "pause-reason-#{membership.id}", required: true, maxlength: 200, rows: 2 %>
-                        <%= form.submit "Pause #{@program.participant_label.titleize}", class: "secondary-action" %>
+                        <%= form.text_area :reason, id: "pause-reason-#{membership.id}", required: true, maxlength: 200, rows: 2,
+                                           placeholder: "Explanation required", aria: { label: "Pause explanation" } %>
+                        <div class="participant-pause-actions">
+                          <%= form.submit "Pause #{@program.participant_label.titleize}", class: "secondary-action" %>
+                          <button type="button" class="secondary-action" data-close-details>Cancel</button>
+                        </div>
                       <% end %>
                     </details>
                   <% end %>
                 </div>
               </td>
+              <td><%= link_to "Edit", edit_program_participant_path(@program, membership) %></td>
             </tr>
           <% end %>
         </tbody>

@@ -53,7 +53,7 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     date = (Date.current..(Date.current + 7)).find { |day| day.cwday == 1 && day > Date.current }
     track_booking(BookingMutation.new(program: program, user: participant).book(date: date.iso8601))
     sign_in(participant)
-    [root_path, profile_path].each do |path|
+    [root_path, bookings_profile_path].each do |path|
       get path
       portrait = response.parsed_body.at_css('.upcoming-booking-photo')
       expect(portrait.at_css('img')['src']).to include('venue-placeholder')
@@ -96,12 +96,14 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     expect(venue.photos.count).to eq(1)
     get photos_venue_path(venue)
     expect(response.parsed_body.at_css('.venue-tabs [aria-current="page"]').text).to eq('Photos')
-    expect(response.parsed_body.at_css('.venue-photo button.secondary-action').text).to eq('Delete Photo')
+    expect(response.parsed_body.css('.venue-card')).to be_empty
+    expect(response.parsed_body.css('.venue-photo button.secondary-action').map(&:text)).to eq(['Make Private',
+                                                                                                'Delete Photo'])
     delete session_path
     get photos_venue_path(venue)
     image = response.parsed_body.at_css('.venue-photo img')
     expect(image.attributes.transform_values(&:value)).to include('width' => '400', 'height' => '400')
-    expect(response.body).not_to include('Upload Venue Photo', admin.email)
+    expect(response.body).not_to include('Upload Photo', admin.email)
     expect(response.parsed_body.at_css('.venue-photo button.secondary-action')).to be_nil
     expect(image.parent['data-photo-preview']).to eq('true')
     expect(image.parent['target']).to be_nil
@@ -109,7 +111,7 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
 
   it 'moves venue photos into a public tab without granting management access' do
     get venue_path(venue)
-    expect(response.parsed_body.css('.venue-tabs a').map(&:text)).to eq(%w[View Programs Photos])
+    expect(response.parsed_body.css('.venue-tabs a').map(&:text)).to eq(%w[View Photos Programs])
     expect(response.parsed_body.at_css('.photo-gallery')).to be_nil
     get photos_venue_path(venue)
     expect(response.body).to include('No venue photos yet.')
@@ -118,7 +120,7 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     sign_in(admin)
     get edit_venue_path(venue)
     expect(response.parsed_body.css('.venue-tabs a').map(&:text))
-      .to eq(['View', 'Programs', 'Photos', 'Edit', 'Coordinators', 'Create Program'])
+      .to eq(['View', 'Edit', 'Photos', 'Programs', 'New Program', 'Invite a Coordinator', 'Security'])
     expect(response.parsed_body.at_css('.venue-tabs [aria-current="page"]').text).to eq('Edit')
   end
 
@@ -129,13 +131,13 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
       .to eq([['Venues'], ['Create Venue']])
     get edit_venue_path(venue)
     expect(response.parsed_body.css('.venue-tabs .page-tab-group').map { |group| group.css('a').map(&:text) })
-      .to eq([['View'], ['Programs', 'Photos', 'Edit', 'Coordinators', 'Create Program']])
+      .to eq([['View'], ['Edit', 'Photos', 'Programs', 'New Program', 'Invite a Coordinator', 'Security']])
     expect(response.parsed_body.at_css('.venue-tabs [aria-current="page"]').text).to eq('Edit')
     delete session_path
     get venue_path(venue)
     expect(response.parsed_body.at_css('.venue-tabs .tab-separator')['aria-hidden']).to eq('true')
     expect(response.parsed_body.css('.venue-tabs .page-tab-group').map { |group| group.css('a').map(&:text) })
-      .to eq([['View'], %w[Programs Photos]])
+      .to eq([['View'], %w[Photos Programs]])
   end
 
   it 'serves full-size and square optimized WebP images publicly without persistent caching' do
@@ -156,8 +158,8 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     grant_venue_access(venue, coordinator)
     sign_in(coordinator)
     get photos_venue_path(venue)
-    expect(response.parsed_body.at_css("[data-photo='#{photo.id}'] .status-label").text).to eq('Primary')
-    patch venue_photo_path(venue, second)
+    expect(response.parsed_body.at_css("[data-photo='#{photo.id}'] figcaption").text).to include('Primary')
+    patch venue_photo_path(venue, second), params: { venue_photo: { primary: '1' } }
     expect(response).to redirect_to(photos_venue_path(venue))
     expect(venue.reload.primary_photo).to eq(second)
     change = HistoryTracker.where('association_chain.id': venue.id, action: 'update').last
@@ -165,8 +167,51 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     expect(change.modifier_id).to eq(coordinator.id)
     get photos_venue_path(venue)
     selected = response.parsed_body.at_css("[data-photo='#{second.id}']")
-    expect(selected.at_css('.status-label').text).to eq('Primary')
-    expect(selected.text).not_to include('Set Primary Photo')
+    expect(selected.at_css('figcaption').text).to include('Primary')
+    expect(selected.text).not_to include('Make Primary')
+  end
+
+  def expect_guest_cannot_view_private_photo(second)
+    delete session_path
+    get photos_venue_path(venue)
+    expect(response.parsed_body.css('[data-photo]').pluck('data-photo')).to eq([second.id.to_s])
+    expect_private_photo_not_found
+  end
+
+  def expect_private_photo_not_found
+    get venue_photo_path(venue, photo)
+    expect(response).to have_http_status(:not_found)
+  end
+
+  def expect_primary_photo_changes
+    patch venue_photo_path(venue, photo), params: { venue_photo: { primary: '1' } }
+    expect(photo.reload).to be_public
+    expect(venue.reload.primary_photo).to eq(photo)
+    clear_primary_photo
+  end
+
+  def clear_primary_photo
+    patch venue_photo_path(venue, photo), params: { venue_photo: { public: '0' } }
+    expect(venue.reload.primary_photo_id).to be_nil
+  end
+
+  it 'lets coordinators keep venue photos private from guests, cards, and the primary selection' do
+    photo
+    second = VenuePhoto.add(venue, photo_upload)
+    sign_in(admin)
+    patch venue_photo_path(venue, photo), params: { venue_photo: { public: '0' } }
+    expect(response).to redirect_to(photos_venue_path(venue))
+    expect(photo.reload).not_to be_public
+    expect(venue.reload.primary_photo).to eq(second)
+    get photos_venue_path(venue)
+    labels = response.parsed_body.at_css("[data-photo='#{photo.id}'] figcaption").text
+    expect(labels).to include('Private')
+    expect(response.parsed_body.at_css("[data-photo='#{photo.id}']").text).to include('Make Public')
+    get venues_path
+    expect(response.parsed_body.at_css('.venue-card img')['src']).to eq(venue_photo_path(venue, second, thumbnail: 1))
+    expect_guest_cannot_view_private_photo(second)
+    sign_in(admin)
+    expect_primary_photo_changes
   end
 
   it 'falls back to the first remaining photo after deleting the primary photo without guest edit controls' do
@@ -178,7 +223,7 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     expect(venue.reload.primary_photo).to eq(photo)
     delete session_path
     get photos_venue_path(venue)
-    expect(response.body).not_to include('Set Primary Photo', 'Delete Photo')
+    expect(response.body).not_to include('Make Primary', 'Delete Photo')
     expect(venue.photos.count).to eq(1)
   end
 
@@ -197,7 +242,7 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     expect(card.at_css('.upcoming-booking-photo img')['src']).to eq(venue_photo_path(venue, second, thumbnail: 1))
     expect(card.at_css('.upcoming-booking-photo a')['href']).to eq(venue_photo_path(venue, second))
     sign_in(admin)
-    patch venue_photo_path(create_venue, second)
+    patch venue_photo_path(create_venue, second), params: { venue_photo: { primary: '1' } }
     expect(response).to have_http_status(:not_found)
     expect(venue.reload.primary_photo).to eq(second)
   end

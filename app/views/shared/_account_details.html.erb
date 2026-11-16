@@ -1,0 +1,18 @@
+<% if user.roles.any? %>
+  <p class="profile-roles"><%= safe_join(user.roles.map { |role| status_label(role.tr("_", " ")) }, " ") %></p>
+<% end %>
+<dl class="account-details">
+  <% if local_assigns[:admin] %>
+    <dt>Account Status</dt><dd><%= status_label(user.active? ? "Active" : "Inactive") %></dd>
+  <% end %>
+  <dt>Name</dt><dd><%= user.name %></dd>
+  <dt>Email</dt><dd><%= user.email %></dd>
+  <dt>Phone</dt><dd><%= user.display_phone.presence || "Not provided" %></dd>
+  <dt>Gender</dt><dd><%= user.gender&.capitalize || "Not selected" %></dd>
+  <dt>Public Display Name</dt><dd><%= user.public_name %></dd>
+  <dt>Instagram Handle</dt><dd><% if (url = InstagramProfile.url(user.instagram_handle)) %><%= link_to "@#{user.instagram_handle}", url, target: "_blank", rel: "noopener noreferrer" %><% else %>Not provided<% end %></dd>
+  <dt>Instagram Tagging</dt><dd><% if user.instagram_tagging_allowed? %><%= status_label("Enabled") %>: handle appears in announcements and program calendars<% else %><%= status_label("Off") %>: Instagram stays private<% end %></dd>
+</dl>
+<% if user.pending_email.present? %>
+  <p><%= status_label("Pending") %> email verification for <%= user.pending_email %>. The current email is still <%= user.email %>.</p>
+<% end %>

@@ -40,10 +40,9 @@ class GoogleCalendarEvent
       'Private booking details. Do not share this event or make the calendar public.',
       program_start_details,
       *venue_details,
-      "Name: #{@user.name}", "Public name: #{@user.public_name}",
-      "Email: #{@user.email}", "Phone (unverified): #{@user.phone}", "Gender: #{@user.gender}",
+      "Name: #{@user.name}", "Public name: #{public_name}",
+      "Email: #{@user.email}", "Phone: #{@user.display_phone}", "Gender: #{@user.gender}",
       *instagram_details,
-      "Private identity: #{@user.public_profile_private? ? 'Yes' : 'No'}",
       "Posebook: #{program_link}"
     ].compact.join("\n")
   end
@@ -67,7 +66,7 @@ class GoogleCalendarEvent
   end
 
   def instagram_details
-    handle = @user.public_instagram_handle
+    handle = membership ? membership.participant_instagram_handle : @user.public_instagram_handle
     ["Instagram tagging: #{handle.present? ? 'Yes' : 'No'}", ("Instagram: @#{handle}" if handle.present?)]
   end
 
@@ -78,5 +77,15 @@ class GoogleCalendarEvent
   def organizer_ids
     @program.memberships.coordinators.distinct(:user_id) +
       @program.venue.memberships.coordinators.distinct(:user_id) + [@connection.connected_by_id]
+  end
+
+  def public_name
+    membership ? membership.participant_public_name : @user.public_name
+  end
+
+  def membership
+    return @membership if defined?(@membership)
+
+    @membership = ProgramMembership.where(program_id: @program.id, user_id: @user.id).first
   end
 end

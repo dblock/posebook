@@ -80,4 +80,18 @@
     });
     pendingLinks.clear();
   });
+
+  document.addEventListener("click", event => {
+    const close = event.target.closest?.("[data-close-details]");
+    if (!close) return;
+    const details = close.closest("details");
+    if (!details) return;
+    details.open = false;
+    details.querySelector("form")?.reset();
+    requestAnimationFrame(() => details.querySelector("summary")?.focus());
+  });
+
+  document.addEventListener("change", event => {
+    if (event.target.matches?.("select[data-auto-submit]")) event.target.form?.requestSubmit();
+  });
 })();

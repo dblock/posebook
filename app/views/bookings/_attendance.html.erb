@@ -1,12 +1,9 @@
 <div class="booking-attendance" aria-label="Attendance confirmation">
   <%= render "programs/booking_status", program: program, booking: booking, private_view: true %>
   <% if booking.attendance_confirmed? %>
-    <p>You're confirmed. See you there! Contact an organizer if your plans change.</p>
+    <p>You're confirmed. See you there!</p>
   <% elsif booking.confirmation_open? %>
     <%= button_to "I'll be there!", confirm_program_booking_path(program, booking), params: { booking_version: booking.lock_version } %>
     <p>Please confirm that you will be there for your <%= program.program_label.downcase %>.</p>
-  <% end %>
-  <% if can_book && booking.confirmation_open? && !booking.rescheduling_locked? %>
-    <p><%= link_to "I can no longer make it.", edit_program_booking_path(program, booking), class: "button-link" %></p>
   <% end %>
 </div>

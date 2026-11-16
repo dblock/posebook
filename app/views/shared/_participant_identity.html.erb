@@ -1,14 +1,15 @@
+<% path = local_assigns[:path] || participant_path(participant) %>
 <div class="participant-identity">
   <% photo = participant.primary_profile_photo %>
-  <%= link_to participant_path(participant), class: "participant-portrait" do %>
-    <%= image_tag(photo ? participant_photo_path(participant, photo, thumbnail: 1) : "profile-placeholder.svg",
-                  width: 64, height: 64, loading: "lazy",
-                  alt: photo ? "Profile photo of #{participant.name}" : "No profile photo for #{participant.name}") %>
-  <% end %>
+  <% portrait = image_tag(photo ? participant_photo_path(participant, photo, thumbnail: 1) : "profile-placeholder.svg",
+                          width: 64, height: 64, loading: "lazy",
+                          alt: photo ? "Profile photo of #{participant.name}" : "No profile photo for #{participant.name}") %>
+  <%= link_to portrait, path, class: "participant-portrait" %>
   <div>
     <% label = local_assigns.fetch(:show_email, true) ? participant_contact_label(participant) : participant.name %>
-    <strong><%= link_to label, participant_path(participant) %></strong>
-    <% if participant.instagram_handle.present? %>
+    <% label = "#{label} (You)" if local_assigns[:you] %>
+    <strong><%= link_to label, path %></strong>
+    <% if participant.instagram_handle.present? && (current_user&.system_admin? || participant.instagram_tagging_allowed?) %>
       <br><%= link_to "@#{participant.instagram_handle}", InstagramProfile.url(participant.instagram_handle),
                       target: "_blank", rel: "noopener noreferrer" %>
     <% end %>

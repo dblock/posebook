@@ -19,7 +19,7 @@ RSpec.describe 'Responsive layout', :aggregate_failures, :database, type: :syste
               history: program_path(program, section: 'history'), participants: program_participants_path(program),
               invitations: program_participant_invitations_path(program),
               applications: program_applications_path(program), edit: edit_program_path(program),
-              profile: profile_path, account: details_profile_path }
+              profile: profile_path, bookings: bookings_profile_path }
     each_viewport do |viewport|
       pages.each do |name, path|
         visit path

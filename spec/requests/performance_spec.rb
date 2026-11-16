@@ -25,12 +25,12 @@ RSpec.describe 'User experience read performance', :aggregate_failures, :databas
     programs.each { |program| grant_participant_access(program, participant) }
     track_booking(BookingMutation.new(program: programs.first, user: participant).book(date: '2026-11-16'))
     sign_in(participant)
-    [root_path, profile_path].each do |path|
+    { root_path => 2, bookings_profile_path => 3 }.each do |path, booking_commands|
       result = commands { get path }
       expect(response.parsed_body.css('.bookable-programs .program-card').size).to eq(11)
       expect(response.parsed_body.css('.upcoming-booking').size).to eq(1)
       expect(result[:commands]).to be <= 25
-      expect(result[:collections]['bookings']).to eq(2)
+      expect(result[:collections]['bookings']).to eq(booking_commands)
       expect(result[:collections]['users']).to eq(1)
     end
     expect(ParticipantDashboard).to have_received(:new).with(participant).twice
@@ -49,7 +49,7 @@ RSpec.describe 'User experience read performance', :aggregate_failures, :databas
   it 'reuses calendar absence snapshots but still checks neighbors outside the displayed date range' do
     program = create_program(available_weekdays: %w[0 1 2 3 4 5 6], no_consecutive_genders: ['female'])
     grant_participant_access(program, participant)
-    neighbor = create_user(gender: 'female', public_profile_private: true)
+    neighbor = create_user(gender: 'female')
     grant_participant_access(program, neighbor)
     track_booking(BookingMutation.new(program: program, user: neighbor).book(date: '2026-11-28'))
     sign_in(participant)
@@ -85,11 +85,11 @@ RSpec.describe 'User experience read performance', :aggregate_failures, :databas
     [active, inactive].each { |user| grant_coordinator_access(program, user) }
     grant_coordinator_access(create_program, foreign)
     sign_in(participant)
-    get profile_path
+    get bookings_profile_path
     expect(response.body).to include(active.email)
     expect(response.body).not_to include(inactive.email, foreign.email)
     grant_coordinator_access(program, foreign)
-    get profile_path
+    get bookings_profile_path
     expect(response.body).to include(foreign.email)
   end
 end

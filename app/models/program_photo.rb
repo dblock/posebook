@@ -5,8 +5,11 @@ class ProgramPhoto
   include PhotoFiles
 
   belongs_to :program, inverse_of: :photos
+  field :public, type: Mongoid::Boolean, default: true
   index({ program_id: 1, created_at: 1 })
   after_destroy :delete_files
+
+  scope :visible, -> { where(:public.ne => false) }
 
   def self.add(program, upload)
     buffers = ProfileImage.new(upload).buffers

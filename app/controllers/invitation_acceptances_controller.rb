@@ -41,8 +41,7 @@ class InvitationAcceptancesController < ApplicationController
 
   def registration_attributes
     params.expect(user: %i[name email phone gender password password_confirmation
-                           display_name instagram_handle instagram_tagging_allowed
-                           public_profile_private]).to_h.symbolize_keys
+                           display_name instagram_handle instagram_tagging_allowed]).to_h.symbolize_keys
   end
 
   def handle_notification_error

@@ -1,11 +1,7 @@
 <main>
   <%= render "programs/navigation", program: @program, active: "view", detail: "Apply" %>
   <h1>Apply to <%= @program.name %></h1>
-  <p>Prepare your account details, photos, and application on this page. Save an incomplete draft to return later, or submit it when ready.</p>
-  <p>We send one completion reminder after seven days. Unfinished drafts are automatically removed after 30 days from the first save, even if you edit them later. Your account, photos, and submitted history are kept.</p>
-  <p>Drafts are private to you and system administrators. This program's coordinators receive no application or review access until you explicitly submit and consent.</p>
-  <p>Acceptance grants participation and an initial booking invitation, subject to the program's existing booking rules. Applying alone does not grant access.</p>
-  <p>We notify this program's assigned coordinators when you apply and email you their decision. Withdrawing stops future application updates.</p>
+  <p>Save a draft anytime and submit when ready. Drafts are private and deleted after 30 days.</p>
   <%= render "shared/errors", record: @application %>
   <% @user = @profile || current_user.dup %>
   <% @user.assign_attributes(@application.draft_profile.slice(*ApplicationDraft::PROFILE_FIELDS)) unless @profile %>
@@ -13,18 +9,18 @@
   <%= form_with url: program_participation_application_path(@program), scope: :participant_application, multipart: true, id: "application-editor" do |form| %>
     <%= form.hidden_field :lock_version, value: @application.draft_revision if @application.persisted? %>
     <h2>Account Details</h2>
-    <p>These details are saved with your draft and applied to your account when you submit. Your verified email is <strong><%= current_user.email %></strong>.</p>
+    <p><small>Saved to your account (<%= current_user.email %>) when you submit.</small></p>
     <%= form.fields_for :profile, @user do |profile| %>
       <p><%= profile.label :name %><br><%= profile.text_field :name, required: true, autocomplete: "name", maxlength: 100 %></p>
-      <p><%= profile.label :phone %><br><%= profile.telephone_field :phone, required: true, autocomplete: "tel" %></p>
+      <p><%= profile.label :phone %><br><%= profile.telephone_field :phone, required: true, autocomplete: "tel", placeholder: "+1 (212) 555-1234" %></p>
       <%= render "shared/gender_field", form: profile %>
-      <%= render "shared/public_profile_fields", form: profile, self_service: true %>
+      <%= render "shared/public_profile_fields", form: profile %>
     <% end %>
     <%= render "photos", form: form %>
     <h2>Application</h2>
     <p><%= form.label :message, "Message (Optional)" %><br><%= form.text_area :message, value: @application.message, maxlength: 5000, rows: 5 %></p>
     <p><label><%= form.check_box :consent, { required: true }, "1", "0" %> I agree to share my account contact details, gender, profile, and all photos (including private photos) with this program's reviewing coordinators.</label></p>
-    <p>Review access continues after Not Now so coordinators can reconsider later. You can withdraw an unaccepted application to stop application-only review and future acceptance. Accepted participants use the existing organizer-access policy. Your submitted application and decision history are retained; reviewer notes remain private.</p>
+    <p><small>You can withdraw before acceptance.</small></p>
     <%= form.button "Save Draft", name: "participant_application[intent]", value: "draft", formnovalidate: true, class: "secondary-action" %>
     <%= form.button "Submit Application", name: "participant_application[intent]", value: "submit" %>
   <% end %>

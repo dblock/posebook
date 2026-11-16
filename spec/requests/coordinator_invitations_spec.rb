@@ -21,7 +21,7 @@ RSpec.describe 'Coordinator invitations', :aggregate_failures, :database, type: 
   it 'offers an explicit venue promotion for a registered email without duplicating accounts' do
     user = create_user
     sign_in(admin)
-    post venue_coordinators_path(venue), params: { email: " #{user.email.upcase} ", send_email: '1' }
+    post venue_coordinators_path(venue), params: { email: " #{user.email.upcase} " }
     expect(response.body).to include('This Email Is Already Registered', 'Grant Venue Coordinator Access')
     expect(VenueMembership.where(venue_id: venue.id, user_id: user.id)).to be_empty
     expect(CoordinatorInvitation.where(venue_id: venue.id)).to be_empty
@@ -60,7 +60,7 @@ RSpec.describe 'Coordinator invitations', :aggregate_failures, :database, type: 
   it 'emails an invitation restricted to the requested venue and address' do
     sign_in(admin)
     post venue_coordinators_path(venue), params: { name: 'Invited Manager', email: 'manager@example.test',
-                                                   send_email: '1', program_id: create_program.id }
+                                                   program_id: create_program.id }
     invitation = track_record(CoordinatorInvitation.find_by(venue_id: venue.id))
     created_link
     expect(invitation.program_id).to be_nil
@@ -118,11 +118,11 @@ RSpec.describe 'Coordinator invitations', :aggregate_failures, :database, type: 
     expect(invitation.invited_by).to eq(manager)
   end
 
-  it 'creates venue and session links without email or SMTP even when email delivery is checked' do
+  it 'creates venue and session links without email or SMTP when no email is entered' do
     sign_in(admin)
     allow(Rails.configuration.x).to receive(:password_reset_delivery_enabled).and_return(false)
     [venue_coordinators_path(venue), program_coordinators_path(program)].each do |path|
-      post path, params: { name: 'Invited Manager', send_email: '1' }
+      post path, params: { name: 'Invited Manager' }
       link = created_link
       token = URI.decode_www_form(URI(link).query).to_h.fetch('token')
       invitation = track_record(CoordinatorInvitation.available(token))
@@ -222,7 +222,7 @@ RSpec.describe 'Coordinator invitations', :aggregate_failures, :database, type: 
     delete program_coordinator_invitation_path(create_program, invitation)
     expect(response).to have_http_status(:not_found)
     delete program_coordinator_invitation_path(program, invitation)
-    expect(response).to redirect_to(program_coordinators_path(program))
+    expect(response).to redirect_to(new_program_coordinator_path(program))
     expect(invitation.reload.status).to eq('Revoked')
     follow_redirect!
     expect(response.body).to include(invitation.email, 'Revoked')
@@ -263,16 +263,17 @@ RSpec.describe 'Coordinator invitations', :aggregate_failures, :database, type: 
     expect(VenueMembership.where(venue_id: venue.id)).to be_empty
   end
 
-  it 'rejects unavailable email delivery but keeps a shareable link after delivery failure' do
+  it 'emails invitations whenever an email is entered and keeps a shareable link without delivery' do
     sign_in(admin)
     allow(Rails.configuration.x).to receive(:password_reset_delivery_enabled).and_return(false)
-    post venue_coordinators_path(venue), params: { email: 'mail@example.test', send_email: '1' }
-    expect(response).to have_http_status(:unprocessable_content)
-    expect(CoordinatorInvitation.where(venue_id: venue.id)).to be_empty
+    post venue_coordinators_path(venue), params: { email: 'mail@example.test' }
+    expect(flash[:notice]).to eq(I18n.t('invitations.created'))
+    created_link
+    CoordinatorInvitation.where(venue_id: venue.id).destroy_all
     allow(Rails.configuration.x).to receive(:password_reset_delivery_enabled).and_return(true)
     allow(EmailDeliveryJob).to receive(:perform_later).and_raise(ActiveJob::EnqueueError, 'Unavailable')
     allow(NewRelic::Agent).to receive(:notice_error)
-    post venue_coordinators_path(venue), params: { email: 'mail@example.test', send_email: '1' }
+    post venue_coordinators_path(venue), params: { email: 'mail@example.test' }
     track_record(CoordinatorInvitation.find_by(venue_id: venue.id))
     created_link
     expect(response.body).to include('Email could not be queued.')

@@ -192,3 +192,6 @@ Cuprite
 viewport
 viewports
 namespace
+GCal
+admin's
+dismissible

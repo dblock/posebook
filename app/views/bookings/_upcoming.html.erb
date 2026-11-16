@@ -1,5 +1,5 @@
 <section class="upcoming-booking attendance-panel" aria-labelledby="upcoming-booking-<%= booking.id %>">
-  <h2 id="upcoming-booking-<%= booking.id %>">Your Upcoming Booking</h2>
+  <h2 id="upcoming-booking-<%= booking.id %>"><%= local_assigns[:read_only] ? "Upcoming Booking" : "Your Upcoming Booking" %></h2>
   <div class="upcoming-booking-details">
     <% if local_assigns.fetch(:show_venue, false) %>
       <figure class="upcoming-booking-photo">
@@ -20,20 +20,26 @@
         <h3><%= link_to program.name, program_path(program) %></h3>
       <% end %>
       <p class="upcoming-booking-date"><time datetime="<%= booking.scheduled_start.iso8601 %>"><%= booking.date.to_fs(:long) %> at <%= booking_time(booking) %></time></p>
+      <p class="upcoming-booking-countdown"><%= booking_countdown(booking) %></p>
       <% if local_assigns.fetch(:show_venue, false) %>
-        <p><%= link_to program.venue.name, venue_path(program.venue) %></p>
-        <%= render "venues/information", venue: program.venue %>
+        <%= render "venues/location", venue: program.venue %>
       <% end %>
-      <%= render "bookings/attendance", program: program, booking: booking, can_book: can_book %>
-      <% if booking.rescheduling_locked? %>
+      <% if local_assigns[:read_only] %>
+        <%= render "programs/booking_status", program: program, booking: booking, private_view: true %>
+      <% else %>
+        <%= render "bookings/attendance", program: program, booking: booking %>
+      <% end %>
+      <% if booking.rescheduling_locked? && !local_assigns[:read_only] %>
         <%= render "bookings/rescheduling_notice", program: program, urgent: booking.attendance_overdue? %>
       <% end %>
-      <div class="booking-actions">
-        <% if can_book && !booking.confirmation_open? && !booking.rescheduling_locked? %>
-          <%= link_to "Change Date", edit_program_booking_path(program, booking), class: "button-link" %>
+      <% unless local_assigns[:read_only] %>
+        <div class="booking-actions">
+          <% if can_book && !booking.rescheduling_locked? %>
+            <%= link_to "Reschedule", edit_program_booking_path(program, booking), class: "button-link" %>
         <% end %>
         <%= link_to "Cancel Booking", cancellation_program_booking_path(program, booking), class: "button-link" %>
       </div>
+      <% end %>
     </div>
   </div>
 </section>

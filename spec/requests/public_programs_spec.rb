@@ -46,14 +46,16 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
     expect(summary.text).to include('Monday, November 16, 2026', '6:30 PM - 9:00 PM (2 hours 30 min)',
                                     'America/New_York', 'Public Participant')
     expect(summary.at_css('time')['datetime']).to eq('2026-11-16T23:30:00Z')
-    expect(summary.at_css('.booked-participant a')['href']).to eq('https://www.instagram.com/private_participant/')
+    expect(summary.at_css('.booked-participant a[target="_blank"]')['href'])
+      .to eq('https://www.instagram.com/private_participant/')
+    expect(summary.at_css('.booked-participant a')['href']).to eq(participant_path(user))
     expect(response.body).not_to include(user.name, user.email, user.phone)
     expect_public_only
   end
 
-  it 'keeps private and inactive next-session identities anonymous even in the manager overview' do
+  it 'keeps inactive next-session identities anonymous even in the manager overview' do
     user = private_booking.user
-    user.update!(public_profile_private: true, instagram_tagging_allowed: true)
+    user.update!(instagram_tagging_allowed: true, active: false)
     [nil, create_user, create_user(roles: ['system_admin'])].each do |viewer|
       grant_participant_access(program, viewer) if viewer && !viewer.system_admin?
       sign_in(viewer) if viewer
@@ -63,9 +65,6 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
       expect(summary.to_html).not_to include(user.name, user.display_name, user.email, user.id.to_s,
                                              'private_participant')
     end
-    user.update!(public_profile_private: false, active: false)
-    get program_path(program)
-    expect(response.parsed_body.at_css('.next-session').text).to include('To be announced')
   end
 
   it 'refreshes public identity and tagging choices in the next-session summary on each request' do
@@ -161,9 +160,11 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
       get path
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(program.name, 'Monday at 6:30 PM',
-                                       'Public Participant', 'Fallback Participant')
-      expect(response.body).not_to include(hidden.name, hidden.email, hidden.phone, hidden.id.to_s,
+                                       'Public Participant', 'To be announced')
+      expect(response.body).not_to include(hidden.name, hidden.email, hidden.phone, 'Fallback Participant',
                                            'private_participant')
+      expect(response.parsed_body.at_css("a[href='#{participant_path(hidden)}']").text).to eq('Public Participant')
+      expect(response.body).not_to include(tagged_booking.user.id.to_s)
       link = response.parsed_body.at_css('a[href="https://www.instagram.com/public_participant/"]')
       expect(link.text).to eq('@public_participant')
       expect(link['target']).to eq('_blank')
@@ -215,27 +216,26 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
     expect(response.body).not_to include('Fallback Participant', 'public_participant')
   end
 
-  it 'announces private participants anonymously to guests and other participants' do
+  it 'shows only the active participant public name and consented Instagram to visitors' do
     booking = scheduled_booking('2026-11-16', name: 'Private Account', display_name: 'Hidden Alias',
-                                              instagram_handle: '@private_participant', instagram_tagging_allowed: true,
-                                              public_profile_private: true)
+                                              instagram_handle: '@private_participant', instagram_tagging_allowed: true)
     [nil, create_user].each do |viewer|
       grant_participant_access(program, viewer) if viewer
       sign_in(viewer) if viewer
       get program_path(program, section: 'calendar')
-      expect(response.parsed_body.at_css('[data-date="2026-11-16"]').text).to include('To be announced')
-      expect(response.body).not_to include(booking.user.name, 'Hidden Alias', 'private_participant',
-                                           booking.user.email, booking.user.id.to_s)
+      expect(response.parsed_body.at_css('[data-date="2026-11-16"]').text).to include('Hidden Alias',
+                                                                                      '@private_participant')
+      expect(response.body).not_to include(booking.user.name, booking.user.email)
     end
   end
 
-  it 'lets authorized managers identify private participants in the calendar and retained history' do
+  it 'lets managers identify participants with blank display names in the calendar and retained history' do
     participant = private_booking.user
-    participant.update!(public_profile_private: true, instagram_tagging_allowed: true)
+    participant.update!(display_name: nil, instagram_tagging_allowed: true)
     sign_in(create_user(roles: ['system_admin']))
     get program_path(program, section: 'calendar')
     expect(response.parsed_body.at_css('[data-date="2026-11-16"]').text).to include(participant.name)
-    expect(response.body).not_to include('private_participant')
+    expect(response.body).not_to include(participant.email)
     get program_path(program, section: 'history')
     history = response.parsed_body.at_xpath('//section[h2="Program Booking History"]')
     expect(history.text).to include(participant.name)

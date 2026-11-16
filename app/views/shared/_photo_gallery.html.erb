@@ -1,0 +1,33 @@
+<%# locals: (photos:, editable:, upload_url:, scope:, photo_url:, description:, primary_id: nil, show_status: editable, empty_text: nil, figure_class: nil) %>
+<div data-photo-region>
+  <% if editable %>
+    <%= javascript_include_tag "photo-actions", defer: true %>
+    <%= form_with url: upload_url, scope: scope, multipart: true, data: { photo_action: true } do |form| %>
+      <p><%= form.label :file, "New Photo" %><br><%= form.file_field :file, accept: "image/jpeg,image/png,image/webp", required: true %></p>
+      <%= form.submit "Upload Photo" %>
+    <% end %>
+  <% end %>
+  <div class="photo-gallery">
+    <% photos.each_with_index do |photo, index| %>
+      <% primary = photo.id == primary_id %>
+      <figure class="<%= class_names("profile-photo", figure_class) %>" data-photo="<%= photo.id %>">
+        <%= render "shared/photo_thumbnail", full_url: photo_url.call(photo), thumbnail_url: photo_url.call(photo, thumbnail: 1),
+                   description: description.call(index) %>
+        <% labels = [] %>
+        <% labels << status_label(photo.public? ? "Public" : "Private") if show_status %>
+        <% labels << status_label("Primary") if show_status && primary %>
+        <% if labels.any? %><figcaption><%= safe_join(labels, " ") %></figcaption><% end %>
+        <% if editable %>
+          <div class="photo-actions">
+            <%= button_to photo.public? ? "Make Private" : "Make Public", photo_url.call(photo), method: :patch, params: { scope => { public: photo.public? ? "0" : "1" } }, form: { data: { photo_action: true } }, class: "secondary-action" %>
+            <% unless primary %>
+              <%= button_to "Make Primary", photo_url.call(photo), method: :patch, params: { scope => { primary: "1" } }, form: { data: { photo_action: true } }, class: "secondary-action" %>
+            <% end %>
+            <%= button_to "Delete Photo", photo_url.call(photo), method: :delete, form: { data: { photo_action: true } }, class: "secondary-action" %>
+          </div>
+        <% end %>
+      </figure>
+    <% end %>
+  </div>
+  <% if photos.empty? && empty_text %><p><%= empty_text %></p><% end %>
+</div>

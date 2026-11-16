@@ -39,7 +39,7 @@ RSpec.describe 'Single-page application drafts', :aggregate_failures, :database,
                                                          'participant_application[photos][]')
     expect(editor.css('a[target="_blank"]')).to be_empty
     expect(ParticipantApplication.where(user_id: applicant.id)).not_to exist
-    expect(response.body).to include('one completion reminder after seven days', 'after 30 days from the first save')
+    expect(response.body).to include('Drafts are private and deleted after 30 days.')
   end
 
   it 'saves incomplete details privately without changing the account, granting access, or notifying reviewers' do
@@ -96,7 +96,8 @@ RSpec.describe 'Single-page application drafts', :aggregate_failures, :database,
   it 'uploads and removes real photos on the same form while withholding draft-only reviewer access' do
     save_draft(photos: [photo_upload])
     photo = applicant.reload.profile_photos.first
-    expect(photo.public?).to be(false)
+    expect(photo.public?).to be(true)
+    photo.change_visibility(applicant, false)
     sign_in(coordinator)
     get participant_photo_path(applicant, photo)
     expect(response).to have_http_status(:not_found)

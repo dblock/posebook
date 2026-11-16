@@ -26,7 +26,7 @@ RSpec.describe 'Application account verification', :aggregate_failures, :databas
     post application_registration_account_path,
          params: { token: registration.token,
                    user: user_attributes(email: registration.email, instagram_tagging_allowed: '0',
-                                         public_profile_private: '1', **attributes) }
+                                         **attributes) }
   end
 
   def request_link(email)
@@ -58,7 +58,7 @@ RSpec.describe 'Application account verification', :aggregate_failures, :databas
     register(registration, roles: ['system_admin'], active: false, program_id: program.id)
     expect(response).to redirect_to(new_program_participation_application_path(program))
     user = track_record(User.find_by(email: registration.email))
-    expect(user).to have_attributes(roles: [], active: true, public_profile_private: true)
+    expect(user).to have_attributes(roles: [], active: true)
     expect(user.email_verified_at).to be_present
     expect(registration.reload.used_by_id).to eq(user.id)
     expect(program.memberships.where(user_id: user.id)).not_to exist
@@ -81,8 +81,8 @@ RSpec.describe 'Application account verification', :aggregate_failures, :databas
     expect(User.where(email: registration.email)).not_to exist
   end
 
-  it 'preserves verification through account switching without changing roles or privacy' do
-    user = create_user(public_profile_private: true)
+  it 'preserves verification through account switching without changing roles' do
+    user = create_user
     registration = challenge(email: user.email)
     sign_in(create_user)
     get application_verification_path(token: registration.token)
@@ -95,7 +95,7 @@ RSpec.describe 'Application account verification', :aggregate_failures, :databas
     expect(response).to redirect_to(application_verification_path(token: registration.token))
     post application_verification_path, params: { token: registration.token }
     expect(response).to redirect_to(new_program_participation_application_path(program))
-    expect(user.reload).to have_attributes(roles: [], public_profile_private: true)
+    expect(user.reload).to have_attributes(roles: [])
     expect(user.email_verified_at).to be_present
     expect(program.participant?(user)).to be(false)
   end

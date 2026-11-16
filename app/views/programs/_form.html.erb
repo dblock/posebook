@@ -1,29 +1,29 @@
 <%= render "shared/errors", record: program %>
 <%= form_with model: program.persisted? ? program : [program.venue, program] do |form| %>
   <p><%= form.label :name %><br><%= form.text_field :name, required: true, maxlength: 100 %></p>
-  <p><%= form.label :program_label, "Program label" %><br><%= form.text_field :program_label, required: true, maxlength: 40 %><br><small>Singular label, such as Program or Workshop.</small></p>
-  <p><%= form.label :participant_label, "Participant label" %><br><%= form.text_field :participant_label, required: true, maxlength: 40 %><br><small>Singular label for the person booked, such as Participant or Instructor. This changes terminology, not booking rules.</small></p>
-  <p><%= form.label :custom_slug, "Slug" %><br><%= form.text_field :custom_slug, maxlength: 100, placeholder: program.name.to_s.to_url %><br>
-    <small>Leave blank to generate from the <%= @program.program_label.downcase %> name. Previous links keep working when the slug changes. <% if program.persisted? %>Current link: <%= link_to program_url(program), program_path(program) %>.<% end %></small>
+  <p><%= form.label :program_label, "Program Label" %><br><%= form.text_field :program_label, required: true, maxlength: 40 %><br><small>Such as Program or Workshop.</small></p>
+  <p><%= form.label :participant_label, "Participant Label" %><br><%= form.text_field :participant_label, required: true, maxlength: 40 %><br><small>Such as Participant or Instructor.</small></p>
+  <p><%= form.label :custom_slug, "Shortcut" %><br><%= form.text_field :custom_slug, maxlength: 100, placeholder: program.name.to_s.to_url %><br>
+    <small>Blank generates one. Old links keep working.<% if program.persisted? %> <%= link_to program_url(program), program_path(program) %><% end %></small>
   </p>
   <p>Venue: <%= link_to program.venue.name, venue_path(program.venue) %></p>
-  <p><%= form.label :time_zone, "Time zone" %><br><%= form.select :time_zone, Program::TIME_ZONES, {}, required: true %></p>
-  <p><%= form.label :start_time, "Regular start time" %><br><%= form.time_field :start_time, required: true, step: 60 %><br>
-    <small>Usual event start in the <%= @program.program_label.downcase %>'s time zone. Use Manage Schedule to change a single date.</small>
+  <p><%= form.label :time_zone, "Time Zone" %><br><%= form.select :time_zone, Program::TIME_ZONES, {}, required: true %></p>
+  <p><%= form.label :start_time, "Regular Start Time" %><br><%= form.time_field :start_time, required: true, step: 60 %><br>
+    <small>Change single dates in Manage Schedule.</small>
   </p>
-  <p><%= form.label :end_time, "Regular end time (optional)" %><br><%= form.time_field :end_time, step: 60 %><br>
-    <small>An earlier end time means the next day. Leave blank if the end time is not known.</small>
+  <p><%= form.label :end_time, "Regular End Time (optional)" %><br><%= form.time_field :end_time, step: 60 %><br>
+    <small>Before the start time means the next day.</small>
   </p>
-  <p><%= form.label :calendar_invitation_lead_minutes, "Calendar invitation lead time (minutes)" %><br>
+  <p><%= form.label :calendar_invitation_lead_minutes, "Calendar Invitation Lead Time (minutes)" %><br>
     <%= form.number_field :calendar_invitation_lead_minutes, min: 0, step: 1, required: true %><br>
-    <small>Google Calendar invitations start this many minutes before the booked <%= program.program_label.downcase %>. Defaults to 0. Booking times and calendar end times stay unchanged. Changing this also updates existing upcoming invitations.</small>
+    <small>Minutes before the start that calendar invitations begin.</small>
   </p>
   <p><%= form.label :pay, "Pay (USD)" %><br><%= form.number_field :pay, min: 0, step: "0.01", required: true %></p>
-  <p><%= form.label :first_bookable_date, "First bookable date (optional)" %><br><%= form.date_field :first_bookable_date %><br>
-    <small>Earliest session date available for new bookings and date changes, in the program's time zone. Invited participants can book these dates now. Earlier sessions and existing bookings are retained. Leave blank for today's date.</small>
+  <p><%= form.label :first_bookable_date, "First Bookable Date (optional)" %><br><%= form.date_field :first_bookable_date %><br>
+    <small>Blank means today.</small>
   </p>
-  <p><%= form.label :booking_horizon_months, "Booking horizon (months)" %><br><%= form.number_field :booking_horizon_months, min: 1, required: true %><br>
-    <small>Calendar months from today, or from the first bookable date when it is in the future.</small>
+  <p><%= form.label :booking_horizon_months, "Booking Horizon (months)" %><br><%= form.number_field :booking_horizon_months, min: 1, required: true %><br>
+    <small>Months ahead that can be booked.</small>
   </p>
   <fieldset>
     <legend>Available Weekdays</legend>
@@ -34,20 +34,18 @@
   </fieldset>
   <fieldset>
     <legend>Prevent Consecutive <%= @program.participant_label.pluralize.titleize %> by Gender</legend>
-    <p>Optional. When enabled, each selected gender cannot repeat in immediately adjacent scheduled <%= @program.program_label.pluralize.downcase %>. Unselected genders may repeat. An unbooked <%= @program.program_label.downcase %> breaks the sequence; closed dates are skipped.</p>
+    <p><small>Selected genders can't book back-to-back dates. Organizers can override.</small></p>
     <%= hidden_field_tag "program[no_consecutive_genders][]", "" %>
     <% User::GENDERS.each do |gender| %>
       <label><%= check_box_tag "program[no_consecutive_genders][]", gender, program.no_consecutive_genders.include?(gender), id: "no-consecutive-#{gender}" %> <%= gender.capitalize %></label>
     <% end %>
-    <p>These rules apply to new bookings and replacements, not existing reservations. Organizers can explicitly override with an explanation.</p>
   </fieldset>
   <p><%= form.label :instructions %><br><%= form.text_area :instructions, maxlength: 5000, rows: 4 %></p>
   <p><label><%= form.check_box :applications_enabled %> Accept Participation Applications</label><br>
-    <small>Requires email delivery and an active coordinator. Closing intake keeps existing applications.</small>
+    <small>Requires email and an active coordinator.</small>
     <% if program.persisted? %>
       <br><small>Application link: <%= link_to program_apply_url(program), program_apply_path(program) %></small>
     <% end %>
   </p>
-  <p>Changing regular times updates upcoming bookings without a dated time exception, retaining each time change. Other settings do not rewrite existing bookings. Automated reminders are not available yet.</p>
   <%= form.submit program.persisted? ? "Save #{@program.program_label.titleize}" : "Create #{@program.program_label.titleize}" %>
 <% end %>

@@ -18,7 +18,7 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
   end
 
   it 'links model identity and private Instagram from rosters and booking history' do
-    participant.update!(instagram_handle: 'drawing.model', public_profile_private: true)
+    participant.update!(instagram_handle: 'drawing.model', instagram_tagging_allowed: true)
     membership
     track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-11-16'))
     manage_participants
@@ -68,7 +68,7 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
     expect(membership.reload.history_tracks.last.modifier_id).to eq(organizer.id)
   end
 
-  it 'keeps invitations in booking access with editing and pause or resume controls in actions' do
+  it 'keeps invitations in booking access with editing and pause or resume controls in separate columns' do
     membership
     manage_participants
     get program_participants_path(program)
@@ -81,7 +81,8 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
     get program_participants_path(program)
     actions = response.parsed_body.at_css("tr[data-membership='#{membership.id}'] .participant-actions")
     expect(actions.css('button').map(&:text)).to eq(['Resume Participant'])
-    expect(actions.at_css('a')['href']).to eq(edit_program_participant_path(program, membership))
+    expect(response.parsed_body.at_css("tr[data-membership='#{membership.id}'] td:nth-child(4) a")['href'])
+      .to eq(edit_program_participant_path(program, membership))
     expect(actions.css('details')).to be_empty
   end
 
@@ -158,7 +159,7 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
       expect(response).to redirect_to(program_participants_path(program, page: 2))
       follow_redirect!
       expect(response.parsed_body.text).to include('3 total participants', '2 available', '1 paused')
-      expect(response.parsed_body.at_css("tr[data-membership='#{members.last.id}'] summary").text).to eq('Pause note')
+      expect(response.parsed_body.at_css("tr[data-membership='#{members.last.id}'] summary").text).to eq('Pause Note')
     end
 
     it 'clamps missing, invalid, and out-of-range pages to valid bounds' do
@@ -262,7 +263,7 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
     sign_in(participant)
     get program_path(program)
     expect(response.body).to include('booking access at this program is paused', 'Cancel Booking')
-    expect(response.body).not_to include('Private organizer note.', 'Change Date')
+    expect(response.body).not_to include('Private organizer note.', 'Reschedule')
     get edit_program_booking_path(program, original)
     expect(response).to redirect_to(program_path(program))
     post cancel_program_booking_path(program, original),

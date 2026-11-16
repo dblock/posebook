@@ -10,6 +10,11 @@ module PhoneSettings
     validates :phone, format: { with: /\A\+[1-9]\d{7,14}\z/ }, allow_blank: true
   end
 
+  def display_phone
+    match = phone.to_s.match(/\A\+1(\d{3})(\d{3})(\d{4})\z/)
+    match ? "+1 (#{match[1]}) #{match[2]}-#{match[3]}" : phone
+  end
+
   private
 
   def normalize_phone

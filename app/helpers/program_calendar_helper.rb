@@ -3,8 +3,15 @@
 module ProgramCalendarHelper
   include ScheduleTimeHelper
 
-  def booking_participant_name(participant, manager: false)
-    manager && participant.public_profile_private? ? participant.name : participant.public_name
+  def booking_participant_name(participant, membership = nil, manager: false)
+    display_name = membership&.display_name_override || participant.display_name
+    return participant.name if manager && display_name.blank?
+
+    participant.active? && display_name.present? ? display_name : 'To be announced'
+  end
+
+  def booking_participant_instagram_handle(participant, membership = nil)
+    participant.public_instagram_handle unless membership&.instagram_hidden?
   end
 
   def program_organizer_contacts(program)
@@ -67,6 +74,14 @@ module ProgramCalendarHelper
 
   def format_start_time(clock)
     DateTime.strptime(clock, '%H:%M').strftime('%-I:%M %p')
+  end
+
+  def booking_countdown(booking)
+    days = (booking.date - Time.current.in_time_zone(booking.time_zone).to_date).to_i
+    return 'Today' if days <= 0
+    return 'Tomorrow' if days == 1
+
+    "In #{days} days"
   end
 
   def booking_time(booking)

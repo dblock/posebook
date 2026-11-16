@@ -14,8 +14,7 @@
     <% unless program.booking_active? %><p><%= status_label("Inactive") %></p><% end %>
     <h2><%= link_to program.name, program_path(program) %></h2>
     <p><%= program_schedule_summary(program) %></p>
-    <p>Venue: <%= link_to program.venue.name, venue_path(program.venue) %></p>
-    <%= render "venues/information", venue: program.venue %>
+    <%= render "venues/location", venue: program.venue %>
     <% if local_assigns.fetch(:bookable, false) %>
       <%= link_to "Choose a Date", program_path(program, section: "calendar"), class: "button-link" %>
     <% elsif local_assigns.fetch(:managed, false) %>

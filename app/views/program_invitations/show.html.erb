@@ -5,10 +5,10 @@
   <p class="invitation-recipient"><%= participant_contact_label(@invitation) %></p>
   <%= render "programs/regular_schedule", program: @program %>
   <% if @token.present? %>
-    <p><%= label_tag :invitation_link, "Invitation link (copy now)" %><span class="copy-field"><%= url_field_tag :invitation_link, invitation_url(token: @token, **Rails.configuration.action_mailer.default_url_options), readonly: true %><%= copy_button(target: "invitation_link", label: "private invitation link") %></span></p>
+    <p><%= label_tag :invitation_link, "Invitation Link (copy now)" %><span class="copy-field"><%= url_field_tag :invitation_link, invitation_url(token: @token, **Rails.configuration.action_mailer.default_url_options), readonly: true %><%= copy_button(target: "invitation_link", label: "private invitation link") %></span></p>
     <p>This link is shown only once. Share it privately with one <%= @program.participant_label.downcase %>; they can create an account or sign in with an existing one.<% if @invitation.email.present? %> Only <%= @invitation.email %> can accept it.<% end %></p>
   <% else %>
     <p>The private link is only displayed when the invitation is created. Create a new invitation if you did not keep it.</p>
   <% end %>
-  <p><%= link_to "Back to #{@program.participant_label.titleize} Invitations", program_participant_invitations_path(@program) %></p>
+  <p><%= link_to "Back to Invitations", program_participant_invitations_path(@program) %></p>
 </main>

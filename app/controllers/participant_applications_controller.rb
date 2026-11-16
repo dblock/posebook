@@ -2,6 +2,7 @@
 
 class ParticipantApplicationsController < ApplicationController
   include ParticipantApplicationErrors
+  include UserPages
 
   before_action -> { response.headers['Cache-Control'] = 'private, no-store' }
   before_action :remember_status_destination, only: :show
@@ -11,11 +12,8 @@ class ParticipantApplicationsController < ApplicationController
   before_action :prepare_submission, only: %i[new create apply]
 
   def index
-    @page = [params[:page].to_i, 1].max
-    @applications = ParticipantApplication.where(user_id: current_user.id).includes(:program)
-                                          .order_by(created_at: :desc, id: :desc).skip((@page - 1) * 50).limit(51).to_a
-    @more = @applications.length > 50
-    @applications = @applications.first(50)
+    @user = current_user
+    load_user_applications(@user)
   end
 
   def show
