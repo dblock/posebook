@@ -12,6 +12,24 @@ RSpec.describe DateDisplayHelper, :aggregate_failures, type: :helper do
     Nokogiri::HTML.fragment(html).at_css('time')
   end
 
+  it 'reuses localized calendar dates across repeated rows without changing the displayed timestamps' do
+    allow(helper).to receive(:l).and_call_original
+    first = rendered(Time.utc(2026, 12, 16, 15))
+    second = rendered(Time.utc(2026, 12, 16, 16))
+    expect(first.at_css('.date-display-label').text).to eq(second.at_css('.date-display-label').text)
+    expect(first['title']).to include('10:00 AM EST')
+    expect(second['title']).to include('11:00 AM EST')
+    expect(helper).to have_received(:l).exactly(2).times
+  end
+
+  it 'does not reuse a localized date label when the locale changes within a render' do
+    allow(helper).to receive(:l).and_return('English month', 'French month')
+    allow(I18n).to receive(:locale).and_return(:en, :fr)
+    date = Date.new(2026, 12, 1)
+    expect(helper.date_display_title(date, format: :month)).to eq('English month')
+    expect(helper.date_display_title(date, format: :month)).to eq('French month')
+  end
+
   { -7 => 'Nov 9', -6 => 'Last Tue', -2 => 'Last Sat', -1 => 'Yesterday', 0 => 'Today',
     1 => 'Tomorrow', 2 => 'Next Wed', 6 => 'Next Sun', 7 => 'Nov 23' }.each do |offset, label|
     it "labels #{offset} calendar days away as #{label}" do

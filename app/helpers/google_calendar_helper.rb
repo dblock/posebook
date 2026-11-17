@@ -1,6 +1,18 @@
 # frozen_string_literal: true
 
 module GoogleCalendarHelper
+  def preload_google_calendar_connections(bookings)
+    return unless current_user
+
+    ids = bookings.filter_map do |booking|
+      booking.program_id if booking.status == 'confirmed' && google_calendar_manager?(booking.program)
+    end.uniq
+    return if ids.empty?
+
+    connections = GoogleCalendarConnection.where(:program_id.in => ids, enabled: true).index_by(&:program_id)
+    google_calendar_connections.merge!(ids.index_with { |id| connections[id] })
+  end
+
   def google_calendar_rsvp(program, booking)
     return unless booking.status == 'confirmed'
 
@@ -11,10 +23,16 @@ module GoogleCalendarHelper
 
   private
 
+  def google_calendar_connections
+    @google_calendar_connections ||= {}
+  end
+
   def google_calendar_responses(program)
     return {} unless current_user && google_calendar_manager?(program)
 
-    connection = GoogleCalendarConnection.where(program_id: program.id, enabled: true).first
+    connection = google_calendar_connections.fetch(program.id) do
+      GoogleCalendarConnection.where(program_id: program.id, enabled: true).first
+    end
     return {} unless connection&.authorized?
 
     google_calendar_snapshots(program.id, connection.calendar_id)

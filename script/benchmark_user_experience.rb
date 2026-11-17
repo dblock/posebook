@@ -14,6 +14,7 @@ module UserExperienceBenchmark
     VENUES = 20
     USERS = 50
     PHOTOS = 8
+    INVITATIONS = 10
 
     attr_reader :users, :venues, :programs
 
@@ -30,6 +31,7 @@ module UserExperienceBenchmark
       create_memberships
       create_bookings
       create_photos
+      create_invitations
       self
     end
 
@@ -119,6 +121,12 @@ module UserExperienceBenchmark
       photos = Array.new(PHOTOS) { track_record(type.add(owner, upload)) }
       owner.update!(primary_photo_id: photos.last.id)
     end
+
+    def create_invitations
+      [venues.first, programs.first].each do |target|
+        INVITATIONS.times { create_coordinator_invitation(target, users.last, email: nil) }
+      end
+    end
   end
 
   # Counts database reads and elapsed time without recording arguments or private data.
@@ -152,7 +160,7 @@ module UserExperienceBenchmark
   end
 
   # Warm server-side request times exclude setup, login, browser and network latency.
-  class Runner
+  class Runner # rubocop:disable Metrics/ClassLength -- Keep the page matrix with its fixture-aware runner.
     def initialize(fixtures, samples:)
       @fixtures = fixtures
       @samples = samples
@@ -166,7 +174,7 @@ module UserExperienceBenchmark
       { fixture: { venues: Fixtures::VENUES, programs: @fixtures.programs.size, users: Fixtures::USERS,
                    memberships: @fixtures.programs.size * Fixtures::USERS,
                    bookings: @fixtures.programs.size * ((Fixtures::USERS * 4) + 4),
-                   photos_per_location: Fixtures::PHOTOS },
+                   photos_per_location: Fixtures::PHOTOS, coordinator_invitations_per_location: Fixtures::INVITATIONS },
         environment: { ruby: RUBY_VERSION, rails: Rails.version, mongodb: @mongo_version, samples: @samples,
                        latency: 'Warm in-process Rails requests; excludes browser, network and login.' },
         pages: pages.map { |name, client, path| measure(name, client, path) },
@@ -184,8 +192,8 @@ module UserExperienceBenchmark
 
     def pages
       admin = client(@fixtures.users.last)
-      participant_pages + public_pages + [['Admin Home', admin, '/'],
-                                          ['Model Roster', admin, "#{@program_path}/participants"]]
+      participant_pages + public_pages + admin_pages(admin) + program_management_pages(admin) +
+        venue_management_pages(admin)
     end
 
     def participant_pages
@@ -196,7 +204,10 @@ module UserExperienceBenchmark
        ['Profile', participant, '/profile'], ['Profile Bookings', participant, '/profile/bookings'],
        ['Booking History', participant, '/profile/history'],
        ['Booking Calendar', participant, "#{@program_path}/calendar?month=#{@month}"],
-       ['Profile Thumbnail', participant, thumbnail]]
+       ['Profile Thumbnail', participant, thumbnail]] +
+        %w[edit security programs applications photos].map do |section|
+          ["Profile #{section.titleize}", participant, "/profile/#{section}"]
+        end
     end
 
     def public_pages
@@ -205,7 +216,31 @@ module UserExperienceBenchmark
       [['Public Home', guest, '/'], ['Venue Overview', guest, @venue_path],
        ['Program Overview', guest, @program_path], ['Venue Programs', guest, "#{@venue_path}/programs"],
        ['Public Calendar', guest, "#{@program_path}/calendar?month=#{@month}"],
-       ['Venue Photos', guest, "#{@venue_path}/photos"], ['Venue Thumbnail', guest, thumbnail]]
+       ['Venue Photos', guest, "#{@venue_path}/photos"], ['Venue Thumbnail', guest, thumbnail]] +
+        %w[about privacy terms].map { |section| [section.titleize, guest, "/#{section}"] }
+    end
+
+    def admin_pages(admin)
+      user_path = "/admin/users/#{@fixtures.users.first.id}"
+      [['Admin Home', admin, '/'], ['User Directory', admin, '/admin/users'],
+       ['Audit History', admin, '/admin/history'], ['Admin User Profile', admin, user_path]] +
+        %w[edit bookings programs applications history photos security].map do |section|
+          ["Admin User #{section.titleize}", admin, "#{user_path}/#{section}"]
+        end
+    end
+
+    def program_management_pages(admin)
+      %w[calendar history photos edit security schedule schedule/exceptions participants
+         coordinators coordinators/new participant_invitations participant_invitations/new
+         applications applications/history google_calendar organizer_bookings/new].map do |section|
+        ["Program #{section.tr('/', ' ').titleize}", admin, "#{@program_path}/#{section}"]
+      end
+    end
+
+    def venue_management_pages(admin)
+      %w[photos programs edit security coordinators coordinators/new programs/new].map do |section|
+        ["Venue #{section.tr('/', ' ').titleize}", admin, "#{@venue_path}/#{section}"]
+      end
     end
 
     def measure(name, client, path)
@@ -258,7 +293,7 @@ module UserExperienceBenchmark
   def self.run(samples:)
     validate!
     [User, Venue, Program, ProgramMembership, VenueMembership, Booking, BookingClaim,
-     ProgramScheduleException, HistoryTracker, VenuePhoto, ProgramPhoto].each(&:create_indexes)
+     ProgramScheduleException, HistoryTracker, VenuePhoto, ProgramPhoto, CoordinatorInvitation].each(&:create_indexes)
     fixtures = Fixtures.new
     fixtures.create
     Runner.new(fixtures, samples: samples).run

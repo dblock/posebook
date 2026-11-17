@@ -7,8 +7,8 @@ class OrganizerBookingsController < ApplicationController
   rescue_from BookingMutation::Invalid, BookingMutation::Conflict, with: :show_error
   rescue_from BookingMutation::Stale, with: :show_stale_booking
 
-  def new; end
-  def edit; end
+  def new = load_participants
+  def edit = load_participants
 
   def create
     @booking = mutation.create(booking_params)
@@ -29,14 +29,19 @@ class OrganizerBookingsController < ApplicationController
 
   def find_program
     @program = Program.managed_by(current_user).find(params.expect(:program_id))
-    ids = @program.memberships.participants.distinct(:user_id)
-    @participants = User.active.where(:id.in => ids).order_by(name: :asc).to_a
   end
 
   def find_booking
     records = action_name == 'edit' ? Booking.upcoming : Booking.all
     @booking = records.where(program_id: @program.id).find(params.expect(:id))
-    @participants << @booking.user unless @participants.any? { |participant| participant.id == @booking.user_id }
+  end
+
+  def load_participants
+    ids = @program.memberships.participants.distinct(:user_id)
+    @participants = User.active.where(:id.in => ids).order_by(name: :asc).to_a
+    return unless @booking && @participants.none? { |participant| participant.id == @booking.user_id }
+
+    @participants << @booking.user
   end
 
   def booking_params
@@ -53,6 +58,7 @@ class OrganizerBookingsController < ApplicationController
   end
 
   def show_error(error)
+    load_participants
     flash.now[:alert] = error.message
     render(action_name == 'create' ? :new : :edit, status: :unprocessable_content)
   end

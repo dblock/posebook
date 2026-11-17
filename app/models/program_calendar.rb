@@ -43,7 +43,11 @@ class ProgramCalendar
 
   def next_session
     date = next_session_date
-    booking = program.bookings.where(date: date, status: 'confirmed').includes(:user).first if date
+    booking = if date && date_range.cover?(date)
+                displayed_bookings[date]
+              elsif date
+                program.bookings.where(date: date, status: 'confirmed').includes(:user).first
+              end
     [date, booking]
   end
 
@@ -74,7 +78,7 @@ class ProgramCalendar
   end
 
   def current_booking(user)
-    bookings.values.find { |booking| booking.user_id == user.id }
+    Booking.upcoming.where(program_id: program.id, user_id: user.id).first
   end
 
   def gender_blocked_reason(date, user, excluding: nil)

@@ -16,9 +16,9 @@ module DateDisplayHelper
   end
 
   def date_display_title(value, format:)
-    return l(value.to_date, format: '%B %Y') if format == :month
+    return localized_calendar_date(value.to_date, '%B %Y') if format == :month
 
-    date = l(value.to_date, format: '%A, %B %-d, %Y')
+    date = localized_calendar_date(value.to_date, '%A, %B %-d, %Y')
     return date unless date_display_time?(value)
 
     "#{date} at #{value.strftime('%-I:%M %p %Z')}"
@@ -36,10 +36,16 @@ module DateDisplayHelper
 
   private
 
+  def localized_calendar_date(date, format)
+    dates = @localized_calendar_dates ||= {}
+    key = [I18n.locale, date, format]
+    dates.fetch(key) { dates[key] = l(date, format: format) }
+  end
+
   def absolute_date_label(value, today, format:)
     pattern = { compact: '%b %-d', month: '%B' }.fetch(format, '%a, %b %-d')
     pattern += format == :month ? ' %Y' : ', %Y' if value.year != today.year
-    l(value.to_date, format: pattern)
+    localized_calendar_date(value.to_date, pattern)
   end
 
   def nearby_date_label(date, today, compact:)
@@ -47,6 +53,6 @@ module DateDisplayHelper
     return { -1 => 'Yesterday', 0 => 'Today', 1 => 'Tomorrow' }[offset] if offset.abs <= 1
     return unless offset.abs < 7
 
-    "#{offset.negative? ? 'Last' : 'Next'} #{l(date, format: compact ? '%a' : '%A')}"
+    "#{offset.negative? ? 'Last' : 'Next'} #{localized_calendar_date(date, compact ? '%a' : '%A')}"
   end
 end

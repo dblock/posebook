@@ -1,4 +1,5 @@
 <% bookings = dashboard.upcoming_bookings %>
+<% preload_google_calendar_connections(bookings) %>
 <% bookings.each do |booking| %>
   <%= render "bookings/upcoming", program: booking.program, booking: booking,
              can_book: dashboard.access_for(booking.program_id).allowed?, show_venue: true,

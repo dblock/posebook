@@ -19,6 +19,103 @@ RSpec.describe 'User experience read performance', :aggregate_failures, :databas
     Mongoid.default_client.unsubscribe(Mongo::Monitoring::COMMAND, monitor) if monitor
   end
 
+  it 'resolves a revoked ordinary session only once while rendering a public page and rechecks the next request' do
+    sign_in(participant)
+    participant.update!(session_version: SecureRandom.hex(16))
+    result = commands { get about_path }
+    expect(response).to have_http_status(:ok)
+    expect(response.body).not_to include(participant.email, 'Sign Out')
+    expect(result[:collections]['users']).to eq(1)
+    sign_in(participant)
+    get profile_path
+    expect(response.body).to include(participant.email)
+  end
+
+  it 'resolves revoked remembered credentials once per request and removes the invalid cookie' do
+    post session_path, params: { email: participant.email, password: DatabaseHelpers::TEST_PASSWORD, remember_me: '1' }
+    participant.update!(session_version: SecureRandom.hex(16))
+    result = commands { get about_path }
+    expect(response).to have_http_status(:ok)
+    expect(response.body).not_to include('Sign Out')
+    expect(result[:collections]['users']).to eq(2)
+    expect(cookies['_posebook_remember_me']).to be_blank
+    get profile_path
+    expect(response).to redirect_to(new_session_path)
+  end
+
+  it 'batch loads coordinator invitation targets without loading an unused coordinator list' do
+    admin = create_user(roles: ['system_admin'])
+    sign_in(admin)
+    [create_venue, create_program].each do |target|
+      10.times { create_coordinator_invitation(target, admin) }
+      result = commands { get new_polymorphic_path([target, :coordinator]) }
+      collection = target.is_a?(Venue) ? 'venues' : 'programs'
+      expect(response.parsed_body.css('a[href*="/coordinator_invitations/"]').size).to eq(10)
+      expect(result[:collections][collection]).to be <= 2
+      expect(result[:collections].keys & %w[program_memberships venue_memberships]).to be_empty
+    end
+  end
+
+  it 'does not load calendar booking access or upcoming participants for the program history page' do
+    program = create_program
+    grant_participant_access(program, participant)
+    booking = track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-11-16'))
+    sign_in(create_user(roles: ['system_admin']))
+    result = commands { get history_program_path(program) }
+    expect(response.parsed_body.at_css("tr[data-booking='#{booking.id}']")).to be_present
+    expect(result[:collections]['bookings']).to be <= 2
+  end
+
+  it 'shares the displayed booking snapshot with the next session without exposing private identity' do
+    program = create_program
+    participant.update!(display_name: 'Public Model')
+    grant_participant_access(program, participant)
+    track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-11-16'))
+    result = commands { get program_path(program) }
+    expect(response.parsed_body.css('.booked-participant').map(&:text)).to eq(['Public Model', 'Public Model'])
+    expect(response.body).not_to include(participant.email)
+    expect(result[:collections]['bookings']).to eq(1)
+    expect(result[:collections]['users']).to eq(1)
+  end
+
+  it 'still finds the next booked session outside a calendar starting at a future booking window' do
+    program = create_program
+    participant.update!(display_name: 'Earlier Model')
+    grant_participant_access(program, participant)
+    track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-11-16'))
+    program.update!(first_bookable_date: Date.new(2027, 1, 1))
+    get program_path(program)
+    expect(response.parsed_body.at_css('.next-session').text).to include('Earlier Model', 'Next Mon')
+    expect(response.body).to include('January 2027')
+  end
+
+  it 'fetches only the current participant booking instead of hydrating every upcoming participant' do
+    program = create_program(available_weekdays: %w[0 1 2 3 4 5 6])
+    grant_participant_access(program, participant)
+    booking = track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-11-16'))
+    3.times do |index|
+      other = create_user
+      grant_participant_access(program, other)
+      track_booking(BookingMutation.new(program: program, user: other).book(date: "2026-11-#{17 + index}"))
+    end
+
+    result = commands { expect(ProgramCalendar.new(program).current_booking(participant)).to eq(booking) }
+    expect(result[:collections]['bookings']).to eq(1)
+    expect(result[:collections]).not_to have_key('users')
+  end
+
+  it 'batch loads calendar connections across an administrator view of another participant bookings' do
+    programs = Array.new(5) { create_program }
+    programs.each do |program|
+      grant_participant_access(program, participant)
+      track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-11-16'))
+    end
+    sign_in(create_user(roles: ['system_admin']))
+    result = commands { get bookings_admin_user_path(participant) }
+    expect(response.parsed_body.css('.upcoming-booking').size).to eq(5)
+    expect(result[:collections]['google_calendar_connections']).to eq(1)
+  end
+
   it 'keeps dashboard database work bounded as the number of eligible programs grows' do
     allow(ParticipantDashboard).to receive(:new).and_call_original
     programs = Array.new(12) { create_program }

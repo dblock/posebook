@@ -151,6 +151,17 @@ RSpec.describe 'Organizer bookings', :aggregate_failures, :database, type: :requ
     expect(record.status).to eq('confirmed')
   end
 
+  it 'retains an inactive booked participant in both the edit form and a validation error' do
+    record = reserve
+    participant.update!(active: false)
+    get edit_program_organizer_booking_path(program, record)
+    expect(response.parsed_body.at_css("#booking_user_id option[value='#{participant.id}']")).to be_present
+    patch program_organizer_booking_path(program, record), params: booking_params(reason: '')
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.parsed_body.at_css("#booking_user_id option[value='#{participant.id}']")).to be_present
+    expect(record.reload.status).to eq('confirmed')
+  end
+
   it 'rejects an old organizer form instead of clearing a newer confirmation' do
     record = reserve
     get edit_program_organizer_booking_path(program, record)
