@@ -67,13 +67,13 @@ RSpec.describe 'Google Calendar connections', :aggregate_failures, :database, ty
     { 'needsAction' => 'Pending', 'accepted' => 'Accepted', 'tentative' => 'Tentative',
       'declined' => 'Declined' }.each do |status, label|
       sync.set(rsvp_status: status)
-      get program_path(program, section: 'calendar')
+      get calendar_program_path(program)
       cell = response.parsed_body.at_css("[data-date=\"#{booking.date.iso8601}\"]")
       expect(cell.at_css('.google-calendar-rsvp .status-label').text).to eq(label)
       expect(cell.css('.status-label').map(&:text)).to eq(['Booked', label])
       expect(cell.at_css('.google-calendar-rsvp .status-label')['title']).to include('last checked')
     end
-    get program_path(program, section: 'history')
+    get history_program_path(program)
     expect(response.parsed_body.at_css('.google-calendar-rsvp .status-label').text).to eq('Declined')
     get edit_program_organizer_booking_path(program, booking)
     expect(response.parsed_body.at_css('.google-calendar-rsvp .status-label').text).to eq('Declined')
@@ -83,7 +83,7 @@ RSpec.describe 'Google Calendar connections', :aggregate_failures, :database, ty
   it 'places Google responses inline beside booking badges without a visible prefix' do
     _, booking, = response_snapshot
     sign_in(organizer)
-    [program_path(program, section: 'calendar'), program_path(program, section: 'history'),
+    [calendar_program_path(program), history_program_path(program),
      program_participants_path(program), edit_program_organizer_booking_path(program, booking)].each do |path|
       get path
       rsvp = response.parsed_body.at_css('span.google-calendar-rsvp')
@@ -97,12 +97,12 @@ RSpec.describe 'Google Calendar connections', :aggregate_failures, :database, ty
     _, booking, = response_snapshot
     [nil, booking.user, create_user].each do |viewer|
       sign_in(viewer) if viewer
-      get program_path(program, section: 'calendar')
+      get calendar_program_path(program)
       expect(response.parsed_body.at_css('.google-calendar-rsvp')).to be_nil
     end
 
     sign_in(booking.user)
-    get program_path(program, section: 'history')
+    get history_program_path(program)
     expect(response.parsed_body.at_css('.google-calendar-rsvp')).to be_nil
   end
 
@@ -122,18 +122,18 @@ RSpec.describe 'Google Calendar connections', :aggregate_failures, :database, ty
     connection, booking, sync = response_snapshot
     sign_in(create_user(roles: ['system_admin']))
     sync.set(rsvp_fingerprint: 'old-payload')
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(response.parsed_body.at_css('.google-calendar-rsvp')).to be_nil
     sync.set(rsvp_fingerprint: 'sent', rsvp_booking_id: BSON::ObjectId.new)
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(response.parsed_body.at_css('.google-calendar-rsvp')).to be_nil
     sync.set(rsvp_booking_id: booking.id)
     connection.update!(enabled: false)
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(response.parsed_body.at_css('.google-calendar-rsvp')).to be_nil
     connection.update!(enabled: true)
     program.memberships.coordinators.first.pull(roles: 'program_coordinator')
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(response.parsed_body.at_css('.google-calendar-rsvp')).to be_nil
   end
 

@@ -193,7 +193,7 @@ RSpec.describe 'Homepage', :aggregate_failures, :database, type: :request do
     get root_path
     cards = response.parsed_body.css('.participant-programs .program-card')
     expect(cards.css('h2 a').map(&:text)).to eq(['Paused Mondays', 'Public Mondays'])
-    expect(cards.css('.button-link').pluck('href')).to eq([program_path(program, section: 'calendar')])
+    expect(cards.css('.button-link').pluck('href')).to eq([calendar_program_path(program)])
     expect(response.body).not_to include('Unassigned Mondays')
   end
 

@@ -23,7 +23,7 @@ RSpec.describe 'Invitation recipient restrictions', :aggregate_failures, :databa
   def destination
     return venue_path(venue) if scope == :venue
 
-    program_path(program, section: ('calendar' if scope == :participant))
+    scope == :participant ? calendar_program_path(program) : program_path(program)
   end
 
   def recipient_invitation(email)

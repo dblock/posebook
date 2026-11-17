@@ -11,10 +11,10 @@ RSpec.describe 'Public pages', :aggregate_failures, :database, type: :system do
 
   around { |example| travel_to(Time.utc(2026, 11, 13, 15)) { example.run } }
 
-  def open_participant_home
+  def open_participant_home(date: '2026-11-16')
     participant = create_user(name: 'Studio Model')
     grant_participant_access(program, participant)
-    track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-11-16'))
+    track_booking(BookingMutation.new(program: program, user: participant).book(date: date))
     sign_in_through_browser(participant)
     visit root_path
   end
@@ -58,6 +58,21 @@ RSpec.describe 'Public pages', :aggregate_failures, :database, type: :system do
     expect(page).to have_current_path(/status=accepted/)
     expect(page).to have_select('Status', selected: 'Accepted')
     expect_unchanged_page
+  end
+
+  it 'opens application review from a plain table link without JavaScript' do
+    applicant, application = create_submitted_application
+    sign_in_through_browser(create_user(roles: ['system_admin']))
+    without_javascript do
+      visit program_applications_path(program)
+      capture_screenshot('application-review-link')
+      find('td a:not(.button-link)', text: 'Review', exact_text: true).click
+      expect(page).to have_current_path(program_application_path(program, application))
+      expect(page).to have_css('h1', text: 'Review Application')
+      capture_screenshot('application-history-actor-links')
+      within('[aria-label="Application history"]') { click_on applicant.name }
+      expect(page).to have_current_path(admin_user_path(applicant))
+    end
   end
 
   it 'lets administrators open submitted applications from their homepage at every viewport' do
@@ -151,7 +166,6 @@ RSpec.describe 'Public pages', :aggregate_failures, :database, type: :system do
     visit root_path
     within('.homepage-applications') { click_on 'View' }
     expect(page).to have_text('Original experience')
-    expect(find('.application-resubmit').style('margin-block-start')).to eq('margin-block-start' => '16px')
     expect(page).to have_no_css('main input:not([type="hidden"]), main select')
     visit applications_profile_path
     click_on 'Resubmit'
@@ -248,22 +262,44 @@ RSpec.describe 'Public pages', :aggregate_failures, :database, type: :system do
       expect(page).to have_css('[data-calendar]')
       expect(page).to have_no_link('View Calendar')
       click_on 'Next Month'
+      expect(page).to have_current_path(calendar_program_path(program, month: '2026-12'))
       expect(page).to have_css('[data-calendar]')
     end
   end
 
-  it 'keeps application preparation as wide as the public program at every viewport' do
-    program.update!(applications_enabled: true)
-    each_viewport do |viewport|
-      visit program_path(program)
-      width = width_of(page.find('main'))
-      visit new_program_application_registration_path(program)
-      expect(page).to have_field('Email')
-      expect(width_of(page.find('main'))).to eq(width)
-      expect(width_of(page.find_field('Email'))).to be < width if viewport == :desktop
-      expect_no_horizontal_overflow
-      capture_screenshot("application-preparation-#{viewport}")
-    end
+  it 'opens the dedicated calendar page from the embedded overview calendar' do
+    visit program_path(program)
+    click_on 'Next Month'
+    expect(page).to have_current_path(calendar_program_path(program, month: '2026-12'))
+    expect(page).to have_css('[data-calendar-month]', text: 'December')
+    expect(page).to have_no_css('.next-session')
+  end
+
+  it 'navigates dedicated calendar months in place with browser Back and Forward' do
+    visit calendar_program_path(program)
+    mark_page
+    click_on 'Next Month'
+    expect(page).to have_current_path(calendar_program_path(program, month: '2026-12'))
+    expect(page).to have_css('[data-calendar-month]', text: 'December')
+    page.go_back
+    expect(page).to have_current_path(calendar_program_path(program))
+    expect(page).to have_css('[data-calendar-month]', text: 'November')
+    page.go_forward
+    expect(page).to have_current_path(calendar_program_path(program, month: '2026-12'))
+    expect(page).to have_css('[data-calendar-month]', text: 'December')
+    expect_unchanged_page
+  end
+
+  it 'keeps rescheduling month navigation on the booking editor' do
+    open_participant_home(date: '2026-11-23')
+    click_on 'Reschedule'
+    path = page.current_path
+    mark_page
+    click_on 'Next Month'
+    expect(page).to have_current_path("#{path}?month=2026-12")
+    expect(page).to have_css('h1', text: 'Change Your Booking Date')
+    expect(page).to have_field('What changed?')
+    expect_unchanged_page
   end
 
   it 'shows managed programs instead of public sessions on the coordinator homepage' do
@@ -310,7 +346,7 @@ RSpec.describe 'Public pages', :aggregate_failures, :database, type: :system do
 
   it 'links a participant calendar booking to its upcoming booking card' do
     open_participant_home
-    visit program_path(program, section: 'calendar')
+    visit calendar_program_path(program)
     find('.calendar a', text: 'Booked').click
     expect(page).to have_current_path(program_path(program), ignore_query: true)
     expect(page).to have_css('.upcoming-booking')

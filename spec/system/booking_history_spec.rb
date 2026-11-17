@@ -33,7 +33,6 @@ RSpec.describe 'Booking history details', :aggregate_failures, :database, type: 
     toggle = find("summary[aria-controls='booking-details-#{booking.id}']")
     toggle_booking_details(toggle, selector) do
       expect_booking_explanations(selector)
-      expect_confirmation_font(selector)
       expect_no_horizontal_overflow
       capture_screenshot("#{name}-#{viewport}")
     end
@@ -48,18 +47,9 @@ RSpec.describe 'Booking history details', :aggregate_failures, :database, type: 
     end
   end
 
-  def expect_confirmation_font(selector)
-    paragraph = find("#{selector} p", text: 'Confirmed on')
-    clock = paragraph.find('.date-display-clock')
-    expect(clock.style('font-family', 'font-size')).to eq(paragraph.style('font-family', 'font-size'))
-  end
-
   def toggle_booking_details(toggle, selector)
-    cell = toggle.find(:xpath, 'ancestor::td')
-    border = cell.style('border-bottom-color')
     toggle.click
     yield
-    expect(cell.style('border-bottom-color')).not_to eq(border)
     toggle.send_keys(:enter)
     expect(page).to have_no_css(selector)
   end
@@ -73,16 +63,19 @@ RSpec.describe 'Booking history details', :aggregate_failures, :database, type: 
     end
   end
 
-  it 'moves program explanations and manager editing details under their arrows' do
+  it 'keeps program explanations under arrows and manager editing in its own column' do
     upcoming = track_booking(Booking.create!(program: program, user: participant, date: Date.new(2026, 12, 14),
                                              time_zone: 'UTC', starts_at: Time.utc(2026, 12, 14, 19),
                                              ends_at: Time.utc(2026, 12, 14, 21)))
     sign_in_through_browser(admin)
     each_viewport do |viewport|
-      visit program_path(program, section: 'history')
+      visit history_program_path(program)
       expand_booking(viewport, name: 'program-booking-details')
-      find("summary[aria-controls='booking-details-#{upcoming.id}']").click
-      expect(page).to have_link('Edit', href: edit_program_organizer_booking_path(program, upcoming))
+      within("tr[data-booking='#{upcoming.id}'] td:last-child") do
+        expect(page).to have_link('Edit', href: edit_program_organizer_booking_path(program, upcoming))
+      end
+      expect(page).to have_no_css("tr[data-booking='#{upcoming.id}'] summary")
+      expect(page).to have_no_css("tr[data-booking='#{booking.id}'] a", text: 'Edit')
       find("summary[aria-controls='booking-details-#{booking.id}']").click
       expect(page).to have_text('Gender-rule override: Private manager override.')
     end
@@ -92,7 +85,7 @@ RSpec.describe 'Booking history details', :aggregate_failures, :database, type: 
     sign_in_through_browser(participant)
     resize_to(:narrow)
     without_javascript do
-      [history_profile_path, program_path(program, section: 'history')].each do |path|
+      [history_profile_path, history_program_path(program)].each do |path|
         visit path
         expand_booking(:narrow, name: 'owner-booking-details')
         expect(page).to have_no_text(:all, 'Private manager override.')

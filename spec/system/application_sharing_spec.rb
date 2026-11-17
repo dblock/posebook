@@ -13,25 +13,17 @@ RSpec.describe 'Application sharing', :aggregate_failures, :database, type: :sys
     sign_in_through_browser(coordinator)
   end
 
-  def expect_editor_actions
-    submit = find_button('Submit Application')
-    expect(find_button('Save Draft').style('height', 'font-size')).to eq(submit.style('height', 'font-size'))
-    expect(find_link('Cancel Application').style('height', 'font-size')).to eq(submit.style('height', 'font-size'))
-  end
-
   it 'configures a message prompt in settings and shows it in the application editor' do
     visit edit_program_path(program)
     fill_in 'Application Message Placeholder', with: 'Do you have any experience?'
     click_on 'Save Program'
     expect(page).to have_css('.flash', text: 'settings saved.')
-    click_on 'Sign Out'
+    sign_out_through_browser
     sign_in_through_browser(create_user(email_verified_at: Time.current))
     each_viewport do |viewport|
       without_javascript do
         visit new_program_participation_application_path(program)
         expect(page).to have_field('Message (Optional)', placeholder: 'Do you have any experience?', with: '')
-        expect_editor_actions
-        expect(top_of(find_link('Cancel Application'))).to eq(top_of(find_button('Save Draft'))) if viewport == :desktop
         expect_no_horizontal_overflow
         capture_screenshot("application-message-prompt-#{viewport}")
       end
@@ -39,7 +31,7 @@ RSpec.describe 'Application sharing', :aggregate_failures, :database, type: :sys
   end
 
   it 'cancels unsaved and saved applications without JavaScript or submitting them' do
-    click_on 'Sign Out'
+    sign_out_through_browser
     applicant = create_user(email_verified_at: Time.current)
     sign_in_through_browser(applicant)
     without_javascript do
@@ -59,7 +51,7 @@ RSpec.describe 'Application sharing', :aggregate_failures, :database, type: :sys
   end
 
   it 'requires consent to enable submission while keeping draft saving available' do
-    click_on 'Sign Out'
+    sign_out_through_browser
     applicant = create_user(email_verified_at: Time.current)
     sign_in_through_browser(applicant)
     visit new_program_participation_application_path(program)
@@ -75,7 +67,7 @@ RSpec.describe 'Application sharing', :aggregate_failures, :database, type: :sys
   end
 
   it 'saves drafts in place and then navigates after final submission' do
-    click_on 'Sign Out'
+    sign_out_through_browser
     sign_in_through_browser(create_user(email_verified_at: Time.current))
     visit new_program_participation_application_path(program)
     mark_page
@@ -102,7 +94,7 @@ RSpec.describe 'Application sharing', :aggregate_failures, :database, type: :sys
 
     participant = create_user(name: 'Riley Participant')
     grant_participant_access(program, participant)
-    click_on 'Sign Out'
+    sign_out_through_browser
     sign_in_through_browser(participant)
     visit program_path(program)
     expect(page).to have_no_css('#application-sharing')

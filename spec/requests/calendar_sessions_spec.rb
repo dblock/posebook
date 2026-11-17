@@ -54,14 +54,14 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     program.update!(first_bookable_date: Date.new(2027, 1, 1))
     get program_path(program)
     expect(response.parsed_body.at_css('.next-session').text).to include('Next Tuesday', '8:00 PM')
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(response.parsed_body.at_css('[data-calendar-month]').text.strip).to eq('January 2027')
     expect(response.parsed_body.at_css('.booking-window-notice').text).to include('book now', 'Jan 1, 2027')
-    get program_path(program, month: '2026-11')
+    get calendar_program_path(program, month: '2026-11')
     expect(day('2026-11-16').text).not_to include('6:30 PM')
     expect(day('2026-11-17').text).to include('8:00 PM')
     expect(response.body).not_to include('Private closure.', 'Private extra session.')
-    get program_path(program, month: '2027-07')
+    get calendar_program_path(program, month: '2027-07')
     expect(response.parsed_body.at_css('[data-calendar-month]').text.strip).to eq('July 2027')
     expect(response.parsed_body.css('nav[aria-label="Calendar months"] a').map(&:text)).not_to include('Next Month')
   end
@@ -70,19 +70,19 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     booking = reserve('2026-11-16')
     program.update!(first_bookable_date: Date.new(2027, 1, 1))
     sign_in(booking.user)
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(response.body).to include('Your Upcoming Booking', 'Cancel Booking', 'I&#39;ll be there!')
     participant = create_user
     grant_participant_access(program, participant)
     sign_in(participant)
-    get program_path(program, month: '2026-12')
+    get calendar_program_path(program, month: '2026-12')
     expect(day('2026-12-28').css('form, button')).to be_empty
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(day('2027-01-04').at_css('form')).to be_present
   end
 
   it 'uses one-word labels and leaves past non-session cells entirely blank' do
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(day('2026-11-17').text.strip).to eq('17')
     expect(day('2026-11-17').css('a, .status-label, small')).to be_empty
     expect(day('2026-11-09').css('.status-label').text).to eq('Past')
@@ -98,12 +98,12 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     grant_participant_access(program, participant)
     [nil, participant].each do |viewer|
       sign_in(viewer) if viewer
-      get program_path(program, section: 'calendar')
+      get calendar_program_path(program)
       expect(day('2026-11-17').text.strip).to eq('17')
       expect(day('2026-11-17').css('a, .status-label, small')).to be_empty
     end
     sign_in(organizer_for)
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     link = day('2026-11-17').at_css('a[aria-label="Edit 2026-11-17"]')
     expect(link['aria-label']).to eq('Edit 2026-11-17')
     expect(link['href']).to eq(program_schedule_path(program, date: '2026-11-17'))
@@ -119,7 +119,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     grant_participant_access(program, participant)
     track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-11-23'))
     sign_in(participant)
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(day('2026-11-17').text.strip).to eq('17')
     expect(day('2026-11-17').css('a, .status-label, small')).to be_empty
     expect(day('2026-11-23').css('.status-label').text).to eq('Booked')
@@ -131,11 +131,11 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     track_record(ProgramScheduleException.create!(program: program, date: Date.new(2026, 11, 17),
                                                   mode: 'closed', reason: 'Private closure.'))
     sign_in(organizer_for)
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(day('2026-11-16').text).to include('Booked', booking.user.name, 'Edit Day')
     expect(day('2026-11-17').text).to include('Blocked', 'Private closure.', 'Edit Day')
     program.update!(booking_horizon_months: 1)
-    get program_path(program, month: '2026-12')
+    get calendar_program_path(program, month: '2026-12')
     expect(day('2026-12-14').text).to include('Future')
     expect(day('2026-12-14').css('a')).to be_empty
   end
@@ -143,7 +143,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
   it 'honors historical openings and closures without publishing their explanations' do
     exception('2026-11-09', 'closed')
     exception('2026-11-10', 'open', start_time: '21:15')
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(day('2026-11-09').children).to be_empty
     expect(day('2026-11-10').text).to include('9:15 PM', 'Past Program')
     expect(response.body).not_to include('Private historical explanation.')
@@ -152,7 +152,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
   it 'keeps a completed session and saved time visible even after its regular weekday changes' do
     booking = historical_booking('2026-11-09', display_name: 'Past Public Participant')
     program.update!(available_weekdays: ['2'])
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(day('2026-11-09').text).to include('Completed', '8:45 PM', 'Past Public Participant')
     expect(day('2026-11-09').css('form, button')).to be_empty
     expect(response.body).not_to include(booking.user.email, 'Your Upcoming Booking')
@@ -163,19 +163,19 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
                                                       instagram_handle: 'past_artist', instagram_tagging_allowed: true)
     named = historical_booking('2026-11-09', name: 'Private Past Participant', display_name: 'Past Display Name',
                                              instagram_handle: 'past_artist_two', instagram_tagging_allowed: true)
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(day('2026-11-02').text).to include('Past Public Participant', '@past_artist')
     expect(day('2026-11-09').text).to include('Past Display Name', '@past_artist_two')
     expect(response.body).not_to include(named.user.name, named.user.email)
     public_booking.user.update!(instagram_tagging_allowed: false)
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(day('2026-11-02').text).not_to include('@past_artist')
   end
 
   it 'does not publish canceled or foreign-session history when showing past sessions' do
     historical_booking('2026-11-02', status: 'canceled', display_name: 'Canceled Past Participant')
     historical_booking('2026-11-09', at: create_program, display_name: 'Foreign Past Participant')
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(day('2026-11-02').text).to include('Past Program')
     expect(response.body).not_to include('Canceled Past Participant', 'Foreign Past Participant',
                                          'Private cancellation.')
@@ -185,7 +185,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     historical_booking('2026-11-30', display_name: 'Previous Month Participant')
     travel_to Time.utc(2026, 12, 4, 15)
     sign_in(organizer_for)
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(day('2026-11-30').text).to include('Completed', 'Previous Month Participant')
     expect(day('2026-11-30').css('form, button')).to be_empty
     expect(day('2026-11-30').css('a').map(&:text)).not_to include('Edit Booking', 'Edit Day')
@@ -197,7 +197,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     booking = historical_booking('2026-11-09')
     grant_participant_access(program, booking.user)
     sign_in(booking.user)
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(response.body).not_to include('Your Upcoming Booking', 'You are already scheduled')
     expect(day('2026-11-16').at_css('form')).to be_present
     expect(day('2026-11-09').css('form, button')).to be_empty
@@ -209,7 +209,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     grant_participant_access(program, participant)
     [nil, participant].each do |viewer|
       sign_in(viewer) if viewer
-      get program_path(program, month: '2026-12')
+      get calendar_program_path(program, month: '2026-12')
       expect(day('2026-11-30').text).to include('Available', '6:30 PM')
       expect(day('2026-11-29').text.strip).to eq('29')
       %w[2026-12-14 2027-01-01].each do |date|
@@ -222,7 +222,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
   it 'shows organizers actual neighboring-month sessions with scoped booking and day controls' do
     booking = reserve('2026-12-28')
     sign_in(organizer_for)
-    get program_path(program, month: '2027-01')
+    get calendar_program_path(program, month: '2027-01')
     expect(day('2026-12-28').text).to include('Booked', '6:30 PM', booking.user.name)
     expect(day('2026-12-28').at_css("a[href='#{edit_program_organizer_booking_path(program, booking)}']")).to be_present
     expect(day('2027-02-01').text).to include('Available', '6:30 PM', 'Schedule Participant', 'Edit Day')
@@ -235,11 +235,11 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
   it 'does not let organizer neighboring-month controls bypass the booking horizon or session scope' do
     program.update!(booking_horizon_months: 1)
     sign_in(organizer_for)
-    get program_path(program, month: '2026-12')
+    get calendar_program_path(program, month: '2026-12')
     expect(day('2026-12-14').css('.status-label').text).to eq('Future')
     expect(day('2026-12-14').css('a, form, button')).to be_empty
     sign_in(organizer_for(create_program))
-    get program_path(program, month: '2026-12', program_coordinator: '1')
+    get calendar_program_path(program, month: '2026-12', program_coordinator: '1')
     expect(day('2026-11-30').css('.status-label').text).to eq('Available')
     expect(day('2026-11-30').css('a, form, button')).to be_empty
   end
@@ -249,7 +249,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     grant_participant_access(program, participant)
     track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-12-14'))
     sign_in(participant)
-    get program_path(program, month: '2026-12')
+    get calendar_program_path(program, month: '2026-12')
     expect(day('2026-11-29').text.strip).to eq('29')
     expect(day('2026-11-30').text).to include('6:30 PM', 'You are already scheduled')
     expect(day('2026-11-30').text).not_to include('Future')
@@ -263,7 +263,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     grant_participant_access(program, participant)
     [nil, participant].each do |viewer|
       sign_in(viewer) if viewer
-      get program_path(program, month: '2026-12')
+      get calendar_program_path(program, month: '2026-12')
       expect(day('2026-11-30').text).to include('To be announced')
       expect(day('2026-11-30').text).not_to include(booking.user.name, 'Future')
       expect(day('2026-11-30').css('a, form, button')).to be_empty
@@ -274,11 +274,11 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     booking = reserve('2026-11-30')
     booking.user.update!(display_name: 'Public Model')
     membership = ProgramMembership.participants.find_by(program_id: program.id, user_id: booking.user_id)
-    get program_path(program, month: '2026-12')
+    get calendar_program_path(program, month: '2026-12')
     expect(day('2026-11-30').css('.booked-participant a').pluck('href'))
       .to eq([participant_path(booking.user)])
     sign_in(organizer_for)
-    get program_path(program, month: '2026-12')
+    get calendar_program_path(program, month: '2026-12')
     expect(day('2026-11-30').css('.booked-participant a').pluck('href'))
       .to eq([participant_path(booking.user), edit_program_participant_path(program, membership)])
   end

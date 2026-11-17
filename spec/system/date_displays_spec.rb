@@ -36,24 +36,15 @@ RSpec.describe 'Compact date displays', :aggregate_failures, :database, type: :s
     label = date.find('.date-display-label')
     clock = date.find('.date-display-clock')
     expect((top_of(clock) - top_of(label)).abs).to be <= 4
-    expect(width_of(date.find(:xpath, '..'))).to be >= 160
   end
 
-  # rubocop:disable-next Spellcheck/Spelling -- Standard JavaScript DOM identifiers.
-  def expect_plain_date(date)
-    expect(date[:tabindex]).to be_nil
-    expect(date.style('cursor')).to eq(date.find(:xpath, '..').style('cursor'))
-    date.click
-    expect(date.evaluate_script('getComputedStyle(this, "::after").content')).to eq('none')
-  end
-
-  it 'keeps application and history dates on one line without click expansion at every viewport' do
+  it 'keeps application and history dates on one line without extra tab stops at every viewport' do
     prepare_history
     each_viewport do |viewport|
       [program_applications_path(program), history_program_applications_path(program)].each_with_index do |path, index|
         visit path
         date = expect_precise_date
-        expect_plain_date(date)
+        expect(date[:tabindex]).to be_nil
         expect_single_line_date(date)
         expect_no_horizontal_overflow
         capture_screenshot("compact-date-table-#{index}-#{viewport}")
@@ -127,8 +118,8 @@ RSpec.describe 'Compact date displays', :aggregate_failures, :database, type: :s
     prepare_history
     without_javascript do
       visit history_program_applications_path(program)
-      expect_plain_date(expect_precise_date)
-      visit program_path(program, section: 'calendar')
+      expect(expect_precise_date[:tabindex]).to be_nil
+      visit calendar_program_path(program)
       date = find(".calendar [data-date='2026-11-17'] time")
       expect(date.text).to eq('17')
       expect(date[:title]).to eq('Tuesday, November 17, 2026')

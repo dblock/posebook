@@ -16,9 +16,9 @@
     <p><%= program_schedule_summary(program) %></p>
     <%= render "venues/location", venue: program.venue %>
     <% if local_assigns.fetch(:bookable, false) %>
-      <%= link_to "Choose a Date", program_path(program, section: "calendar"), class: "button-link" %>
+      <%= link_to "Choose a Date", calendar_program_path(program), class: "button-link" %>
     <% elsif local_assigns.fetch(:managed, false) %>
-      <%= link_to "Manage Calendar", program_path(program, section: "calendar"), class: "button-link" %>
+      <%= link_to "Manage Calendar", calendar_program_path(program), class: "button-link" %>
     <% end %>
   </div>
 </article>

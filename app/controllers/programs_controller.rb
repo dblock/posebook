@@ -70,19 +70,14 @@ class ProgramsController < ApplicationController
   def prepare_program_access
     @program_coordinator = current_user && @program.managed_by?(current_user)
     @program_member = @program_coordinator || (current_user && @program.participant?(current_user))
-    @section = params[:section].presence || default_section
+    @section = request.path_parameters.fetch(:section, 'view')
   end
 
   def prepare_program_page
-    return head :not_found unless %w[view calendar history].include?(@section)
     return head :not_found if @section == 'history' && !@program_member
 
     @calendar = ProgramCalendar.new(@program, month: (params[:month] unless @section == 'view'))
     load_calendar if @program_member
-  end
-
-  def default_section
-    params[:month].present? || request.headers['X-Posebook-Calendar-Context'].present? ? 'calendar' : 'view'
   end
 
   def find_venue

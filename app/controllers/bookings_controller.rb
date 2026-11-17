@@ -86,7 +86,7 @@ class BookingsController < ApplicationController
 
   def finish_booking(message)
     destination = if @program.reload.booking_active?
-                    program_path(@program, month: @booking.date.strftime('%Y-%m'))
+                    calendar_program_path(@program, month: @booking.date.strftime('%Y-%m'))
                   else
                     profile_path
                   end
@@ -112,7 +112,7 @@ class BookingsController < ApplicationController
     return profile_path unless @program.reload.booking_active?
 
     month = params[:date]&.to_s&.first(7)
-    program_path(@program, month: month, section: ('calendar' if month.blank?))
+    calendar_program_path(@program, month: month)
   end
 
   def show_stale_booking(error)

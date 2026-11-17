@@ -119,9 +119,9 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     expect(response.parsed_body.at_css('.program-tabs')).to be_nil
     expect(response.body).to include('Session Calendar')
     expect(response.body).not_to include('Private instructions')
-    get program_path(program, section: 'history')
+    get history_program_path(program)
     expect(response).to have_http_status(:not_found)
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(response.body).to include('Session Calendar')
     breadcrumb = response.parsed_body.at_css('nav[aria-label="Breadcrumb"]').text
     expect(breadcrumb).to include(program.venue.name, program.name)
@@ -132,7 +132,7 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     participant = create_user
     grant_participant_access(program, participant)
     sign_in(participant)
-    get program_path(program, section: 'history')
+    get history_program_path(program)
     expect(response.body).to include('Your Booking History')
     expect(response.parsed_body.css('.program-tabs a').map(&:text)).to eq(%w[Program Calendar Photos])
     get program_participants_path(program)
@@ -203,7 +203,7 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
       follow_redirect!
       expect(response.body).to include('Lecture settings saved.')
       expect(response.parsed_body.css('dt').map(&:text)).to include('Pay')
-      get program_path(program, section: 'calendar')
+      get calendar_program_path(program)
       expect(response.body).to include('Lecture Calendar', 'Schedule a Speaker')
       get edit_program_path(program)
       expect(response.parsed_body.at_css('input[name="program[participant_label]"]')['value']).to eq('Speaker')

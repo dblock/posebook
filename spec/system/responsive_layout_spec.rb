@@ -15,8 +15,8 @@ RSpec.describe 'Responsive layout', :aggregate_failures, :database, type: :syste
 
   it 'keeps coordinator pages within the viewport' do
     pages = { home: root_path, venues: venues_path, venue: venue_path(program.venue),
-              program: program_path(program), calendar: program_path(program, section: 'calendar'),
-              history: program_path(program, section: 'history'), participants: program_participants_path(program),
+              program: program_path(program), calendar: calendar_program_path(program),
+              history: history_program_path(program), participants: program_participants_path(program),
               invitations: program_participant_invitations_path(program),
               applications: program_applications_path(program), edit: edit_program_path(program),
               profile: profile_path, bookings: bookings_profile_path }
@@ -27,6 +27,21 @@ RSpec.describe 'Responsive layout', :aggregate_failures, :database, type: :syste
         expect_no_horizontal_overflow
         capture_screenshot("#{name}-#{viewport}")
       end
+    end
+  end
+
+  it 'fits invitation columns on desktop and keeps narrow screens within the viewport' do
+    create_participant_invitation(program, coordinator, name: 'Accepted Invitee With A Longer Name',
+                                                        email: 'avery.accepted.long.address@example.test',
+                                                        created_at: 4.days.ago, used_at: 3.days.ago)
+    each_viewport do |viewport|
+      visit program_participant_invitations_path(program)
+      table = find('table.participant-invitations')
+      expect(width_of(table)).to be <= width_of(find('.table-scroll')) if viewport == :desktop
+      expect(table).to have_text('Accepted Invitee With A Longer Name')
+      expect(table).to have_button('Revoke')
+      expect_no_horizontal_overflow
+      capture_screenshot("compact-invitations-#{viewport}")
     end
   end
 end

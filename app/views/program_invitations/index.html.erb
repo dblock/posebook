@@ -8,7 +8,7 @@
   <% else %>
     <p class="scroll-hint">Scroll horizontally to view invitation dates and actions.</p>
     <div class="table-scroll" role="region" aria-label="<%= @program.participant_label.titleize %> invitations" tabindex="0">
-      <table>
+      <table class="participant-invitations">
         <thead><tr><th>Invitee</th><th>Status</th><th>Invited</th><th>Invited By</th><th>Expires</th><th>Accepted</th><th>Revoke</th><th>View</th></tr></thead>
         <tbody>
           <% @invitations.each do |invitation| %>
@@ -21,7 +21,7 @@
               </td>
               <td class="invitation-status"><%= status_label(invitation.status) %></td>
               <td><%= render "shared/date", value: invitation.created_at, zone: @program.time_zone, format: :compact %></td>
-              <td><%= invitation.invited_by&.name.presence || "Not recorded" %></td>
+              <td class="invitation-sender"><% if (sender = invitation.invited_by)&.name.present? %><%= link_to sender.name, participant_path(sender) %><% else %>Not recorded<% end %></td>
               <td><%= render "shared/date", value: invitation.expires_at, zone: @program.time_zone, format: :compact %></td>
               <td><% if invitation.used_at %><%= render "shared/date", value: invitation.used_at, zone: @program.time_zone, format: :compact %><% else %>Not accepted<% end %></td>
               <td><% if invitation.status == "Pending" %>

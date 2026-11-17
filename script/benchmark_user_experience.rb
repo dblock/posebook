@@ -195,7 +195,7 @@ module UserExperienceBenchmark
       [['Venue Directory', participant, '/venues'], ['Participant Home', participant, '/'],
        ['Profile', participant, '/profile'], ['Profile Bookings', participant, '/profile/bookings'],
        ['Booking History', participant, '/profile/history'],
-       ['Booking Calendar', participant, "#{@program_path}?section=calendar&month=#{@month}"],
+       ['Booking Calendar', participant, "#{@program_path}/calendar?month=#{@month}"],
        ['Profile Thumbnail', participant, thumbnail]]
     end
 
@@ -204,7 +204,7 @@ module UserExperienceBenchmark
       thumbnail = "#{@venue_path}/photos/#{@fixtures.venues.first.primary_photo.id}?thumbnail=1"
       [['Public Home', guest, '/'], ['Venue Overview', guest, @venue_path],
        ['Program Overview', guest, @program_path], ['Venue Programs', guest, "#{@venue_path}/programs"],
-       ['Public Calendar', guest, "#{@program_path}?section=calendar&month=#{@month}"],
+       ['Public Calendar', guest, "#{@program_path}/calendar?month=#{@month}"],
        ['Venue Photos', guest, "#{@venue_path}/photos"], ['Venue Thumbnail', guest, thumbnail]]
     end
 

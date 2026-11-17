@@ -123,7 +123,7 @@ module ProgramCalendarHelper
     if changing_booking
       edit_program_booking_path(calendar.program, changing_booking, **options)
     else
-      program_path(calendar.program, **options)
+      calendar_program_path(calendar.program, **options)
     end
   end
 end

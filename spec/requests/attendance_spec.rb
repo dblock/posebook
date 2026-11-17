@@ -27,9 +27,9 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
 
   def history_status(viewer, heading)
     sign_in(viewer)
-    get program_path(program, section: 'history')
+    get history_program_path(program)
     history = response.parsed_body.at_xpath("//section[h2='#{heading}']")
-    history.at_css("tr[data-booking='#{booking.id}'] td:last-child")
+    history.at_css("tr[data-booking='#{booking.id}'] .booking-status")
   end
 
   def close_confirmed_booking(status)
@@ -81,7 +81,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
      [organizer, 'Program Booking History']].each do |viewer, heading|
       status = history_status(viewer, heading)
       expect(status.css('.status-label').map(&:text)).to eq(['Booked'])
-      get program_path(program, section: 'calendar')
+      get calendar_program_path(program)
       day = response.parsed_body.at_css(".calendar [data-date='#{booking.date.iso8601}']")
       expect(day.css('.status-label').map(&:text)).to eq(['Booked'])
     end
@@ -89,10 +89,22 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
 
   it 'shows the booked badge alongside the overdue warning on the owner calendar' do
     travel_to Time.utc(2026, 11, 18, 5)
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     day = response.parsed_body.at_css(".calendar [data-date='#{booking.date.iso8601}']")
     expect(day.css('.status-label').map(&:text)).to eq(['Booked'])
     expect(day.at_css('.attendance-warning').text).to include('Please contact an organizer ASAP')
+  end
+
+  it 'omits urgent calendar warnings from participant and manager booking history' do
+    travel_to Time.utc(2026, 11, 18, 5)
+    organizer = create_user
+    grant_coordinator_access(program, organizer)
+    [[participant, 'Your Booking History'],
+     [organizer, 'Program Booking History']].each do |viewer, heading|
+      status = history_status(viewer, heading)
+      expect(status.css('.status-label').map(&:text)).to eq(['Booked'])
+      expect(response.body).not_to include('Please contact an organizer ASAP')
+    end
   end
 
   %w[canceled rescheduled].each do |state|
@@ -154,7 +166,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     grant_coordinator_access(program, organizer)
     travel_to Time.utc(2026, 11, 18, 5)
     sign_in(organizer)
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     warning = response.parsed_body.at_css('.attendance-warning')
     expect(warning['role']).to eq('status')
     expect(warning['class']).not_to include('status-label')
@@ -165,14 +177,14 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     expect(response.parsed_body.at_css('.participant-roster').text).not_to include(booking.date.iso8601)
     expect(response.body).not_to include('Please contact an organizer ASAP')
     delete session_path
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(response.body).not_to include('Attendance not confirmed', 'follow up ASAP', 'Edit Booking')
   end
 
   it 'publishes a positive confirmation without revealing a private participant or confirmation history' do
     confirm_booking
     delete session_path
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(response.body).to include('To be announced')
     expect(response.parsed_body.at_css('.calendar .attendance-confirmed').text).to eq('Confirmed')
     expect(response.body).not_to include(participant.name, participant.email, 'Program Booking History',
@@ -206,10 +218,10 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
   end
 
   it 'reloads stale private summaries when confirmation changes during calendar navigation' do
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     context = response.parsed_body.at_css('[data-calendar]')['data-calendar-context']
     confirm_booking
-    get program_path(program, month: '2026-12')
+    get calendar_program_path(program, month: '2026-12')
     expect(response.parsed_body.at_css('[data-calendar]')['data-calendar-context']).not_to eq(context)
   end
 

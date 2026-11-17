@@ -956,6 +956,15 @@ tr:has(.participant-note-toggle[open]) + .participant-note-row {
   overflow-wrap: anywhere;
 }
 
+.participant-invitations :is(th, td) {
+  padding: 0.75rem 0.5rem;
+}
+
+.table-scroll .participant-invitations .participant-identity {
+  min-width: 14rem;
+  overflow-wrap: anywhere;
+}
+
 .participant-identity > div {
   min-width: 0;
 }

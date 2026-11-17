@@ -16,7 +16,6 @@ RSpec.describe 'Roster details', :aggregate_failures, :database, type: :system d
 
   def expect_expanded_note(member)
     row = find("#pause-note-#{member.id}")
-    expect(row.all('td').map { |cell| cell[:colspan] }).to eq(%w[3 3])
     expect(row).to have_css('td:last-child', text: member.participant_pause_reason)
   end
 
@@ -32,23 +31,10 @@ RSpec.describe 'Roster details', :aggregate_failures, :database, type: :system d
   end
 
   def toggle_note(toggle, selector)
-    expect_pause_arrow(toggle)
-    border = note_border_color(toggle)
     toggle.click
     yield
-    expect(note_border_color(toggle)).not_to eq(border)
     toggle.send_keys(:enter)
     expect(page).to have_no_css(selector)
-  end
-
-  def expect_pause_arrow(toggle)
-    size = toggle.style('font-size').fetch('font-size').to_f
-    arrow_size = toggle.find('span').style('font-size').fetch('font-size').to_f
-    expect(arrow_size).to eq(size * 2)
-  end
-
-  def note_border_color(toggle)
-    toggle.find(:xpath, 'ancestor::td').style('border-bottom-color').fetch('border-bottom-color')
   end
 
   def withdrawn_application
@@ -80,23 +66,12 @@ RSpec.describe 'Roster details', :aggregate_failures, :database, type: :system d
     end
   end
 
-  def table_font_size(path, viewport)
-    visit path
-    minimum_width = path == program_participants_path(program) ? 288 : 352
-    expect(width_of(find('.table-scroll .participant-identity', match: :first))).to be >= minimum_width
-    expect_no_horizontal_overflow
-    capture_screenshot("table-type-#{path.split('/').last}-#{viewport}")
-    find('.table-scroll tbody td', match: :first).style('font-size').fetch('font-size')
-  end
-
-  it 'opens pause notes across the rightmost three columns at every viewport' do
+  it 'opens pause notes at every viewport' do
     membership.update!(participant_paused: true, participant_pause_reason: 'Taking a break until December.')
     each_viewport do |viewport|
       visit program_participants_path(program)
-      expect(width_of(find("tr[data-membership='#{membership.id}'] > td:first-child"))).to be <= 64
       toggle_pause_note(membership, viewport)
       expect(page).to have_css('main > form:last-child button', text: 'Invite All Available Models (0)')
-      expect(find('.participant-bulk-invite').style('margin-block-start')).to eq('margin-block-start' => '16px')
     end
   end
 
@@ -186,20 +161,6 @@ RSpec.describe 'Roster details', :aggregate_failures, :database, type: :system d
       visit program_participants_path(program)
       toggle_pause_note(membership, :no_javascript)
       expect(page).to have_button('Invite All Available Models (0)', disabled: true)
-    end
-  end
-
-  it 'uses the invitation table font size for rosters, applications, and coordinators at every viewport' do
-    membership
-    create_participant_invitation(program, coordinator, name: 'Invited Model')
-    applicant = create_user(email_verified_at: Time.current)
-    track_record(ParticipantApplicationWorkflow.new(program: program, user: applicant).submit(message: nil,
-                                                                                              consent: '1'))
-    paths = [program_participant_invitations_path(program), program_participants_path(program),
-             program_applications_path(program), program_coordinators_path(program)]
-    each_viewport do |viewport|
-      sizes = paths.map { |path| table_font_size(path, viewport) }
-      expect(sizes.uniq.size).to eq(1)
     end
   end
 

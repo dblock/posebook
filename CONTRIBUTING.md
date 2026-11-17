@@ -29,7 +29,7 @@ Run affected tests while developing, then final tests and lint before committing
 
 Tests require a separate `MONGODB_TEST_URI` named `posebook_test` or beginning with `posebook_test_`; they never fall back to the development URI. Use real MongoDB transactions, indexes, and libvips processing, but fake external providers. Track fixtures and remove only owned records/files, never collections or databases. Development mail appears in `tmp/mail` when the worker runs; tests use in-memory delivery.
 
-Add focused behavioral tests for changed permissions, concurrency, time zones, errors, and other relevant boundaries. Booking requests must carry explicit displayed revisions; reload fixtures only when modeling a fresh view. Booking cleanup uses exact owned IDs because normal deletion is guarded. Audit cleanup disables tracking and removes only owned history entries.
+Add focused behavioral tests for changed permissions, concurrency, time zones, errors, and other relevant boundaries. Avoid assertions for purely cosmetic spacing, colors, font sizes, or fixed element dimensions; keep layout checks for real overflow and usability regressions. Booking requests must carry explicit displayed revisions; reload fixtures only when modeling a fresh view. Booking cleanup uses exact owned IDs because normal deletion is guarded. Audit cleanup disables tracking and removes only owned history entries.
 
 `bundle exec rake spec` writes line/branch coverage to `coverage/index.html` and `coverage/lcov.info`. Inspect meaningful gaps without adding trivial assertions or excluding runtime code.
 
@@ -39,7 +39,7 @@ CI keeps Test, Lint, and Package separate, uses explicit inline `matrix.entry` c
 
 `bundle exec rspec spec/system` drives headless Chrome through Capybara/Cuprite against an in-process Puma server and the test database; the full suite includes these specs. Set `BROWSER_PATH` for a nonstandard Chrome/Chromium binary.
 
-Create fixtures with database helpers and `track_record` records created through browser flows; tracking is not automatic. `spec/support/browser_helpers.rb` supplies sign-in, desktop/phone/narrow viewports, overflow checks, disabled JavaScript, clipboard stubs, and screenshots. Set `BROWSER_SCREENSHOTS=tmp/screenshots` for captures; never commit them. Embed meaningful interface captures as GitHub-hosted PR attachments and verify their published URLs.
+Create fixtures with database helpers and `track_record` records created through browser flows; tracking is not automatic. `spec/support/browser_helpers.rb` supplies sign-in/out, desktop/phone/narrow viewports, overflow checks, disabled JavaScript, clipboard stubs, and screenshots. Group layout checks by viewport to avoid repeated browser resizing, and reuse each loaded page for related checks. Browser tests default `FERRUM_CLICK_WAIT` to `0.01`, shortening the fixed post-click pause while retaining a navigation grace period and unchanged waiting timeouts; wait for visible results before checking asynchronous actions or starting another navigation. Set `BROWSER_SCREENSHOTS=tmp/screenshots` for captures; never commit them. Embed meaningful interface captures as GitHub-hosted PR attachments and verify their published URLs.
 
 ## Performance Benchmarks
 

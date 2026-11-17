@@ -6,6 +6,8 @@ Deploy web and worker at the same version. The default shared worker handles the
 
 ## Program URLs
 
+Program calendars and booking history use `/programs/:slug/calendar` and `/programs/:slug/history`. Replace saved `?section=calendar` and `?section=history` links; query parameters no longer select pages and there are no compatibility redirects. Calendar month selection remains `?month=YYYY-MM` on the calendar route. No database migration is required.
+
 Program URLs now use `/programs` instead of `/sessions`, including calendars, bookings, galleries, management, and Google Calendar settings. Creating a program uses `/venues/:venue_slug/programs/new` and posts to `/venues/:venue_slug/programs`. Update saved bookmarks, shared links, and external clients to the new prefix; old `/sessions` paths are not redirected or aliased. Authentication remains at `/session`, and the Google OAuth callback is unchanged. No database or slug migration is required.
 
 ## Queued Transactional Email

@@ -167,11 +167,11 @@ RSpec.describe 'Venue and program activation', :aggregate_failures, :database, t
   it 'forces a full calendar refresh when venue activation changes during navigation' do
     book_participant
     sign_in(participant)
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     context = response.parsed_body.at_css('[data-calendar]')['data-calendar-context']
     expect(context).to be_present
     venue.update!(active: false)
-    get program_path(program, section: 'calendar'), headers: { 'X-Posebook-Calendar-Context' => context }
+    get calendar_program_path(program), headers: { 'X-Posebook-Calendar-Context' => context }
     expect(response.parsed_body.at_css('main')).to be_present
     expect(response.body).to include('Inactive')
   end

@@ -60,8 +60,8 @@ class GoogleCalendarEvent
   end
 
   def program_link
-    Rails.application.routes.url_helpers.program_url(
-      @program, **Rails.application.config.action_mailer.default_url_options, section: 'calendar'
+    Rails.application.routes.url_helpers.calendar_program_url(
+      @program, **Rails.application.config.action_mailer.default_url_options
     )
   end
 

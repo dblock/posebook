@@ -1,10 +1,10 @@
 <% manager = current_user && program.managed_by?(current_user) %>
-<% calendar_tabs = [["calendar", "Calendar", program_path(program, section: "calendar")]] %>
+<% calendar_tabs = [["calendar", "Calendar", calendar_program_path(program)]] %>
 <% models_tabs = [] %>
 <% settings_tabs = [] %>
 <% if manager %>
   <% calendar_tabs += [["exceptions", "Schedule Exceptions", exceptions_program_schedule_path(program)],
-                       ["history", "History", program_path(program, section: "history")]] %>
+                       ["history", "History", history_program_path(program)]] %>
   <% models_tabs = [["participants", "Roster", program_participants_path(program)],
                    ["invitations", "Invitations", program_participant_invitations_path(program)],
                    ["applications", "Applications", program_applications_path(program)],

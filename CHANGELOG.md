@@ -147,4 +147,9 @@
 - [#163](https://github.com/dblock/posebook/pull/163): Expand booking history explanations and manager details with consistent disclosure arrows and tighten participant roster columns - [@dblock](https://github.com/dblock).
 - [#164](https://github.com/dblock/posebook/pull/164): Match timestamp typography to surrounding text and narrow the administrator Users name column - [@dblock](https://github.com/dblock).
 - [#165](https://github.com/dblock/posebook/pull/165): Keep coordinator invitation actions below program and venue coordinator lists with consistent spacing - [@dblock](https://github.com/dblock).
+- [#166](https://github.com/dblock/posebook/pull/166): Use dedicated calendar and booking history routes throughout navigation, redirects, notifications, and provider links - [@dblock](https://github.com/dblock).
+- [#166](https://github.com/dblock/posebook/pull/166): Keep program history Edit actions in their own column and remove urgent calendar warnings from history - [@dblock](https://github.com/dblock).
+- [#166](https://github.com/dblock/posebook/pull/166): Tighten participant invitation columns to avoid unnecessary desktop scrolling while preserving dates and separate actions, and link invitation senders to their accounts - [@dblock](https://github.com/dblock).
+- [#166](https://github.com/dblock/posebook/pull/166): Render program application Review actions as plain links and link application history authors to their accounts - [@dblock](https://github.com/dblock).
+- [#166](https://github.com/dblock/posebook/pull/166): Prune cosmetic-only tests and styling assertions and speed browser tests by shortening fixed click delays and removing redundant page loads while retaining workflow, accessibility, and overflow coverage - [@dblock](https://github.com/dblock).
 - Your contribution here.

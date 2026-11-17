@@ -18,7 +18,7 @@ class ParticipantApplicationMailer < ApplicationMailer
     @application = application
     @program = application.program
     @application_url = program_participation_application_url(@program)
-    @calendar_url = program_url(@program, section: 'calendar')
+    @calendar_url = calendar_program_url(@program)
     subject = application.status == 'accepted' ? 'Application Accepted' : 'An Update About Your Application'
     mail(to: recipient.email, subject: "#{subject}: #{@program.name}")
   end

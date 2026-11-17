@@ -21,7 +21,7 @@ class ProgramSchedulesController < ApplicationController
     @exception = ProgramScheduleMutation.new(program: @program,
                                              user: current_user).call(schedule_params)
     if @exception.errors.empty?
-      redirect_to program_path(@program, month: @exception.date.strftime('%Y-%m')),
+      redirect_to calendar_program_path(@program, month: @exception.date.strftime('%Y-%m')),
                   notice: @program.message('programs.schedule_saved')
     else
       load_schedule

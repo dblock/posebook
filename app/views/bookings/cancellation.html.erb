@@ -9,5 +9,5 @@
     <p><%= label_tag :reason, "Explanation" %><br><%= text_area_tag :reason, params[:reason], required: true, maxlength: 2000, rows: 3 %></p>
     <%= submit_tag "Cancel Booking" %>
   <% end %>
-  <p><%= link_to "Keep My Booking", program_path(@program, section: "calendar") %></p>
+  <p><%= link_to "Keep My Booking", calendar_program_path(@program) %></p>
 </main>

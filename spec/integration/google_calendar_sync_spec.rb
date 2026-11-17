@@ -76,6 +76,7 @@ RSpec.describe GoogleCalendarSync, :aggregate_failures, :database do
     expect(api).to have_received(:insert_event) do |_, event, **|
       expect(event.description).to include("Venue: #{program.venue.name}", "Address: #{program.venue.address}",
                                            "Google Maps: #{program.venue.google_maps_location_url}")
+      expect(event.description).to include("/programs/#{program.to_param}/calendar")
     end
   end
 

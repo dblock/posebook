@@ -58,7 +58,7 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     expect(portrait.at_css('img')['src']).to include('venue-placeholder')
     expect(portrait.at_css('a')['href']).to eq(venue_path(venue))
     expect(portrait.at_css('[data-photo-preview]')).to be_nil
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(response.parsed_body.at_css('.upcoming-booking-photo')).to be_nil
   end
 

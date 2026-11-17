@@ -11,6 +11,6 @@
     <p><%= form.label :end_time, "End Time (optional)" %><br><%= form.time_field :end_time, step: 60 %><br><small>An earlier end time means the next day. Leave blank for no end time; ignored unless opening or changing a date.</small></p>
     <p><%= form.label :reason, "Explanation" %><br><%= form.text_area :reason, required: true, maxlength: 200, rows: 2 %></p>
     <%= form.submit "Save Schedule" %>
-    <p><%= link_to "Cancel", program_path(@program, section: "calendar") %></p>
+    <p><%= link_to "Cancel", calendar_program_path(@program) %></p>
   <% end %>
 </main>

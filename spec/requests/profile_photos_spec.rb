@@ -324,7 +324,7 @@ RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request 
                    .book(date: Date.current.next_occurring(:monday).iso8601))
     sign_in(create_user(roles: ['system_admin']))
     { program_participants_path(program) => participant_path(participant),
-      program_path(program, section: 'history') => participant_path(participant),
+      history_program_path(program) => participant_path(participant),
       admin_users_path => admin_user_path(participant) }.each do |path, link|
       get path
       url = participant_photo_path(participant, second.id, thumbnail: 1)

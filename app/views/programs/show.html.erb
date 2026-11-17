@@ -34,7 +34,7 @@
     <p><% if @program.booking_active? %><%= link_to "Schedule #{@program.participant_article} #{@program.participant_label.titleize}", new_program_organizer_booking_path(@program) %> | <% end %><%= link_to "Manage Schedule", program_schedule_path(@program) %></p>
   <% end %>
   <% unless @program_member %>
-    <p>Booking is available to invited <%= @program.participant_label.pluralize.downcase %>. <%= link_to "Sign In", program_path(@program, booking_invitation: "1") unless current_user %></p>
+    <p>Booking is available to invited <%= @program.participant_label.pluralize.downcase %>. <%= link_to "Sign In", calendar_program_path(@program, booking_invitation: "1") unless current_user %></p>
   <% end %>
   <% else %>
     <%= render "booking_history" %>

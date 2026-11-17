@@ -71,7 +71,7 @@ RSpec.describe 'Organizer bookings', :aggregate_failures, :database, type: :requ
           params: booking_params(attendance: 'confirmed')
     expect(record.reload.attendance_confirmed_by_id).to eq(organizer.id)
     follow_redirect!
-    get program_path(program, section: 'history')
+    get history_program_path(program)
     expect(response.body).to include('Confirmed on ')
     patch program_organizer_booking_path(program, record), params: booking_params
     expect(record.reload.attendance_confirmed?).to be(false)
@@ -118,9 +118,9 @@ RSpec.describe 'Organizer bookings', :aggregate_failures, :database, type: :requ
     expect(record.attendance_confirmed_at).to be_present
     expect(record.attendance_changes.pluck('confirmed')).to eq([true])
     expect(BookingClaim.where(booking_id: record.id)).to be_empty
-    get program_path(program, section: 'history')
+    get history_program_path(program)
     history = response.parsed_body.at_xpath('//section[h2="Program Booking History"]')
-    status = history.at_css("tr[data-booking='#{record.id}'] td:last-child")
+    status = history.at_css("tr[data-booking='#{record.id}'] .booking-status")
     expect(status.text.strip).to eq('Canceled')
     expect(status.at_css('.attendance-confirmed')).to be_nil
   end
@@ -133,7 +133,7 @@ RSpec.describe 'Organizer bookings', :aggregate_failures, :database, type: :requ
     form = response.parsed_body.at_css('form[action$="/cancel"]')
     post form['action'], params: { authenticity_token: form.at_css('input[name="authenticity_token"]')['value'],
                                    booking: { reason: 'Agreed cancellation.', lock_version: record.lock_version } }
-    expect(response).to redirect_to(program_path(program, month: '2026-11'))
+    expect(response).to redirect_to(calendar_program_path(program, month: '2026-11'))
     expect(record.reload.status).to eq('canceled')
   ensure
     OrganizerBookingsController.allow_forgery_protection = protection
@@ -163,7 +163,7 @@ RSpec.describe 'Organizer bookings', :aggregate_failures, :database, type: :requ
     expect(response).to redirect_to(program_path(program))
     follow_redirect!
     expect(response.body).to include('changed while you were editing')
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(response.body).to include('Confirmed')
     expect(record.reload.attendance_confirmed_by_id).to eq(other.id)
     expect(record.attendance_changes.size).to eq(1)

@@ -63,7 +63,7 @@ class InvitationAcceptancesController < ApplicationController
   end
 
   def accepted_location
-    program_path(@program, section: 'calendar')
+    calendar_program_path(@program)
   end
 
   def acceptance_notice

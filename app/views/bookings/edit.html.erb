@@ -13,5 +13,5 @@
     <% end %>
     <%= render "programs/calendar", calendar: @calendar, public_view: false %>
   <% end %>
-  <p><%= link_to "Keep Current Date", program_path(@program, section: "calendar") %></p>
+  <p><%= link_to "Keep Current Date", calendar_program_path(@program) %></p>
 </main>

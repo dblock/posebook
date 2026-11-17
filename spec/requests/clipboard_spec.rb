@@ -166,7 +166,7 @@ RSpec.describe 'Copy controls', :aggregate_failures, :database, type: :request d
     organizer = create_user(phone: '+12125551234')
     grant_coordinator_access(program, organizer)
     sign_in(user)
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(response.parsed_body.css('.copy-button')).to be_empty
     expect(response.parsed_body.at_css('a[href="https://www.instagram.com/preview.artist/"]')).to be_present
     expect(response.parsed_body.at_css("a[href='mailto:#{organizer.email}']")).to be_present
