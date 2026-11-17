@@ -4,5 +4,5 @@
   <%= render "programs/regular_schedule", program: @program %>
   <%= render "shared/coordinators_table", coordinators: @coordinators,
                                           remove_path: ->(membership) { program_coordinator_path(@program, membership) } %>
-  <p><%= link_to "Invite a Coordinator", new_program_coordinator_path(@program), class: "button-link" %></p>
+  <p class="coordinator-invitation-action"><%= link_to "Invite a Coordinator", new_program_coordinator_path(@program), class: "button-link" %></p>
 </main>
