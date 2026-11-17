@@ -10,5 +10,8 @@
   <% else %>
     <p>The private link is only displayed when the invitation is created. Create a new invitation if you did not keep it.</p>
   <% end %>
-  <p><%= link_to "Back to Invitations", program_participant_invitations_path(@program) %></p>
+  <% if @invitation.status == "Pending" %>
+    <%= button_to "Revoke", program_participant_invitation_path(@program, @invitation, cursor: params[:cursor], status: params[:status]), method: :delete, class: "secondary-action" %>
+  <% end %>
+  <p><%= link_to "Back to Invitations", program_participant_invitations_path(@program, cursor: params[:cursor], status: params[:status]) %></p>
 </main>

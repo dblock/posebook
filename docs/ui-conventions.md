@@ -16,15 +16,23 @@ Use `shared/photo_series` inside a card's `data-photo-series` container to open 
 
 Plain `button`, `input[type=submit]`, and `.button-link` elements are primary actions with a comfortable touch target. Use `.secondary-action` for less important actions; buttons inside tables are compact automatically. Group related actions in `.participant-actions`. `pending-controls.js` marks submitted forms busy and disables their buttons, so do not add per-page loading code.
 
-Keep New Program on the venue Programs page and Invite a Coordinator on coordinator lists, beside their headings in `.title-row`, rather than making creation actions primary tabs.
+Keep New Program beside its heading on the venue Programs page. Keep Invite a Coordinator at the bottom of program coordinator lists; on venue coordinator lists it remains beside the heading in `.title-row`. Do not make creation actions primary tabs.
+
+Put Invite All Available after its list and pagination, including empty states.
 
 ## Status and Identity
 
 Show states with the `status_label` helper, which maps statuses to success, danger, warning, and neutral tones. Show a person with `participant_contact_label`, which renders `Name <email> (Gender)` or only the email when nothing else is known.
 
+Reuse `shared/participant_identity` for roster, applicant, invitee, and Applications History participant columns, with `shared/participant_portrait` supplying the portrait or placeholder. Link known accounts to their profile and retain invitation details as the fallback for invitees without a linked account; never match accounts by invitation email. Preserve application and invitation identity snapshots and do not expose additional live account details through these snapshots. Coordinator tables also reuse the portrait and link names to profiles, never email addresses to mail links. Keep Revoke in its own invitation column and put a plain-text View link in the rightmost column.
+
 ## Tables
 
 Wrap tables in `.table-scroll` with `role="region"`, an `aria-label`, and `tabindex="0"`, preceded by a `.scroll-hint` that appears on narrow screens. Render an empty-state paragraph instead of an empty table, and paginate long lists with `CursorPage` and `shared/pagination`, which renders `nav.participant-pagination` with First/Previous/Next links. Keep navigation outside the nonempty-results block so emptied cursor ranges still have a First link. Do not display page numbers or absolute row ranges: insertions and deletions change those positions. Preserve the cursor in table actions and redirects, and reset it when changing filters. See `app/views/program_invitations/index.html.erb` for the canonical example. Table cells are vertically centered, except calendar days, which align to the top.
+
+Standard data tables inherit the same body font size, and identity columns have a 22rem minimum width so contact information stays readable inside the scrolling region. Keep Invite to Book in its own roster column and separate application Review and View Profile actions. A native disclosure arrow opens roster pause notes and Applications History reviewer notes in a separate row spanning the rightmost three columns, including without JavaScript. Fade the border between the expanded parent and detail rows to a faint divider, retaining the detail row's normal bottom boundary. Omit arrows for events without notes and show history events as plain text, not status badges. Keep ordinary booking timestamps and urgent follow-up copy off the roster while retaining calendar warnings.
+
+Use the shared GET table filter with in-place updates and a no-JavaScript submit fallback. Roster status options include program-wide counts; invitation status and application history event filters default to All. Preserve filters through pagination and mutation return paths, reset cursors on filter changes, and keep private draft events out of history filters.
 
 ## Forms and Feedback
 

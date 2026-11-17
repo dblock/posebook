@@ -7,7 +7,8 @@
                        ["history", "History", program_path(program, section: "history")]] %>
   <% models_tabs = [["participants", "Roster", program_participants_path(program)],
                    ["invitations", "Invitations", program_participant_invitations_path(program)],
-                   ["applications", "Applications", program_applications_path(program)]] %>
+                   ["applications", "Applications", program_applications_path(program)],
+                   ["application_history", "History", history_program_applications_path(program)]] %>
   <% settings_tabs = [["edit", "Details", edit_program_path(program)],
                      ["google_calendar", "Google Calendar", program_google_calendar_path(program)]] %>
 <% end %>

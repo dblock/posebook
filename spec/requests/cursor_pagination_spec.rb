@@ -22,7 +22,7 @@ RSpec.describe 'Application cursor pagination', :aggregate_failures, :database, 
   end
 
   def review_rows
-    response.parsed_body.css('tbody tr td:first-child').map(&:text)
+    response.parsed_body.css('tbody tr td:first-child').map { |cell| cell.text.squish }
   end
 
   it 'retains review filters and fresh authorization while paging through new submissions' do
@@ -67,8 +67,8 @@ RSpec.describe 'Application cursor pagination', :aggregate_failures, :database, 
     track_record(ParticipationEvent.create!(program: program, user: applicant, actor: coordinator,
                                             source_id: applications.last.id, action: 'application_declined'))
     get next_path
-    expect(response.parsed_body.css('tbody tr').size).to eq(1)
-    expect(response.parsed_body.at_css('tbody tr').text).to include(events.first.notes, coordinator.name)
+    expect(response.parsed_body.css('tr[data-event]').size).to eq(1)
+    expect(response.parsed_body.at_css('tbody').text).to include(events.first.notes, coordinator.name)
     expect(response.parsed_body.at_css('a[rel="next"]')).to be_nil
   end
 

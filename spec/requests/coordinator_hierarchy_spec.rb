@@ -8,6 +8,22 @@ RSpec.describe 'Coordinator hierarchy', :aggregate_failures, :database, type: :r
   let(:other_program) { create_program }
   let(:coordinator) { create_user }
 
+  it 'shows coordinator portraits and keeps the invitation action below the list without access guidance' do
+    grant_venue_access(venue, coordinator)
+    assignee = create_user
+    grant_coordinator_access(program, assignee)
+    photo = assignee.profile_photos.create!(public: true)
+    sign_in(coordinator)
+    get program_coordinators_path(program)
+    expect(response.parsed_body.at_css('.participant-portrait img')['src'])
+      .to eq(participant_photo_path(assignee, photo.id, thumbnail: 1))
+    expect(response.parsed_body.at_css('main > p:last-child a')['href']).to eq(new_program_coordinator_path(program))
+    expect(response.body).not_to include('inherit access to every', 'coordinators cannot grant coordinator access.')
+    expect(response.parsed_body.at_css('.coordinator-list td a:not(.participant-portrait)')['href'])
+      .to eq(participant_path(assignee))
+    expect(response.parsed_body.at_css("a[href='mailto:#{assignee.email}']")).to be_nil
+  end
+
   it 'keeps invalid venue creation and editing on their forms without changing stored locations' do
     sign_in(create_user(roles: ['system_admin']))
     get new_venue_path

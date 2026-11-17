@@ -148,7 +148,8 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     expect(response.parsed_body.css('.program-tabs .page-tab-group').map { |group| group.css('a').map(&:text) })
       .to eq([%w[Program Calendar Photos Models Settings]])
     expect(response.parsed_body.at_css('.program-tabs [aria-current="page"]').text).to eq('Models')
-    expect(response.parsed_body.css('.program-secondary-tabs a').map(&:text)).to eq(%w[Roster Invitations Applications])
+    expect(response.parsed_body.css('.program-secondary-tabs a').map(&:text))
+      .to eq(%w[Roster Invitations Applications History])
     expect(response.parsed_body.at_css('.program-secondary-tabs [aria-current="page"]').text).to eq('Roster')
     get program_coordinators_path(program)
     expect(response).to have_http_status(:forbidden)
@@ -164,7 +165,8 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
       .to eq(%w[Program Calendar Photos Models Settings])
     expect(response.parsed_body.css('.program-secondary-tabs a').map(&:text))
       .to eq(['Details', 'Coordinators', 'Google Calendar', 'Security'])
-    expect(response.parsed_body.at_css('.title-row a.button-link')['href']).to eq(new_program_coordinator_path(program))
+    expect(response.parsed_body.at_css('main > p:last-child a.button-link')['href'])
+      .to eq(new_program_coordinator_path(program))
   end
 
   it 'places program settings and Google Calendar in tabs with matching breadcrumbs' do
@@ -210,7 +212,7 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
 
     it 'uses configured roster and booking labels without changing membership roles' do
       get program_participants_path(program)
-      expect(response.body).to include('Instructors at', 'total instructors', 'Pause Instructor')
+      expect(response.body).to include('Instructors at', 'All Instructors (1)', 'Pause Instructor')
       get new_program_organizer_booking_path(program)
       expect(response.parsed_body.at_css('label[for="booking_user_id"]').text).to eq('Instructor')
       expect(response.body).to include('Choose an instructor')
@@ -515,7 +517,8 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     program = create_program
     user = create_user
     get program_coordinators_path(program)
-    expect(response.parsed_body.at_css('.title-row a.button-link')['href']).to eq(new_program_coordinator_path(program))
+    expect(response.parsed_body.at_css('main > p:last-child a.button-link')['href'])
+      .to eq(new_program_coordinator_path(program))
     get new_program_coordinator_path(program)
     expect(response.body).to include('Invite a Coordinator', 'Continue')
     expect(response.body).not_to include(user.email)

@@ -140,4 +140,5 @@
 - [#155](https://github.com/dblock/posebook/pull/155): Retain complete application lifecycle history, show read-only details and shared owner tables, and reopen withdrawn submissions as private drafts requiring fresh consent - [@dblock](https://github.com/dblock).
 - [#156](https://github.com/dblock/posebook/pull/156): Upload selected photos in place across account, application, program, venue, and administrator galleries while retaining ordinary upload controls without JavaScript - [@dblock](https://github.com/dblock).
 - [#157](https://github.com/dblock/posebook/pull/157): Add scoped submitted-application queues to management homepages and update status filtering and pagination in place - [@dblock](https://github.com/dblock).
+- [#158](https://github.com/dblock/posebook/pull/158): Unify management-table identities, font sizes, actions, status and event filters, and expandable notes with faint dividers - [@dblock](https://github.com/dblock).
 - Your contribution here.

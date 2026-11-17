@@ -123,7 +123,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     end
   end
 
-  it 'distinguishes the usual session time from the actual booking time on cancellation and participant lists' do
+  it 'shows the actual booking time on cancellation but only the regular schedule on participant lists' do
     prepare_participant
     program.update!(start_time: '19:15')
     track_record(ProgramScheduleException.create!(program: program, date: Date.new(2026, 11, 16),
@@ -133,7 +133,8 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     expect(response.body).to include('Monday at 7:15 PM (America/New_York)', '8:00 PM EST')
     grant_coordinator_access(program, participant)
     get program_participants_path(program)
-    expect(response.body).to include('Monday at 7:15 PM (America/New_York)', '8:00 PM EST')
+    expect(response.body).to include('Monday at 7:15 PM (America/New_York)')
+    expect(response.body).not_to include('8:00 PM EST')
   end
 
   it 'renders an independently navigable calendar without changing booking actions' do
