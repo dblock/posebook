@@ -142,4 +142,5 @@
 - [#157](https://github.com/dblock/posebook/pull/157): Add scoped submitted-application queues to management homepages and update status filtering and pagination in place - [@dblock](https://github.com/dblock).
 - [#158](https://github.com/dblock/posebook/pull/158): Unify management-table identities, font sizes, actions, status and event filters, and expandable notes with faint dividers - [@dblock](https://github.com/dblock).
 - [#159](https://github.com/dblock/posebook/pull/159): Move remaining creation and personal invitation actions below management lists and simplify unavailable Google Calendar feedback - [@dblock](https://github.com/dblock).
+- [#160](https://github.com/dblock/posebook/pull/160): Use Reject and Application Rejected consistently for application decisions without changing stored statuses or reconsideration - [@dblock](https://github.com/dblock).
 - Your contribution here.

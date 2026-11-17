@@ -146,7 +146,7 @@ RSpec.describe 'Roster details', :aggregate_failures, :database, type: :system d
     each_viewport do |viewport|
       visit history_program_applications_path(program)
       expect(page).to have_css('tr[data-event] .participant-note-toggle', count: 1)
-      expect(page).to have_css('.participation-history td:nth-child(3)', text: 'Application: Not Now')
+      expect(page).to have_css('.participation-history td:nth-child(3)', text: 'Application Rejected')
       expect(page).to have_no_css('.participation-history .status-label')
       toggle_history_note(event, viewport)
     end

@@ -9,7 +9,7 @@ module ParticipantApplicationsHelper
   end
 
   def participation_event_label(event)
-    return 'Application: Not Now' if event.action == 'application_declined'
+    return 'Application Rejected' if event.action == 'application_declined'
 
     event.action.humanize.titleize
   end

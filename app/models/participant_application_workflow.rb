@@ -19,7 +19,7 @@ class ParticipantApplicationWorkflow
   end
 
   def review(id, status:, version:, notes: nil)
-    raise Invalid, 'Choose Accept or Not Now.' unless %w[accepted declined].include?(status)
+    raise Invalid, 'Choose Accept or Reject.' unless %w[accepted declined].include?(status)
 
     with_schedule_lock do |session|
       actor = User.active.find(@user.id)
@@ -66,7 +66,7 @@ class ParticipantApplicationWorkflow
     end
     return if %w[accepted declined withdrawn].include?(status) && status != @application.status
 
-    raise Invalid, 'Choose Accept or Not Now.'
+    raise Invalid, 'Choose Accept or Reject.'
   end
 
   def admit_participant(session)

@@ -51,7 +51,7 @@ RSpec.describe 'Application cursor pagination', :aggregate_failures, :database, 
     next_path = response.parsed_body.at_css('a[rel="next"]')['href']
     applications.first.update!(status: 'declined')
     get next_path.sub('status=pending', 'status=declined')
-    expect(response.body).to include(applications.first.email, 'Not Now')
+    expect(response.body).to include(applications.first.email, 'Reject')
     expect(response.parsed_body.at_css('.participant-pagination')).to be_nil
   end
 

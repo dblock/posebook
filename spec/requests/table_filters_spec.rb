@@ -125,6 +125,6 @@ RSpec.describe 'Management table filters', :aggregate_failures, :database, type:
     expect(response.parsed_body.css('tr[data-event]').pluck('data-event')).to eq([event.id.to_s])
     get next_path.sub(event.action, 'application_declined')
     expect(response.parsed_body.css('tbody tr').size).to eq(1)
-    expect(response.parsed_body.at_css('tbody td:nth-child(3)').text).to eq('Application: Not Now')
+    expect(response.parsed_body.at_css('tbody td:nth-child(3)').text).to eq('Application Rejected')
   end
 end

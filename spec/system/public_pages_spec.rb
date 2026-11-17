@@ -84,11 +84,11 @@ RSpec.describe 'Public pages', :aggregate_failures, :database, type: :system do
     applicant, application = create_submitted_application
     sign_in_through_browser(create_user(roles: ['system_admin']))
     visit program_application_path(program, application)
-    click_on 'Not Now'
+    click_on 'Reject'
     expect(page).to have_current_path(program_applications_path(program))
     visit program_application_path(program, application)
     each_viewport do |viewport|
-      expect(page).to have_css('main > p .status-label', text: 'Not Now')
+      expect(page).to have_css('main > p .status-label', text: 'Reject')
       expect(page).to have_link(applicant.name, href: participant_path(applicant))
       expect_no_horizontal_overflow
       capture_screenshot("declined-review-#{viewport}")

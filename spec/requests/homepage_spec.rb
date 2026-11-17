@@ -35,7 +35,7 @@ RSpec.describe 'Homepage', :aggregate_failures, :database, type: :request do
     section = response.parsed_body.at_css('.submitted-applications')
     expect(section.css('[scope]').map(&:text)).to eq(%w[Program Applicant Status Actions])
     expect(section.css('tbody tr').size).to eq(5)
-    expect(section.text).to include('Pending', 'Accepted', 'Not Now', 'Withdrawn', other.email)
+    expect(section.text).to include('Pending', 'Accepted', 'Reject', 'Withdrawn', other.email)
     expect(section.text).not_to include(private_applicant.name, private_applicant.email, 'Cancel Application')
     expect(section.css('.button-link').pluck('href')).to include(program_application_path(other.program, other))
     expect(section.css('tbody form')).to be_empty
@@ -124,7 +124,7 @@ RSpec.describe 'Homepage', :aggregate_failures, :database, type: :request do
     sign_in(applicant)
     get root_path
     table = response.parsed_body.at_css('.homepage-applications table')
-    expect(table.text).to include('Draft', 'Pending', 'Accepted', 'Not Now', 'Withdrawn')
+    expect(table.text).to include('Draft', 'Pending', 'Accepted', 'Reject', 'Withdrawn')
     expect(table.css('button').map(&:text))
       .to contain_exactly('Cancel Application', 'Withdraw', 'Withdraw', 'Resubmit')
     expect(table.at_css('a[href$="/new"]')['href']).to eq(new_program_participation_application_path(program))

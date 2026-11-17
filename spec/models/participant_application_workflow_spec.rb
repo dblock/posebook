@@ -34,10 +34,10 @@ RSpec.describe ParticipantApplicationWorkflow, :aggregate_failures, :database do
     expect(application.events.first.actor_id).to eq(applicant.id)
   end
 
-  it 'can accept a past Not Now decision without losing its private explanation or reviewer' do
+  it 'can accept a past Reject decision without losing its private explanation or reviewer' do
     application = submit
     workflow(coordinator).review(application.id, status: 'declined', version: 0, notes: 'Revisit next season.')
-    expect(application.reload.status_label).to eq('Not Now')
+    expect(application.reload.status_label).to eq('Reject')
     expect { workflow(coordinator).review(application.id, status: 'declined', version: 1) }
       .to raise_error(ParticipantApplicationWorkflow::Invalid)
     accept(application)
@@ -120,7 +120,7 @@ RSpec.describe ParticipantApplicationWorkflow, :aggregate_failures, :database do
     expect(application.events.count).to eq(1)
   end
 
-  it 'commits only one of competing acceptance and Not Now decisions' do
+  it 'commits only one of competing acceptance and Reject decisions' do
     application = submit
     threads = %w[accepted declined].map do |status|
       Thread.new do
