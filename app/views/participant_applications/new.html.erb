@@ -19,7 +19,7 @@
     <% end %>
     <%= render "photos", form: form %>
     <h2>Application</h2>
-    <p><%= form.label :message, "Message (Optional)" %><br><%= form.text_area :message, value: @application.message, maxlength: 5000, rows: 5 %></p>
+    <p><%= form.label :message, "Message (Optional)" %><br><%= form.text_area :message, value: @application.message, placeholder: @program.application_message_placeholder.presence, maxlength: 5000, rows: 5 %></p>
     <p><label><%= form.check_box :consent, { required: true }, "1", "0" %> I agree to share my account contact details, gender, profile, and all photos (including private photos) with this program's reviewing coordinators.</label></p>
     <p><small>You can withdraw before acceptance.</small></p>
     <%= form.button "Save Draft", name: "participant_application[intent]", value: "draft", formnovalidate: true, class: "secondary-action" %>

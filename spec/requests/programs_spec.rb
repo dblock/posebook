@@ -3,6 +3,38 @@
 require 'rails_helper'
 
 RSpec.describe 'Program management', :aggregate_failures, :database, type: :request do
+  context 'with an application message placeholder' do
+    let(:program) { create_program(application_message_placeholder: 'Original prompt') }
+    let(:coordinator) { create_user }
+
+    before do
+      grant_coordinator_access(program, coordinator)
+      sign_in(coordinator)
+    end
+
+    it 'allows assigned coordinators to update, audit, and clear the prompt' do
+      patch program_path(program),
+            params: { program: { application_message_placeholder: 'Do you have any experience?' } }
+      expect(response).to redirect_to(program_path(program))
+      expect(program.reload.application_message_placeholder).to eq('Do you have any experience?')
+      change = program.history_tracks.last
+      expect(change.modified['application_message_placeholder']).to eq('Do you have any experience?')
+      expect(change.modifier_id).to eq(coordinator.id)
+      patch program_path(program), params: { program: { application_message_placeholder: '' } }
+      expect(program.reload.application_message_placeholder).to eq('')
+    end
+
+    it 'rejects oversize prompts and prevents unrelated users from changing them' do
+      patch program_path(program), params: { program: { application_message_placeholder: 'x' * 5001 } }
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(program.reload.application_message_placeholder).to eq('Original prompt')
+      sign_in(create_user)
+      patch program_path(program), params: { program: { application_message_placeholder: 'Not allowed' } }
+      expect(response).to have_http_status(:not_found)
+      expect(program.reload.application_message_placeholder).to eq('Original prompt')
+    end
+  end
+
   it 'creates an optional first bookable date and lets assigned coordinators change, audit, and clear it' do
     sign_in(create_user(roles: ['system_admin']))
     venue = create_venue

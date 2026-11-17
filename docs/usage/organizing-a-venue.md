@@ -2,6 +2,8 @@
 
 [Back to Posebook](../../README.md)
 
+Set **Application Message Placeholder** in program **Settings > Details** to suggest questions such as "Do you have any experience?" inside the empty application message box. It is optional plain text, limited to 5,000 characters, and never becomes the applicant's answer. Leave it blank for no placeholder. Changes are audited and apply to new and saved draft editors without changing existing messages or other programs.
+
 System administrators create physical venues, invite or promote **Venue Coordinators**, and manage accounts. Venue coordinators edit their location, photos, and Instagram, create recurring programs, manage every program there, and invite or promote **Program Coordinators**. Coordinator assignment does not expose a global user directory.
 
 System administrators open any account from **Users**. Its pages have the same tabs as your own profile (**Profile**, **Bookings**, **Programs**, **Applications**, **History**, **Edit**, **Photos**, and **Security**). Bookings are view-only, and **Security** offers **Send Password Reset Email** instead of changing the password directly, plus **Deactivate** or **Reactivate** (administrator accounts cannot be deactivated). Opening your own account redirects to your profile.
