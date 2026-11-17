@@ -1,0 +1,6 @@
+<% content_for :head do %>
+  <%= javascript_include_tag "application-filter", defer: true %>
+<% end %>
+<%= form_with url: url, method: :get, class: "application-filter" do |form| %>
+  <p><%= form.label name, label %> <%= form.select name, options, { selected: selected }, data: { auto_submit: true } %><noscript><%= form.submit "Filter" %></noscript></p>
+<% end %>

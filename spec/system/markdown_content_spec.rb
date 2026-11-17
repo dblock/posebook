@@ -75,7 +75,8 @@ RSpec.describe 'Markdown content', :aggregate_failures, :database, type: :system
     each_viewport do |viewport|
       visit new_program_participation_application_path(program)
       expect_public_description
-      expect(page).to have_button('Submit Application')
+      expect(page).to have_button('Submit Application', disabled: true)
+      expect(page).to have_field('Phone', with: '+1 (202) 555-0101')
       capture_screenshot("application-description-#{viewport}")
     end
   end

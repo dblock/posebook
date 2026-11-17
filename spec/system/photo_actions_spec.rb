@@ -23,7 +23,6 @@ RSpec.describe 'Photo actions', :aggregate_failures, :database, type: :system do
 
   def upload_profile_photo
     attach_file 'New Photo', image_file
-    click_on 'Upload Photo'
     expect(page).to have_css('.profile-photo', count: 2)
     expect(page).to have_css('.flash', count: 1)
     participant.reload.profile_photos.last
@@ -54,6 +53,125 @@ RSpec.describe 'Photo actions', :aggregate_failures, :database, type: :system do
     owner.update!(primary_photo_id: primary.id)
     [primary, first].map do |photo|
       owner.is_a?(Venue) ? venue_photo_path(owner, photo) : program_photo_path(owner, photo)
+    end
+  end
+
+  def expect_separate_invitation_actions(invitation)
+    within("[data-invitation='#{invitation.id}']") do
+      expect(page).to have_css('td:last-child a:not(.button-link)', text: 'View')
+      expect(page).to have_css('td:nth-last-child(2) button', text: 'Revoke')
+      expect(page).to have_css('.participant-portrait img[src*="profile-placeholder"]')
+    end
+  end
+
+  def expect_roster_profile_column(photo)
+    source = participant_photo_path(participant, photo.id, thumbnail: 1)
+    expect(page).to have_css(".participant-portrait img[src='#{source}']")
+    expect(page).to have_css(".participant-identity strong a[href='#{participant_path(participant)}']")
+  end
+
+  it 'shows roster portraits and separate invitation actions at every viewport' do
+    admin = create_user(roles: ['system_admin'])
+    program = create_program
+    photo = ProfilePhoto.add(participant, Rack::Test::UploadedFile.new(image_file, 'image/png'))
+    create_participant_invitation(program, admin, name: 'Accepted invitee', used_by_id: participant.id,
+                                                  used_at: Time.current)
+    pending = create_participant_invitation(program, admin, name: 'Pending invitee')
+    sign_in_through_browser(admin)
+    each_viewport do |viewport|
+      visit program_participant_invitations_path(program)
+      expect_roster_profile_column(photo)
+      expect_separate_invitation_actions(pending)
+      expect(page).to have_css('main > p:last-child a.button-link', text: 'Invite a Participant')
+      expect_no_horizontal_overflow
+      capture_screenshot("invitation-portraits-#{viewport}")
+    end
+  end
+
+  it 'shows roster portraits in application and history tables at every viewport' do
+    coordinator = create_user
+    program = create_program(applications_enabled: true)
+    grant_coordinator_access(program, coordinator)
+    participant.update!(email_verified_at: Time.current)
+    photo = ProfilePhoto.add(participant, Rack::Test::UploadedFile.new(image_file, 'image/png'))
+    track_record(ParticipantApplicationWorkflow.new(program: program, user: participant).submit(message: nil,
+                                                                                                consent: '1'))
+    sign_in_through_browser(coordinator)
+    each_viewport do |viewport|
+      [program_applications_path(program), history_program_applications_path(program)].each do |path|
+        visit path
+        expect_roster_profile_column(photo)
+        expect_no_horizontal_overflow
+        capture_screenshot("application-portraits-#{path.split('/').last}-#{viewport}")
+      end
+    end
+  end
+
+  it 'shows roster portraits and the bottom invitation action for coordinators at every viewport' do
+    admin = create_user(roles: ['system_admin'])
+    program = create_program
+    grant_coordinator_access(program, participant)
+    photo = ProfilePhoto.add(participant, Rack::Test::UploadedFile.new(image_file, 'image/png'))
+    sign_in_through_browser(admin)
+    each_viewport do |viewport|
+      visit program_coordinators_path(program)
+      expect(page).to have_css(".participant-portrait img[src='#{participant_photo_path(participant, photo.id,
+                                                                                        thumbnail: 1)}']")
+      expect(page).to have_css('main > p:last-child a.button-link', text: 'Invite a Coordinator')
+      expect(page).to have_link(participant.name, href: participant_path(participant))
+      expect_no_horizontal_overflow
+      capture_screenshot("coordinator-portraits-#{viewport}")
+    end
+    within('.coordinator-list') { click_on participant.name }
+    expect(page).to have_current_path(admin_user_path(participant))
+  end
+
+  it 'uploads application photos without requiring consent or submitting the application' do
+    program = create_program(applications_enabled: true)
+    participant.update!(email_verified_at: Time.current)
+    sign_in_through_browser(participant)
+    without_javascript do
+      visit new_program_participation_application_path(program)
+      fill_in 'Name', with: 'Staged applicant name'
+      attach_file 'Add Photos (Optional)', image_file
+      click_on 'Upload Photos'
+      expect(page).to have_css('.profile-photo', count: 1)
+      expect(page).to have_field('Name', with: 'Staged applicant name')
+      expect(participant.reload.name).to eq('Photo Participant')
+      expect(ParticipantApplication.find_by(user_id: participant.id).status).to eq('draft')
+    end
+  end
+
+  it 'automatically uploads chosen application photos while retaining staged account edits and a private draft' do
+    program = create_program(applications_enabled: true)
+    participant.update!(email_verified_at: Time.current)
+    sign_in_through_browser(participant)
+    visit new_program_participation_application_path(program)
+    mark_page
+    expect(page).to have_no_button('Upload Photos')
+    fill_in 'Name', with: 'Staged applicant name'
+    attach_file 'Add Photos (Optional)', [image_file, image_file]
+    expect(page).to have_css('.profile-photo', count: 2)
+    expect(page).to have_field('Name', with: 'Staged applicant name')
+    expect(participant.reload.name).to eq('Photo Participant')
+    expect(ParticipantApplication.find_by(user_id: participant.id).status).to eq('draft')
+    expect(page).to have_button('Submit Application', disabled: true)
+    expect_unchanged_page
+    attach_file 'Add Photos (Optional)', image_file
+    expect(page).to have_css('.profile-photo', count: 3)
+    expect_unchanged_page
+  end
+
+  it 'automatically uploads to program and administrator-managed account galleries without reloading' do
+    program = create_program
+    sign_in_through_browser(create_user(roles: ['system_admin']))
+    [photos_program_path(program), photos_admin_user_path(participant)].each do |path|
+      visit path
+      mark_page
+      expect(page).to have_no_button('Upload Photo')
+      attach_file 'New Photo', image_file
+      expect(page).to have_css('.profile-photo', count: 1)
+      expect_unchanged_page
     end
   end
 
@@ -106,6 +224,9 @@ RSpec.describe 'Photo actions', :aggregate_failures, :database, type: :system do
       expect_card_series(venue_path(program.venue), '.venue-card', venue_sources, viewport)
       expect_card_series(venue_path(program.venue), '.program-card', program_sources, viewport)
       expect_card_series(program_path(program), '.next-session', program_sources, viewport)
+      expect_card_series(program_path(program), '.venue-card', venue_sources, viewport)
+      expect(page.all('.location-card-photo').map { |photo| width_of(photo) }).to all(eq(150))
+      capture_screenshot("program-cards-#{viewport}")
     end
   end
 
@@ -117,6 +238,7 @@ RSpec.describe 'Photo actions', :aggregate_failures, :database, type: :system do
     track_booking(BookingMutation.new(program: program, user: participant).book(date: date.iso8601))
     sign_in_through_browser(participant)
     expect_card_series(bookings_profile_path, '.upcoming-booking', sources)
+    expect(width_of(find('.upcoming-booking-photo'))).to eq(150)
   end
 
   it 'opens the card primary image directly without JavaScript' do
@@ -138,7 +260,6 @@ RSpec.describe 'Photo actions', :aggregate_failures, :database, type: :system do
 
     2.times do |index|
       attach_file 'New Photo', image_file
-      click_on 'Upload Photo'
       expect(page).to have_css('.venue-photo', count: index + 1)
     end
     second = venue.reload.photos.order_by(created_at: :asc).last
@@ -167,6 +288,9 @@ RSpec.describe 'Photo actions', :aggregate_failures, :database, type: :system do
       visit photos_profile_path
       click_on 'Make Private'
       expect(page).to have_button('Make Public')
+      attach_file 'New Photo', image_file
+      click_on 'Upload Photo'
+      expect(page).to have_css('.profile-photo', count: 2)
     end
   end
 end

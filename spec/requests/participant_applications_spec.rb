@@ -33,11 +33,57 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     application
     sign_in(coordinator)
     review('declined')
+    expect(response).to redirect_to(program_applications_path(program))
   end
 
   def review(status, version: application.reload.lock_version, notes: 'Private reviewer explanation.')
     patch program_application_path(program, application),
           params: { participant_application: { status: status, lock_version: version, notes: notes } }
+  end
+
+  it 'shows roster portraits in applications and history while retaining the submitted applicant identity' do
+    application
+    photo = private_photo
+    photo.select_primary(applicant)
+    applicant.update!(name: 'Changed account name')
+    sign_in(coordinator)
+    [program_applications_path(program), history_program_applications_path(program)].each do |path|
+      get path
+      portrait = response.parsed_body.at_css('.participant-portrait')
+      expect(portrait['href']).to eq(participant_path(applicant))
+      expect(response.parsed_body.at_css('.participant-identity strong a')['href']).to eq(participant_path(applicant))
+      expect(portrait.at_css('img')['src']).to eq(participant_photo_path(applicant, photo.id, thumbnail: 1))
+      expect(response.body).to include(application.name)
+      expect(response.body).not_to include(applicant.name)
+    end
+  end
+
+  it 'uses a placeholder rather than a private-only applicant photo after withdrawal' do
+    photo = private_photo
+    application
+    sign_in(applicant)
+    delete program_participation_application_path(program), params: { lock_version: application.lock_version }
+    sign_in(coordinator)
+    [program_applications_path(program, status: 'withdrawn'), history_program_applications_path(program)].each do |path|
+      get path
+      expect(response.parsed_body.at_css('.participant-portrait img')['src']).to include('profile-placeholder')
+      expect(response.body).not_to include(photo.id.to_s)
+    end
+  end
+
+  it 'links each applicant to their profile across mixed application states' do
+    application
+    admitted = create_user
+    grant_participant_access(program, admitted)
+    track_record(ParticipantApplication.create!(program: program, user: admitted, status: 'accepted',
+                                                profile_shared_at: Time.current, created_at: 1.second.from_now))
+    sign_in(coordinator)
+    get program_applications_path(program, status: 'all')
+    expect(response.parsed_body.css('tbody .participant-portrait').pluck('href'))
+      .to eq([participant_path(admitted), participant_path(applicant)])
+    cells = response.parsed_body.at_css('tbody tr').css('td')
+    expect(cells[-2].at_css('a').text).to eq('Review')
+    expect(cells.last.at_css('a').text).to eq('View Profile')
   end
 
   it 'offers opt-in public applications without exposing private program information or granting access' do
@@ -50,7 +96,8 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     sign_in(applicant)
     expect(response).to redirect_to(new_program_participation_application_path(program))
     follow_redirect!
-    expect(response.body).to include('including private photos', 'Submit Application')
+    expect(response.body).to include("I agree to share my information with the program's coordinators.",
+                                     'Submit Application')
     expect(response.headers['Cache-Control']).to include('no-store')
     expect(program.participant?(applicant)).to be(false)
   end
@@ -159,7 +206,7 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
          params: { participant_application: { consent: '1', lock_version: draft.draft_revision,
                                               user_id: user.id, status: 'accepted',
                                               roles: ['system_admin'] } }
-    expect(response).to redirect_to(program_participation_application_path(program))
+    expect(response).to redirect_to(applications_profile_path)
     saved = ParticipantApplication.find_by(user_id: applicant.id)
     expect(saved).to have_attributes(status: 'pending', name: applicant.name, email: applicant.email,
                                      gender: applicant.gender, message: nil)
@@ -203,12 +250,36 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     expect(response.parsed_body.at_css("main a[href='#{participant_path(applicant)}']").text).to eq('View Profile')
   end
 
-  it 'retains private Not Now history and accepts it later even with intake closed' do
+  it 'links the applicant profile and labels Reject with newest history first' do
+    decline_application
+    get program_application_path(program, application)
+    header = response.parsed_body.at_css('main > p')
+    expect(header.at_css('a')['href']).to eq(participant_path(applicant))
+    expect(header.at_css('.status-label').text).to eq('Reject')
+    expect(header.text).not_to include(' - ')
+    expect(response.parsed_body.css('[aria-label="Application history"] tbody tr td:first-child').map(&:text))
+      .to eq(['Application Rejected', 'Application Submitted'])
+  end
+
+  it 'moves private reviewer notes into a disclosure row and omits arrows for events without notes' do
+    decline_application
+    event = application.events.last
+    get history_program_applications_path(program)
+    row = response.parsed_body.at_css("tr[data-event='#{event.id}']")
+    expect(row.at_css('summary')['aria-controls']).to eq("event-notes-#{event.id}")
+    expect(row.text).not_to include(event.notes)
+    notes = response.parsed_body.at_css("#event-notes-#{event.id}")
+    expect(notes.css('td').pluck(:colspan)).to eq(%w[2 3])
+    expect(notes.text).to include(event.notes)
+    expect(response.parsed_body.css('summary[aria-controls^="event-notes-"]').size).to eq(1)
+  end
+
+  it 'retains private Reject history and accepts it later even with intake closed' do
     decline_application
     expect(application.reload.status).to eq('declined')
     get program_application_path(program, application)
-    expect(response.body).to include('Not Now', 'Private reviewer explanation.')
-    expect(response.body).not_to include('>Not Now</button>')
+    expect(response.body).to include('Reject', 'Private reviewer explanation.')
+    expect(response.body).not_to include('>Reject</button>')
     program.update!(applications_enabled: false)
     sign_in(coordinator)
     review('accepted')
@@ -216,7 +287,7 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     expect(program.participant?(applicant)).to be(true)
     expect(application.reload.status).to eq('accepted')
     get program_application_path(program, application)
-    expect(response.body).to include('Application Submitted', 'Application: Not Now', 'Application Accepted')
+    expect(response.body).to include('Application Submitted', 'Application Rejected', 'Application Accepted')
     expect(response.body).not_to include('Private Reviewer Notes (Optional)')
     expect_accepted_application_links
   end
@@ -225,7 +296,7 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     decline_application
     sign_in(applicant)
     get program_participation_application_path(program)
-    expect(response.body).to include('Not Now', 'may accept this application later')
+    expect(response.body).to include('Reject', 'may accept this application later')
     expect(response.body).not_to include('Private reviewer explanation.', coordinator.name)
   end
 
@@ -261,7 +332,7 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     sign_in(coordinator)
     expect(response).to redirect_to(history_program_applications_path(program))
     follow_redirect!
-    expect(response.body).to include('Participation History', applicant.email)
+    expect(response.body).to include('Applications History', applicant.email)
     delete session_path
     get history_program_applications_path(program)
     sign_in(create_user)
@@ -306,6 +377,19 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     end
     patch participant_photo_path(applicant, photo.id), params: { profile_photo: { public: '1' } }
     expect(response).to have_http_status(:forbidden)
+  end
+
+  it 'keeps owner application details and private photos available after withdrawal' do
+    photo = private_photo
+    application
+    sign_in(applicant)
+    delete program_participation_application_path(program), params: { lock_version: 0 }
+    get program_participation_application_path(program)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(program.name, application.message, applicant.email,
+                                     participant_photo_path(applicant, photo.id))
+    get participant_photo_path(applicant, photo.id)
+    expect(response).to have_http_status(:ok)
   end
 
   it 'requires a current owner revision to withdraw and ends direct image access and future acceptance' do
@@ -368,6 +452,8 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     sign_in(coordinator)
     get history_program_applications_path(program)
     expect(response.body).to include('Invitation Accepted', 'Application Submitted', invited.email, applicant.email)
+    expect(response.parsed_body.css('.participant-portrait').pluck('href'))
+      .to contain_exactly(participant_path(invited), participant_path(applicant))
     expect(response.headers['Cache-Control']).to include('no-store')
   end
 

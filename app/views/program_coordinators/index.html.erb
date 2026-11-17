@@ -1,11 +1,8 @@
 <main>
   <%= render "programs/navigation", program: @program, active: "coordinators" %>
-  <div class="title-row">
-    <h1>Coordinators</h1>
-    <%= link_to "Invite a Coordinator", new_program_coordinator_path(@program), class: "button-link" %>
-  </div>
+  <h1>Coordinators</h1>
   <%= render "programs/regular_schedule", program: @program %>
   <%= render "shared/coordinators_table", coordinators: @coordinators,
                                           remove_path: ->(membership) { program_coordinator_path(@program, membership) } %>
-  <p>Venue coordinators inherit access to every <%= @program.program_label.downcase %> at their venue. <%= @program.program_label.titleize %> coordinators cannot grant coordinator access.</p>
+  <p><%= link_to "Invite a Coordinator", new_program_coordinator_path(@program), class: "button-link" %></p>
 </main>

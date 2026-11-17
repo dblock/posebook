@@ -2,7 +2,7 @@
   <%= render "programs/navigation", program: @program, active: "applications", detail: "Review" %>
   <h1>Review Application</h1>
   <% membership = @program.memberships.participants.where(user_id: @application.user_id).first if @application.status == "accepted" %>
-  <p><%= link_to_if membership, participant_contact_label(@application), (edit_program_participant_path(@program, membership) if membership) %> - <strong><%= @application.status_label %></strong></p>
+  <p><%= link_to participant_contact_label(@application), membership ? edit_program_participant_path(@program, membership) : participant_path(@application.user_id) %> <%= status_label(@application.status_label) %></p>
   <% if membership %><p><%= link_to "View Profile", participant_path(@application.user_id) %></p><% end %>
   <% gallery = PhotoGallery.new(@application.user, current_user) if %w[pending declined].include?(@application.status) %>
   <% photos = gallery&.private_access? ? gallery.photos : [] %>
@@ -18,10 +18,10 @@
       <%= form.hidden_field :lock_version, value: @application.lock_version %>
       <p><%= form.label :notes, "Private Reviewer Notes (Optional)" %><br><%= form.text_area :notes, maxlength: 200, rows: 3 %><br><small>Visible only to this program's managers, never the applicant.</small></p>
       <p><%= form.button "Accept", name: "participant_application[status]", value: "accepted" %>
-      <% if @application.status == "pending" %><%= form.button "Not Now", name: "participant_application[status]", value: "declined" %><% end %></p>
+      <% if @application.status == "pending" %><%= form.button "Reject", name: "participant_application[status]", value: "declined" %><% end %></p>
     <% end %>
   <% end %>
-  <% events = @application.events.includes(:actor).to_a %>
+  <% events = @application.events.reviewable.includes(:actor).reorder(created_at: :desc, id: :desc).to_a %>
   <% if events.any? %>
     <h2>History</h2>
     <%= render "participant_applications/events", events: events, private_notes: true, source: @application %>

@@ -1,33 +1,46 @@
-<main>
-  <%= render "programs/navigation", program: @program, active: "applications", detail: "Participation History" %>
-  <h1>Participation History</h1>
-  <p>Application decisions and accepted personal invitations retain their distinct origins. Earlier membership origins are not reconstructed.</p>
+<main data-application-region>
+  <%= render "programs/navigation", program: @program, active: "application_history" %>
+  <h1>Applications History</h1>
+  <%= render "shared/table_filter", url: history_program_applications_path(@program), name: :event, label: "Event",
+             selected: @event, options: [["All Events", "all"], ["Application Submitted", "application_submitted"], ["Application Accepted", "application_accepted"], ["Application Rejected", "application_declined"], ["Application Withdrawn", "application_withdrawn"], ["Invitation Accepted", "invitation_accepted"]] %>
   <% if @events.empty? %>
     <p>No participation events yet.</p>
   <% else %>
-    <div class="table-scroll" role="region" aria-label="Participation history" tabindex="0">
+    <div class="table-scroll" role="region" aria-label="Applications history" tabindex="0">
       <table class="participation-history">
-        <thead><tr><th>Participant</th><th>Event</th><th>Date</th><th>By</th><th>Notes</th></tr></thead>
+        <thead><tr><th aria-label="Notes"></th><th>Participant</th><th>Event</th><th>Date</th><th>By</th></tr></thead>
         <tbody>
           <% @events.each do |event| %>
             <% source = @sources[event.source_id] %>
-            <tr>
+            <tr data-event="<%= event.id %>">
               <td>
-                <% if source.is_a?(ParticipantApplication) %>
-                  <%= link_to participant_contact_label(source), program_application_path(@program, source) %>
-                <% elsif source %>
-                  <%= participant_contact_label(source) %>
+                <% if event.notes.present? %>
+                  <details class="participant-note-toggle">
+                    <summary aria-label="Notes for <%= source&.name.presence || 'participant' %>" aria-controls="event-notes-<%= event.id %>"><span aria-hidden="true">&#9656;</span></summary>
+                  </details>
+                <% end %>
+              </td>
+              <td>
+                <% if source %>
+                  <% profile = source.is_a?(ParticipantApplication) ? source.user : @invitees[source.used_by_id] %>
+                  <% path = profile ? participant_path(profile) : (source.is_a?(ParticipantApplication) ? program_application_path(@program, source) : program_participant_invitation_path(@program, source)) %>
+                  <%= render "shared/participant_identity", participant: source, profile: profile, path: path, show_instagram: false %>
                 <% end %>
               </td>
               <td><%= participation_event_label(event) %></td>
               <td><time datetime="<%= event.created_at.iso8601 %>"><%= l(event.created_at.in_time_zone(@program.time_zone), format: :long) %></time></td>
-              <td><%= participation_actor_label(event, source) %></td>
-              <td><%= event.notes %></td>
+              <td><%= link_to_if event.actor_id, participation_actor_label(event, source), (participant_path(event.actor_id) if event.actor_id) %></td>
             </tr>
+            <% if event.notes.present? %>
+              <tr class="participant-note-row" id="event-notes-<%= event.id %>">
+                <td colspan="2"></td>
+                <td colspan="3"><p class="participant-notes"><%= event.notes %></p></td>
+              </tr>
+            <% end %>
           <% end %>
         </tbody>
       </table>
     </div>
   <% end %>
-  <%= render "shared/pagination", pagination: @pagination, label: "Participation history pages" %>
+  <%= render "shared/pagination", pagination: @pagination, label: "Applications history pages" %>
 </main>

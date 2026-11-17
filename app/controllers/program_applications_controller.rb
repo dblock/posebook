@@ -14,7 +14,7 @@ class ProgramApplicationsController < ApplicationController
 
     records = ParticipantApplication.where(program_id: @program.id, :status.ne => 'draft')
     records = records.where(status: @status) unless @status == 'all'
-    @applications = page_of(records)
+    @applications = page_of(records.includes(:user))
   end
 
   def show
@@ -27,17 +27,44 @@ class ProgramApplicationsController < ApplicationController
                                   .review(params.expect(:id), status: attributes[:status],
                                                               version: attributes[:lock_version],
                                                               notes: attributes[:notes])
-    redirect_to program_application_path(@program, params[:id]), notice: t('participant_applications.reviewed')
+    redirect_to review_destination(attributes[:status]), notice: t('participant_applications.reviewed')
   end
 
   def history
-    @events = page_of(ParticipationEvent.where(program_id: @program.id).includes(:actor))
-    ids = @events.map(&:source_id)
-    @sources = ParticipantApplication.where(:id.in => ids).index_by(&:id)
-                                     .merge(ParticipantInvitation.where(:id.in => ids).index_by(&:id))
+    @event = params[:event].presence || 'all'
+    return head :bad_request unless @event == 'all' || ParticipationEvent::REVIEW_ACTIONS.include?(@event)
+
+    @events = page_of(history_scope)
+    @sources = history_sources
+    @invitees = history_invitees
   end
 
   private
+
+  def history_scope
+    records = ParticipationEvent.reviewable.where(program_id: @program.id)
+    records = records.where(action: @event) unless @event == 'all'
+    records.includes(:actor)
+  end
+
+  def history_sources
+    ids = @events.map(&:source_id)
+    ParticipantApplication.where(program_id: @program.id, :id.in => ids).includes(:user).index_by(&:id)
+                          .merge(ParticipantInvitation.where(program_id: @program.id, :id.in => ids).index_by(&:id))
+  end
+
+  def history_invitees
+    ids = @sources.values.grep(ParticipantInvitation).filter_map do |invitation|
+      invitation.used_by_id if invitation.used_at
+    end
+    User.where(:id.in => ids).index_by(&:id)
+  end
+
+  def review_destination(status)
+    return program_applications_path(@program) if status == 'declined'
+
+    program_application_path(@program, params[:id])
+  end
 
   def remember_review_destination
     return if current_user

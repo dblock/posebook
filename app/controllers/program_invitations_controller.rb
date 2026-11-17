@@ -9,9 +9,12 @@ class ProgramInvitationsController < ApplicationController
   before_action :find_invitation, only: %i[show destroy]
 
   def index
-    records = @program.participant_invitations.includes(:invited_by).order_by(created_at: :desc)
-    @pagination = CursorPage.new(records, cursor: params[:cursor])
+    @status = params[:status].presence || 'all'
+    return head :bad_request unless ParticipantInvitation::STATUSES.include?(@status)
+
+    @pagination = CursorPage.new(invitation_scope, cursor: params[:cursor])
     @invitations = @pagination.records
+    @invitees = accepted_invitees
   end
 
   def show
@@ -36,11 +39,20 @@ class ProgramInvitationsController < ApplicationController
 
   def destroy
     result = @invitation.revoke
-    redirect_to program_participant_invitations_path(@program, cursor: params[:cursor]),
+    redirect_to program_participant_invitations_path(@program, cursor: params[:cursor], status: params[:status]),
                 result ? { notice: t('invitations.revoked') } : { alert: t('invitations.not_pending') }
   end
 
   private
+
+  def invitation_scope
+    @program.participant_invitations.with_status(@status).includes(:invited_by).order_by(created_at: :desc)
+  end
+
+  def accepted_invitees
+    ids = @invitations.filter_map { |invitation| invitation.used_by_id if invitation.used_at }
+    User.where(:id.in => ids).index_by(&:id)
+  end
 
   def finish_creation
     queued = deliver_invitation

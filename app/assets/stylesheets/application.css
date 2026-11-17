@@ -97,17 +97,29 @@ h3 {
 
 h1 {
   margin: 0 0 1.5rem;
-  font-size: clamp(2.1rem, 4vw, 3.4rem);
+  font-size: clamp(1.575rem, 3vw, 2.55rem);
   letter-spacing: -0.035em;
 }
 
 h2 {
   margin: 2rem 0 1rem;
-  font-size: 2rem;
+  font-size: 1.5rem;
 }
 
 h3 {
-  font-size: 1.4rem;
+  font-size: 1.05rem;
+}
+
+h4 {
+  font-size: 0.75em;
+}
+
+h5 {
+  font-size: 0.6225em;
+}
+
+h6 {
+  font-size: 0.5025em;
 }
 
 p,
@@ -386,7 +398,7 @@ nav {
 }
 
 .location-card-photo {
-  flex: 0 1 12rem;
+  flex: 0 1 150px;
   margin: 0;
 }
 
@@ -419,7 +431,7 @@ nav {
 }
 
 .upcoming-booking-photo {
-  flex: 0 1 12rem;
+  flex: 0 1 150px;
   margin: 0;
 }
 
@@ -619,6 +631,7 @@ table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
+  font-size: inherit;
 }
 
 .table-scroll {
@@ -836,12 +849,6 @@ table:not(.calendar) td:not(:first-child) .participant-actions {
   }
 }
 
-.participant-roster {
-  table-layout: fixed;
-  font-size: 0.875rem;
-  line-height: 1.4;
-}
-
 .participant-roster th,
 .participant-roster td {
   padding: 0.9rem;
@@ -849,10 +856,66 @@ table:not(.calendar) td:not(:first-child) .participant-actions {
   overflow-wrap: anywhere;
 }
 
+:is(.participant-roster, .participation-history) thead th:first-child {
+  width: 1.75rem;
+}
+
+table.participant-roster :is(th, td):nth-child(2) {
+  text-align: left;
+}
+
+.participant-note-toggle {
+  margin: 0;
+}
+
+.participant-note-toggle summary {
+  padding: 0.5rem;
+  list-style: none;
+}
+
+.participant-note-toggle summary::-webkit-details-marker {
+  display: none;
+}
+
+.participant-note-toggle summary span {
+  display: inline-block;
+  font-size: 2em;
+  line-height: 1;
+}
+
+.participant-note-toggle[open] summary span {
+  transform: rotate(90deg);
+}
+
+.participant-note-row {
+  display: none;
+}
+
+tr:has(.participant-note-toggle) > td {
+  transition: border-bottom-color 150ms ease;
+}
+
+tr:has(.participant-note-toggle[open]) > td {
+  border-bottom-color: color-mix(in srgb, var(--line) 10%, transparent);
+}
+
+.participant-bulk-invite {
+  margin-block-start: 1rem;
+}
+
+tr:has(.participant-note-toggle[open]) + .participant-note-row {
+  display: table-row;
+}
+
 .participant-identity {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+}
+
+.table-scroll .participant-identity {
+  min-width: 22rem;
+  text-align: left;
 }
 
 .participant-identity > div {
@@ -889,6 +952,10 @@ table:not(.calendar) td:not(:first-child) .participant-actions {
 
 .participant-actions > form {
   margin: 0;
+}
+
+.application-resubmit {
+  margin-block-start: 1rem;
 }
 
 .participant-roster summary,

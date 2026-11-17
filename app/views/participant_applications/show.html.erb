@@ -1,21 +1,21 @@
 <main>
   <%= render "profiles/navigation", active: "applications" %>
-  <h1>Your Application to <%= @program.name %></h1>
+  <h1>Application</h1>
+  <p><strong>Program:</strong> <%= link_to @program.name, program_path(@program) %></p>
   <p><strong>Status:</strong> <%= @application.status_label %></p>
-  <% if @application.status == "accepted" %>
-    <p>You are a participant. <%= link_to "View Calendar", program_path(@program, section: "calendar") %>. Existing booking rules and any account pause still apply.</p>
-  <% elsif @application.status == "declined" %>
-    <p>Not accepting right now. Coordinators may accept this application later; you do not need to apply again.</p>
-  <% elsif @application.status == "withdrawn" %>
-    <p>This application cannot be accepted. Application-only profile access has ended. Ask an organizer for an invitation if you wish to participate in the future.</p>
-  <% else %>
-    <p>Your application is awaiting review. No membership or booking access has been granted.</p>
+  <% if @application.status == "declined" %>
+    <p>Coordinators may accept this application later; you do not need to apply again.</p>
   <% end %>
+  <h2>Account Details</h2>
+  <%= render "shared/account_details", user: @user %>
+  <h2>Photos</h2>
+  <%= render "shared/photo_gallery", photos: @photos, editable: false, upload_url: nil, scope: :profile_photo,
+             photo_url: ->(photo, **options) { participant_photo_path(current_user, photo, **options) },
+             description: ->(index) { "Profile photo #{index + 1}" }, show_status: false %>
   <% if @application.message.present? %><h2>Your Message</h2><%= simple_format(@application.message) %><% end %>
-  <% if %w[pending declined].include?(@application.status) %>
-    <p>Withdrawing prevents later acceptance and ends application-only review of your profile and private photos. Existing participant access is unchanged. History is retained.</p>
-    <%= button_to "Withdraw Application", program_participation_application_path(@program), method: :delete, params: { lock_version: @application.lock_version }, class: "secondary-action" %>
-  <% end %>
   <h2>History</h2>
-  <%= render "events", events: @application.events, private_notes: false %>
+  <%= render "events", events: @application.events.reorder(created_at: :desc, id: :desc), private_notes: false %>
+  <% if @application.status == "withdrawn" && @program.applications_enabled? && @program.booking_active? %>
+    <%= button_to "Resubmit", resubmit_program_participation_application_path(@program), params: { lock_version: @application.lock_version }, form: { class: "button_to application-resubmit" } %>
+  <% end %>
 </main>

@@ -8,7 +8,7 @@ class ParticipantApplicationsController < ApplicationController
   before_action :remember_status_destination, only: :show
   before_action :require_authentication, except: %i[new create apply]
   before_action :find_program, except: :index
-  before_action :require_verified_applicant, only: %i[new create apply]
+  before_action :require_verified_applicant, only: %i[new create apply resubmit]
   before_action :prepare_submission, only: %i[new create apply]
 
   def index
@@ -18,7 +18,9 @@ class ParticipantApplicationsController < ApplicationController
 
   def show
     @application = own_application
-    redirect_to new_program_participation_application_path(@program) if @application.draft?
+    @user = current_user.dup
+    @user.assign_attributes(@application.applicant_profile_attributes)
+    @photos = PhotoGallery.new(current_user, current_user).photos
   end
 
   def apply
@@ -49,6 +51,11 @@ class ParticipantApplicationsController < ApplicationController
     redirect_to own_application_path, notice: t('participant_applications.withdrawn')
   end
 
+  def resubmit
+    draft.reopen(version: params[:lock_version])
+    redirect_to new_program_participation_application_path(@program), notice: t('participant_applications.reopened')
+  end
+
   private
 
   def save_editor(attributes)
@@ -58,12 +65,12 @@ class ParticipantApplicationsController < ApplicationController
 
   def submit_editor(attributes)
     workflow.submit(message: @application.message, consent: attributes[:consent], version: @application.draft_revision)
-    redirect_to own_application_path, notice: t('participant_applications.submitted')
+    redirect_to applications_profile_path, notice: t('participant_applications.submitted')
   end
 
   def abandon_draft
     draft.discard(version: params[:lock_version])
-    redirect_to program_path(@program), notice: t('participant_applications.draft_abandoned')
+    redirect_to applications_profile_path, notice: t('participant_applications.draft_abandoned')
   end
 
   def remember_status_destination

@@ -11,15 +11,45 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     admin = create_user(roles: ['system_admin'])
     program = create_program
     unknown = create_user(name: 'Private account name', gender: 'female')
+    photo = unknown.profile_photos.create!(public: true)
     recipients = [{ name: 'Drawing <Model> & Artist', email: 'artist@example.test' },
                   { email: unknown.email }, { name: 'Named guest' }, {}]
     recipients.each { |attributes| create_participant_invitation(program, admin, **attributes) }
     sign_in(admin)
     get program_participant_invitations_path(program)
-    expect(response.parsed_body.css('.invitation-recipient').map(&:text))
+    expect(response.parsed_body.css('.invitation-recipient').map { |recipient| recipient.text.squish })
       .to contain_exactly('Drawing <Model> & Artist <artist@example.test>', unknown.email, 'Named guest',
                           'Personal invitation')
-    expect(response.body).not_to include(unknown.name, '(Female)')
+    expect(response.body).not_to include(unknown.name, '(Female)', photo.id.to_s)
+  end
+
+  it 'uses the accepted account portrait without replacing the invitation identity' do
+    admin = create_user(name: 'Organizer', roles: ['system_admin'])
+    invitee = create_user(name: 'Changed account name')
+    photo = invitee.profile_photos.create!(public: true)
+    program = create_program
+    create_participant_invitation(program, admin, name: 'Original invitee',
+                                                  used_by_id: invitee.id, used_at: Time.current)
+    sign_in(admin)
+    get program_participant_invitations_path(program)
+    recipient = response.parsed_body.at_css('.invitation-recipient')
+    expect(recipient.at_css('img')['src']).to eq(participant_photo_path(invitee, photo.id, thumbnail: 1))
+    expect(recipient.at_css('strong a')['href']).to eq(participant_path(invitee))
+    expect(recipient.text.squish).to eq('Original invitee')
+    expect(response.body).not_to include(invitee.name)
+  end
+
+  it 'puts View and Revoke in separate cells for pending invitations' do
+    admin = create_user(roles: ['system_admin'])
+    invitation = create_participant_invitation(create_program, admin)
+    sign_in(admin)
+    get program_participant_invitations_path(invitation.program)
+    cells = response.parsed_body.at_css('tbody tr').css('td')
+    expect(cells.last.at_css('a')['href'])
+      .to eq(program_participant_invitation_path(invitation.program, invitation))
+    expect(cells.last.at_css('form, .button-link')).to be_nil
+    expect(cells[-2].at_css('button').text).to eq('Revoke')
+    expect(cells.first.at_css('img')['src']).to include('profile-placeholder')
   end
 
   it 'shows invitation dates, sender, status, and compact actions in a separate labeled table' do
@@ -36,7 +66,7 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     expect(row.css('time').pluck('datetime'))
       .to eq([invitation.created_at, invitation.expires_at, invitation.used_at]
                .map { |time| time.in_time_zone(program.time_zone).iso8601 })
-    expect(row.at_css('a.button-link')['href']).to eq(program_participant_invitation_path(program, invitation))
+    expect(row.at_css('td:last-child a')['href']).to eq(program_participant_invitation_path(program, invitation))
     expect(response.headers['Cache-Control']).to include('no-store')
     expect(response.body).not_to include(invitation.token, invitation.token_digest)
   end

@@ -5,7 +5,13 @@
       <tbody>
         <% coordinators.each do |membership| %>
           <tr data-membership="<%= membership.id %>">
-            <td><%= membership.user.name %><br><%= mail_to membership.user.email %></td>
+            <td>
+              <div class="participant-identity">
+                <%= render "shared/participant_portrait", participant: membership.user, name: membership.user.name,
+                           path: participant_path(membership.user) %>
+                <div><%= link_to membership.user.name, participant_path(membership.user) %><br><%= membership.user.email %></div>
+              </div>
+            </td>
             <td><%= status_label(membership.user.active? ? "Active" : "Inactive") %></td>
             <td><%= button_to "Remove Coordinator", remove_path.call(membership), method: :delete, class: "secondary-action" %></td>
           </tr>

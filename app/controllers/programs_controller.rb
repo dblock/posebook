@@ -120,7 +120,8 @@ class ProgramsController < ApplicationController
   def program_params
     params.expect(program: [:name, :program_label, :participant_label, :custom_slug, :time_zone, :start_time, :end_time,
                             :pay, :calendar_invitation_lead_minutes, :applications_enabled,
-                            :description, :instructions, :booking_horizon_months, :first_bookable_date,
+                            :application_message_placeholder, :description, :instructions,
+                            :booking_horizon_months, :first_bookable_date,
                             { available_weekdays: [], no_consecutive_genders: [] }])
   end
 end

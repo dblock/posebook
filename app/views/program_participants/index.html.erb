@@ -1,19 +1,27 @@
-<main>
+<main data-application-region>
   <%= render "programs/navigation", program: @program, active: "participants", detail: @program.participant_label.pluralize.titleize %>
   <h1><%= @program.participant_label.pluralize.titleize %> at <%= @program.name %></h1>
   <%= render "programs/regular_schedule", program: @program %>
-  <p class="participant-counts"><strong><%= @roster.counts[:total] %> total <%= @program.participant_label.pluralize.downcase %></strong> &middot; <%= @roster.counts[:available] %> <%= status_label("available") %> &middot; <%= @roster.counts[:booked] %> <%= status_label("booked") %> &middot; <%= @roster.counts[:paused] %> <%= status_label("paused") %> &middot; <%= @roster.counts[:inactive] %> <%= status_label("inactive") %></p>
-  <%= button_to "Invite All Available #{@program.participant_label.pluralize.titleize} (#{@roster.counts[:available]})", invite_all_program_participants_path(@program, cursor: @roster.pagination.cursor), disabled: @roster.counts[:available].zero? %>
+  <% options = [["All #{@program.participant_label.pluralize.titleize} (#{@roster.counts[:total]})", "all"]] + %w[available booked paused inactive].map { |status| ["#{status.titleize} (#{@roster.counts[status.to_sym]})", status] } %>
+  <%= render "shared/table_filter", url: program_participants_path(@program), name: :status, label: "Status",
+             selected: @roster.status, options: options %>
+  <% roster_query = { cursor: @roster.pagination.cursor, status: params[:status] } %>
   <% if @memberships.any? %>
-    <p>Showing <%= @memberships.size %> of <%= @roster.counts[:total] %> <%= @program.participant_label.pluralize.downcase %></p>
     <p class="scroll-hint">Scroll horizontally to view <%= @program.participant_label.downcase %> access and actions.</p>
     <div class="table-scroll" role="region" aria-label="<%= @program.program_label.titleize %> <%= @program.participant_label.pluralize.downcase %>" tabindex="0">
       <table class="participant-roster">
-        <thead><tr><th><%= @program.participant_label.titleize %></th><th>Booking Access</th><th>Pause</th><th>Details</th></tr></thead>
+        <thead><tr><th aria-label="Pause Note"></th><th><%= @program.participant_label.titleize %></th><th>Booking Access</th><th>Invite to Book</th><th>Pause</th><th>Details</th></tr></thead>
         <tbody>
           <% @memberships.each do |membership| %>
             <% access = @roster.access_for(membership) %>
             <tr data-membership="<%= membership.id %>">
+              <td>
+                <% if membership.participant_pause_reason.present? %>
+                  <details class="participant-note-toggle">
+                    <summary aria-label="Pause note for <%= membership.user.name %>" aria-controls="pause-note-<%= membership.id %>"><span aria-hidden="true">&#9656;</span></summary>
+                  </details>
+                <% end %>
+              </td>
               <td>
                 <%= render "shared/participant_identity", participant: membership.user %>
                 <% if membership.notes.present? %>
@@ -22,28 +30,25 @@
               </td>
               <td>
                 <% if access.booking && !access.paused? && membership.user.active? %>
-                  <%= render "programs/booking_status", booking: access.booking, private_view: true %>
-                  on <%= access.booking.date.iso8601 %> at <%= booking_time(access.booking) %>
+                  <%= render "programs/booking_status", booking: access.booking, private_view: true, show_warning: false %>
                 <% else %>
                   <%= status_label(access.status) %>
                   <% if access.booking %><br>Booking retained: <%= access.booking.date.iso8601 %> at <%= booking_time(access.booking) %> (<%= access.booking.display_status %>)<% end %>
-                  <% if access.booking&.attendance_overdue? %><small class="attendance-warning" role="status">Please contact an organizer ASAP.</small><% end %>
                 <% end %>
-                <% if membership.participant_pause_reason.present? %>
-                  <details><summary>Pause Note</summary><p>Last pause: <%= membership.participant_pause_reason %></p></details>
-                <% end %>
+              </td>
+              <td>
                 <% if membership.user.active? && !access.paused? && !access.booking %>
-                  <%= button_to "Invite to Book", invite_program_participant_path(@program, membership, cursor: @roster.pagination.cursor), class: "secondary-action" %>
+                  <%= button_to "Invite to Book", invite_program_participant_path(@program, membership, **roster_query), class: "secondary-action" %>
                 <% end %>
               </td>
               <td>
                 <div class="participant-actions">
                   <% if access.paused? %>
-                    <%= button_to "Resume #{@program.participant_label.titleize}", resume_program_participant_path(@program, membership, cursor: @roster.pagination.cursor), class: "secondary-action" %>
+                    <%= button_to "Resume #{@program.participant_label.titleize}", resume_program_participant_path(@program, membership, **roster_query), class: "secondary-action" %>
                   <% else %>
                     <details class="participant-pause">
                       <summary class="button-link">Pause <%= @program.participant_label.titleize %></summary>
-                      <%= form_with url: pause_program_participant_path(@program, membership, cursor: @roster.pagination.cursor) do |form| %>
+                      <%= form_with url: pause_program_participant_path(@program, membership, **roster_query) do |form| %>
                         <%= form.text_area :reason, id: "pause-reason-#{membership.id}", required: true, maxlength: 200, rows: 2,
                                            placeholder: "Explanation required", aria: { label: "Pause explanation" } %>
                         <div class="participant-pause-actions">
@@ -55,14 +60,21 @@
                   <% end %>
                 </div>
               </td>
-              <td><%= link_to "Edit", edit_program_participant_path(@program, membership) %></td>
+              <td><%= link_to "Edit", edit_program_participant_path(@program, membership, **roster_query) %></td>
             </tr>
+            <% if membership.participant_pause_reason.present? %>
+              <tr class="participant-note-row" id="pause-note-<%= membership.id %>">
+                <td colspan="3"></td>
+                <td colspan="3"><p class="participant-notes">Last pause: <%= membership.participant_pause_reason %></p></td>
+              </tr>
+            <% end %>
           <% end %>
         </tbody>
       </table>
     </div>
   <% else %>
-    <p>No <%= @program.participant_label.pluralize.downcase %> assigned.</p>
+    <p><%= @roster.counts[:total].zero? ? "No #{@program.participant_label.pluralize.downcase} assigned." : "No #{@program.participant_label.pluralize.downcase} in this view." %></p>
   <% end %>
   <%= render "shared/pagination", pagination: @roster.pagination, label: "#{@program.participant_label.titleize} pages" %>
+  <%= button_to "Invite All Available #{@program.participant_label.pluralize.titleize} (#{@roster.counts[:available]})", invite_all_program_participants_path(@program, **roster_query), disabled: @roster.counts[:available].zero?, form: { class: "button_to participant-bulk-invite" } %>
 </main>

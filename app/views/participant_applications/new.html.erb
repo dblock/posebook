@@ -1,8 +1,10 @@
-<main>
+<% content_for :head do %>
+  <%= javascript_include_tag "application-consent", defer: true %>
+<% end %>
+<main data-edit-in-place>
   <%= render "programs/navigation", program: @program, active: "view", detail: "Apply" %>
   <h1>Apply to <%= @program.name %></h1>
   <%= render "shared/description", location: @program %>
-  <p>Save a draft anytime and submit when ready. Drafts are private and deleted after 30 days.</p>
   <%= render "shared/errors", record: @application %>
   <% @user = @profile || current_user.dup %>
   <% @user.assign_attributes(@application.draft_profile.slice(*ApplicationDraft::PROFILE_FIELDS)) unless @profile %>
@@ -10,22 +12,25 @@
   <%= form_with url: program_participation_application_path(@program), scope: :participant_application, multipart: true, id: "application-editor" do |form| %>
     <%= form.hidden_field :lock_version, value: @application.draft_revision if @application.persisted? %>
     <h2>Account Details</h2>
-    <p><small>Saved to your account (<%= current_user.email %>) when you submit.</small></p>
     <%= form.fields_for :profile, @user do |profile| %>
       <p><%= profile.label :name %><br><%= profile.text_field :name, required: true, autocomplete: "name", maxlength: 100 %></p>
-      <p><%= profile.label :phone %><br><%= profile.telephone_field :phone, required: true, autocomplete: "tel", placeholder: "+1 (212) 555-1234" %></p>
+      <p><%= profile.label :phone %><br><%= profile.telephone_field :phone, value: profile.object.display_phone, required: true, autocomplete: "tel", placeholder: "+1 (212) 555-1234" %></p>
       <%= render "shared/gender_field", form: profile %>
       <%= render "shared/public_profile_fields", form: profile %>
     <% end %>
     <%= render "photos", form: form %>
     <h2>Application</h2>
-    <p><%= form.label :message, "Message (Optional)" %><br><%= form.text_area :message, value: @application.message, maxlength: 5000, rows: 5 %></p>
-    <p><label><%= form.check_box :consent, { required: true }, "1", "0" %> I agree to share my account contact details, gender, profile, and all photos (including private photos) with this program's reviewing coordinators.</label></p>
-    <p><small>You can withdraw before acceptance.</small></p>
-    <%= form.button "Save Draft", name: "participant_application[intent]", value: "draft", formnovalidate: true, class: "secondary-action" %>
-    <%= form.button "Submit Application", name: "participant_application[intent]", value: "submit" %>
+    <p><%= form.label :message, "Message (Optional)" %><br><%= form.text_area :message, value: @application.message, placeholder: @program.application_message_placeholder.presence, maxlength: 5000, rows: 5 %></p>
+    <p><label><%= form.check_box :consent, { required: true, data: { application_consent: true } }, "1", "0" %> I agree to share my information with the program's coordinators.</label></p>
   <% end %>
-  <% if @application.persisted? %>
-    <%= button_to "Abandon Draft", program_participation_application_path(@program), method: :delete, params: { lock_version: @application.draft_revision }, class: "secondary-action" %>
-  <% end %>
+  <div class="participant-actions">
+    <%= button_tag "Submit Application", form: "application-editor", name: "participant_application[intent]", value: "submit", data: { application_submit: true, navigate: true } %>
+    <%= button_tag "Save Draft", form: "application-editor", name: "participant_application[intent]", value: "draft", formnovalidate: true %>
+    <% if @application.persisted? %>
+      <%= button_to "Cancel Application", program_participation_application_path(@program), method: :delete, params: { lock_version: @application.draft_revision }, form: { data: { navigate: true } } %>
+    <% else %>
+      <%= link_to "Cancel Application", applications_profile_path, class: "button-link" %>
+    <% end %>
+  </div>
+  <p><small>Save a draft anytime and submit when ready. Drafts are private and deleted after 30 days.</small></p>
 </main>

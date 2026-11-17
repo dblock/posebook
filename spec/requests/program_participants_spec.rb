@@ -17,6 +17,12 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
     sign_in(organizer)
   end
 
+  def expect_roster_counts(total:, available:, booked:, paused:, inactive:)
+    expect(response.parsed_body.css('select[name="status"] option').map(&:text))
+      .to eq(["All Participants (#{total})", "Available (#{available})", "Booked (#{booked})",
+              "Paused (#{paused})", "Inactive (#{inactive})"])
+  end
+
   it 'links model identity and private Instagram from rosters and booking history' do
     participant.update!(instagram_handle: 'drawing.model', instagram_tagging_allowed: true)
     membership
@@ -68,19 +74,20 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
     expect(membership.reload.history_tracks.last.modifier_id).to eq(organizer.id)
   end
 
-  it 'keeps invitations in booking access with editing and pause or resume controls in separate columns' do
+  it 'keeps invitations, booking access, editing, and pause or resume controls in separate columns' do
     membership
     manage_participants
     get program_participants_path(program)
     row = response.parsed_body.at_css("tr[data-membership='#{membership.id}']")
-    expect(row.at_css('td:nth-child(2) form')['action']).to eq(invite_program_participant_path(program, membership))
+    expect(row.at_css('td:nth-child(4) form')['action']).to eq(invite_program_participant_path(program, membership))
+    expect(row.at_css('td:nth-child(3) form')).to be_nil
     expect(row.at_css('.participant-actions').text).not_to include('View Photos', 'Invite to Book')
     expect(row.at_css('.participant-pause summary').text).to eq('Pause Participant')
     membership.update!(participant_paused: true, participant_pause_reason: 'Travel.')
     get program_participants_path(program)
     actions = response.parsed_body.at_css("tr[data-membership='#{membership.id}'] .participant-actions")
     expect(actions.css('button').map(&:text)).to eq(['Resume Participant'])
-    expect(response.parsed_body.at_css("tr[data-membership='#{membership.id}'] td:nth-child(4) a")['href'])
+    expect(response.parsed_body.at_css("tr[data-membership='#{membership.id}'] td:nth-child(6) a")['href'])
       .to eq(edit_program_participant_path(program, membership))
     expect(actions.css('details')).to be_empty
   end
@@ -92,10 +99,10 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
     membership.update!(participant_paused: true, participant_pause_reason: 'Private explanation.')
     manage_participants
     get program_participants_path(program)
-    cell = response.parsed_body.at_css("tr[data-membership='#{membership.id}'] td:nth-child(2)")
+    cell = response.parsed_body.at_css("tr[data-membership='#{membership.id}'] td:nth-child(3)")
     expect(cell.css('.status-label').map(&:text)).to eq(['Paused'])
     expect(cell.text).to include('Booking retained', booking.date.iso8601, 'Booked')
-    expect(cell.at_css('.attendance-warning')['role']).to eq('status')
+    expect(cell.at_css('.attendance-warning')).to be_nil
   end
 
   it 'bulk invites only active participants at this session without upcoming bookings or pauses' do
@@ -109,9 +116,9 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
     grant_participant_access(create_program, create_user)
     manage_participants
     get program_participants_path(program)
-    expect(response.parsed_body.at_css('.participant-counts').text.squish)
-      .to eq("4 total participants \u00b7 1 available \u00b7 1 booked \u00b7 1 paused \u00b7 1 inactive")
-    expect(response.parsed_body.at_css('main form button').text).to eq('Invite All Available Participants (1)')
+    expect_roster_counts(total: 4, available: 1, booked: 1, paused: 1, inactive: 1)
+    expect(response.parsed_body.at_css('main > form:last-child button').text)
+      .to eq('Invite All Available Participants (1)')
     post invite_all_program_participants_path(program)
     expect(ActionMailer::Base.deliveries).to be_empty
     deliver_emails
@@ -137,8 +144,8 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
       get program_participants_path(program)
       expect(response.parsed_body.css('tr[data-membership]').pluck('data-membership'))
         .to eq(members.first(2).map { |item| item.id.to_s })
-      expect(response.parsed_body.text).to include('3 total participants', '3 available',
-                                                   'Invite All Available Participants (3)')
+      expect_roster_counts(total: 3, available: 3, booked: 0, paused: 0, inactive: 0)
+      expect(response.body).to include('Invite All Available Participants (3)')
       next_path = response.parsed_body.at_css('a[rel="next"]')['href']
       expect(next_path).to start_with("#{program_participants_path(program)}?cursor=")
       expect(response.parsed_body.at_css('a[rel="prev"]')).to be_nil
@@ -163,8 +170,9 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
       post pause_program_participant_path(program, members.last, cursor: cursor), params: { reason: 'Travel.' }
       expect(response).to redirect_to(program_participants_path(program, cursor: cursor))
       follow_redirect!
-      expect(response.parsed_body.text).to include('3 total participants', '2 available', '1 paused')
-      expect(response.parsed_body.at_css("tr[data-membership='#{members.last.id}'] summary").text).to eq('Pause Note')
+      expect_roster_counts(total: 3, available: 2, booked: 0, paused: 1, inactive: 0)
+      expect(response.parsed_body.at_css("tr[data-membership='#{members.last.id}'] summary")['aria-controls'])
+        .to eq("pause-note-#{members.last.id}")
     end
 
     it 'restarts invalid cursors and ignores legacy page numbers' do
@@ -180,12 +188,13 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
   it 'handles an empty roster without pagination or an enabled bulk action' do
     manage_participants
     get program_participants_path(program, page: 999)
-    expect(response.parsed_body.text).to include('0 total participants', '0 available', 'No participants assigned.')
+    expect_roster_counts(total: 0, available: 0, booked: 0, paused: 0, inactive: 0)
+    expect(response.body).to include('No participants assigned.')
     expect(response.parsed_body.at_css('form button[disabled]').text).to eq('Invite All Available Participants (0)')
     expect(response.parsed_body.at_css('nav[aria-label="Participant pages"]')).to be_nil
     membership.update!(participant_paused: true, participant_pause_reason: 'Taking a break.')
     get program_participants_path(program)
-    expect(response.parsed_body.text).to include('1 total participants', '0 available', '1 paused')
+    expect_roster_counts(total: 1, available: 0, booked: 0, paused: 1, inactive: 0)
     expect(response.parsed_body.at_css('form button[disabled]').text).to eq('Invite All Available Participants (0)')
   end
 
@@ -204,8 +213,7 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
 
     travel_to(past.ends_at + 1.second)
     get program_participants_path(program)
-    expect(response.parsed_body.at_css('.participant-counts').text.squish)
-      .to eq("3 total participants \u00b7 2 available \u00b7 0 booked \u00b7 0 paused \u00b7 1 inactive")
+    expect_roster_counts(total: 3, available: 2, booked: 0, paused: 0, inactive: 1)
     expect(response.parsed_body.at_css("tr[data-membership='#{completed.id}']").text)
       .to include('Uninvited', 'Invite to Book')
   end

@@ -1,0 +1,33 @@
+<% own = user == current_user %>
+<p class="scroll-hint">Scroll horizontally to view all columns.</p>
+<div class="table-scroll" role="region" aria-label="Applications" tabindex="0">
+  <table>
+    <thead><tr><th scope="col">Program</th><% if local_assigns[:show_applicant] %><th scope="col">Applicant</th><% end %><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
+    <tbody>
+      <% applications.each do |application| %>
+        <tr>
+          <td><%= link_to application.program.name, program_path(application.program) %></td>
+          <% if local_assigns[:show_applicant] %><td><%= participant_contact_label(application) %></td><% end %>
+          <td><%= application.status_label %></td>
+          <td>
+            <div class="participant-actions">
+              <%= link_to "View", own ? program_participation_application_path(application.program) : program_application_path(application.program, application), class: "button-link" %>
+              <% if own && application.draft? %>
+                <% if application.program.applications_enabled? && application.program.booking_active? %>
+                  <%= link_to "Continue Application", new_program_participation_application_path(application.program), class: "button-link" %>
+                <% end %>
+                <%= button_to "Cancel Application", program_participation_application_path(application.program), method: :delete, params: { lock_version: application.draft_revision } %>
+              <% else %>
+                <% if own && %w[pending declined].include?(application.status) %>
+                  <%= button_to "Withdraw", program_participation_application_path(application.program), method: :delete, params: { lock_version: application.lock_version } %>
+                <% elsif own && application.status == "withdrawn" && application.program.applications_enabled? && application.program.booking_active? %>
+                  <%= button_to "Resubmit", resubmit_program_participation_application_path(application.program), params: { lock_version: application.lock_version } %>
+                <% end %>
+              <% end %>
+            </div>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

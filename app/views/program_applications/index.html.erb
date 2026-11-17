@@ -2,27 +2,31 @@
   <%= render "programs/navigation", program: @program, active: "applications" %>
   <h1>Applications</h1>
   <p><%= status_label(@program.applications_enabled? && @program.booking_active? ? "Open" : "Closed") %></p>
-  <%= form_with url: program_applications_path(@program), method: :get, class: "application-filter" do |form| %>
-    <p><%= form.label :status, "Status" %> <%= form.select :status, [["Pending", "pending"], ["Not Now", "declined"], ["Accepted", "accepted"], ["Withdrawn", "withdrawn"], ["All", "all"]], { selected: @status }, data: { auto_submit: true } %></p>
-  <% end %>
-  <% if @applications.empty? %><p>No applications in this view.</p><% else %>
-    <div class="table-scroll" role="region" aria-label="Applications" tabindex="0">
-      <table>
-        <thead><tr><th>Applicant</th><th>Status</th><th>Submitted</th><th>Actions</th></tr></thead>
-        <tbody>
-          <% memberships = @program.memberships.participants.where(:user_id.in => @applications.select { |application| application.status == "accepted" }.map(&:user_id)).index_by(&:user_id) %>
-          <% @applications.each do |application| %>
-            <% membership = memberships[application.user_id] if application.status == "accepted" %>
-            <tr>
-              <td><%= link_to_if membership, participant_contact_label(application), (edit_program_participant_path(@program, membership) if membership) %></td><td><%= application.status_label %></td>
-              <td><%= l((application.submitted_at || application.created_at).to_date, format: :long) %></td>
-              <td><%= link_to "Review", program_application_path(@program, application), class: "button-link" %><% if membership %> <%= link_to "View Profile", participant_path(application.user_id), class: "button-link" %><% end %></td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
-  <% end %>
-  <%= render "shared/pagination", pagination: @pagination, label: "Application pages" %>
-  <p><%= link_to "Participation History", history_program_applications_path(@program) %></p>
+  <section aria-label="Applications" data-application-region>
+    <%= render "participant_applications/filter", url: program_applications_path(@program), status: @status %>
+    <% if @applications.empty? %><p>No applications in this view.</p><% else %>
+      <div class="table-scroll" role="region" aria-label="Applications" tabindex="0">
+        <table>
+          <thead><tr><th>Applicant</th><th>Status</th><th>Submitted</th><th>Review</th><th>View Profile</th></tr></thead>
+          <tbody>
+            <% memberships = @program.memberships.participants.where(:user_id.in => @applications.select { |application| application.status == "accepted" }.map(&:user_id)).index_by(&:user_id) %>
+            <% @applications.each do |application| %>
+              <% membership = memberships[application.user_id] %>
+              <tr>
+                <td>
+                  <%= render "shared/participant_identity", participant: application, profile: application.user,
+                             path: participant_path(application.user_id), show_instagram: false %>
+                </td><td><%= application.status_label %></td>
+                <td><%= l((application.submitted_at || application.created_at).to_date, format: :long) %></td>
+                <td><%= link_to "Review", program_application_path(@program, application), class: "button-link" %></td>
+                <td><% if membership %><%= link_to "View Profile", participant_path(application.user_id), class: "button-link" %><% end %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+    <%= render "shared/pagination", pagination: @pagination, label: "Application pages" %>
+  </section>
+  <p><%= link_to "Applications History", history_program_applications_path(@program) %></p>
 </main>

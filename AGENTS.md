@@ -49,7 +49,7 @@ Participant editing changes only membership display overrides, Instagram/photo h
 
 Drafts are owner-only, grant no review/photo access, and stage profile fields until explicit consented submission. Bind revisions to draft ID and version for save/submit/abandon; stale forms must not recreate removed drafts. Photos use existing authorized storage outside submission transactions and survive abandonment.
 
-Pending/Not Now review consent grants scoped reading, never editing. Withdrawal revokes application-only access on every image request and prevents acceptance. Preserve identity snapshots, append-only decisions/events, private reviewer notes, and optimistic decision revisions. Acceptance uses the existing first-cycle membership path.
+Pending and rejected applications with review consent grant scoped reading, never editing. Withdrawal revokes application-only access on every image request and prevents acceptance. Preserve identity snapshots, append-only decisions/events, private reviewer notes, and optimistic decision revisions. Acceptance uses the existing first-cycle membership path.
 
 Required application/decision/admission email outboxes and ID-only jobs join the workflow transaction through `EmailDelivery.enqueue_in_transaction` and its active session. Enqueue failures roll back the workflow; do not nest transactions or send SMTP there. Optional invitation-email failure must preserve its usable private link/grant.
 

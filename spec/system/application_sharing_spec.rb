@@ -13,6 +13,83 @@ RSpec.describe 'Application sharing', :aggregate_failures, :database, type: :sys
     sign_in_through_browser(coordinator)
   end
 
+  def expect_editor_actions
+    submit = find_button('Submit Application')
+    expect(find_button('Save Draft').style('height', 'font-size')).to eq(submit.style('height', 'font-size'))
+    expect(find_link('Cancel Application').style('height', 'font-size')).to eq(submit.style('height', 'font-size'))
+  end
+
+  it 'configures a message prompt in settings and shows it in the application editor' do
+    visit edit_program_path(program)
+    fill_in 'Application Message Placeholder', with: 'Do you have any experience?'
+    click_on 'Save Program'
+    expect(page).to have_css('.flash', text: 'settings saved.')
+    click_on 'Sign Out'
+    sign_in_through_browser(create_user(email_verified_at: Time.current))
+    each_viewport do |viewport|
+      without_javascript do
+        visit new_program_participation_application_path(program)
+        expect(page).to have_field('Message (Optional)', placeholder: 'Do you have any experience?', with: '')
+        expect_editor_actions
+        expect(top_of(find_link('Cancel Application'))).to eq(top_of(find_button('Save Draft'))) if viewport == :desktop
+        expect_no_horizontal_overflow
+        capture_screenshot("application-message-prompt-#{viewport}")
+      end
+    end
+  end
+
+  it 'cancels unsaved and saved applications without JavaScript or submitting them' do
+    click_on 'Sign Out'
+    applicant = create_user(email_verified_at: Time.current)
+    sign_in_through_browser(applicant)
+    without_javascript do
+      visit new_program_participation_application_path(program)
+      fill_in 'Phone', with: ''
+      click_on 'Cancel Application'
+      expect(page).to have_current_path(applications_profile_path)
+      expect(ParticipantApplication.where(user_id: applicant.id)).not_to exist
+      visit new_program_participation_application_path(program)
+      fill_in 'Message (Optional)', with: 'Draft message'
+      click_on 'Save Draft'
+      expect(page).to have_css('.flash', text: 'Draft saved.')
+      click_on 'Cancel Application'
+      expect(page).to have_current_path(applications_profile_path)
+      expect(ParticipantApplication.where(user_id: applicant.id)).not_to exist
+    end
+  end
+
+  it 'requires consent to enable submission while keeping draft saving available' do
+    click_on 'Sign Out'
+    applicant = create_user(email_verified_at: Time.current)
+    sign_in_through_browser(applicant)
+    visit new_program_participation_application_path(program)
+    expect(page).to have_button('Submit Application', disabled: true)
+    find('[data-application-consent]').check
+    expect(page).to have_button('Submit Application', disabled: false)
+    find('[data-application-consent]').uncheck
+    expect(page).to have_button('Submit Application', disabled: true)
+    click_on 'Save Draft'
+    expect(page).to have_css('.flash', text: 'Draft saved.')
+    expect(page).to have_button('Submit Application', disabled: true)
+    expect(ParticipantApplication.find_by(user_id: applicant.id).status).to eq('draft')
+  end
+
+  it 'saves drafts in place and then navigates after final submission' do
+    click_on 'Sign Out'
+    sign_in_through_browser(create_user(email_verified_at: Time.current))
+    visit new_program_participation_application_path(program)
+    mark_page
+    fill_in 'Message (Optional)', with: 'My application'
+    click_on 'Save Draft'
+    expect(page).to have_css('.flash', text: 'Draft saved.')
+    expect_unchanged_page
+    click_on 'Save Draft'
+    expect(page).to have_button('Save Draft', disabled: false)
+    find('[data-application-consent]').check
+    click_on 'Submit Application'
+    expect(page).to have_current_path(applications_profile_path)
+  end
+
   it 'shows a visible application link beside Copy Link at every viewport' do
     each_viewport do |viewport|
       visit program_path(program, token: 'private')

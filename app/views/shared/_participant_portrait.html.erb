@@ -1,0 +1,6 @@
+<% photo = participant&.primary_profile_photo %>
+<%= link_to path, class: "participant-portrait" do %>
+  <%= image_tag(photo ? participant_photo_path(participant, photo.id, thumbnail: 1) : "profile-placeholder.svg",
+                width: 64, height: 64, loading: "lazy",
+                alt: photo ? "Profile photo of #{name}" : "No profile photo for #{name}") %>
+<% end %>

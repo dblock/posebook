@@ -22,7 +22,7 @@ RSpec.describe 'Application cursor pagination', :aggregate_failures, :database, 
   end
 
   def review_rows
-    response.parsed_body.css('tbody tr td:first-child').map(&:text)
+    response.parsed_body.css('tbody tr td:first-child').map { |cell| cell.text.squish }
   end
 
   it 'retains review filters and fresh authorization while paging through new submissions' do
@@ -51,7 +51,7 @@ RSpec.describe 'Application cursor pagination', :aggregate_failures, :database, 
     next_path = response.parsed_body.at_css('a[rel="next"]')['href']
     applications.first.update!(status: 'declined')
     get next_path.sub('status=pending', 'status=declined')
-    expect(response.body).to include(applications.first.email, 'Not Now')
+    expect(response.body).to include(applications.first.email, 'Reject')
     expect(response.parsed_body.at_css('.participant-pagination')).to be_nil
   end
 
@@ -67,8 +67,8 @@ RSpec.describe 'Application cursor pagination', :aggregate_failures, :database, 
     track_record(ParticipationEvent.create!(program: program, user: applicant, actor: coordinator,
                                             source_id: applications.last.id, action: 'application_declined'))
     get next_path
-    expect(response.parsed_body.css('tbody tr').size).to eq(1)
-    expect(response.parsed_body.at_css('tbody tr').text).to include(events.first.notes, coordinator.name)
+    expect(response.parsed_body.css('tr[data-event]').size).to eq(1)
+    expect(response.parsed_body.at_css('tbody').text).to include(events.first.notes, coordinator.name)
     expect(response.parsed_body.at_css('a[rel="next"]')).to be_nil
   end
 
@@ -82,11 +82,9 @@ RSpec.describe 'Application cursor pagination', :aggregate_failures, :database, 
     get applications_profile_path
     next_path = response.parsed_body.at_css('a[rel="next"]')['href']
     get next_path, params: { user_id: coordinator.id }
-    expect(response.parsed_body.css('main li').map(&:text))
-      .to eq(["#{owned.first.program.name} - Pending"])
+    expect(review_rows).to eq([owned.first.program.name])
     expect(response.parsed_body.at_css('a[rel="next"]')).to be_nil
     get response.parsed_body.at_css('a[rel="prev"]')['href']
-    expect(response.parsed_body.css('main li').map(&:text))
-      .to eq(owned.reverse.first(2).map { |item| "#{item.program.name} - Pending" })
+    expect(review_rows).to eq(owned.reverse.first(2).map { |item| item.program.name })
   end
 end

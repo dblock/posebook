@@ -1,31 +1,33 @@
-<main>
+<main data-application-region>
   <%= render "programs/navigation", program: @program, active: "invitations" %>
   <h1>Invitations</h1>
-  <p><%= link_to "Invite #{@program.participant_article} #{@program.participant_label.titleize}", new_program_participant_invitation_path(@program), class: "button-link" %></p>
+  <%= render "shared/table_filter", url: program_participant_invitations_path(@program), name: :status, label: "Status",
+             selected: @status, options: [["All", "all"], ["Pending", "pending"], ["Accepted", "accepted"], ["Revoked", "revoked"], ["Expired", "expired"]] %>
   <% if @invitations.empty? %>
     <p>No invitations<%= " on this page" if @pagination.cursor %>.</p>
   <% else %>
     <p class="scroll-hint">Scroll horizontally to view invitation dates and actions.</p>
     <div class="table-scroll" role="region" aria-label="<%= @program.participant_label.titleize %> invitations" tabindex="0">
       <table>
-        <thead><tr><th>Invitee</th><th>Status</th><th>Invited</th><th>Invited By</th><th>Expires</th><th>Accepted</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Invitee</th><th>Status</th><th>Invited</th><th>Invited By</th><th>Expires</th><th>Accepted</th><th>Revoke</th><th>View</th></tr></thead>
         <tbody>
           <% @invitations.each do |invitation| %>
             <tr data-invitation="<%= invitation.id %>">
-              <td class="invitation-recipient"><%= participant_contact_label(invitation) %></td>
+              <td class="invitation-recipient">
+                <% invitee = @invitees[invitation.used_by_id] %>
+                <%= render "shared/participant_identity", participant: invitation, profile: invitee,
+                           path: invitee ? participant_path(invitee) : program_participant_invitation_path(@program, invitation),
+                           show_instagram: false %>
+              </td>
               <td class="invitation-status"><%= status_label(invitation.status) %></td>
               <td><%= time_tag invitation.created_at.in_time_zone(@program.time_zone), format: :long %></td>
               <td><%= invitation.invited_by&.name.presence || "Not recorded" %></td>
               <td><%= time_tag invitation.expires_at.in_time_zone(@program.time_zone), format: :long %></td>
               <td><% if invitation.used_at %><%= time_tag invitation.used_at.in_time_zone(@program.time_zone), format: :long %><% else %>Not accepted<% end %></td>
-              <td>
-                <div class="participant-actions">
-                  <%= link_to "View", program_participant_invitation_path(@program, invitation), class: "button-link", aria: { label: "View invitation for #{invitation.name.presence || invitation.email.presence || 'participant'}" } %>
-                  <% if invitation.status == "Pending" %>
-                    <%= button_to "Revoke", program_participant_invitation_path(@program, invitation, cursor: @pagination.cursor), method: :delete, class: "secondary-action", aria: { label: "Revoke invitation for #{invitation.name.presence || invitation.email.presence || 'participant'}" } %>
-                  <% end %>
-                </div>
-              </td>
+              <td><% if invitation.status == "Pending" %>
+                <%= button_to "Revoke", program_participant_invitation_path(@program, invitation, cursor: @pagination.cursor, status: params[:status]), method: :delete, class: "secondary-action", aria: { label: "Revoke invitation for #{invitation.name.presence || invitation.email.presence || 'participant'}" } %>
+              <% end %></td>
+              <td><%= link_to "View", program_participant_invitation_path(@program, invitation, cursor: @pagination.cursor, status: params[:status]), aria: { label: "View invitation for #{invitation.name.presence || invitation.email.presence || 'participant'}" } %></td>
             </tr>
           <% end %>
         </tbody>
@@ -33,4 +35,5 @@
     </div>
   <% end %>
   <%= render "shared/pagination", pagination: @pagination, label: "Invitation pages" %>
+  <p><%= link_to "Invite #{@program.participant_article} #{@program.participant_label.titleize}", new_program_participant_invitation_path(@program), class: "button-link" %></p>
 </main>

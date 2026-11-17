@@ -5,8 +5,12 @@ class ApplicationDraftMaintenance
   EXPIRES_AFTER = 30.days
 
   def self.run
-    ParticipantApplication.where(status: 'draft', profile_shared_at: nil, :created_at.lte => REMINDER_AFTER.ago)
-                          .any_of({ draft_reminded_at: nil }, { :created_at.lte => EXPIRES_AFTER.ago })
+    ParticipantApplication.where(status: 'draft', profile_shared_at: nil)
+                          .any_of({ draft_started_at: nil, :created_at.lte => EXPIRES_AFTER.ago },
+                                  { :draft_started_at.lte => EXPIRES_AFTER.ago },
+                                  { draft_started_at: nil, draft_reminded_at: nil,
+                                    :created_at.lte => REMINDER_AFTER.ago },
+                                  { draft_reminded_at: nil, :draft_started_at.lte => REMINDER_AFTER.ago })
                           .only(:id).each { |record| new(record.id).process }
   end
 
@@ -20,8 +24,8 @@ class ApplicationDraftMaintenance
         record = draft
         next unless record
 
-        if record.created_at <= EXPIRES_AFTER.ago
-          record.destroy!
+        if record.draft_created_at <= EXPIRES_AFTER.ago
+          record.discard_draft!(expired: true)
         elsif record.draft_reminded_at.nil? && remindable?(record)
           enqueue_reminder(record, session)
         end
@@ -29,9 +33,12 @@ class ApplicationDraftMaintenance
     end
   end
 
-  def reminder_message
+  def reminder_message(expires_at: nil)
     record = draft
-    ParticipantApplicationMailer.draft_reminder(record, @user) if record && remindable?(record)
+    return unless record && remindable?(record)
+    return if expires_at && expires_at != record.draft_created_at + EXPIRES_AFTER
+
+    ParticipantApplicationMailer.draft_reminder(record, @user)
   end
 
   private
@@ -42,7 +49,7 @@ class ApplicationDraftMaintenance
 
   def remindable?(record)
     @user = User.active.where(id: record.user_id).first
-    record.created_at <= REMINDER_AFTER.ago && record.created_at > EXPIRES_AFTER.ago &&
+    record.draft_created_at <= REMINDER_AFTER.ago && record.draft_created_at > EXPIRES_AFTER.ago &&
       @user&.email_verified_at && accepting?(record.program_id)
   end
 
@@ -53,7 +60,7 @@ class ApplicationDraftMaintenance
 
   def enqueue_reminder(record, session)
     record.update!(draft_reminded_at: Time.current)
-    EmailDelivery.enqueue_in_transaction('application_draft', record, session: session,
-                                                                      expires_at: record.created_at + EXPIRES_AFTER)
+    expires_at = record.draft_created_at + EXPIRES_AFTER
+    EmailDelivery.enqueue_in_transaction('application_draft', record, session: session, expires_at: expires_at)
   end
 end

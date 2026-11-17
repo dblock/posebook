@@ -44,6 +44,44 @@ RSpec.describe ApplicationDraftMaintenance, :aggregate_failures, :database do
     :expired
   end
 
+  def reopen_after_submission(record = draft)
+    grant_coordinator_access(program, create_user)
+    submit_or_expired
+    ParticipantApplicationWorkflow.new(program: program, user: user)
+                                  .withdraw(record.id, version: record.reload.lock_version)
+    ApplicationDraft.new(program: program, user: user).reopen(version: record.reload.lock_version)
+  end
+
+  it 'starts a fresh draft period after reopening and restores submitted history when the new draft expires' do
+    draft.update!(created_at: 60.days.ago)
+    reopen_after_submission
+    ApplicationDraft.new(program: program, user: user)
+                    .save(version: draft.reload.draft_revision, message: 'Private replacement')
+    described_class.run
+    expect(draft.reload.status).to eq('draft')
+    travel 7.days
+    described_class.run
+    expect(draft.reload.draft_reminded_at).to eq(Time.current)
+    expect(EmailDelivery.find_by(kind: 'application_draft', resource_id: draft.id).expires_at).to eq(23.days.from_now)
+    travel 23.days
+    described_class.run
+    expect(draft.reload).to have_attributes(status: 'withdrawn', message: 'Ready to apply', draft_origin: {})
+    expect(draft.events.map(&:action))
+      .to eq(%w[application_submitted application_withdrawn application_reopened application_draft_expired])
+    expect(draft.events.last.actor_id).to be_nil
+  end
+
+  it 'does not deliver an earlier draft cycle reminder after reopening' do
+    maintenance.process
+    reopen_after_submission
+    travel 7.days
+    described_class.run
+    expect(EmailDelivery.where(kind: 'application_draft', resource_id: draft.id).count).to eq(2)
+    deliver_emails
+    expect(ActionMailer::Base.deliveries.size).to eq(1)
+    expect(ActionMailer::Base.deliveries.last.subject).to include('Finish Your Participation Application')
+  end
+
   it 'starts at seven elapsed days and queues only one reminder without invalidating the open editor' do
     draft.update!(created_at: 7.days.ago + 1.second)
     described_class.run
@@ -141,7 +179,8 @@ RSpec.describe ApplicationDraftMaintenance, :aggregate_failures, :database do
     remaining = ParticipantApplication.where(id: draft.id).first
     expect(remaining&.status).to be_nil.or(eq('pending'))
     expect(outcomes).to include(remaining ? :submitted : :expired)
-    expect(ParticipationEvent.where(source_id: draft.id).count).to eq(remaining ? 1 : 0)
+    expect(ParticipationEvent.where(source_id: draft.id).pluck(:action))
+      .to eq([remaining ? 'application_submitted' : 'application_draft_expired'])
   end
 
   it 'skips an abandoned draft when its reminder reaches the mail worker' do
