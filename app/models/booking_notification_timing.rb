@@ -8,7 +8,7 @@ class BookingNotificationTiming
 
   def due_at(kind)
     setting = BookingNotificationSetting.for(@program, kind)
-    return previous_session_end if kind == 'confirmation_request' && setting.timing == 'previous_session_end'
+    return previous_session_end if setting.timing == 'previous_session_end'
 
     local_checkpoint(@booking.date - setting.days_before, setting.time)
   end

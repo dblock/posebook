@@ -73,6 +73,64 @@ RSpec.describe BookingNotification, :aggregate_failures, :database do
     expect(BookingNotificationTiming.new(record).confirmation_opens_at).to eq(Time.utc(2026, 10, 26, 16))
   end
 
+  %w[confirmation_reminder session_reminder coordinator_alert].each do |kind|
+    it "delivers #{kind} at the inherited venue previous-session end only once" do
+      program.venue.update!(notification_settings: {
+                              'confirmation_request' => { 'enabled' => false },
+                              kind => { 'enabled' => true, 'timing' => 'previous_session_end' }
+                            })
+      clear_creation
+      travel_to Time.utc(2026, 11, 17, 1, 59, 59)
+      run_notifications
+      expect(notices(kind)).to be_empty
+      travel 1.second
+      2.times { run_notifications }
+      recipient = kind == 'coordinator_alert' ? organizer : participant
+      expect(ActionMailer::Base.deliveries.map(&:to)).to eq([[recipient.email]])
+      expect(notices(kind).first).to have_attributes(state: 'sent', scheduled_for: Time.utc(2026, 11, 17, 2))
+    end
+  end
+
+  it 'uses overnight exceptions and the saved time zone for inherited previous-session reminders' do
+    program.venue.update!(notification_settings: { 'session_reminder' => { 'timing' => 'previous_session_end' } })
+    record = booking
+    track_record(ProgramScheduleException.create!(program: program, date: '2026-11-16', mode: 'closed',
+                                                  reason: 'Closed'))
+    exception = track_record(ProgramScheduleException.create!(
+                               program: program, date: '2026-11-18', mode: 'open',
+                               start_time: '22:00', end_time: '02:00', reason: 'Overnight'
+                             ))
+    program.update!(time_zone: 'America/Los_Angeles')
+    record.program = program
+    expect(BookingNotificationTiming.new(record).due_at('session_reminder')).to eq(Time.utc(2026, 11, 19, 7))
+    exception.update!(end_time: nil)
+    expect(BookingNotificationTiming.new(record).due_at('session_reminder')).to eq(Time.utc(2026, 11, 19, 5))
+  end
+
+  it 'allows a program to override venue session-end timing with a week-before checkpoint across daylight saving' do
+    program.venue.update!(notification_settings: { 'session_reminder' => { 'timing' => 'previous_session_end' } })
+    program.update!(notification_settings: {
+                      'session_reminder' => { 'timing' => 'days_before', 'days_before' => 7, 'time' => '12:00' }
+                    })
+    travel_to Time.utc(2026, 10, 20, 12)
+    grant_participant_access(program, participant)
+    record = track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-11-02'))
+    expect(BookingNotificationTiming.new(record).due_at('session_reminder')).to eq(Time.utc(2026, 10, 26, 16))
+    expect(NotificationSetting.for(program.venue, 'session_reminder').timing).to eq('previous_session_end')
+  end
+
+  it 'does not replay a venue session-end reminder for a late booking or after the session starts' do
+    program.venue.update!(notification_settings: { 'session_reminder' => { 'timing' => 'previous_session_end' } })
+    travel_to Time.utc(2026, 11, 17, 15)
+    clear_creation
+    run_notifications
+    expect(notices('session_reminder')).to be_empty
+    expect(ActionMailer::Base.deliveries).to be_empty
+    travel_to booking.scheduled_start
+    run_notifications
+    expect(ActionMailer::Base.deliveries).to be_empty
+  end
+
   it 'sends creation mail once to the participant and deduplicated assigned coordinators' do
     grant_venue_access(program.venue, organizer)
     global_admin = create_user(roles: ['system_admin'])

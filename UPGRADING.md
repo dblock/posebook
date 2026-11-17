@@ -52,6 +52,8 @@ Program settings now include **Notifications**, with default confirmation openin
 
 Admin **Settings > Notifications** supplies global defaults for every email. Venue and program settings add scoped overrides; existing program booking overrides remain valid. Missing settings inherit the built-in defaults, and the global defaults document is created only on the first admin save. Security emails remain mandatory. Existing accounts default to receiving optional application reminders and coordinator alerts, with controls in **Profile > Notifications**. Normal startup adds the pending-draft-reminder index; reminder delays remain seven elapsed days unless configured otherwise, and draft cleanup remains 30 days.
 
+All scheduled booking emails now support **At Previous Session End** as well as a calendar-day offset and clock time in venue/program notification settings. Existing defaults and saved overrides are unchanged; timing inherits independently of template content. No migration is required. Changing a reminder's timing does not change confirmation opening or make immediate service/security messages delayed.
+
 ## Retired One-Time Conversions
 
 The sole instance must deploy [PR #52](https://github.com/dblock/posebook/pull/52) and finish its automatic conversion before deploying the migration-free application. That version supplies the schema rename, legacy venue split, Instagram handle conversion, and slug backfills. Stop older application versions before that conversion and verify the existing admin, venue, and program afterward. Do not deploy the current version directly against an older schema.

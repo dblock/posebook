@@ -96,6 +96,24 @@ RSpec.describe 'Scoped notification settings', :aggregate_failures, :database, t
     expect(admin.reload.coordinator_notifications_enabled?).to be(true)
   end
 
+  it 'previews venue session-end timing without saving and inherits it after an explicit save' do
+    sign_in(admin)
+    post preview_venue_notification_path(program.venue, 'session_reminder'),
+         params: { notification: { timing: 'previous_session_end' } },
+         headers: { 'X-Notification-Preview' => 'true' }
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body.at_css('[data-preview-timing]').text).to include('9:00 PM')
+    expect(program.venue.reload.notification_settings).to be_empty
+    patch venue_notification_path(program.venue, 'session_reminder'),
+          params: { notification: { timing: 'previous_session_end' } }
+    expect(response).to redirect_to(edit_venue_notification_path(program.venue, 'session_reminder'))
+    get edit_program_notification_path(program, 'session_reminder')
+    expect(response.parsed_body.at_css('[name="notification[timing]"] option[selected]')['value'])
+      .to eq('previous_session_end')
+    expect(program.reload.notification_settings).to be_empty
+    expect(ActionMailer::Base.deliveries).to be_empty
+  end
+
   it 'renders the editor and synthetic preview for every listed admin and venue notification' do
     sign_in(admin)
     [admin_settings_notifications_path, venue_notifications_path(program.venue)].each do |list|
