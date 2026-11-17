@@ -157,4 +157,5 @@
 - [#169](https://github.com/dblock/posebook/pull/169): Add admin, venue, and program notification editors with inherited defaults, live previews, and personal notification preferences - [@dblock](https://github.com/dblock).
 - [#170](https://github.com/dblock/posebook/pull/170): Match administrator history disclosure controls to other tables, with expandable detail rows and separate Type and What columns - [@dblock](https://github.com/dblock).
 - [#172](https://github.com/dblock/posebook/pull/172): Allow every scheduled booking email to use venue-inherited previous-session-end or calendar-day timing, with live previews and program overrides - [@dblock](https://github.com/dblock).
+- [#173](https://github.com/dblock/posebook/pull/173): Display application-table View actions as plain links rather than buttons - [@dblock](https://github.com/dblock).
 - Your contribution here.

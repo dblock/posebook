@@ -11,7 +11,7 @@
           <td><%= application.status_label %></td>
           <td>
             <div class="participant-actions">
-              <%= link_to "View", own ? program_participation_application_path(application.program) : program_application_path(application.program, application), class: "button-link" %>
+              <%= link_to "View", own ? program_participation_application_path(application.program) : program_application_path(application.program, application) %>
               <% if own && application.draft? %>
                 <% if application.program.applications_enabled? && application.program.booking_active? %>
                   <%= link_to "Continue Application", new_program_participation_application_path(application.program), class: "button-link" %>
