@@ -50,6 +50,19 @@ RSpec.describe NotificationSetting, :aggregate_failures, :database do
     expect(setting).to be_valid
   end
 
+  it 'allows previous-session timing for scheduled booking emails but not immediate notifications' do
+    NotificationCatalog::SCHEDULED.each do |kind|
+      setting = described_class.for(program.venue, kind)
+      setting.timing = 'previous_session_end'
+      expect(setting).to be_valid
+    end
+    %w[booking_created application_draft password_reset].each do |kind|
+      setting = described_class.for(defaults, kind)
+      setting.timing = 'previous_session_end'
+      expect(setting).not_to be_valid
+    end
+  end
+
   it 'applies admin security content through the real delivery worker regardless of personal preferences' do
     defaults.update!(notification_settings: { 'password_reset' => { 'subject' => 'Security for {recipient_name}',
                                                                     'body' => 'Reset now: {reset_url}' } })

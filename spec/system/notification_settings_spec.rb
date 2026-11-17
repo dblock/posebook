@@ -48,6 +48,38 @@ RSpec.describe 'Notification settings', :aggregate_failures, :database, type: :s
     end
   end
 
+  it 'previews and saves venue previous-session timing inherited by program reminders' do
+    grant_venue_access(program.venue, organizer)
+    visit edit_venue_notification_path(program.venue, 'session_reminder')
+    expect(page).to have_select('Send', selected: 'Days Before the Session')
+    select 'At Previous Session End', from: 'Send'
+    expect(page).to have_css('[data-days-timing]', visible: :hidden)
+    expect(page).to have_css('[data-preview-timing]', text: '9:00 PM')
+    check_layouts('venue-session-timing')
+    click_on 'Save Notification'
+    expect(page).to have_css('[role="status"]', text: 'Notification saved.')
+    visit edit_program_notification_path(program, 'session_reminder')
+    expect(page).to have_select('Send', selected: 'At Previous Session End')
+    expect(page).to have_text('Using Venue Defaults')
+    expect(program.reload.notification_settings).to be_empty
+  end
+
+  it 'saves a week-before program override without JavaScript or changing its custom message' do
+    program.venue.update!(notification_settings: { 'session_reminder' => { 'timing' => 'previous_session_end' } })
+    program.update!(notification_settings: { 'session_reminder' => { 'subject' => 'Program reminder' } })
+    without_javascript do
+      visit edit_program_notification_path(program, 'session_reminder')
+      select 'Days Before the Session', from: 'Send'
+      fill_in 'Calendar Days Before', with: '7'
+      fill_in 'Time', with: '13:15'
+      click_on 'Save Notification'
+      expect(page).to have_css('[role="status"]', text: 'Notification saved.')
+      expect(page).to have_css('[data-preview-timing]', text: '1:15 PM')
+      expect(NotificationSetting.for(program.reload, 'session_reminder'))
+        .to have_attributes(timing: 'days_before', days_before: 7, subject: 'Program reminder')
+    end
+  end
+
   it 'lists purposes, opens the selected editor, and reflects saved notification status' do
     visit program_notifications_path(program)
     expect(page).to have_css('table', text: 'Purpose')

@@ -68,7 +68,7 @@ class NotificationSetting
   end
 
   def validate_timing
-    return if kind == 'confirmation_request' || timing == 'days_before'
+    return if NotificationCatalog::SCHEDULED.include?(kind) || timing == 'days_before'
 
     errors.add(:timing, 'must use days before the session')
   end

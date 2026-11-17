@@ -9,7 +9,7 @@
   <% end %>
   <dl>
     <dt>To</dt><dd><%= preview.recipient %></dd>
-    <dt>When</dt><dd><%= preview.timing %></dd>
+    <dt>When</dt><dd data-preview-timing><%= preview.timing %></dd>
     <dt>Subject</dt><dd data-preview-subject><%= content.fetch("subject") %></dd>
   </dl>
   <div class="notification-preview-body" data-preview-body><%= booking_notification_body(content.fetch("body")) %></div>

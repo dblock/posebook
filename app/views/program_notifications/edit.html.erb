@@ -17,11 +17,9 @@
     <% if BookingNotificationSetting::SCHEDULED.include?(@setting.kind) %>
       <fieldset>
         <legend>Timing</legend>
-        <% if @setting.kind == "confirmation_request" %>
-          <p><%= form.label :timing, "Confirmation Opens" %><br>
-            <%= form.select :timing, [["At Previous Session End", "previous_session_end"], ["Days Before the Session", "days_before"]], selected: @setting.timing %>
-          </p>
-        <% end %>
+        <p><%= form.label :timing, @setting.kind == "confirmation_request" ? "Confirmation Opens" : "Send" %><br>
+          <%= form.select :timing, [["At Previous Session End", "previous_session_end"], ["Days Before the Session", "days_before"]], selected: @setting.timing %>
+        </p>
         <div data-days-timing>
           <p><%= form.label :days_before, "Calendar Days Before" %><br>
             <%= form.number_field :days_before, value: @setting.days_before, min: 0, max: 365, required: true %>
@@ -30,8 +28,8 @@
         </div>
         <% if @setting.kind == "confirmation_request" %>
           <small>Confirmation opens at this time even when its email is disabled. Days and time are used only for Days Before the Session.</small>
-          <p><small>Previous session means the preceding scheduled session, including unbooked sessions and dated exceptions. Without an end time, that session ends at local midnight.</small></p>
         <% end %>
+        <p><small>Previous session means the preceding scheduled session, including unbooked sessions and dated exceptions. Without an end time, that session ends at local midnight.</small></p>
       </fieldset>
     <% elsif @setting.kind == "application_draft" %>
       <p><%= form.label :days_after, "Elapsed Days After First Save or Reopening" %><br>
