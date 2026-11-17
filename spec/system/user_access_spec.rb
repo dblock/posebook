@@ -9,6 +9,17 @@ RSpec.describe 'User access', :aggregate_failures, :database, type: :system do
 
   before { sign_in_through_browser(admin) }
 
+  it 'fits desktop account tables with a narrower name column and keeps narrow pages contained' do
+    member.update!(name: 'Morgan Member With A Longer Account Name')
+    each_viewport do |viewport|
+      visit admin_users_path
+      expect(width_of(row.find('td:first-child'))).to be <= 256
+      expect(width_of(find('.user-accounts'))).to be <= width_of(find('.table-scroll')) if viewport == :desktop
+      expect_no_horizontal_overflow
+      capture_screenshot("compact-user-accounts-#{viewport}")
+    end
+  end
+
   it 'deactivates and reactivates a user without reloading the page' do
     visit admin_users_path
     mark_page

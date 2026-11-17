@@ -65,11 +65,6 @@ body {
   white-space: nowrap;
 }
 
-.date-display-compact .date-display-clock {
-  font-size: 0.875em;
-  font-variant-numeric: tabular-nums;
-}
-
 .site-footer {
   border-top: 1px solid var(--line);
   padding: 1.25rem 2rem;
@@ -946,6 +941,15 @@ tr:has(.participant-note-toggle[open]) + .participant-note-row {
 .table-scroll .participant-identity {
   min-width: 22rem;
   text-align: left;
+}
+
+.user-accounts th:first-child {
+  width: 14rem;
+}
+
+.table-scroll .user-accounts .participant-identity {
+  min-width: 12rem;
+  overflow-wrap: anywhere;
 }
 
 .participant-identity > div {

@@ -18,7 +18,7 @@ RSpec.describe 'Booking history details', :aggregate_failures, :database, type: 
                                   time_changes: [{ 'from' => Time.utc(2026, 12, 7, 18),
                                                    'to' => Time.utc(2026, 12, 7, 19),
                                                    'reason' => 'Later studio access.' }],
-                                  attendance_changes: [{ 'confirmed' => false, 'changed_at' => Time.current,
+                                  attendance_changes: [{ 'confirmed' => true, 'changed_at' => Time.current,
                                                          'reason' => 'Attendance changed.' }]))
   end
 
@@ -33,6 +33,7 @@ RSpec.describe 'Booking history details', :aggregate_failures, :database, type: 
     toggle = find("summary[aria-controls='booking-details-#{booking.id}']")
     toggle_booking_details(toggle, selector) do
       expect_booking_explanations(selector)
+      expect_confirmation_font(selector)
       expect_no_horizontal_overflow
       capture_screenshot("#{name}-#{viewport}")
     end
@@ -42,9 +43,15 @@ RSpec.describe 'Booking history details', :aggregate_failures, :database, type: 
     within(selector) do
       expect(page).to have_text('Travel plans changed.')
       expect(page).to have_text('Later studio access.')
-      expect(page).to have_text('Attendance confirmation cleared')
+      expect(page).to have_text('Confirmed on')
       expect(page).to have_text('Attendance changed.')
     end
+  end
+
+  def expect_confirmation_font(selector)
+    paragraph = find("#{selector} p", text: 'Confirmed on')
+    clock = paragraph.find('.date-display-clock')
+    expect(clock.style('font-family', 'font-size')).to eq(paragraph.style('font-family', 'font-size'))
   end
 
   def toggle_booking_details(toggle, selector)
