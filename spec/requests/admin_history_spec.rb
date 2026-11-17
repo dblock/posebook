@@ -9,6 +9,10 @@ RSpec.describe 'Administrator audit history', :aggregate_failures, :database, ty
     response.parsed_body.at_css("tr[data-history='#{entry.id}']")
   end
 
+  def history_changes(entry)
+    response.parsed_body.at_css("#audit-changes-#{entry.id}")
+  end
+
   def change_program_records(program, membership, exception)
     Current.set(user: admin) do
       program.venue.update!(address: 'Updated address')
@@ -43,8 +47,12 @@ RSpec.describe 'Administrator audit history', :aggregate_failures, :database, ty
     row = history_row(entry)
     expect(row.at_css("a[href='#{admin_user_path(admin)}']").text).to eq(admin.name)
     expect(row.at_css("a[href='#{admin_user_path(user)}']").text).to eq('<script>changed</script>')
-    expect(row.text).to include('Original Name', '<script>changed</script>', 'Updated', 'Before:', 'After:')
-    expect(row.at_css('script')).to be_nil
+    expect(row.css('td')[3].text).to eq('User')
+    expect(row.css('td')[4].text).to eq('<script>changed</script>')
+    expect(row.text).to include('<script>changed</script>', 'Updated')
+    expect(history_changes(entry).text).to include('Original Name', '<script>changed</script>', 'Before:', 'After:')
+    expect(row.at_css('summary')['aria-controls']).to eq(history_changes(entry)['id'])
+    expect(response.parsed_body.at_css('main script')).to be_nil
     expect(response.body).not_to include('synthetic secret', 'Password digest')
     expect(response.headers['Cache-Control']).to include('private', 'no-store')
   end
@@ -89,7 +97,7 @@ RSpec.describe 'Administrator audit history', :aggregate_failures, :database, ty
     row = history_row(entry)
     expect(row.text).to include('Deleted account', actor.id.to_s, 'Retained Subject', 'Unavailable', 'Deleted')
     expect(row.css('a')).to be_empty
-    expect(row.text).to include('Before:', 'After: Not set')
+    expect(history_changes(entry).text).to include('Before:', 'After: Not set')
     expect(response.body).to include('System / Anonymous')
   end
 
@@ -103,10 +111,12 @@ RSpec.describe 'Administrator audit history', :aggregate_failures, :database, ty
                                                   modified: { name: 'hidden payload' }))
     sign_in(admin)
     get admin_history_path
-    expect(history_row(entry).text).to include('No displayable field changes.', 'Unavailable')
-    expect(history_row(embedded).text).to include('No displayable field changes.', 'Unavailable')
-    expect(history_row(missing).text).to include('Unknown record', 'No displayable field changes.', 'Unavailable')
+    expect(history_row(entry).text).to include('Unavailable')
+    expect(history_row(embedded).text).to include('Unavailable')
+    expect(history_row(missing).text).to include('Unknown record', 'Unavailable')
     expect(history_row(entry).text).not_to include('Unknown')
+    expect(history_row(entry).at_css('summary')).to be_nil
+    expect(history_changes(entry)).to be_nil
     expect(response.body).not_to include('hidden payload')
   end
 
