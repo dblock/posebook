@@ -138,4 +138,5 @@
 - [#153](https://github.com/dblock/posebook/pull/153): Refine public program and application pages with a public venue card after the next session, label-free session details, 150px card images, smaller headings, and formatted phone inputs - [@dblock](https://github.com/dblock).
 - [#154](https://github.com/dblock/posebook/pull/154): Add an optional audited application message placeholder in program settings - [@dblock](https://github.com/dblock).
 - [#155](https://github.com/dblock/posebook/pull/155): Retain complete application lifecycle history, show read-only details and shared owner tables, and reopen withdrawn submissions as private drafts requiring fresh consent - [@dblock](https://github.com/dblock).
+- [#156](https://github.com/dblock/posebook/pull/156): Upload selected photos in place across account, application, program, venue, and administrator galleries while retaining ordinary upload controls without JavaScript - [@dblock](https://github.com/dblock).
 - Your contribution here.

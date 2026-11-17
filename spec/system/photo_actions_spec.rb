@@ -23,7 +23,6 @@ RSpec.describe 'Photo actions', :aggregate_failures, :database, type: :system do
 
   def upload_profile_photo
     attach_file 'New Photo', image_file
-    click_on 'Upload Photo'
     expect(page).to have_css('.profile-photo', count: 2)
     expect(page).to have_css('.flash', count: 1)
     participant.reload.profile_photos.last
@@ -54,6 +53,55 @@ RSpec.describe 'Photo actions', :aggregate_failures, :database, type: :system do
     owner.update!(primary_photo_id: primary.id)
     [primary, first].map do |photo|
       owner.is_a?(Venue) ? venue_photo_path(owner, photo) : program_photo_path(owner, photo)
+    end
+  end
+
+  it 'uploads application photos without requiring consent or submitting the application' do
+    program = create_program(applications_enabled: true)
+    participant.update!(email_verified_at: Time.current)
+    sign_in_through_browser(participant)
+    without_javascript do
+      visit new_program_participation_application_path(program)
+      fill_in 'Name', with: 'Staged applicant name'
+      attach_file 'Add Photos (Optional)', image_file
+      click_on 'Upload Photos'
+      expect(page).to have_css('.profile-photo', count: 1)
+      expect(page).to have_field('Name', with: 'Staged applicant name')
+      expect(participant.reload.name).to eq('Photo Participant')
+      expect(ParticipantApplication.find_by(user_id: participant.id).status).to eq('draft')
+    end
+  end
+
+  it 'automatically uploads chosen application photos while retaining staged account edits and a private draft' do
+    program = create_program(applications_enabled: true)
+    participant.update!(email_verified_at: Time.current)
+    sign_in_through_browser(participant)
+    visit new_program_participation_application_path(program)
+    mark_page
+    expect(page).to have_no_button('Upload Photos')
+    fill_in 'Name', with: 'Staged applicant name'
+    attach_file 'Add Photos (Optional)', [image_file, image_file]
+    expect(page).to have_css('.profile-photo', count: 2)
+    expect(page).to have_field('Name', with: 'Staged applicant name')
+    expect(participant.reload.name).to eq('Photo Participant')
+    expect(ParticipantApplication.find_by(user_id: participant.id).status).to eq('draft')
+    expect(page).to have_button('Submit Application', disabled: true)
+    attach_file 'Add Photos (Optional)', image_file
+    expect(page).to have_css('.profile-photo', count: 3)
+    expect_unchanged_page
+    capture_screenshot('application-auto-upload')
+  end
+
+  it 'automatically uploads to program and administrator-managed account galleries without reloading' do
+    program = create_program
+    sign_in_through_browser(create_user(roles: ['system_admin']))
+    [photos_program_path(program), photos_admin_user_path(participant)].each do |path|
+      visit path
+      mark_page
+      expect(page).to have_no_button('Upload Photo')
+      attach_file 'New Photo', image_file
+      expect(page).to have_css('.profile-photo', count: 1)
+      expect_unchanged_page
     end
   end
 
@@ -142,7 +190,6 @@ RSpec.describe 'Photo actions', :aggregate_failures, :database, type: :system do
 
     2.times do |index|
       attach_file 'New Photo', image_file
-      click_on 'Upload Photo'
       expect(page).to have_css('.venue-photo', count: index + 1)
     end
     second = venue.reload.photos.order_by(created_at: :asc).last
@@ -171,6 +218,9 @@ RSpec.describe 'Photo actions', :aggregate_failures, :database, type: :system do
       visit photos_profile_path
       click_on 'Make Private'
       expect(page).to have_button('Make Public')
+      attach_file 'New Photo', image_file
+      click_on 'Upload Photo'
+      expect(page).to have_css('.profile-photo', count: 2)
     end
   end
 end
