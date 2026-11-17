@@ -82,7 +82,8 @@ RSpec.describe 'Roster details', :aggregate_failures, :database, type: :system d
 
   def table_font_size(path, viewport)
     visit path
-    expect(width_of(find('.table-scroll .participant-identity', match: :first))).to be >= 352
+    minimum_width = path == program_participants_path(program) ? 288 : 352
+    expect(width_of(find('.table-scroll .participant-identity', match: :first))).to be >= minimum_width
     expect_no_horizontal_overflow
     capture_screenshot("table-type-#{path.split('/').last}-#{viewport}")
     find('.table-scroll tbody td', match: :first).style('font-size').fetch('font-size')
@@ -92,6 +93,7 @@ RSpec.describe 'Roster details', :aggregate_failures, :database, type: :system d
     membership.update!(participant_paused: true, participant_pause_reason: 'Taking a break until December.')
     each_viewport do |viewport|
       visit program_participants_path(program)
+      expect(width_of(find("tr[data-membership='#{membership.id}'] > td:first-child"))).to be <= 64
       toggle_pause_note(membership, viewport)
       expect(page).to have_css('main > form:last-child button', text: 'Invite All Available Models (0)')
       expect(find('.participant-bulk-invite').style('margin-block-start')).to eq('margin-block-start' => '16px')

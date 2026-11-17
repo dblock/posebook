@@ -25,14 +25,11 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
          params: { booking_version: booking.lock_version }.merge(attributes)
   end
 
-  def history_status(viewer, heading, column)
+  def history_status(viewer, heading)
     sign_in(viewer)
     get program_path(program, section: 'history')
     history = response.parsed_body.at_xpath("//section[h2='#{heading}']")
-    row = history.css('tbody tr').find do |entry|
-      Time.iso8601(entry.at_css('time')['datetime']).to_date == booking.date
-    end
-    row.at_css("td:nth-child(#{column})")
+    history.at_css("tr[data-booking='#{booking.id}'] td:last-child")
   end
 
   def close_confirmed_booking(status)
@@ -67,9 +64,9 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     confirm_booking
     organizer = create_user
     grant_coordinator_access(program, organizer)
-    [[participant, 'Your Booking History', 2],
-     [organizer, 'Program Booking History', 3]].each do |viewer, heading, column|
-      status = history_status(viewer, heading, column)
+    [[participant, 'Your Booking History'],
+     [organizer, 'Program Booking History']].each do |viewer, heading|
+      status = history_status(viewer, heading)
       expect(status.at_css('.attendance-confirmed').text).to eq('Confirmed')
       expect(status.css('.status-label').map(&:text)).to eq(['Confirmed'])
       expect(status.text.scan(/\bConfirmed\b/).size).to eq(1)
@@ -80,9 +77,9 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     travel_to Time.utc(2026, 11, 13, 15)
     organizer = create_user
     grant_coordinator_access(program, organizer)
-    [[participant, 'Your Booking History', 2],
-     [organizer, 'Program Booking History', 3]].each do |viewer, heading, column|
-      status = history_status(viewer, heading, column)
+    [[participant, 'Your Booking History'],
+     [organizer, 'Program Booking History']].each do |viewer, heading|
+      status = history_status(viewer, heading)
       expect(status.css('.status-label').map(&:text)).to eq(['Booked'])
       get program_path(program, section: 'calendar')
       day = response.parsed_body.at_css(".calendar [data-date='#{booking.date.iso8601}']")
@@ -103,9 +100,9 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
       close_confirmed_booking(state)
       organizer = create_user
       grant_coordinator_access(program, organizer)
-      [[participant, 'Your Booking History', 2],
-       [organizer, 'Program Booking History', 3]].each do |viewer, heading, column|
-        status = history_status(viewer, heading, column)
+      [[participant, 'Your Booking History'],
+       [organizer, 'Program Booking History']].each do |viewer, heading|
+        status = history_status(viewer, heading)
         expect(status.text.strip).to eq(state.humanize)
         expect(status.css('.status-label').map(&:text)).to eq([state.humanize])
         expect(status.at_css('.attendance-confirmed')).to be_nil
@@ -117,7 +114,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
   it 'shows only completed while retaining confirmation in the historical explanation' do
     confirm_booking
     travel_to booking.ends_at
-    status = history_status(participant, 'Your Booking History', 2)
+    status = history_status(participant, 'Your Booking History')
     expect(status.css('.status-label').map(&:text)).to eq(['Completed'])
     expect(status.at_css('.attendance-confirmed')).to be_nil
     expect(response.body).to include('Confirmed on ')

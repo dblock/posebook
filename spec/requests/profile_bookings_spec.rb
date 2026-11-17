@@ -53,7 +53,7 @@ RSpec.describe 'Profile bookings', :aggregate_failures, :database, type: :reques
     expect(response.body).not_to include(other.email, '2026-12-14', 'Manager-only pause reason.')
     expect(response.parsed_body.at_css('.profile-tabs [aria-current="page"]').text).to eq('History')
     expect(response.parsed_body.at_css('.breadcrumbs [aria-current="page"]').text).to eq('History')
-    expect(response.parsed_body.css('tbody tr').size).to eq(2)
+    expect(response.parsed_body.css('tbody tr[data-booking]').size).to eq(2)
   end
 
   it 'retains owner history after membership loss without offering new bookings there' do
