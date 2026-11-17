@@ -6,13 +6,13 @@
   <h2><%= calendar.program.program_label.titleize %> Calendar</h2>
   <% if local_assigns.fetch(:show_schedule, true) %><%= render "programs/regular_schedule", program: calendar.program %><% end %>
   <% if calendar.first_date > calendar.today %>
-    <p class="booking-window-notice">Invited participants can book now for dates on or after <strong><%= calendar.first_date.strftime("%B %-d, %Y") %></strong>. Earlier sessions remain managed by the organizer.</p>
+    <p class="booking-window-notice">Invited participants can book now for dates on or after <strong><%= render "shared/date", value: calendar.first_date, zone: calendar.program.time_zone %></strong>. Earlier sessions remain managed by the organizer.</p>
   <% end %>
   <nav aria-label="Calendar months">
     <% if calendar.month > calendar.today.beginning_of_month %>
       <%= link_to "Previous Month", calendar_month_path(calendar, calendar.month - 1.month, @changing_booking), data: { calendar_navigation: true } %>
     <% end %>
-    <strong data-calendar-month tabindex="-1"><%= calendar.month.strftime("%B %Y") %></strong>
+    <strong data-calendar-month tabindex="-1"><%= render "shared/date", value: calendar.month, zone: calendar.program.time_zone, format: :month %></strong>
     <% if calendar.month < calendar.last_date.beginning_of_month %>
       <%= link_to "Next Month", calendar_month_path(calendar, calendar.month + 1.month, @changing_booking), data: { calendar_navigation: true } %>
     <% end %>

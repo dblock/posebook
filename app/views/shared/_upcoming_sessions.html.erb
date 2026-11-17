@@ -9,7 +9,7 @@
           <% sessions.each do |session| %>
             <% program, booking = session.program, session.booking %>
             <tr>
-              <td><time datetime="<%= (booking&.scheduled_start || session.starts_at).iso8601 %>"><%= session.date.strftime("%a, %b %-d") %></time></td>
+              <td><%= render "shared/date", value: booking&.scheduled_start || session.starts_at, zone: booking&.time_zone || program.time_zone, format: :compact, show_time: false %></td>
               <td><%= booking ? calendar_booking_time(booking) : scheduled_calendar_time(session.calendar, session.date) %></td>
               <td><%= link_to program.name, program_path(program) %></td>
               <% if show_venue %><td><%= link_to program.venue.name, venue_path(program.venue) %></td><% end %>

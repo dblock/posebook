@@ -7,6 +7,19 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     URI.decode_www_form(URI(response.parsed_body.at_css('#invitation_link')['value']).query).to_h.fetch('token')
   end
 
+  it 'shows the localized submission date without the missing private link notice' do
+    admin = create_user(roles: ['system_admin'])
+    program = create_program(time_zone: 'America/Los_Angeles')
+    invitation = create_participant_invitation(program, admin, created_at: Time.utc(2026, 11, 14, 2, 30))
+    sign_in(admin)
+    get program_participant_invitation_path(program, invitation)
+    date = response.parsed_body.at_css('main > p time')
+    expect(date['title']).to eq('Friday, November 13, 2026 at 6:30 PM PST')
+    expect(date['datetime']).to eq('2026-11-13T18:30:00.000000000-08:00')
+    expect(response.body).to include('Submitted On:')
+    expect(response.body).not_to include('The private link is only displayed', 'Create a new invitation if')
+  end
+
   it 'formats invitation recipients from their available details without exposing matching accounts' do
     admin = create_user(roles: ['system_admin'])
     program = create_program
@@ -58,6 +71,7 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     invitation = create_participant_invitation(program, admin, name: 'Invited Model', email: 'model@example.test',
                                                                created_at: Time.utc(2026, 11, 14, 2, 30),
                                                                used_at: Time.utc(2026, 11, 14, 3, 30))
+    invitation.reload
     sign_in(admin)
     get program_participant_invitations_path(program)
     row = response.parsed_body.at_css("[data-invitation='#{invitation.id}']")
@@ -65,7 +79,7 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     expect(row.text).to include('Invited Model <model@example.test>', admin.name, 'Accepted')
     expect(row.css('time').pluck('datetime'))
       .to eq([invitation.created_at, invitation.expires_at, invitation.used_at]
-               .map { |time| time.in_time_zone(program.time_zone).iso8601 })
+               .map { |time| time.in_time_zone(program.time_zone).iso8601(9) })
     expect(row.at_css('td:last-child a')['href']).to eq(program_participant_invitation_path(program, invitation))
     expect(response.headers['Cache-Control']).to include('no-store')
     expect(response.body).not_to include(invitation.token, invitation.token_digest)

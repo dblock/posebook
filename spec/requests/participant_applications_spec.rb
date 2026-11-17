@@ -41,6 +41,20 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
           params: { participant_application: { status: status, lock_version: version, notes: notes } }
   end
 
+  it 'shows the localized submission date rather than draft creation to applicants and reviewers' do
+    program.update!(time_zone: 'America/Los_Angeles')
+    application.update!(created_at: Time.utc(2026, 11, 10), submitted_at: Time.utc(2026, 11, 14, 2, 30))
+    [[applicant, program_participation_application_path(program)],
+     [coordinator, program_application_path(program, application)]].each do |user, path|
+      sign_in(user)
+      get path
+      date = response.parsed_body.at_css('main > p time')
+      expect(date['title']).to eq('Friday, November 13, 2026 at 6:30 PM PST')
+      expect(date['datetime']).to eq('2026-11-13T18:30:00.000000000-08:00')
+      expect(response.body).to include('Submitted On:')
+    end
+  end
+
   it 'shows roster portraits in applications and history while retaining the submitted applicant identity' do
     application
     photo = private_photo

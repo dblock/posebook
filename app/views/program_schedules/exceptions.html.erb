@@ -9,7 +9,7 @@
         <tbody>
           <% @exceptions.each do |exception| %>
             <tr>
-              <td><%= exception.date.iso8601 %></td>
+              <td><%= render "shared/date", value: exception.date, zone: @program.time_zone, format: :compact %></td>
               <td><%= status_label(exception.mode.humanize) %><%= " schedule restored" if exception.mode == "regular" %></td>
               <td><%= format_start_time(exception.start_time) if exception.start_time %><% if exception.end_time %> - <%= format_start_time(exception.end_time) %><%= " next day" if exception.end_time < exception.start_time %><% end %></td>
               <td><%= exception.reason %></td>

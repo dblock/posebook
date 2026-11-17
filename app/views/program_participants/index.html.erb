@@ -33,7 +33,7 @@
                   <%= render "programs/booking_status", booking: access.booking, private_view: true, show_warning: false %>
                 <% else %>
                   <%= status_label(access.status) %>
-                  <% if access.booking %><br>Booking retained: <%= access.booking.date.iso8601 %> at <%= booking_time(access.booking) %> (<%= access.booking.display_status %>)<% end %>
+                  <% if access.booking %><br>Booking retained: <%= render "shared/date", value: access.booking.scheduled_start, zone: access.booking.time_zone, format: :compact, show_time: false %> at <%= booking_time(access.booking) %> (<%= access.booking.display_status %>)<% end %>
                 <% end %>
               </td>
               <td>

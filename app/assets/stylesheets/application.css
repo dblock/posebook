@@ -61,6 +61,15 @@ body {
   border-inline-start: 3px solid var(--line);
 }
 
+.date-display {
+  white-space: nowrap;
+}
+
+.date-display-compact .date-display-clock {
+  font-size: 0.875em;
+  font-variant-numeric: tabular-nums;
+}
+
 .site-footer {
   border-top: 1px solid var(--line);
   padding: 1.25rem 2rem;
@@ -689,6 +698,10 @@ table:not(.calendar) :is(th, td):not(:first-child) {
   text-align: center;
 }
 
+table:not(.calendar) td:has(> .date-display) {
+  min-width: 10rem;
+}
+
 table:not(.calendar) td:not(:first-child) .participant-actions {
   justify-content: center;
 }
@@ -745,8 +758,8 @@ table:not(.calendar) td:not(:first-child) .participant-actions {
   display: none;
 }
 
-.calendar time a {
-  display: inline;
+.calendar a:has(> time) {
+  display: block;
   margin: 0;
 }
 

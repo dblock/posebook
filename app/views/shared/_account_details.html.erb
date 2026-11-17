@@ -4,6 +4,8 @@
 <dl class="account-details">
   <% if local_assigns[:admin] %>
     <dt>Account Status</dt><dd><%= status_label(user.active? ? "Active" : "Inactive") %></dd>
+    <dt>Account Created</dt><dd><%= render "shared/date", value: user.created_at, zone: "UTC" %></dd>
+    <dt>Account Updated</dt><dd><%= render "shared/date", value: user.updated_at, zone: "UTC" %></dd>
   <% end %>
   <dt>Name</dt><dd><%= user.name %></dd>
   <dt>Email</dt><dd><%= user.email %></dd>

@@ -9,7 +9,7 @@
   <% if @next_booking %>
     <h2>Next Booking</h2>
     <p><%= link_to @next_booking.program.name, program_path(@next_booking.program) %>,
-      <time datetime="<%= @next_booking.scheduled_start.iso8601 %>"><%= @next_booking.date.strftime("%A, %B %-d, %Y") %></time>,
+      <%= render "shared/date", value: @next_booking.scheduled_start, zone: @next_booking.time_zone, show_time: false %>,
       <%= calendar_booking_time(@next_booking) %> (<%= @next_booking.time_zone %>)</p>
   <% end %>
   <%= render "shared/photo_gallery", photos: @photos, editable: false, upload_url: nil, scope: :profile_photo,

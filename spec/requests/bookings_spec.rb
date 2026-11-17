@@ -36,7 +36,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     cards = response.parsed_body.css('.upcoming-booking')
     expect(cards.pluck('aria-labelledby'))
       .to eq(["upcoming-booking-#{earlier.id}", "upcoming-booking-#{later.id}"])
-    expect(cards.first.text).to include('November 23, 2026', '8:00 PM - 10:00 PM', earlier_program.address)
+    expect(cards.first.text).to include('Mon, Nov 23', '8:00 PM - 10:00 PM', earlier_program.address)
     expect(cards.first.at_css('.venue-google-maps')['href']).to eq(earlier_program.venue.google_maps_location_url)
     expect(cards.first.css('.booking-actions .button-link').map(&:text)).to eq(['Reschedule', 'Cancel Booking'])
     expect(response.body).not_to include(other.email, 'November 30, 2026', 'Confirmation opens',
@@ -49,8 +49,8 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     [program_path(program), program_path(program, section: 'calendar')].each do |path|
       get path
       card = response.parsed_body.at_css('.upcoming-booking')
-      expect(card.at_css('time').text).to include('December 07, 2026', '6:30 PM')
-      expect(card.at_css('time')['datetime']).to eq(later.scheduled_start.iso8601)
+      expect(card.at_css('.upcoming-booking-date').text).to include('Mon, Dec 7', '6:30 PM')
+      expect(Time.iso8601(card.at_css('time')['datetime'])).to eq(later.scheduled_start)
       expect(card.css('.booking-actions .button-link').map(&:text)).to eq(['Reschedule', 'Cancel Booking'])
       expect(response.body).not_to include('Confirmation opens', 'You can have one upcoming booking')
     end
@@ -71,7 +71,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
   it 'asks for confirmation before booking and lets the participant cancel without a reservation' do
     prepare_participant
     post program_bookings_path(program), params: { date: '2026-11-16' }
-    expect(response.body).to include('Confirm Your Booking', 'November 16, 2026', '6:30 PM', 'America/New_York')
+    expect(response.parsed_body.text).to include('Confirm Your Booking', 'Next Monday', '6:30 PM', 'America/New_York')
     form = response.parsed_body.at_css("form[action='#{program_bookings_path(program)}']")
     expect(form.at_css('[name="date"]')['value']).to eq('2026-11-16')
     expect(form.at_css('[name="confirmed"]')['value']).to eq('1')
@@ -141,7 +141,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     prepare_participant
     get program_path(program, month: '2026-12')
     calendar = response.parsed_body.at_css('[data-calendar]')
-    expect(calendar.at_css('[data-calendar-month]').text).to eq('December 2026')
+    expect(calendar.at_css('[data-calendar-month]').text.strip).to eq('December')
     expect(calendar.css('a[data-calendar-navigation]').pluck('href'))
       .to eq([program_path(program, month: '2026-11'),
               program_path(program, month: '2027-01')])
@@ -241,7 +241,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
                                                reason: 'Travel plans changed.', changed_by_id: participant.id)
     expect(replacement.date).to eq(Date.new(2026, 11, 30))
     get program_path(program, section: 'history')
-    expect(response.body).to include('Rescheduled', 'Moved from 2026-11-23', 'Travel plans changed.', 'Booked')
+    expect(response.parsed_body.text).to include('Rescheduled', 'Moved from Nov 23', 'Travel plans changed.', 'Booked')
   end
 
   it 'keeps the original booking if a requested replacement date is occupied' do
@@ -332,7 +332,8 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     grant_coordinator_access(program, organizer)
     sign_in(organizer)
     get program_path(program, section: 'history')
-    expect(response.body).to include('Program Booking History', participant.name, original.date.iso8601)
+    expect(response.body).to include('Program Booking History', participant.name)
+    expect(Time.iso8601(response.parsed_body.at_css('section table time')['datetime'])).to eq(original.scheduled_start)
     expect(response.parsed_body.css('.calendar form')).to be_empty
     get program_path(create_program)
     expect(response).to have_http_status(:ok)

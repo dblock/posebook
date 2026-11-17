@@ -26,6 +26,20 @@ Show states with the `status_label` helper, which maps statuses to success, dang
 
 Reuse `shared/participant_identity` for roster, applicant, invitee, and Applications History participant columns, with `shared/participant_portrait` supplying the portrait or placeholder. Link known accounts to their profile and retain invitation details as the fallback for invitees without a linked account; never match accounts by invitation email. Preserve application and invitation identity snapshots and do not expose additional live account details through these snapshots. Coordinator tables also reuse the portrait and link names to profiles, never email addresses to mail links. Keep Revoke in its own invitation column and put a plain-text View link in the rightmost column.
 
+## Dates and Times
+
+Render human-readable HTML dates with `shared/date`, passing `value:` as a `Date`, `Time`, or `DateTime` and `zone:` as the program's IANA time zone. Use the booking's saved time zone for booking dates and UTC for administrator audit history. Never convert civil dates to artificial midnight timestamps.
+
+Dates use Today, Yesterday, or Tomorrow, then Last/Next weekday within six calendar days of the local current date. Other dates use abbreviated months and omit the current year; relative labels also work across year boundaries. Default labels include weekdays, such as `Wed, Dec 16`, while `format: :compact` uses `Dec 16` or `Next Wed` for tables. Timestamps show a minute-precision 12-hour clock on the same line as the date. Date columns have a 10rem minimum width and expand to fit longer labels inside the table's scrolling region. Use `show_time: false` only when an adjacent booking range or dedicated Time column already supplies the clock; preserve those ranges, overnight markers, duration, and zone.
+
+Application details show Submitted On using the submission timestamp, falling back to creation for older records without it. Invitation details show Submitted On using the invitation's creation timestamp. Both use the program time zone.
+
+Administrator account details include Account Created and Account Updated timestamps in UTC; ordinary account detail views do not expose this metadata.
+
+Every rendered date has a semantic `datetime`, complete hover `title`, and matching accessible label. Hover details show the full date, time to the minute, and local time zone abbreviation, without seconds, fractional seconds, or numeric UTC offsets. The machine-readable value retains full precision and its offset. Dates remain ordinary text, without a custom cursor, click expansion, or additional tab stops. Calendar `format: :day` and `format: :month` retain day-number and month labels with full hover details and date/month machine precision.
+
+Keep editable date/time fields, route parameters, provider payloads, and durable email/event descriptions in their existing absolute formats. Copyright years are not date instances.
+
 ## Tables
 
 Wrap tables in `.table-scroll` with `role="region"`, an `aria-label`, and `tabindex="0"`, preceded by a `.scroll-hint` that appears on narrow screens. Render an empty-state paragraph instead of an empty table, and paginate long lists with `CursorPage` and `shared/pagination`, which renders `nav.participant-pagination` with First/Previous/Next links. Keep navigation outside the nonempty-results block so emptied cursor ranges still have a First link. Do not display page numbers or absolute row ranges: insertions and deletions change those positions. Preserve the cursor in table actions and redirects, and reset it when changing filters. See `app/views/program_invitations/index.html.erb` for the canonical example. Table cells are vertically centered, except calendar days, which align to the top.

@@ -10,7 +10,11 @@
   <% label = calendar_day_label(booking, reason) %>
   <% no_session = !booking && reason == "No #{calendar.program.program_label.titleize}" %>
   <td data-date="<%= date.iso8601 %>" class="<%= calendar_day_class(booking, reason) %>">
-    <time datetime="<%= date.iso8601 %>"><% if no_session && @program_coordinator && date.between?(calendar.today, calendar.last_date) %><%= link_to date.day, program_schedule_path(calendar.program, date: date.iso8601), aria: { label: "Edit #{date.iso8601}" } %><% else %><%= date.day %><% end %></time>
+    <% if no_session && @program_coordinator && date.between?(calendar.today, calendar.last_date) %>
+      <%= link_to program_schedule_path(calendar.program, date: date.iso8601), aria: { label: "Edit #{date.iso8601}" } do %><%= render "shared/date", value: date, zone: calendar.program.time_zone, format: :day %><% end %>
+    <% else %>
+      <%= render "shared/date", value: date, zone: calendar.program.time_zone, format: :day %>
+    <% end %>
     <% if reason != "Future" && (clock = calendar_time(calendar, date)) %><strong><%= clock %></strong><br><% end %>
     <% if booking %>
       <% booking_url = program_path(calendar.program, anchor: "upcoming-booking-#{booking.id}") if !public_view && booking.user_id == current_user&.id && booking.ends_at > Time.current %>

@@ -35,7 +35,7 @@ RSpec.describe 'Profile bookings', :aggregate_failures, :database, type: :reques
 
   it 'lists your current bookings and only programs with an unused active booking invitation' do
     get bookings_profile_path
-    expect(response.parsed_body.at_css('.upcoming-booking').text).to include('December 07, 2026', booked.name)
+    expect(response.parsed_body.at_css('.upcoming-booking').text).to include('Mon, Dec 7', booked.name)
     expect(response.parsed_body.css('.bookable-programs .program-card h2 a').map(&:text)).to eq([available.name])
     expect(response.parsed_body.at_css(".bookable-programs a[href='#{program_path(available,
                                                                                   section: 'calendar')}']"))

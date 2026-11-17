@@ -5,7 +5,7 @@
       <% events.each do |event| %>
         <tr>
           <td><%= participation_event_label(event) %></td>
-          <td><time datetime="<%= event.created_at.iso8601 %>"><%= l(event.created_at.in_time_zone(@program.time_zone), format: :long) %></time></td>
+          <td><%= render "shared/date", value: event.created_at, zone: @program.time_zone, format: :compact %></td>
           <% if private_notes %>
             <td><%= participation_actor_label(event, local_assigns[:source]) %></td>
             <td><%= event.notes %></td>

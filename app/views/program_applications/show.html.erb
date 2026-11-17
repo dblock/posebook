@@ -3,6 +3,7 @@
   <h1>Review Application</h1>
   <% membership = @program.memberships.participants.where(user_id: @application.user_id).first if @application.status == "accepted" %>
   <p><%= link_to participant_contact_label(@application), membership ? edit_program_participant_path(@program, membership) : participant_path(@application.user_id) %> <%= status_label(@application.status_label) %></p>
+  <p><strong>Submitted On:</strong> <%= render "shared/date", value: @application.submitted_at || @application.created_at, zone: @program.time_zone %></p>
   <% if membership %><p><%= link_to "View Profile", participant_path(@application.user_id) %></p><% end %>
   <% gallery = PhotoGallery.new(@application.user, current_user) if %w[pending declined].include?(@application.status) %>
   <% photos = gallery&.private_access? ? gallery.photos : [] %>

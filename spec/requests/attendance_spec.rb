@@ -29,7 +29,9 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     sign_in(viewer)
     get program_path(program, section: 'history')
     history = response.parsed_body.at_xpath("//section[h2='#{heading}']")
-    row = history.css('tbody tr').find { |entry| entry.at_css('td').text.start_with?(booking.date.iso8601) }
+    row = history.css('tbody tr').find do |entry|
+      Time.iso8601(entry.at_css('time')['datetime']).to_date == booking.date
+    end
     row.at_css("td:nth-child(#{column})")
   end
 

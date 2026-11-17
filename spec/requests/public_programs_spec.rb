@@ -56,9 +56,9 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
     user.update!(instagram_tagging_allowed: true)
     get program_path(program)
     summary = response.parsed_body.at_css('.next-session')
-    expect(summary.text).to include('Monday, November 16, 2026', '6:30 PM - 9:00 PM (2 hours 30 min)',
+    expect(summary.text).to include('Next Monday', '6:30 PM - 9:00 PM (2 hours 30 min)',
                                     'America/New_York', 'Public Participant')
-    expect(summary.at_css('time')['datetime']).to eq('2026-11-16T23:30:00Z')
+    expect(Time.iso8601(summary.at_css('time')['datetime'])).to eq(private_booking.scheduled_start)
     expect(summary.css('table, dt, dd')).to be_empty
     expect(summary.at_css('.booked-participant a[target="_blank"]')['href'])
       .to eq('https://www.instagram.com/private_participant/')
@@ -110,7 +110,7 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
     scheduled_booking('2026-11-16', at: create_program, display_name: 'Other Program Participant')
     get program_path(program)
     summary = response.parsed_body.at_css('.next-session')
-    expect(summary.text).to include('Monday, November 16, 2026', "#{program.participant_label} to be announced")
+    expect(summary.text).to include('Next Monday', "#{program.participant_label} to be announced")
     expect(summary.text).not_to include('Public Participant', 'Other Program Participant', 'Private cancellation.')
   end
 
@@ -120,7 +120,7 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
     schedule_exception('2026-11-17', mode: 'open', start_time: '20:00', end_time: '22:00')
     get program_path(program)
     summary = response.parsed_body.at_css('.next-session')
-    expect(summary.text).to include('Tuesday, November 17, 2026', '8:00 PM - 10:00 PM (2 hours)',
+    expect(summary.text).to include('Next Tuesday', '8:00 PM - 10:00 PM (2 hours)',
                                     "#{program.participant_label} to be announced")
     expect(response.body).not_to include('Private schedule explanation.', 'Fallback Participant')
   end
@@ -131,7 +131,7 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
     travel_to Time.utc(2026, 11, 30, 23, 31)
     get program_path(program, section: 'view', month: '2027-02')
     summary = response.parsed_body.at_css('.next-session')
-    expect(summary.text).to include('Monday, December 14, 2026', 'December Participant')
+    expect(summary.text).to include('Mon, Dec 14', 'December Participant')
     expect(summary.text).not_to include('View Calendar')
     expect(response.body).not_to include('Private schedule explanation.')
   end
@@ -153,7 +153,7 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
     get program_path(program), params: { month: '2026-12' },
                                headers: { 'X-Posebook-Calendar-Context' => context }
     expect(response).to have_http_status(:ok)
-    expect(response.parsed_body.at_css('[data-calendar-month]').text).to eq('December 2026')
+    expect(response.parsed_body.at_css('[data-calendar-month]').text.strip).to eq('December')
     expect(response.parsed_body.at_css('header, main')).to be_nil
     expect(response.headers['Vary']).to include('X-Posebook-Calendar-Context')
     expect_public_only

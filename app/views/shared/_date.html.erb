@@ -1,0 +1,5 @@
+<%# locals: (value:, zone: Time.zone, format: :default, show_time: true) -%>
+<% date = date_display_value(value, zone: zone) -%>
+<% full_date = date_display_title(date, format: format) -%>
+<%= tag.time datetime: date_display_datetime(date, format: format), title: full_date, aria: { label: full_date },
+             class: ["date-display", ("date-display-compact" if format == :compact)] do %><span class="date-display-label"><%= date_display_label(date, zone: zone, format: format) %></span><% if show_time && date_display_time?(date) && !%i[day month].include?(format) %><span class="date-display-clock"><span class="date-display-separator"> at </span><%= date.strftime("%-I:%M %p") %></span><% end %><% end -%>
