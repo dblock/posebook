@@ -1,0 +1,13 @@
+<main>
+  <%= render "navigation", active: "notifications" %>
+  <h1>Notifications</h1>
+  <%= render "shared/errors", record: @user %>
+  <%= form_with model: @user, url: notifications_profile_path, method: :patch do |form| %>
+    <p><label><%= form.check_box :booking_reminders_enabled %> Booking Reminders</label></p>
+    <p><label><%= form.check_box :application_reminders_enabled %> Incomplete Application Reminders</label></p>
+    <p><label><%= form.check_box :coordinator_notifications_enabled %> Coordinator Alerts</label><br>
+      <small>Application submissions, new participants, and attendance confirmations or follow-ups.</small>
+    </p>
+    <%= form.submit "Save Preferences" %>
+  <% end %>
+</main>

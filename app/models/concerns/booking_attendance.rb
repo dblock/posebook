@@ -15,11 +15,12 @@ module BookingAttendance
   end
 
   def confirmation_opens_on
-    date - 7
+    BookingNotificationTiming.new(self).confirmation_opens_at.in_time_zone(time_zone).to_date
   end
 
   def confirmation_open?
-    status == 'confirmed' && booking_today >= confirmation_opens_on && scheduled_start > Time.current
+    status == 'confirmed' && scheduled_start > Time.current &&
+      Time.current >= BookingNotificationTiming.new(self).confirmation_opens_at
   end
 
   def attendance_overdue?
@@ -30,13 +31,16 @@ module BookingAttendance
     booking_today >= date - 5
   end
 
-  def record_attendance!(confirmed, actor, explanation, session:)
+  def record_attendance!(confirmed, actor, explanation, session:, notify: true)
     return if attendance_confirmed? == confirmed
 
     change = { confirmed: confirmed, changed_at: Time.current, changed_by_id: actor.id, reason: explanation }
     atomic_change!(
       { '$set' => attendance_fields(confirmed, actor), '$push' => { attendance_changes: change } }, session: session
     )
+    return unless notify
+
+    BookingNotification.record(self, confirmed ? 'attendance_confirmed' : 'attendance_cleared', actor_id: actor.id)
   end
 
   private

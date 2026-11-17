@@ -57,7 +57,9 @@ Notify active assigned coordinators once per person, not every global admin. Wor
 
 Draft maintenance uses creation or reopening age: one reminder from seven days, cleanup from 30 days. Do not reset age on edits, invalidate editor revisions for reminders, use blanket TTL deletion, or remove accounts/photos/submitted history. Reopened draft cancellation or expiry restores the retained withdrawn submission. Cleanup must transact against submission. Use the shared recurring scheduler and `maintenance`/`mailers` queues.
 
-Automated booking reminders and SMS remain disabled; transactional account/invitation/application messages are separate. New jobs use the shared MongoDB-backed worker, minimal ID arguments, current-state rechecks, and idempotent effects. Preserve the separate transactional Google Calendar outbox.
+Every email resolves per-field admin defaults, venue overrides, and program overrides through `NotificationSetting`; only persist actual overrides, and let blank content inherit. System account/verification templates are admin-only, mandatory, and must retain required action links in the body, not the subject. Recheck enabled settings and personal optional-notification preferences at delivery. Draft reminder delays use elapsed days, default seven, before the fixed 30-day cleanup.
+
+Booking notifications retain per-recipient delivery records, join booking transactions, and queue through shared maintenance and mail workers. Recheck current booking identity/times, attendance, recipient assignment, reminder preferences, enabled settings, and expiry before sending. Use the same safe placeholder rendering for editable templates and previews; never execute templates or include private change reasons. Previous-session timing follows scheduled sessions, including exceptions and unbooked dates, using saved booking time zones and local midnight for an unspecified end. SMS remains disabled. Preserve the separate transactional Google Calendar outbox.
 
 ## Privacy, Photos, and Audit
 

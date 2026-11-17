@@ -46,6 +46,12 @@ Wrong signed-in accounts must sign out and switch to the invited address; the in
 
 Coordinator pages accept new or registered email addresses. Existing-email promotion requires an explicit confirmation; direct email-based assignment clients must submit `grant_access=1` to confirm. Existing user-ID assignment remains supported. Coordinator invitations use a separate collection; see the optional email policy above. Normal startup creates its declared indexes; no data migration or changes to existing memberships are required.
 
+## Booking Notifications
+
+Program settings now include **Notifications**, with default confirmation opening at the previous scheduled session's end, unconfirmed reminders five days before at noon, and final reminders one day before at noon. Coordinator overdue alerts default off. Review program notification settings before starting the updated maintenance/mail workers: existing upcoming bookings participate in future reminder checkpoints, but historical booking-change events are not reconstructed. All times use saved booking time zones; previous sessions without an end use local midnight. Participant reminder preferences default on and can be disabled in **Profile > Notifications** or through reminder emails. No data migration is required; normal startup creates notification indexes. Restart workers with the same application version as the web process.
+
+Admin **Settings > Notifications** supplies global defaults for every email. Venue and program settings add scoped overrides; existing program booking overrides remain valid. Missing settings inherit the built-in defaults, and the global defaults document is created only on the first admin save. Security emails remain mandatory. Existing accounts default to receiving optional application reminders and coordinator alerts, with controls in **Profile > Notifications**. Normal startup adds the pending-draft-reminder index; reminder delays remain seven elapsed days unless configured otherwise, and draft cleanup remains 30 days.
+
 ## Retired One-Time Conversions
 
 The sole instance must deploy [PR #52](https://github.com/dblock/posebook/pull/52) and finish its automatic conversion before deploying the migration-free application. That version supplies the schema rename, legacy venue split, Instagram handle conversion, and slug backfills. Stop older application versions before that conversion and verify the existing admin, venue, and program afterward. Do not deploy the current version directly against an older schema.

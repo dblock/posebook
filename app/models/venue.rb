@@ -8,6 +8,7 @@ class Venue
   include Mongoid::Slug
   include HistoryTracking
   include PrimaryPhoto
+  include NotificationSettings
 
   GOOGLE_MAPS_PATHS = {
     'google.com' => %r{\A/maps(?:/|\z)}, 'www.google.com' => %r{\A/maps(?:/|\z)},
@@ -29,7 +30,7 @@ class Venue
     (venue.custom_slug.presence || venue.name).to_url
   end
   track_history on: %i[name description custom_slug _slugs address instagram_handle google_maps_url
-                       primary_photo_id active],
+                       primary_photo_id active notification_settings],
                 modifier_field_optional: true, modifier_field_inverse_of: nil, track_blank_changes: true
 
   has_many :memberships, class_name: 'VenueMembership', inverse_of: :venue, dependent: :restrict_with_error

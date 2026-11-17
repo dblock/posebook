@@ -2,9 +2,10 @@
 
 class ParticipantInvitationMailer < ApplicationMailer
   def invite(invitation, token)
-    @invitation = invitation
-    @program = invitation.program
-    @invitation_url = invitation_url(token: token)
-    mail(to: invitation.email, subject: @program.message('invitations.subject', program: @program.name))
+    values = { 'invitation_url' => invitation_url(token: token),
+               'recipient_name' => invitation.name.presence || 'Participant',
+               'participant_name' => invitation.name.presence || 'Participant',
+               'participant_label' => invitation.program.participant_label.downcase }
+    notification_mail('participant_invitation', scope: invitation.program, recipient: invitation.email, values: values)
   end
 end

@@ -71,6 +71,7 @@ favicon
 fieldset
 fieldsets
 Gemfile
+getElementById
 getSiblingDB
 GitHub
 hostname
@@ -131,6 +132,7 @@ RuboCop
 samesite
 schemas
 setOnInsert
+setSelectionRange
 SHA
 signup
 SMS

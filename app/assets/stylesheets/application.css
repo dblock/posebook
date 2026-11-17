@@ -50,6 +50,65 @@ body {
   overflow-wrap: anywhere;
 }
 
+.notification-message-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 17rem;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.notification-message-editor p {
+  margin-top: 0;
+}
+
+.notification-placeholders ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.notification-placeholders button {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  box-shadow: none;
+  font-weight: normal;
+  text-align: left;
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 50rem) {
+  .notification-message-editor {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .notification-placeholders ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+  }
+}
+
+.notification-preview {
+  margin-block: 2rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  overflow-wrap: anywhere;
+}
+
+.notification-preview dd {
+  margin-inline-start: 0;
+  margin-block-end: 0.75rem;
+}
+
+[data-notification-editor] > .participant-actions {
+  margin-top: 1rem;
+}
+
 .markdown-content pre {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -693,6 +752,11 @@ table:not(.calendar) :is(th, td):not(:first-child) {
   text-align: center;
 }
 
+table.notification-settings :is(th, td).notification-purpose {
+  min-width: 20rem;
+  text-align: left;
+}
+
 table:not(.calendar) td:has(> .date-display) {
   min-width: 10rem;
 }
@@ -864,7 +928,7 @@ table:not(.calendar) td:not(:first-child) .participant-actions {
   overflow-wrap: anywhere;
 }
 
-:is(.participant-roster, .participation-history, .booking-history) thead th:first-child {
+:is(.participant-roster, .participation-history, .booking-history, .audit-history) thead th:first-child {
   width: 1.75rem;
 }
 
@@ -881,7 +945,7 @@ table.participant-roster th {
   white-space: nowrap;
 }
 
-table:is(.participant-roster, .booking-history) :is(th, td):nth-child(2) {
+table:is(.participant-roster, .booking-history, .audit-history) :is(th, td):nth-child(2) {
   text-align: left;
 }
 

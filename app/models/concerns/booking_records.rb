@@ -41,6 +41,7 @@ module BookingRecords
       gender_override_reason: gender_override_reason
     )
     GoogleCalendarSync.enqueue(booking, session: session)
+    BookingNotification.created(booking, previous: previous, actor_id: @user.id)
     booking
   end
 

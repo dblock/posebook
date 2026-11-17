@@ -28,6 +28,7 @@
             <% if current_user.system_admin? %>
               <%= link_to "Users", admin_users_path, aria: { current: ("page" if current_page?(admin_users_path)) } %>
               <%= link_to "History", admin_history_path, aria: { current: ("page" if current_page?(admin_history_path)) } %>
+              <%= link_to "Settings", admin_settings_path %>
             <% end %>
             <%= button_to "Sign Out", session_path, method: :delete %>
           </div>

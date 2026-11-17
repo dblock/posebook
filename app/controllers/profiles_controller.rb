@@ -19,11 +19,22 @@ class ProfilesController < ApplicationController
 
   def security; end
 
+  def notifications; end
+
+  def update_notifications
+    attributes = params.expect(user: NotificationPreferences::FIELDS.map(&:to_sym))
+    if @user.update(attributes)
+      redirect_to notifications_profile_path, notice: t('booking_notifications.saved')
+    else
+      render :notifications, status: :unprocessable_content
+    end
+  end
+
   def programs = load_user_programs(@user)
 
   def update
     attributes = params.expect(user: %i[name email phone gender current_password display_name instagram_handle
-                                        instagram_tagging_allowed]).to_h.symbolize_keys
+                                        instagram_tagging_allowed booking_reminders_enabled]).to_h.symbolize_keys
     if (updated = @user.update_profile(attributes))
       redirect_to profile_path,
                   notice: t(updated.is_a?(EmailDelivery) ? 'profiles.updated_email_queued' : 'profiles.updated')

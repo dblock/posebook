@@ -7,6 +7,7 @@ class Program # rubocop:disable Metrics/ClassLength -- Keep Mongoid field and au
   include HistoryTracking
   include PrimaryPhoto
   include ProgramVisibility
+  include NotificationSettings
 
   TIME_ZONES = TZInfo::Timezone.all_identifiers.freeze
   RESERVED_SLUGS = %w[new edit admin assets rails up venues sessions programs profile password registration
@@ -40,7 +41,7 @@ class Program # rubocop:disable Metrics/ClassLength -- Keep Mongoid field and au
                        booking_horizon_months first_bookable_date available_weekdays start_time end_time
                        no_consecutive_genders
                        calendar_invitation_lead_minutes primary_photo_id active applications_enabled
-                       application_message_placeholder],
+                       application_message_placeholder notification_settings],
                 modifier_field_optional: true, modifier_field_inverse_of: nil, track_blank_changes: true
 
   has_many :memberships, class_name: 'ProgramMembership', inverse_of: :program,

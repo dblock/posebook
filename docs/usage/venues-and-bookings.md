@@ -22,7 +22,9 @@ Below upcoming bookings, **Programs You Can Book** lists programs where you have
 
 Location pages use `/venues/:slug`; calendars and bookings use `/programs/:slug`. Previous slugs remain valid within those paths. Old root shortcuts and venue-nested calendar/booking links are not redirected.
 
-Starting seven days before your booking, confirm that you will attend. Until five days before the booking, you can report that you can no longer make it and follow the rescheduling steps. After that cutoff, contact an organizer to reschedule; you can still confirm attendance or cancel.
+By default, confirmation opens when the program's previous scheduled session ends; organizers can configure a different day/time. You may receive an email requesting confirmation, another reminder five calendar days before at noon if still unconfirmed, and a final reminder the day before at noon. Organizers can change these times or disable individual emails. Until five days before the booking, you can report that you can no longer make it and follow the rescheduling steps. After that cutoff, contact an organizer to reschedule; you can still confirm attendance or cancel.
+
+**Booking Reminders** in **Profile > Notifications** controls scheduled participant reminders across your programs. That page also controls incomplete application reminders and optional coordinator alerts. Reminder emails also link to a page where you can explicitly disable booking reminders without signing in; opening the link alone changes nothing. Booking changes and cancellations are still sent. Email links open your authenticated booking page and never confirm attendance by themselves. Google Calendar invitations remain separate.
 
 Upcoming booking cards place the booking status under their picture and group **I'll be there!** with **Cancel Booking**. When the organizer-contact notice is shown, the attendance-confirmation request appears inside that notice instead of being repeated above it.
 

@@ -6,6 +6,10 @@
   <% settings_tabs += [["coordinators", "Coordinators", venue_coordinators_path(venue)],
                        ["security", "Security", security_venue_path(venue)]] %>
 <% end %>
+<% if manager %>
+  <% position = settings_tabs.index { |key, _, _| key == "security" } || settings_tabs.length %>
+  <% settings_tabs.insert(position, ["notifications", "Notifications", venue_notifications_path(venue)]) %>
+<% end %>
 <% tabs << ["settings", "Settings", edit_venue_path(venue)] if manager %>
 <% secondary_active = active == "invite_coordinator" ? "coordinators" : active %>
 <% primary_active = settings_tabs.any? { |key, _, _| key == secondary_active } ? "settings" : active %>

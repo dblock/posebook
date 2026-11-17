@@ -8,7 +8,13 @@ Rails.application.routes.draw do
     resources :photos, only: %i[show create update destroy], controller: 'profile_photos'
   end
   resource :email_change, only: %i[show update]
+  resource :booking_reminder_preference, only: %i[show update]
   namespace :admin do
+    resource :settings, only: :show do
+      resources :notifications, only: %i[index edit update], param: :kind, controller: 'notifications' do
+        post :preview, on: :member
+      end
+    end
     get 'history', to: 'history#index', as: :history
     resources :users, only: %i[index show edit update] do
       member do
@@ -18,6 +24,9 @@ Rails.application.routes.draw do
     end
   end
   resources :venues, except: :destroy do
+    resources :notifications, only: %i[index edit update], param: :kind, controller: 'venue_notifications' do
+      post :preview, on: :member
+    end
     %i[photos programs security].each { |page| get page, on: :member }
     resources :photos, only: %i[show create update destroy], controller: 'venue_photos'
     resources :coordinators, only: %i[index new create destroy], controller: 'venue_coordinators'
@@ -25,6 +34,9 @@ Rails.application.routes.draw do
     resources :programs, only: %i[new create]
   end
   resources :programs, only: %i[index show edit update] do
+    resources :notifications, only: %i[index edit update], param: :kind, controller: 'program_notifications' do
+      post :preview, on: :member
+    end
     get :calendar, on: :member, action: :show, defaults: { section: 'calendar' }
     get :history, on: :member, action: :show, defaults: { section: 'history' }
     get :photos, on: :member

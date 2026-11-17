@@ -7,31 +7,37 @@
     <p class="scroll-hint">Scroll horizontally to view changes and their authors.</p>
     <div class="table-scroll" role="region" aria-label="Audit history" tabindex="0">
       <table class="audit-history">
-        <thead><tr><th>Time (UTC)</th><th>Who</th><th>What</th><th>Action</th><th>Changes</th></tr></thead>
+        <thead><tr><th aria-label="Change Details"></th><th>Time (UTC)</th><th>Who</th><th>Type</th><th>What</th><th>Action</th></tr></thead>
         <tbody>
           <% @entries.each do |entry| %>
             <% changes = @history.changes_for(entry) %>
             <tr data-history="<%= entry.id %>">
-              <td><%= render "shared/date", value: entry.created_at, zone: "UTC", format: :compact %></td>
-              <td><%= audit_actor(entry, @history) %></td>
-              <td><%= audit_subject(entry, @history) %></td>
-              <td><%= audit_action(entry) %></td>
               <td>
                 <% if changes.any? %>
-                  <details>
-                    <summary><%= changes.keys.map(&:humanize).to_sentence %></summary>
-                    <dl class="audit-changes">
-                      <% changes.each do |field, values| %>
-                        <dt><strong><%= field.humanize %></strong></dt>
-                        <dd>Before: <%= audit_value(values[:from]) %><br>After: <%= audit_value(values[:to]) %></dd>
-                      <% end %>
-                    </dl>
+                  <details class="participant-note-toggle">
+                    <summary aria-label="Change details" aria-controls="audit-changes-<%= entry.id %>"><span aria-hidden="true">&#9656;</span></summary>
                   </details>
-                <% else %>
-                  No displayable field changes.
                 <% end %>
               </td>
+              <td><%= render "shared/date", value: entry.created_at, zone: "UTC", format: :compact %></td>
+              <td><%= audit_actor(entry, @history) %></td>
+              <td><%= audit_type(entry, @history) %></td>
+              <td><%= audit_subject(entry, @history) %></td>
+              <td><%= audit_action(entry) %></td>
             </tr>
+            <% if changes.any? %>
+              <tr class="participant-note-row" id="audit-changes-<%= entry.id %>">
+                <td></td>
+                <td colspan="5">
+                  <dl class="audit-changes">
+                    <% changes.each do |field, values| %>
+                      <dt><strong><%= field.humanize %></strong></dt>
+                      <dd>Before: <%= audit_value(values[:from]) %><br>After: <%= audit_value(values[:to]) %></dd>
+                    <% end %>
+                  </dl>
+                </td>
+              </tr>
+            <% end %>
           <% end %>
         </tbody>
       </table>

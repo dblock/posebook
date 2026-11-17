@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 class AuditHistory
-  MODELS = [User, Venue, Program, ProgramMembership, ProgramScheduleException].index_by(&:name).freeze
+  MODELS = [User, Venue, Program, ProgramMembership, ProgramScheduleException,
+            NotificationDefaults].index_by(&:name).freeze
   ASSOCIATIONS = { ProgramMembership => %i[user program], ProgramScheduleException => [:program] }.freeze
 
   attr_reader :pagination

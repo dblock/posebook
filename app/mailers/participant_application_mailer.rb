@@ -2,24 +2,20 @@
 
 class ParticipantApplicationMailer < ApplicationMailer
   def draft_reminder(application, recipient)
-    @program = application.program
-    @application_url = program_participation_application_url(@program)
-    mail(to: recipient.email, subject: "Finish Your Participation Application: #{@program.name}")
+    values = { 'application_url' => program_participation_application_url(application.program) }
+    notification_mail('application_draft', scope: application.program, recipient: recipient, values: values)
   end
 
   def submitted(application, recipient)
-    @application = application
-    @program = application.program
-    @review_url = program_application_url(@program, application)
-    mail(to: recipient.email, subject: "New Participation Application for #{@program.name}")
+    values = { 'participant_name' => application.name.presence || 'Applicant',
+               'review_url' => program_application_url(application.program, application) }
+    notification_mail('application_submitted', scope: application.program, recipient: recipient, values: values)
   end
 
   def decision(application, recipient)
-    @application = application
-    @program = application.program
-    @application_url = program_participation_application_url(@program)
-    @calendar_url = calendar_program_url(@program)
-    subject = application.status == 'accepted' ? 'Application Accepted' : 'An Update About Your Application'
-    mail(to: recipient.email, subject: "#{subject}: #{@program.name}")
+    values = { 'application_url' => program_participation_application_url(application.program),
+               'calendar_url' => calendar_program_url(application.program) }
+    notification_mail("application_#{application.status}", scope: application.program, recipient: recipient,
+                                                           values: values)
   end
 end

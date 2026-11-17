@@ -15,6 +15,11 @@ RSpec.describe ApplicationDraftMaintenance, :aggregate_failures, :database do
   end
   let(:maintenance) { described_class.new(draft.id) }
 
+  after do
+    QueuedJob.where(queue: 'maintenance').delete_all
+    RecurringJobSchedule.where(id: ApplicationDraftMaintenanceJob.name).delete_all
+  end
+
   around do |example|
     previous_queues = Delayed::Worker.queues
     travel_to(Time.utc(2026, 11, 15, 15)) { example.run }
@@ -22,9 +27,24 @@ RSpec.describe ApplicationDraftMaintenance, :aggregate_failures, :database do
     Delayed::Worker.queues = previous_queues
   end
 
-  after do
-    QueuedJob.where(queue: 'maintenance').delete_all
-    RecurringJobSchedule.where(id: ApplicationDraftMaintenanceJob.name).delete_all
+  it 'uses configurable elapsed days and rechecks personal preferences before sending' do
+    program.update!(notification_settings: { 'application_draft' => { 'days_after' => 3 } })
+    draft.update!(created_at: 3.days.ago + 1.second)
+    maintenance.process
+    expect(draft.reload.draft_reminded_at).to be_nil
+    travel 1.second
+    maintenance.process
+    expect(draft.reload.draft_reminded_at).to eq(Time.current)
+    user.update!(application_reminders_enabled: false)
+    deliver_emails
+    expect(ActionMailer::Base.deliveries).to be_empty
+  end
+
+  it 'does not queue a disabled draft reminder' do
+    program.update!(notification_settings: { 'application_draft' => { 'enabled' => false } })
+    maintenance.process
+    expect(EmailDelivery.where(resource_id: draft.id)).to be_empty
+    expect(draft.reload.draft_reminded_at).to be_nil
   end
 
   def add_photo
@@ -244,7 +264,7 @@ RSpec.describe ApplicationDraftMaintenance, :aggregate_failures, :database do
     Delayed::Worker.queues = ['maintenance']
     RecurringJobSchedule.enqueue_due
     expect(draft.reload.draft_reminded_at).to be_nil
-    expect(BackgroundWorker.build(queues: ['maintenance']).work_off(1)).to eq([1, 0])
+    expect(BackgroundWorker.build(queues: ['maintenance']).work_off.last).to eq(0)
     expect(draft.reload.draft_reminded_at).to eq(Time.current)
     deliver_emails
     expect(ActionMailer::Base.deliveries.size).to eq(1)

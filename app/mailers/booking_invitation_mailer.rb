@@ -2,9 +2,8 @@
 
 class BookingInvitationMailer < ApplicationMailer
   def invite(membership)
-    @program = membership.program
-    @user = membership.user
-    @booking_url = calendar_program_url(@program, booking_invitation: '1')
-    mail(to: @user.email, subject: @program.message('participant_access.subject', program: @program.name))
+    values = { 'booking_url' => calendar_program_url(membership.program, booking_invitation: '1') }
+    notification_mail('booking_invitation', scope: membership.program, recipient: membership.user,
+                                            multipart: true, values: values)
   end
 end

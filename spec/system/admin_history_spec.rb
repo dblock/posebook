@@ -14,11 +14,10 @@ RSpec.describe 'Administrator history navigation', :aggregate_failures, :databas
   end
 
   def open_change
-    within("[data-history='#{entry.id}']") do
-      find('summary').click
-      expect(page).to have_text('Before: Jordan Model')
-      expect(page).to have_text('After: Jordan Updated')
-    end
+    details = "#audit-changes-#{entry.id}"
+    expect(page).to have_css(details, visible: :hidden)
+    find("[data-history='#{entry.id}'] summary").click
+    expect(page).to have_css("#{details} .audit-changes", text: /Before: Jordan Model\s+After: Jordan Updated/)
   end
 
   it 'shows linked before and after values through the admin History tab at every viewport' do
@@ -27,6 +26,10 @@ RSpec.describe 'Administrator history navigation', :aggregate_failures, :databas
       within('.user-tabs') { click_on 'History' }
       expect(page).to have_css('.user-tabs [aria-current="page"]', text: 'History')
       open_change
+      find("[data-history='#{entry.id}'] summary").send_keys(:enter)
+      expect(page).to have_css("#audit-changes-#{entry.id}", visible: :hidden)
+      find("[data-history='#{entry.id}'] summary").send_keys(:enter)
+      expect(page).to have_css("#audit-changes-#{entry.id}")
       expect_no_horizontal_overflow
       capture_screenshot("admin-history-#{viewport}")
     end

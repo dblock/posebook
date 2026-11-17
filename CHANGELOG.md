@@ -153,4 +153,6 @@
 - [#166](https://github.com/dblock/posebook/pull/166): Render program application Review actions as plain links and link application history authors to their accounts - [@dblock](https://github.com/dblock).
 - [#166](https://github.com/dblock/posebook/pull/166): Prune cosmetic-only tests and styling assertions and speed browser tests by shortening fixed click delays and removing redundant page loads while retaining workflow, accessibility, and overflow coverage - [@dblock](https://github.com/dblock).
 - [#167](https://github.com/dblock/posebook/pull/167): Reduce repeated date localization, revoked-session queries, calendar booking reads, coordinator invitation target queries, and dashboard calendar connection reads; load organizer selectors only for rendered forms and expand page performance benchmarks - [@dblock](https://github.com/dblock).
+- Add configurable email templates with admin defaults and venue/program overrides, purpose/status tables with dedicated editors and placeholder previews, transactional booking-change notices, configurable attendance/application reminders, and personal notification preferences - [@dblock](https://github.com/dblock).
+- Match administrator history disclosure controls to other tables, with expandable detail rows and separate Type and What columns - [@dblock](https://github.com/dblock).
 - Your contribution here.

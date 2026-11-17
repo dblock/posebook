@@ -69,6 +69,7 @@ class Booking
         '$push' => { time_changes: change } }, session: session
     )
     update_claim_expiry!(expiry, session)
+    BookingNotification.record(self, 'booking_changed', actor_id: actor.id)
   end
 
   def close!(new_status, explanation, actor, session:)
@@ -76,6 +77,7 @@ class Booking
       { '$set' => { status: new_status, reason: explanation, changed_at: Time.current,
                     changed_by_id: actor.id, updated_at: Time.current } }, session: session
     )
+    BookingNotification.record(self, 'booking_canceled', actor_id: actor.id) if new_status == 'canceled'
   end
 
   def delete(*)
