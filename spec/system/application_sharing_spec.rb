@@ -13,6 +13,23 @@ RSpec.describe 'Application sharing', :aggregate_failures, :database, type: :sys
     sign_in_through_browser(coordinator)
   end
 
+  it 'configures a message prompt in settings and shows it in the application editor' do
+    visit edit_program_path(program)
+    fill_in 'Application Message Placeholder', with: 'Do you have any experience?'
+    click_on 'Save Program'
+    expect(page).to have_css('.flash', text: 'settings saved.')
+    click_on 'Sign Out'
+    sign_in_through_browser(create_user(email_verified_at: Time.current))
+    each_viewport do |viewport|
+      without_javascript do
+        visit new_program_participation_application_path(program)
+        expect(page).to have_field('Message (Optional)', placeholder: 'Do you have any experience?', with: '')
+        expect_no_horizontal_overflow
+        capture_screenshot("application-message-prompt-#{viewport}")
+      end
+    end
+  end
+
   it 'shows a visible application link beside Copy Link at every viewport' do
     each_viewport do |viewport|
       visit program_path(program, token: 'private')
