@@ -118,6 +118,16 @@ RSpec.describe 'Google Calendar connections', :aggregate_failures, :database, ty
     expect(response.parsed_body.at_css('.google-calendar-rsvp')).to be_nil
   end
 
+  it 'rechecks connection authority for batched administrator booking views on every request' do
+    _, booking, = response_snapshot
+    sign_in(create_user(roles: ['system_admin']))
+    get bookings_admin_user_path(booking.user)
+    expect(response.parsed_body.at_css('.google-calendar-rsvp .status-label').text).to eq('Declined')
+    program.memberships.coordinators.first.revoke_coordinator_access
+    get bookings_admin_user_path(booking.user)
+    expect(response.parsed_body.at_css('.google-calendar-rsvp')).to be_nil
+  end
+
   it 'hides responses belonging to an old payload or booking and disconnected or unauthorized calendars' do
     connection, booking, sync = response_snapshot
     sign_in(create_user(roles: ['system_admin']))

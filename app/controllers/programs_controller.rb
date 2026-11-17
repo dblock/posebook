@@ -77,7 +77,7 @@ class ProgramsController < ApplicationController
     return head :not_found if @section == 'history' && !@program_member
 
     @calendar = ProgramCalendar.new(@program, month: (params[:month] unless @section == 'view'))
-    load_calendar if @program_member
+    load_calendar if @program_member && @section != 'history'
   end
 
   def find_venue

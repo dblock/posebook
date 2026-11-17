@@ -14,7 +14,9 @@ class ApplicationController < ActionController::Base
   end
 
   def current_user
-    @current_user ||= session_user || remembered_user
+    return @current_user if defined?(@current_user)
+
+    @current_user = session_user || remembered_user
   end
 
   def profile_tab_enabled?(tab, user)

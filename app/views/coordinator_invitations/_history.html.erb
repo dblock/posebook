@@ -1,7 +1,8 @@
-<% if @invitations.any? %>
+<% invitations = @invitations.to_a %>
+<% if invitations.any? %>
   <section>
     <h2>Coordinator Invitations</h2>
-    <% @invitations.each do |invitation| %>
+    <% invitations.each do |invitation| %>
       <p><% if invitation.email.present? %><%= link_to invitation.email, polymorphic_path([invitation.target, invitation]) %><% else %><%= link_to invitation.name.presence || "Personal invitation", polymorphic_path([invitation.target, invitation]) %><% end %> <%= status_label(invitation.status) %></p>
       <% if invitation.status == "Pending" %>
         <%= button_to "Revoke Invitation", polymorphic_path([invitation.target, invitation]), method: :delete %>

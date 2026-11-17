@@ -38,8 +38,9 @@ module CoordinatorInviting
 
   def prepare_coordinator_page
     @invitation = CoordinatorInvitation.new(venue: @venue, program: @program)
-    @coordinators = @invitation.target.memberships.coordinators.includes(:user).to_a
+    @coordinators = @invitation.target.memberships.coordinators.includes(:user).to_a if action_name == 'index'
     @invitations = CoordinatorInvitation.where(venue_id: @venue&.id, program_id: @program&.id)
+                                        .includes(:venue, :program)
                                         .order_by(created_at: :desc)
   end
 

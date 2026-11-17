@@ -51,7 +51,7 @@ MONGODB_TEST_URI='mongodb://127.0.0.1:27017/posebook_test_benchmark?replicaSet=r
 
 The command accepts only `posebook_test_benchmark` or underscore-prefixed variants, creates a synthetic multi-program corpus with booking history and real optimized photos, and cleans up only its records/files. It sends no messages and never deletes collections.
 
-JSON reports request paths, warm latency estimates, allocations, response size, collection read counts, database time, and indexed query work across public/participant/admin pages and images. Setup, login, warm-up, browser, and network time are excluded. Compare on the same machine/corpus; shared load and small samples make timings indicative. Regression tests enforce bounded database work rather than latency thresholds.
+JSON reports request paths, warm latency estimates, allocations, response size, collection read counts, database time, and indexed query work across public/participant/admin pages and images. Scenarios include account and management tabs, program history and settings, application and invitation lists, coordinator invitation histories, and organizer booking forms. Setup, login, warm-up, browser, and network time are excluded. Compare on the same machine/corpus; shared load and small samples make timings indicative. Regression tests enforce bounded database work rather than latency thresholds.
 
 ## Pull Requests
 
