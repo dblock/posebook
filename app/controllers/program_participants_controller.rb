@@ -9,7 +9,10 @@ class ProgramParticipantsController < ApplicationController
   rescue_from BookingMutation::Invalid, with: :show_error
 
   def index
-    @roster = ProgramRoster.new(@program, cursor: params[:cursor])
+    status = params[:status].presence || 'all'
+    return head :bad_request unless ProgramRoster::STATUSES.include?(status)
+
+    @roster = ProgramRoster.new(@program, cursor: params[:cursor], status: status)
     @memberships = @roster.memberships
   end
 
@@ -65,7 +68,7 @@ class ProgramParticipantsController < ApplicationController
   end
 
   def roster_path
-    program_participants_path(@program, cursor: params[:cursor])
+    program_participants_path(@program, cursor: params[:cursor], status: params[:status])
   end
 
   def mutation

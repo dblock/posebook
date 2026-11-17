@@ -150,21 +150,21 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     expect(response.body).not_to include('Attendance Confirmation Needed', 'Your attendance has not been confirmed.')
   end
 
-  it 'shows urgent follow-up on manager calendars and rosters, not public calendars' do
+  it 'shows urgent follow-up on manager calendars but not rosters or public calendars' do
     organizer = create_user
     grant_coordinator_access(program, organizer)
     travel_to Time.utc(2026, 11, 18, 5)
     sign_in(organizer)
-    [program_path(program, section: 'calendar'), program_participants_path(program)].each do |path|
-      get path
-      expect(response.body).to include('Booked', 'Please contact an organizer ASAP')
-      warning = response.parsed_body.at_css('.attendance-warning')
-      expect(warning['role']).to eq('status')
-      expect(warning['class']).not_to include('status-label')
-      selector = ".calendar [data-date='#{booking.date.iso8601}'], .participant-roster td:nth-child(2)"
-      cell = response.parsed_body.at_css(selector)
-      expect(cell.css('.status-label').map(&:text)).to eq(['Booked'])
-    end
+    get program_path(program, section: 'calendar')
+    warning = response.parsed_body.at_css('.attendance-warning')
+    expect(warning['role']).to eq('status')
+    expect(warning['class']).not_to include('status-label')
+    expect(response.parsed_body.at_css(".calendar [data-date='#{booking.date.iso8601}']")
+                   .css('.status-label').map(&:text)).to eq(['Booked'])
+    get program_participants_path(program)
+    expect(response.parsed_body.at_css('.participant-roster').text).to include('Booked')
+    expect(response.parsed_body.at_css('.participant-roster').text).not_to include(booking.date.iso8601)
+    expect(response.body).not_to include('Please contact an organizer ASAP')
     delete session_path
     get program_path(program, section: 'calendar')
     expect(response.body).not_to include('Attendance not confirmed', 'follow up ASAP', 'Edit Booking')

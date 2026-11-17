@@ -56,6 +56,75 @@ RSpec.describe 'Photo actions', :aggregate_failures, :database, type: :system do
     end
   end
 
+  def expect_separate_invitation_actions(invitation)
+    within("[data-invitation='#{invitation.id}']") do
+      expect(page).to have_css('td:last-child a:not(.button-link)', text: 'View')
+      expect(page).to have_css('td:nth-last-child(2) button', text: 'Revoke')
+      expect(page).to have_css('.participant-portrait img[src*="profile-placeholder"]')
+    end
+  end
+
+  def expect_roster_profile_column(photo)
+    source = participant_photo_path(participant, photo.id, thumbnail: 1)
+    expect(page).to have_css(".participant-portrait img[src='#{source}']")
+    expect(page).to have_css(".participant-identity strong a[href='#{participant_path(participant)}']")
+  end
+
+  it 'shows roster portraits and separate invitation actions at every viewport' do
+    admin = create_user(roles: ['system_admin'])
+    program = create_program
+    photo = ProfilePhoto.add(participant, Rack::Test::UploadedFile.new(image_file, 'image/png'))
+    create_participant_invitation(program, admin, name: 'Accepted invitee', used_by_id: participant.id,
+                                                  used_at: Time.current)
+    pending = create_participant_invitation(program, admin, name: 'Pending invitee')
+    sign_in_through_browser(admin)
+    each_viewport do |viewport|
+      visit program_participant_invitations_path(program)
+      expect_roster_profile_column(photo)
+      expect_separate_invitation_actions(pending)
+      expect_no_horizontal_overflow
+      capture_screenshot("invitation-portraits-#{viewport}")
+    end
+  end
+
+  it 'shows roster portraits in application and history tables at every viewport' do
+    coordinator = create_user
+    program = create_program(applications_enabled: true)
+    grant_coordinator_access(program, coordinator)
+    participant.update!(email_verified_at: Time.current)
+    photo = ProfilePhoto.add(participant, Rack::Test::UploadedFile.new(image_file, 'image/png'))
+    track_record(ParticipantApplicationWorkflow.new(program: program, user: participant).submit(message: nil,
+                                                                                                consent: '1'))
+    sign_in_through_browser(coordinator)
+    each_viewport do |viewport|
+      [program_applications_path(program), history_program_applications_path(program)].each do |path|
+        visit path
+        expect_roster_profile_column(photo)
+        expect_no_horizontal_overflow
+        capture_screenshot("application-portraits-#{path.split('/').last}-#{viewport}")
+      end
+    end
+  end
+
+  it 'shows roster portraits and the bottom invitation action for coordinators at every viewport' do
+    admin = create_user(roles: ['system_admin'])
+    program = create_program
+    grant_coordinator_access(program, participant)
+    photo = ProfilePhoto.add(participant, Rack::Test::UploadedFile.new(image_file, 'image/png'))
+    sign_in_through_browser(admin)
+    each_viewport do |viewport|
+      visit program_coordinators_path(program)
+      expect(page).to have_css(".participant-portrait img[src='#{participant_photo_path(participant, photo.id,
+                                                                                        thumbnail: 1)}']")
+      expect(page).to have_css('main > p:last-child a.button-link', text: 'Invite a Coordinator')
+      expect(page).to have_link(participant.name, href: participant_path(participant))
+      expect_no_horizontal_overflow
+      capture_screenshot("coordinator-portraits-#{viewport}")
+    end
+    within('.coordinator-list') { click_on participant.name }
+    expect(page).to have_current_path(admin_user_path(participant))
+  end
+
   it 'uploads application photos without requiring consent or submitting the application' do
     program = create_program(applications_enabled: true)
     participant.update!(email_verified_at: Time.current)

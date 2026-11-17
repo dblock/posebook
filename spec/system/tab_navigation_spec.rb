@@ -57,11 +57,11 @@ RSpec.describe 'Grouped tab navigation', :aggregate_failures, :database, type: :
       expect(page).to have_css('.program-tabs [aria-current="page"]', text: 'Models')
       within('.program-tabs') { click_on 'Settings' }
       within('.program-secondary-tabs') { click_on 'Coordinators' }
-      within('.title-row') { click_on 'Invite a Coordinator' }
+      click_on 'Invite a Coordinator'
       expect(page).to have_css('.program-secondary-tabs [aria-current="page"]', text: 'Coordinators')
       expect(page).to have_button('Continue')
       visit programs_venue_path(program.venue)
-      within('.title-row') { click_on 'New Program' }
+      click_on 'New Program'
       expect(page).to have_css('.venue-tabs [aria-current="page"]', text: 'Programs')
       expect(page).to have_button('Create Program')
     end

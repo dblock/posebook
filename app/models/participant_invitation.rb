@@ -5,6 +5,8 @@ class ParticipantInvitation
   include Mongoid::Timestamps
   include InvitationToken
 
+  STATUSES = %w[all pending accepted revoked expired].freeze
+
   belongs_to :program, inverse_of: :participant_invitations
   belongs_to :invited_by, class_name: 'User', inverse_of: nil
   field :name, type: String
@@ -13,6 +15,16 @@ class ParticipantInvitation
   validates :name, length: { maximum: 100 }, allow_nil: true
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, length: { maximum: 254 }, allow_nil: true
   before_validation { self.email = email.to_s.strip.downcase.presence }
+
+  def self.with_status(status)
+    case status
+    when 'pending' then where(used_at: nil, revoked_at: nil, :expires_at.gt => Time.current)
+    when 'accepted' then where(:used_at.ne => nil)
+    when 'revoked' then where(used_at: nil, :revoked_at.ne => nil)
+    when 'expired' then where(used_at: nil, revoked_at: nil, :expires_at.lte => Time.current)
+    else all
+    end
+  end
 
   def grant_access(user, session:)
     ProgramMembership.grant_participant_access(program, user, session: session)

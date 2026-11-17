@@ -2,6 +2,7 @@
 
 module ParticipantApplicationsHelper
   def participation_actor_label(event, source)
+    return 'System' unless event.actor_id
     return source&.name.presence || 'Applicant' if event.actor_id == event.user_id
 
     event.actor.name

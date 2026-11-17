@@ -631,6 +631,7 @@ table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
+  font-size: inherit;
 }
 
 .table-scroll {
@@ -848,12 +849,6 @@ table:not(.calendar) td:not(:first-child) .participant-actions {
   }
 }
 
-.participant-roster {
-  table-layout: fixed;
-  font-size: 0.875rem;
-  line-height: 1.4;
-}
-
 .participant-roster th,
 .participant-roster td {
   padding: 0.9rem;
@@ -861,10 +856,66 @@ table:not(.calendar) td:not(:first-child) .participant-actions {
   overflow-wrap: anywhere;
 }
 
+:is(.participant-roster, .participation-history) thead th:first-child {
+  width: 1.75rem;
+}
+
+table.participant-roster :is(th, td):nth-child(2) {
+  text-align: left;
+}
+
+.participant-note-toggle {
+  margin: 0;
+}
+
+.participant-note-toggle summary {
+  padding: 0.5rem;
+  list-style: none;
+}
+
+.participant-note-toggle summary::-webkit-details-marker {
+  display: none;
+}
+
+.participant-note-toggle summary span {
+  display: inline-block;
+  font-size: 2em;
+  line-height: 1;
+}
+
+.participant-note-toggle[open] summary span {
+  transform: rotate(90deg);
+}
+
+.participant-note-row {
+  display: none;
+}
+
+tr:has(.participant-note-toggle) > td {
+  transition: border-bottom-color 150ms ease;
+}
+
+tr:has(.participant-note-toggle[open]) > td {
+  border-bottom-color: color-mix(in srgb, var(--line) 10%, transparent);
+}
+
+.participant-bulk-invite {
+  margin-block-start: 1rem;
+}
+
+tr:has(.participant-note-toggle[open]) + .participant-note-row {
+  display: table-row;
+}
+
 .participant-identity {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+}
+
+.table-scroll .participant-identity {
+  min-width: 22rem;
+  text-align: left;
 }
 
 .participant-identity > div {

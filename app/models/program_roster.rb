@@ -2,12 +2,14 @@
 
 class ProgramRoster
   PER_PAGE = 25
+  STATUSES = %w[all available booked paused inactive].freeze
 
-  attr_reader :pagination
+  attr_reader :pagination, :status
 
-  def initialize(program, cursor: nil)
+  def initialize(program, cursor: nil, status: 'all')
     @program = program
-    @pagination = CursorPage.new(participants.includes(:user).order_by(created_at: :asc),
+    @status = status
+    @pagination = CursorPage.new(filtered_participants.includes(:user).order_by(created_at: :asc),
                                  cursor: cursor, per_page: PER_PAGE)
   end
 
@@ -35,6 +37,16 @@ class ProgramRoster
   end
 
   private
+
+  def filtered_participants
+    case status
+    when 'available' then available
+    when 'booked' then unpaused.where(:user_id.in => @program.bookings.upcoming.distinct(:user_id))
+    when 'paused' then active.where(participant_paused: true)
+    when 'inactive' then participants.where(:user_id.nin => active.distinct(:user_id))
+    else participants
+    end
+  end
 
   def upcoming_bookings
     @upcoming_bookings ||= begin
@@ -80,10 +92,10 @@ class ProgramRoster
   end
 
   def unpaused
-    active.where(:participant_paused.ne => true)
+    @unpaused ||= active.where(:participant_paused.ne => true)
   end
 
   def available
-    unpaused.where(:user_id.nin => @program.bookings.upcoming.distinct(:user_id))
+    @available ||= unpaused.where(:user_id.nin => @program.bookings.upcoming.distinct(:user_id))
   end
 end
