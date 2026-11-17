@@ -2,9 +2,8 @@
   <%= render "programs/navigation", program: @program, active: "applications" %>
   <h1>Applications</h1>
   <p><%= status_label(@program.applications_enabled? && @program.booking_active? ? "Open" : "Closed") %></p>
-  <%= form_with url: program_applications_path(@program), method: :get, class: "application-filter" do |form| %>
-    <p><%= form.label :status, "Status" %> <%= form.select :status, [["Pending", "pending"], ["Not Now", "declined"], ["Accepted", "accepted"], ["Withdrawn", "withdrawn"], ["All", "all"]], { selected: @status }, data: { auto_submit: true } %></p>
-  <% end %>
+  <section aria-label="Applications" data-application-region>
+  <%= render "participant_applications/filter", url: program_applications_path(@program), status: @status %>
   <% if @applications.empty? %><p>No applications in this view.</p><% else %>
     <div class="table-scroll" role="region" aria-label="Applications" tabindex="0">
       <table>
@@ -24,5 +23,6 @@
     </div>
   <% end %>
   <%= render "shared/pagination", pagination: @pagination, label: "Application pages" %>
+  </section>
   <p><%= link_to "Participation History", history_program_applications_path(@program) %></p>
 </main>

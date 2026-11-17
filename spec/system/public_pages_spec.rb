@@ -42,6 +42,109 @@ RSpec.describe 'Public pages', :aggregate_failures, :database, type: :system do
     [applicant, application]
   end
 
+  def application_listing_path(listing)
+    listing == :home ? root_path : program_applications_path(program)
+  end
+
+  def expect_filtered_applicant(applicant)
+    expect(page).to have_select('Status', selected: 'Withdrawn')
+    expect(page).to have_css('[data-application-region] tbody', text: applicant.email)
+    expect(page).to have_current_path(/status=withdrawn/)
+    expect_unchanged_page
+  end
+
+  def expect_empty_applications
+    expect(page).to have_text('No applications in this view.')
+    expect(page).to have_current_path(/status=accepted/)
+    expect(page).to have_select('Status', selected: 'Accepted')
+    expect_unchanged_page
+  end
+
+  it 'lets administrators open submitted applications from their homepage at every viewport' do
+    applicant, application = create_withdrawn_application
+    sign_in_through_browser(create_user(roles: ['system_admin']))
+    each_viewport do |viewport|
+      visit root_path
+      expect(page).to have_select('Status', selected: 'Pending')
+      expect(page).to have_text('No applications in this view.')
+      select 'All', from: 'Status'
+      within('.submitted-applications') do
+        expect(page).to have_text(applicant.email)
+        expect(page).to have_text('Withdrawn')
+        expect_no_horizontal_overflow
+        capture_screenshot("admin-submitted-applications-#{viewport}")
+        click_on 'View'
+      end
+      expect(page).to have_current_path(program_application_path(program, application))
+      expect(page).to have_css('h1', text: 'Review Application')
+    end
+  end
+
+  it 'labels declined reviews and links the applicant account at every viewport' do
+    applicant, application = create_submitted_application
+    sign_in_through_browser(create_user(roles: ['system_admin']))
+    visit program_application_path(program, application)
+    click_on 'Not Now'
+    expect(page).to have_current_path(program_applications_path(program))
+    visit program_application_path(program, application)
+    each_viewport do |viewport|
+      expect(page).to have_css('main > p .status-label', text: 'Not Now')
+      expect(page).to have_link(applicant.name, href: participant_path(applicant))
+      expect_no_horizontal_overflow
+      capture_screenshot("declined-review-#{viewport}")
+    end
+    find('main > p a').click
+    expect(page).to have_current_path(admin_user_path(applicant))
+  end
+
+  %i[home program].each do |listing|
+    it "filters #{listing} applications in place with browser Back and Forward" do
+      applicant, = create_withdrawn_application
+      sign_in_through_browser(create_user(roles: ['system_admin']))
+      visit application_listing_path(listing)
+      mark_page
+      select 'Withdrawn', from: 'Status'
+      expect_filtered_applicant(applicant)
+      expect(page).to have_no_button('Filter')
+      select 'Accepted', from: 'Status'
+      expect_empty_applications
+      page.go_back
+      expect_filtered_applicant(applicant)
+      page.go_forward
+      expect_empty_applications
+    end
+
+    it "filters #{listing} applications without JavaScript when there are no pending submissions" do
+      applicant, = create_withdrawn_application
+      sign_in_through_browser(create_user(roles: ['system_admin']))
+      without_javascript do
+        visit application_listing_path(listing)
+        expect(page).to have_select('Status', selected: 'Pending')
+        expect(page).to have_text('No applications in this view.')
+        select 'Withdrawn', from: 'Status'
+        click_on 'Filter'
+        expect(page).to have_select('Status', selected: 'Withdrawn')
+        expect(page).to have_css('[data-application-region] tbody', text: applicant.email)
+      end
+    end
+
+    it "paginates #{listing} applications in place and resets the cursor when filtering" do
+      stub_const('CursorPage::PER_PAGE', 2)
+      applicants = Array.new(3) { create_withdrawn_application.first }
+      sign_in_through_browser(create_user(roles: ['system_admin']))
+      visit application_listing_path(listing)
+      mark_page
+      select 'Withdrawn', from: 'Status'
+      expect(page).to have_css('[data-application-region] tbody tr', count: 2)
+      click_on 'Next'
+      expect(page).to have_css('[data-application-region] tbody tr', count: 1, text: applicants.first.email)
+      select 'All', from: 'Status'
+      expect(page).to have_current_path("#{application_listing_path(listing)}?status=all")
+      expect(page).to have_css('[data-application-region] tbody tr', count: 2)
+      expect_unchanged_page
+    end
+  end
+
   it 'views a withdrawn application read-only before reopening, editing, and submitting it with new consent' do
     applicant, application = create_withdrawn_application
     sign_in_through_browser(applicant)
