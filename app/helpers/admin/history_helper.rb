@@ -9,12 +9,13 @@ module Admin
       actor ? audit_record_link(actor) : "Deleted account (#{entry.modifier_id})"
     end
 
+    def audit_type(entry, history)
+      history.model_for(entry)&.model_name&.human || 'Record'
+    end
+
     def audit_subject(entry, history)
       subject = history.subject_for(entry)
-      model = history.model_for(entry)
-      label = model&.model_name&.human || 'Record'
-      target = subject ? audit_subject_link(subject) : audit_deleted_subject(entry, model)
-      safe_join([tag.strong(label), tag.br, target])
+      subject ? audit_subject_link(subject) : audit_deleted_subject(entry, history.model_for(entry))
     end
 
     def audit_action(entry)

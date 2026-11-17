@@ -155,4 +155,5 @@
 - [#167](https://github.com/dblock/posebook/pull/167): Reduce repeated date localization, revoked-session queries, calendar booking reads, coordinator invitation target queries, and dashboard calendar connection reads; load organizer selectors only for rendered forms and expand page performance benchmarks - [@dblock](https://github.com/dblock).
 - [#168](https://github.com/dblock/posebook/pull/168): Add inherited email templates, transactional booking notices, configurable attendance/application reminders, and optional-notification preferences - [@dblock](https://github.com/dblock).
 - [#169](https://github.com/dblock/posebook/pull/169): Add admin, venue, and program notification editors with inherited defaults, live previews, and personal notification preferences - [@dblock](https://github.com/dblock).
+- [#170](https://github.com/dblock/posebook/pull/170): Match administrator history disclosure controls to other tables, with expandable detail rows and separate Type and What columns - [@dblock](https://github.com/dblock).
 - Your contribution here.

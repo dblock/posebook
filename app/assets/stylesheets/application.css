@@ -928,7 +928,7 @@ table:not(.calendar) td:not(:first-child) .participant-actions {
   overflow-wrap: anywhere;
 }
 
-:is(.participant-roster, .participation-history, .booking-history) thead th:first-child {
+:is(.participant-roster, .participation-history, .booking-history, .audit-history) thead th:first-child {
   width: 1.75rem;
 }
 
@@ -945,7 +945,7 @@ table.participant-roster th {
   white-space: nowrap;
 }
 
-table:is(.participant-roster, .booking-history) :is(th, td):nth-child(2) {
+table:is(.participant-roster, .booking-history, .audit-history) :is(th, td):nth-child(2) {
   text-align: left;
 }
 
