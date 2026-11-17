@@ -135,4 +135,5 @@
 - [#149](https://github.com/dblock/posebook/pull/149): Keep application links clickable and show a generic closed-applications landing page linking back to the program when intake is unavailable - [@dblock](https://github.com/dblock).
 - [#150](https://github.com/dblock/posebook/pull/150): Render private program instructions as sanitized Markdown while preserving plain text and member-only access - [@dblock](https://github.com/dblock).
 - [#151](https://github.com/dblock/posebook/pull/151): Add audited public Markdown descriptions to venues, programs, and application forms while keeping instructions and pay private and booking horizon in settings - [@dblock](https://github.com/dblock).
+- [#153](https://github.com/dblock/posebook/pull/153): Refine public program and application pages with a public venue card after the next session, label-free session details, 150px card images, smaller headings, and formatted phone inputs - [@dblock](https://github.com/dblock).
 - Your contribution here.

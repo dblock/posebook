@@ -29,6 +29,7 @@ RSpec.describe 'Public pages', :aggregate_failures, :database, type: :system do
         expect(page).to have_no_css('.page-tabs')
         expect(page).to have_link('Sign In', href: new_session_path)
         expect(page).to have_css(name == 'public-program' ? '[data-calendar]' : '.upcoming-sessions')
+        expect(page).to have_css('.next-session + .venue-card', text: program.venue.name) if name == 'public-program'
         expect_no_horizontal_overflow
         capture_screenshot("#{name}-#{viewport}")
       end
@@ -41,6 +42,12 @@ RSpec.describe 'Public pages', :aggregate_failures, :database, type: :system do
       visit root_path
       click_on program.name, match: :first
       expect(page).to have_css('.next-session')
+      expect(page).to have_no_css('.next-session dt')
+      within('.next-session + .venue-card') do
+        click_on program.venue.name
+      end
+      expect(page).to have_current_path(venue_path(program.venue))
+      visit program_path(program)
       expect(page).to have_css('[data-calendar]')
       expect(page).to have_no_link('View Calendar')
       click_on 'Next Month'

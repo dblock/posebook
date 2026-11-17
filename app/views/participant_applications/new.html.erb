@@ -13,7 +13,7 @@
     <p><small>Saved to your account (<%= current_user.email %>) when you submit.</small></p>
     <%= form.fields_for :profile, @user do |profile| %>
       <p><%= profile.label :name %><br><%= profile.text_field :name, required: true, autocomplete: "name", maxlength: 100 %></p>
-      <p><%= profile.label :phone %><br><%= profile.telephone_field :phone, required: true, autocomplete: "tel", placeholder: "+1 (212) 555-1234" %></p>
+      <p><%= profile.label :phone %><br><%= profile.telephone_field :phone, value: profile.object.display_phone, required: true, autocomplete: "tel", placeholder: "+1 (212) 555-1234" %></p>
       <%= render "shared/gender_field", form: profile %>
       <%= render "shared/public_profile_fields", form: profile %>
     <% end %>

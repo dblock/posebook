@@ -9,13 +9,13 @@
   <% if @section == "view" %>
   <%= render "shared/description", location: @program %>
   <%= render "next_session" %>
+  <%= render "venues/card", venue: @program.venue, show_photo: :available %>
   <%= render "calendar", calendar: @calendar, public_view: !@program_member, show_schedule: false %>
   <% if @program_coordinator %>
     <p id="application-sharing"><strong>Application Link</strong> <%= status_label(@program.applications_enabled? && @program.booking_active? ? "Open" : "Closed") %><br>
       <%= render "shared/copy_button", url: program_apply_url(@program), label: "application link", show_link: true %>
     </p>
   <% end %>
-  <% if @program_member %><%= render "venues/card", venue: @program.venue, show_photo: :available %><% end %>
   <% if @program_member %>
     <dl>
       <dt>Pay</dt><dd><%= number_to_currency(@program.pay) %> USD</dd>

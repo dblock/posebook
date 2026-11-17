@@ -37,6 +37,19 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
                                                   reason: 'Private schedule explanation.', **attributes))
   end
 
+  it 'shows the venue directly after the next session to guests and signed-in visitors' do
+    [nil, create_user].each do |viewer|
+      sign_in(viewer) if viewer
+      get program_path(program)
+      card = response.parsed_body.at_css('.next-session + .venue-card')
+      expect(card).to be_present
+      expect(card.text).to include(program.venue.name, program.venue.address)
+      expect(card.at_css('h2 a')['href']).to eq(venue_path(program.venue))
+      expect(card.next_element.key?('data-calendar')).to be(true)
+      expect_public_only
+    end
+  end
+
   it 'summarizes the next session using only public identity and consented Instagram' do
     program.update!(end_time: '21:00')
     user = private_booking.user
@@ -46,6 +59,7 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
     expect(summary.text).to include('Monday, November 16, 2026', '6:30 PM - 9:00 PM (2 hours 30 min)',
                                     'America/New_York', 'Public Participant')
     expect(summary.at_css('time')['datetime']).to eq('2026-11-16T23:30:00Z')
+    expect(summary.css('table, dt, dd')).to be_empty
     expect(summary.at_css('.booked-participant a[target="_blank"]')['href'])
       .to eq('https://www.instagram.com/private_participant/')
     expect(summary.at_css('.booked-participant a')['href']).to eq(participant_path(user))
@@ -61,7 +75,7 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
       sign_in(viewer) if viewer
       get program_path(program)
       summary = response.parsed_body.at_css('.next-session')
-      expect(summary.text).to include('To be announced')
+      expect(summary.text).to include("#{program.participant_label} to be announced")
       expect(summary.to_html).not_to include(user.name, user.display_name, user.email, user.id.to_s,
                                              'private_participant')
     end
@@ -79,13 +93,24 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
     expect(summary.text).not_to include('Public Participant', 'private_participant')
   end
 
+  it 'uses the configured participant label for unbooked sessions and hidden public identities' do
+    program.update!(participant_label: 'Model')
+    get program_path(program)
+    expect(response.parsed_body.at_css('.next-session').text).to include('Model to be announced')
+    booking = scheduled_booking('2026-11-16', display_name: '')
+    get program_path(program)
+    summary = response.parsed_body.at_css('.next-session')
+    expect(summary.text).to include('Model to be announced')
+    expect(summary.at_css("a[href='#{participant_path(booking.user)}']")).to be_nil
+  end
+
   it 'announces the scheduled date without treating canceled or foreign bookings as its participant' do
     booking = private_booking
     BookingMutation.new(program: program, user: booking.user).cancel(booking: booking, reason: 'Private cancellation.')
     scheduled_booking('2026-11-16', at: create_program, display_name: 'Other Program Participant')
     get program_path(program)
     summary = response.parsed_body.at_css('.next-session')
-    expect(summary.text).to include('Monday, November 16, 2026', 'To be announced')
+    expect(summary.text).to include('Monday, November 16, 2026', "#{program.participant_label} to be announced")
     expect(summary.text).not_to include('Public Participant', 'Other Program Participant', 'Private cancellation.')
   end
 
@@ -95,7 +120,8 @@ RSpec.describe 'Public session calendars', :aggregate_failures, :database, type:
     schedule_exception('2026-11-17', mode: 'open', start_time: '20:00', end_time: '22:00')
     get program_path(program)
     summary = response.parsed_body.at_css('.next-session')
-    expect(summary.text).to include('Tuesday, November 17, 2026', '8:00 PM - 10:00 PM (2 hours)', 'To be announced')
+    expect(summary.text).to include('Tuesday, November 17, 2026', '8:00 PM - 10:00 PM (2 hours)',
+                                    "#{program.participant_label} to be announced")
     expect(response.body).not_to include('Private schedule explanation.', 'Fallback Participant')
   end
 

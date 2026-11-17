@@ -106,6 +106,9 @@ RSpec.describe 'Photo actions', :aggregate_failures, :database, type: :system do
       expect_card_series(venue_path(program.venue), '.venue-card', venue_sources, viewport)
       expect_card_series(venue_path(program.venue), '.program-card', program_sources, viewport)
       expect_card_series(program_path(program), '.next-session', program_sources, viewport)
+      expect_card_series(program_path(program), '.venue-card', venue_sources, viewport)
+      expect(page.all('.location-card-photo').map { |photo| width_of(photo) }).to all(eq(150))
+      capture_screenshot("program-cards-#{viewport}")
     end
   end
 
@@ -117,6 +120,7 @@ RSpec.describe 'Photo actions', :aggregate_failures, :database, type: :system do
     track_booking(BookingMutation.new(program: program, user: participant).book(date: date.iso8601))
     sign_in_through_browser(participant)
     expect_card_series(bookings_profile_path, '.upcoming-booking', sources)
+    expect(width_of(find('.upcoming-booking-photo'))).to eq(150)
   end
 
   it 'opens the card primary image directly without JavaScript' do
