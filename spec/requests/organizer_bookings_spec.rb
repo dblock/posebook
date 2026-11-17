@@ -120,7 +120,7 @@ RSpec.describe 'Organizer bookings', :aggregate_failures, :database, type: :requ
     expect(BookingClaim.where(booking_id: record.id)).to be_empty
     get program_path(program, section: 'history')
     history = response.parsed_body.at_xpath('//section[h2="Program Booking History"]')
-    status = history.at_css('tbody tr td:nth-child(3)')
+    status = history.at_css("tr[data-booking='#{record.id}'] td:last-child")
     expect(status.text.strip).to eq('Canceled')
     expect(status.at_css('.attendance-confirmed')).to be_nil
   end

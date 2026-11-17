@@ -3,24 +3,36 @@
   <% if @booking_history.any? %>
     <p class="scroll-hint">Scroll horizontally to view the full history.</p>
     <div class="table-scroll" role="region" aria-label="Booking history" tabindex="0">
-      <table>
-        <thead><tr><th>Date / Time</th><% if @program_coordinator %><th><%= @program.participant_label.titleize %></th><% end %><th>Status</th><th>Explanation</th><% if @program_coordinator %><th>Details</th><% end %></tr></thead>
+      <table class="booking-history">
+        <thead><tr><th aria-label="Booking Details"></th><th>Date / Time</th><% if @program_coordinator %><th><%= @program.participant_label.titleize %></th><% end %><th>Status</th></tr></thead>
         <tbody>
           <% @booking_history.each do |booking| %>
-            <tr>
+            <% details = capture do %>
+              <%= render "bookings/explanation", booking: booking %>
+              <% if @program_coordinator && booking.gender_override_reason.present? %>
+                <p>Gender-rule override: <%= booking.gender_override_reason %></p>
+              <% end %>
+              <% if @program_coordinator && booking.status == "confirmed" && booking.ends_at > Time.current %>
+                <p><%= link_to "Edit", edit_program_organizer_booking_path(@program, booking) %></p>
+              <% end %>
+            <% end %>
+            <tr data-booking="<%= booking.id %>">
+              <td>
+                <% if details.present? %>
+                  <details class="participant-note-toggle">
+                    <summary aria-label="Booking explanation and details" aria-controls="booking-details-<%= booking.id %>"><span aria-hidden="true">&#9656;</span></summary>
+                  </details>
+                <% end %>
+              </td>
               <td><%= render "shared/date", value: booking.scheduled_start, zone: booking.time_zone, format: :compact, show_time: false %><br><%= booking_time(booking) %><% if booking.previous_booking %><br>Moved from <%= render "shared/date", value: booking.previous_booking.scheduled_start, zone: booking.previous_booking.time_zone, format: :compact, show_time: false %><% end %></td>
               <% if @program_coordinator %><td><%= render "shared/participant_identity", participant: booking.user %></td><% end %>
               <td><%= render "programs/booking_status", booking: booking, private_view: true %></td>
-              <td>
-                <%= render "bookings/explanation", booking: booking %>
-                <% if @program_coordinator && booking.gender_override_reason.present? %>
-                  <p>Gender-rule override: <%= booking.gender_override_reason %></p>
-                <% end %>
-              </td>
-              <% if @program_coordinator %>
-                <td><% if booking.status == "confirmed" && booking.ends_at > Time.current %><%= link_to "Edit", edit_program_organizer_booking_path(@program, booking) %><% end %></td>
-              <% end %>
             </tr>
+            <% if details.present? %>
+              <tr class="participant-note-row" id="booking-details-<%= booking.id %>">
+                <td></td><td class="booking-details" colspan="<%= @program_coordinator ? 3 : 2 %>"><%= details %></td>
+              </tr>
+            <% end %>
           <% end %>
         </tbody>
       </table>

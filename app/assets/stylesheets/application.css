@@ -864,16 +864,33 @@ table:not(.calendar) td:not(:first-child) .participant-actions {
 
 .participant-roster th,
 .participant-roster td {
-  padding: 0.9rem;
+  padding: 0.75rem 0.6rem;
   vertical-align: middle;
   overflow-wrap: anywhere;
 }
 
-:is(.participant-roster, .participation-history) thead th:first-child {
+:is(.participant-roster, .participation-history, .booking-history) thead th:first-child {
   width: 1.75rem;
 }
 
-table.participant-roster :is(th, td):nth-child(2) {
+table.participant-roster tr:not(.participant-note-row) > :first-child {
+  width: 3rem;
+  padding-inline: 0.25rem;
+}
+
+.table-scroll .participant-roster .participant-identity {
+  min-width: 18rem;
+}
+
+table.participant-roster th {
+  white-space: nowrap;
+}
+
+table:is(.participant-roster, .booking-history) :is(th, td):nth-child(2) {
+  text-align: left;
+}
+
+table.booking-history .booking-details {
   text-align: left;
 }
 

@@ -5,16 +5,28 @@
     <p>Showing <%= @bookings.size %> of <%= @history.count %> bookings</p>
     <p class="scroll-hint">Scroll horizontally to view the full history.</p>
     <div class="table-scroll" role="region" aria-label="Booking history" tabindex="0">
-      <table>
-        <thead><tr><th>Program / Venue</th><th>Date / Time</th><th>Status</th><th>Explanation</th></tr></thead>
+      <table class="booking-history">
+        <thead><tr><th aria-label="Booking Details"></th><th>Program / Venue</th><th>Date / Time</th><th>Status</th></tr></thead>
         <tbody>
           <% @bookings.each do |booking| %>
-            <tr>
+            <% details = render("bookings/explanation", booking: booking) %>
+            <tr data-booking="<%= booking.id %>">
+              <td>
+                <% if details.present? %>
+                  <details class="participant-note-toggle">
+                    <summary aria-label="Booking explanation" aria-controls="booking-details-<%= booking.id %>"><span aria-hidden="true">&#9656;</span></summary>
+                  </details>
+                <% end %>
+              </td>
               <td><%= link_to booking.program.name, program_path(booking.program) %><br><%= link_to booking.program.venue.name, venue_path(booking.program.venue) %></td>
               <td><%= render "shared/date", value: booking.scheduled_start, zone: booking.time_zone, format: :compact, show_time: false %><br><%= booking_time(booking) %><% if booking.previous_booking %><br>Moved from <%= render "shared/date", value: booking.previous_booking.scheduled_start, zone: booking.previous_booking.time_zone, format: :compact, show_time: false %><% end %></td>
               <td><%= render "programs/booking_status", program: booking.program, booking: booking %></td>
-              <td><%= render "bookings/explanation", booking: booking %></td>
             </tr>
+            <% if details.present? %>
+              <tr class="participant-note-row" id="booking-details-<%= booking.id %>">
+                <td></td><td class="booking-details" colspan="3"><%= details %></td>
+              </tr>
+            <% end %>
           <% end %>
         </tbody>
       </table>
