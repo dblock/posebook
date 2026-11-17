@@ -13,9 +13,7 @@
       <p><label><%= form.check_box :private_calendar, required: true %> This calendar is private and shared only with authorized organizers.</label></p>
       <%= form.submit @connection&.enabled? ? "Reconnect Google Calendar" : "Connect Google Calendar" %>
     <% end %>
-  <% elsif current_user.system_admin? %>
-    <p>Google Calendar is not available. Set <code>GOOGLE_CALENDAR_CLIENT_ID</code>, <code>GOOGLE_CALENDAR_CLIENT_SECRET</code>, and <code>GOOGLE_CALENDAR_REDIRECT_URI</code> to enable it; see <%= link_to "Google Calendar setup", "https://github.com/dblock/posebook/blob/master/docs/google-calendar.md" %>.</p>
   <% else %>
-    <p>Google Calendar is not available. Ask an administrator to enable it.</p>
+    <p>Google Calendar is not available.</p>
   <% end %>
 </main>

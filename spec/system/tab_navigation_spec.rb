@@ -32,11 +32,11 @@ RSpec.describe 'Grouped tab navigation', :aggregate_failures, :database, type: :
     end
   end
 
-  it 'puts venue creation and coordinator invitation beside their page headings at every viewport' do
+  it 'puts venue creation below programs and coordinator invitation beside its heading at every viewport' do
     each_viewport do |viewport|
       visit venue_path(program.venue)
       within('.venue-tabs') { click_on 'Programs' }
-      expect(page).to have_css('.title-row a.button-link', text: 'New Program')
+      expect(page).to have_css('.location-cards ~ p:last-child a.button-link', text: 'New Program')
       expect_no_horizontal_overflow
       capture_screenshot("venue-programs-#{viewport}")
       within('.venue-tabs') { click_on 'Settings' }
@@ -63,6 +63,18 @@ RSpec.describe 'Grouped tab navigation', :aggregate_failures, :database, type: :
       visit programs_venue_path(program.venue)
       click_on 'New Program'
       expect(page).to have_css('.venue-tabs [aria-current="page"]', text: 'Programs')
+      expect(page).to have_button('Create Program')
+    end
+  end
+
+  it 'keeps New Program at the bottom of an empty venue list without JavaScript' do
+    venue = create_venue
+    without_javascript do
+      visit programs_venue_path(venue)
+      expect(page).to have_text('No programs yet.')
+      expect(page).to have_css('main > p:last-child a.button-link', text: 'New Program')
+      click_on 'New Program'
+      expect(page).to have_current_path(new_venue_program_path(venue))
       expect(page).to have_button('Create Program')
     end
   end

@@ -1,13 +1,11 @@
 <main>
   <%= render "navigation", venue: @venue, active: "programs" %>
-  <div class="title-row">
-    <h1>Programs</h1>
-    <% if @venue.coordinated_by?(current_user) %>
-      <%= link_to "New Program", new_venue_program_path(@venue), class: "button-link" %>
-    <% end %>
-  </div>
+  <h1>Programs</h1>
   <div class="location-cards">
     <% @programs.each do |program| %><%= render "programs/card", program: program %><% end %>
   </div>
   <% if @programs.empty? %><p>No programs yet.</p><% end %>
+  <% if @venue.coordinated_by?(current_user) %>
+    <p><%= link_to "New Program", new_venue_program_path(@venue), class: "button-link" %></p>
+  <% end %>
 </main>

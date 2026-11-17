@@ -82,6 +82,7 @@ RSpec.describe 'Photo actions', :aggregate_failures, :database, type: :system do
       visit program_participant_invitations_path(program)
       expect_roster_profile_column(photo)
       expect_separate_invitation_actions(pending)
+      expect(page).to have_css('main > p:last-child a.button-link', text: 'Invite a Participant')
       expect_no_horizontal_overflow
       capture_screenshot("invitation-portraits-#{viewport}")
     end
