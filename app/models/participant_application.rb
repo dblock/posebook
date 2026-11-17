@@ -30,7 +30,7 @@ class ParticipantApplication
   before_validation { self.message = message.to_s.strip.presence }
 
   def status_label
-    status == 'declined' ? 'Not Now' : status.titleize
+    status == 'declined' ? 'Reject' : status.titleize
   end
 
   def draft?

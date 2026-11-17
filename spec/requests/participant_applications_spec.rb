@@ -250,15 +250,15 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     expect(response.parsed_body.at_css("main a[href='#{participant_path(applicant)}']").text).to eq('View Profile')
   end
 
-  it 'links the applicant profile and labels Not Now with newest history first' do
+  it 'links the applicant profile and labels Reject with newest history first' do
     decline_application
     get program_application_path(program, application)
     header = response.parsed_body.at_css('main > p')
     expect(header.at_css('a')['href']).to eq(participant_path(applicant))
-    expect(header.at_css('.status-label').text).to eq('Not Now')
+    expect(header.at_css('.status-label').text).to eq('Reject')
     expect(header.text).not_to include(' - ')
     expect(response.parsed_body.css('[aria-label="Application history"] tbody tr td:first-child').map(&:text))
-      .to eq(['Application: Not Now', 'Application Submitted'])
+      .to eq(['Application Rejected', 'Application Submitted'])
   end
 
   it 'moves private reviewer notes into a disclosure row and omits arrows for events without notes' do
@@ -274,12 +274,12 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     expect(response.parsed_body.css('summary[aria-controls^="event-notes-"]').size).to eq(1)
   end
 
-  it 'retains private Not Now history and accepts it later even with intake closed' do
+  it 'retains private Reject history and accepts it later even with intake closed' do
     decline_application
     expect(application.reload.status).to eq('declined')
     get program_application_path(program, application)
-    expect(response.body).to include('Not Now', 'Private reviewer explanation.')
-    expect(response.body).not_to include('>Not Now</button>')
+    expect(response.body).to include('Reject', 'Private reviewer explanation.')
+    expect(response.body).not_to include('>Reject</button>')
     program.update!(applications_enabled: false)
     sign_in(coordinator)
     review('accepted')
@@ -287,7 +287,7 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     expect(program.participant?(applicant)).to be(true)
     expect(application.reload.status).to eq('accepted')
     get program_application_path(program, application)
-    expect(response.body).to include('Application Submitted', 'Application: Not Now', 'Application Accepted')
+    expect(response.body).to include('Application Submitted', 'Application Rejected', 'Application Accepted')
     expect(response.body).not_to include('Private Reviewer Notes (Optional)')
     expect_accepted_application_links
   end
@@ -296,7 +296,7 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     decline_application
     sign_in(applicant)
     get program_participation_application_path(program)
-    expect(response.body).to include('Not Now', 'may accept this application later')
+    expect(response.body).to include('Reject', 'may accept this application later')
     expect(response.body).not_to include('Private reviewer explanation.', coordinator.name)
   end
 

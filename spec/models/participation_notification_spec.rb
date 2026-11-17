@@ -89,7 +89,7 @@ RSpec.describe ParticipationNotification, :aggregate_failures, :database do
     expect(notice.body.decoded).not_to include('Secret reviewer notes', application.message, applicant.email)
   end
 
-  it 'drops superseded submission and Not Now emails rather than sending them after acceptance' do
+  it 'drops superseded submission and Reject emails rather than sending them after acceptance' do
     decide('declined')
     decide('accepted')
     expect { deliver_emails }.to change { ActionMailer::Base.deliveries.length }.by(2)

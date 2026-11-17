@@ -18,7 +18,7 @@
       <%= form.hidden_field :lock_version, value: @application.lock_version %>
       <p><%= form.label :notes, "Private Reviewer Notes (Optional)" %><br><%= form.text_area :notes, maxlength: 200, rows: 3 %><br><small>Visible only to this program's managers, never the applicant.</small></p>
       <p><%= form.button "Accept", name: "participant_application[status]", value: "accepted" %>
-      <% if @application.status == "pending" %><%= form.button "Not Now", name: "participant_application[status]", value: "declined" %><% end %></p>
+      <% if @application.status == "pending" %><%= form.button "Reject", name: "participant_application[status]", value: "declined" %><% end %></p>
     <% end %>
   <% end %>
   <% events = @application.events.reviewable.includes(:actor).reorder(created_at: :desc, id: :desc).to_a %>

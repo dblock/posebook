@@ -26,6 +26,6 @@ class ParticipationEvent
   scope :reviewable, -> { where(:action.in => REVIEW_ACTIONS) }
 
   def label
-    action == 'application_declined' ? 'Application: Not Now' : action.humanize
+    action == 'application_declined' ? 'Application Rejected' : action.humanize
   end
 end
