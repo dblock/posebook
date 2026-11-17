@@ -1,0 +1,19 @@
+<% if @setting.errors.any? %>
+  <%= render "shared/errors", record: @setting %>
+<% else %>
+  <% preview = NotificationPreview.new(@notification_scope, @setting, confirmed: params[:confirmed] == "1",
+                                               url_options: { host: request.host, port: request.optional_port, protocol: request.protocol }) %>
+  <% content = preview.content %>
+  <% unless @setting.enabled %>
+    <p><small>This notification is disabled.</small></p>
+  <% end %>
+  <dl>
+    <dt>To</dt><dd><%= preview.recipient %></dd>
+    <dt>When</dt><dd><%= preview.timing %></dd>
+    <dt>Subject</dt><dd data-preview-subject><%= content.fetch("subject") %></dd>
+  </dl>
+  <div class="notification-preview-body" data-preview-body><%= booking_notification_body(content.fetch("body")) %></div>
+  <% if BookingNotificationSetting::SCHEDULED.include?(@setting.kind) && @setting.kind != "coordinator_alert" %>
+    <p><small>Manage Booking Reminders (account preference link added automatically)</small></p>
+  <% end %>
+<% end %>

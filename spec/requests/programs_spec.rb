@@ -164,7 +164,7 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     expect(response.parsed_body.css('.program-tabs a').map(&:text))
       .to eq(%w[Program Calendar Photos Models Settings])
     expect(response.parsed_body.css('.program-secondary-tabs a').map(&:text))
-      .to eq(['Details', 'Coordinators', 'Google Calendar', 'Security'])
+      .to eq(['Details', 'Coordinators', 'Notifications', 'Google Calendar', 'Security'])
     expect(response.parsed_body.at_css('main > p:last-child a.button-link')['href'])
       .to eq(new_program_coordinator_path(program))
   end

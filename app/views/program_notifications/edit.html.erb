@@ -1,0 +1,77 @@
+<main>
+  <%= notification_navigation(@notification_scope) %>
+  <h1><%= @setting.title %></h1>
+  <p><%= @setting.description %></p>
+  <%= render "shared/errors", record: @setting %>
+  <%= form_with url: notification_update_path(@notification_scope, @setting.kind), method: :patch,
+                scope: :notification, data: { notification_editor: true, preview_url: notification_preview_path(@notification_scope, @setting.kind) } do |form| %>
+    <% if @setting.mandatory? %>
+      <p>Required security email. Its action link must remain in the message.</p>
+    <% else %>
+      <p><label><%= form.check_box :enabled, checked: @setting.enabled %> Enabled</label></p>
+    <% end %>
+    <p><%= @setting.local_attributes.present? ? "Custom Settings" : "Using #{notification_parent_label(@notification_scope)}" %></p>
+    <% if @setting.local_attributes.present? %>
+      <p><label><%= check_box_tag :inherit, "1", params[:inherit] == "1" %> Reset to <%= notification_parent_label(@notification_scope) %></label></p>
+    <% end %>
+    <% if BookingNotificationSetting::SCHEDULED.include?(@setting.kind) %>
+      <fieldset>
+        <legend>Timing</legend>
+        <% if @setting.kind == "confirmation_request" %>
+          <p><%= form.label :timing, "Confirmation Opens" %><br>
+            <%= form.select :timing, [["At Previous Session End", "previous_session_end"], ["Days Before the Session", "days_before"]], selected: @setting.timing %>
+          </p>
+        <% end %>
+        <div data-days-timing>
+          <p><%= form.label :days_before, "Calendar Days Before" %><br>
+            <%= form.number_field :days_before, value: @setting.days_before, min: 0, max: 365, required: true %>
+          </p>
+          <p><%= form.label :time, "Time" %><br><%= form.time_field :time, value: @setting.time, required: true %></p>
+        </div>
+        <% if @setting.kind == "confirmation_request" %>
+          <small>Confirmation opens at this time even when its email is disabled. Days and time are used only for Days Before the Session.</small>
+          <p><small>Previous session means the preceding scheduled session, including unbooked sessions and dated exceptions. Without an end time, that session ends at local midnight.</small></p>
+        <% end %>
+      </fieldset>
+    <% elsif @setting.kind == "application_draft" %>
+      <p><%= form.label :days_after, "Elapsed Days After First Save or Reopening" %><br>
+        <%= form.number_field :days_after, value: @setting.days_after, min: 0, max: 29, required: true %>
+      </p>
+    <% elsif NotificationCatalog::BOOKING_KINDS.include?(@setting.kind) %>
+      <p>Queued immediately after the action. Assigned coordinators receive updates except the person making the change.</p>
+    <% else %>
+      <p>Queued immediately after the action.</p>
+    <% end %>
+    <fieldset>
+      <legend>Email Content</legend>
+      <p><%= form.label :subject, "Subject" %><br>
+        <%= form.text_field :subject, value: @setting.subject.nil? ? @setting.template("subject") : @setting.subject, maxlength: 200 %>
+      </p>
+      <div class="notification-message-editor">
+        <p><%= form.label :body, "Message" %><br>
+          <%= form.text_area :body, value: @setting.body.nil? ? @setting.template("body") : @setting.body, rows: 14, maxlength: 10_000 %>
+        </p>
+        <div class="notification-placeholders" role="group" aria-label="Insert Placeholder">
+          <p><strong>Insert Placeholder</strong></p>
+          <ul>
+            <% @setting.placeholders.each do |placeholder| %>
+              <li><button type="button" data-notification-placeholder="{<%= placeholder %>}" disabled>{<%= placeholder %>}</button></li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    </fieldset>
+    <% if NotificationCatalog::BOOKING_KINDS.include?(@setting.kind) %>
+      <p><label><%= check_box_tag :confirmed, "1", params[:confirmed] == "1" %> Preview Confirmed Attendance</label></p>
+    <% end %>
+    <div class="participant-actions">
+      <%= form.submit "Save Notification" %>
+      <%= link_to "Cancel", notification_list_path(@notification_scope), class: "button-link" %>
+    </div>
+    <h2>Email Preview</h2>
+    <section class="notification-preview" data-notification-preview aria-label="Email Preview" aria-live="polite">
+      <%= render "program_notifications/preview" %>
+    </section>
+  <% end %>
+  <%= javascript_include_tag "notification-preview", defer: true %>
+</main>

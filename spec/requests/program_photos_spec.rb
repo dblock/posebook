@@ -50,7 +50,8 @@ RSpec.describe 'Program photos', :aggregate_failures, :database, type: :request 
     groups = response.parsed_body.css('.program-tabs .page-tab-group')
     expect(groups.map { |group| group.css('a').map(&:text) })
       .to eq([%w[Program Calendar Photos Participants Settings]])
-    expect(response.parsed_body.css('.program-secondary-tabs a').map(&:text)).to eq(['Details', 'Google Calendar'])
+    expect(response.parsed_body.css('.program-secondary-tabs a').map(&:text))
+      .to eq(['Details', 'Notifications', 'Google Calendar'])
     expect(response.parsed_body.at_css('.program-tabs .tab-separator')).to be_nil
     expect(response.parsed_body.at_css('.breadcrumbs [aria-current="page"]').text).to eq('Details')
     delete session_path

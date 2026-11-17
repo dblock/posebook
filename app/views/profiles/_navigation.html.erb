@@ -2,6 +2,7 @@
 <% own = user == current_user %>
 <% tabs = [["profile", "Profile"], ["bookings", "Bookings"], ["programs", "Programs"], ["applications", "Applications"], ["history", "History"]] %>
 <% actions = [["edit", "Edit"], ["photos", "Photos"], ["security", "Security"]] %>
+<% actions.insert(2, ["notifications", "Notifications"]) if own %>
 <% tabs, actions = [tabs, actions].map { |group| group.map { |key, title| [key, title, (user_page_path(user, key) if key == active || profile_tab_enabled?(key, user))] } } %>
 <% breadcrumbs = current_user.system_admin? ? [["Users", admin_users_path]] : [] %>
 <% breadcrumbs << [own ? "#{user.name} (You)" : user.name, (user_page_path(user) unless active == "profile")] %>

@@ -117,7 +117,8 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     expect(response.parsed_body.css('.venue-tabs a').map(&:text))
       .to eq(%w[Venue Programs Photos Settings])
     expect(response.parsed_body.at_css('.venue-tabs [aria-current="page"]').text).to eq('Settings')
-    expect(response.parsed_body.css('.venue-secondary-tabs a').map(&:text)).to eq(%w[Details Coordinators Security])
+    expect(response.parsed_body.css('.venue-secondary-tabs a').map(&:text)).to eq(%w[Details Coordinators Notifications
+                                                                                     Security])
   end
 
   it 'groups programs and photos with management while keeping write actions private' do
@@ -195,7 +196,7 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     sign_in(coordinator)
     get edit_venue_path(venue)
     expect(response.parsed_body.at_css('.venue-tabs [aria-current="page"]').text).to eq('Settings')
-    expect(response.parsed_body.css('.venue-secondary-tabs a').map(&:text)).to eq(['Details'])
+    expect(response.parsed_body.css('.venue-secondary-tabs a').map(&:text)).to eq(%w[Details Notifications])
   end
 
   def expect_guest_cannot_view_private_photo(second)
