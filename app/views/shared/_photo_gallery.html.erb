@@ -3,8 +3,8 @@
   <% if editable %>
     <%= javascript_include_tag "photo-actions", defer: true %>
     <%= form_with url: upload_url, scope: scope, multipart: true, data: { photo_action: true } do |form| %>
-      <p><%= form.label :file, "New Photo" %><br><%= form.file_field :file, accept: "image/jpeg,image/png,image/webp", required: true %></p>
-      <%= form.submit "Upload Photo" %>
+      <p><%= form.label :file, "New Photo" %><br><%= form.file_field :file, accept: "image/jpeg,image/png,image/webp", required: true, data: { photo_upload: true } %></p>
+      <%= form.submit "Upload Photo", data: { photo_upload_submit: true } %>
     <% end %>
   <% end %>
   <div class="photo-gallery">

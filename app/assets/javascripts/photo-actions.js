@@ -2,6 +2,13 @@
   const types = ["image/jpeg", "image/png", "image/webp"];
   const regions = () => Array.from(document.querySelectorAll("[data-photo-region]"));
 
+  function hideUploadButtons() {
+    document.querySelectorAll("[data-photo-upload-submit]").forEach(button => { button.hidden = true; });
+  }
+
+  document.addEventListener("posebook:replaced", hideUploadButtons);
+  hideUploadButtons();
+
   async function submit(form) {
     const region = form.closest("[data-photo-region]");
     const index = regions().indexOf(region);
@@ -25,6 +32,7 @@
       if (!replacement) throw new Error("Photo region not found");
 
       region.replaceWith(replacement);
+      hideUploadButtons();
       const flashes = html.querySelector("[data-flash-messages]");
       if (flashes) document.querySelector("[data-flash-messages]")?.replaceChildren(...flashes.children);
       const figure = photo && Array.from(replacement.querySelectorAll("[data-photo]"))
@@ -43,6 +51,14 @@
 
     event.preventDefault();
     submit(form);
+  });
+
+  document.addEventListener("change", event => {
+    const input = event.target.closest?.("input[data-photo-upload]");
+    if (!input?.files.length) return;
+
+    const button = input.form.querySelector("[data-photo-upload-submit]");
+    if (button && !button.disabled) input.form.requestSubmit(button);
   });
 
   function uploadForm(target) {
