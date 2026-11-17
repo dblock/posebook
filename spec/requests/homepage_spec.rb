@@ -18,6 +18,99 @@ RSpec.describe 'Homepage', :aggregate_failures, :database, type: :request do
                                                                          message: 'Private draft message'))
   end
 
+  def create_submitted_application(at: program, status: 'pending')
+    user = create_user
+    track_record(ParticipantApplication.create!(program: at, user: user, name: user.name, email: user.email,
+                                                status: status, profile_shared_at: Time.current))
+  end
+
+  it 'shows administrators all submitted application states across programs but never private drafts' do
+    program.update!(applications_enabled: true)
+    %w[pending accepted declined withdrawn].each { |status| create_submitted_application(status: status) }
+    other = create_submitted_application(at: create_program)
+    private_applicant = create_user(name: 'Private Draft Applicant', email_verified_at: Time.current)
+    create_draft(private_applicant)
+    sign_in(create_user(roles: ['system_admin']))
+    get root_path, params: { status: 'all' }
+    section = response.parsed_body.at_css('.submitted-applications')
+    expect(section.css('[scope]').map(&:text)).to eq(%w[Program Applicant Status Actions])
+    expect(section.css('tbody tr').size).to eq(5)
+    expect(section.text).to include('Pending', 'Accepted', 'Not Now', 'Withdrawn', other.email)
+    expect(section.text).not_to include(private_applicant.name, private_applicant.email, 'Cancel Application')
+    expect(section.css('.button-link').pluck('href')).to include(program_application_path(other.program, other))
+    expect(section.css('tbody form')).to be_empty
+  end
+
+  it 'limits coordinator submission review to directly assigned and inherited programs' do
+    coordinator = create_user
+    grant_coordinator_access(program, coordinator)
+    create_submitted_application
+    inherited = create_program
+    grant_venue_access(inherited.venue, coordinator)
+    create_submitted_application(at: inherited)
+    outside = create_submitted_application(at: create_program)
+    sign_in(coordinator)
+    get root_path
+    section = response.parsed_body.at_css('.submitted-applications')
+    expect(section.css('tbody tr').size).to eq(2)
+    expect(section.text).to include(program.name, inherited.name)
+    expect(section.text).not_to include(outside.email, outside.program.name)
+  end
+
+  it 'paginates the management submission queue without losing earlier applications' do
+    stub_const('CursorPage::PER_PAGE', 1)
+    records = %w[pending declined].map { |status| create_submitted_application(status: status) }
+    sign_in(create_user(roles: ['system_admin']))
+    get root_path, params: { status: 'all' }
+    section = response.parsed_body.at_css('.submitted-applications')
+    expect(section.text).to include(records.last.email)
+    expect(section.at_css('a[rel="next"]')['href']).to include('status=all')
+    get section.at_css('a[rel="next"]')['href']
+    section = response.parsed_body.at_css('.submitted-applications')
+    expect(section.text).to include(records.first.email)
+    expect(section.text).not_to include(records.last.email)
+    expect(section.at_css('a[rel="next"]')).to be_nil
+    get section.at_css('a[rel="prev"]')['href']
+    expect(response.parsed_body.at_css('.submitted-applications').text).to include(records.last.email)
+  end
+
+  it 'defaults the management queue to pending submissions only' do
+    pending = create_submitted_application
+    other = create_submitted_application(status: 'declined')
+    sign_in(create_user(roles: ['system_admin']))
+    get root_path
+    section = response.parsed_body.at_css('.submitted-applications')
+    expect(section.at_css('select option[selected]')['value']).to eq('pending')
+    expect(section.css('tbody tr').size).to eq(1)
+    expect(section.at_css('tbody').text).to include(pending.email)
+    expect(section.at_css('tbody').text).not_to include(other.email)
+  end
+
+  %w[accepted declined withdrawn].each do |status|
+    it "filters the management queue to #{status} without retaining another status cursor" do
+      stub_const('CursorPage::PER_PAGE', 1)
+      pending = create_submitted_application
+      create_submitted_application
+      filtered = create_submitted_application(status: status)
+      sign_in(create_user(roles: ['system_admin']))
+      get root_path
+      cursor = response.parsed_body.at_css('.submitted-applications a[rel="next"]')['href']
+      get cursor, params: { status: status }
+      section = response.parsed_body.at_css('.submitted-applications')
+      expect(section.at_css('select option[selected]')['value']).to eq(status)
+      expect(section.at_css('tbody').text).to include(filtered.email)
+      expect(section.at_css('tbody').text).not_to include(pending.email)
+    end
+  end
+
+  it 'rejects invalid management filters, including attempts to list drafts' do
+    sign_in(create_user(roles: ['system_admin']))
+    %w[draft forged].each do |status|
+      get root_path, params: { status: status }
+      expect(response).to have_http_status(:bad_request)
+    end
+  end
+
   it 'lists every application status only for the signed-in owner with draft continuation' do
     program.update!(applications_enabled: true)
     applicant = create_user(email_verified_at: Time.current)

@@ -8,6 +8,16 @@
     </section>
   <% end %>
   <% if @management_home %>
+    <section class="submitted-applications" aria-label="Submitted applications" data-application-region>
+      <h2>Submitted Applications</h2>
+      <%= render "participant_applications/filter", url: root_path, status: @submitted_status %>
+      <% if @submitted_applications.any? %>
+        <%= render "participant_applications/table", applications: @submitted_applications, user: nil, show_applicant: true %>
+      <% else %>
+        <p>No applications in this view.</p>
+      <% end %>
+      <%= render "shared/pagination", pagination: @submitted_pagination, label: "Submitted application pages" %>
+    </section>
     <h2>Programs You Manage</h2>
     <%= render "programs/managed", programs: @managed_programs %>
   <% elsif current_user %>

@@ -27,7 +27,7 @@ class ProgramApplicationsController < ApplicationController
                                   .review(params.expect(:id), status: attributes[:status],
                                                               version: attributes[:lock_version],
                                                               notes: attributes[:notes])
-    redirect_to program_application_path(@program, params[:id]), notice: t('participant_applications.reviewed')
+    redirect_to review_destination(attributes[:status]), notice: t('participant_applications.reviewed')
   end
 
   def history
@@ -38,6 +38,12 @@ class ProgramApplicationsController < ApplicationController
   end
 
   private
+
+  def review_destination(status)
+    return program_applications_path(@program) if status == 'declined'
+
+    program_application_path(@program, params[:id])
+  end
 
   def remember_review_destination
     return if current_user

@@ -33,6 +33,7 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     application
     sign_in(coordinator)
     review('declined')
+    expect(response).to redirect_to(program_applications_path(program))
   end
 
   def review(status, version: application.reload.lock_version, notes: 'Private reviewer explanation.')
