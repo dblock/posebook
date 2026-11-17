@@ -31,7 +31,7 @@ class ProgramApplicationsController < ApplicationController
   end
 
   def history
-    @events = page_of(ParticipationEvent.where(program_id: @program.id).includes(:actor))
+    @events = page_of(ParticipationEvent.reviewable.where(program_id: @program.id).includes(:actor))
     ids = @events.map(&:source_id)
     @sources = ParticipantApplication.where(:id.in => ids).index_by(&:id)
                                      .merge(ParticipantInvitation.where(:id.in => ids).index_by(&:id))

@@ -1,6 +1,12 @@
 <main>
   <h1>Posebook</h1>
   <% if current_user %><p>Welcome, <%= current_user.name %>.</p><% end %>
+  <% if current_user && (applications = participant_dashboard.applications).any? %>
+    <section class="homepage-applications" aria-label="Applications">
+      <h2>Applications</h2>
+      <%= render "participant_applications/table", applications: applications, user: current_user %>
+    </section>
+  <% end %>
   <% if @management_home %>
     <h2>Programs You Manage</h2>
     <%= render "programs/managed", programs: @managed_programs %>

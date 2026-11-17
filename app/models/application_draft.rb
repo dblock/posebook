@@ -34,9 +34,24 @@ class ApplicationDraft
       session.with_transaction do
         record = records.first!
         check_version!(record, version)
-        record.destroy!
+        record.discard_draft!
       end
     end
+  end
+
+  def reopen(version:)
+    ParticipantApplication.with_session do |session|
+      session.with_transaction do
+        require_applicant!
+        @record = records.first!
+        check_version!(@record, version, status: 'withdrawn')
+        @record.update!(status: 'draft', draft_origin: @record.attributes.slice('message', 'profile_shared_at'),
+                        profile_shared_at: nil, draft_profile: {}, draft_started_at: Time.current,
+                        draft_reminded_at: nil, lock_version: @record.lock_version + 1)
+        @record.record_event!('reopened', actor: @user)
+      end
+    end
+    @record
   end
 
   private
@@ -48,8 +63,10 @@ class ApplicationDraft
     @record.assign_attributes(message: message,
                               draft_profile: @record.draft_profile.merge(profile.to_h.stringify_keys
                                                                               .slice(*PROFILE_FIELDS)))
-    @record.lock_version += 1 unless @record.new_record?
+    new_draft = @record.new_record?
+    @record.lock_version += 1 unless new_draft
     @record.save!
+    @record.record_event!('draft_created', actor: @user) if new_draft
   end
 
   def require_applicant!
@@ -65,7 +82,8 @@ class ApplicationDraft
     check_version!(record, version)
     @user.assign_attributes(record.draft_profile.slice(*PROFILE_FIELDS))
     @user.save!
-    record.update!(**submission_attributes(message), lock_version: record.lock_version + 1, draft_profile: {})
+    record.update!(**submission_attributes(message), lock_version: record.lock_version + 1, draft_profile: {},
+                                                     draft_origin: {}, draft_started_at: nil, draft_reminded_at: nil)
     record
   end
 
@@ -81,9 +99,11 @@ class ApplicationDraft
     ParticipantApplication.where(program_id: @program.id, user_id: @user.id)
   end
 
-  def check_version!(record, version)
+  def check_version!(record, version, status: 'draft')
     return if record.new_record? && version.blank?
-    return if record.persisted? && record.draft? && version.to_s == record.draft_revision
+
+    expected = status == 'draft' ? record.draft_revision : record.lock_version.to_s
+    return if record.persisted? && record.status == status && version.to_s == expected
 
     raise ParticipantApplicationWorkflow::Conflict, 'This application changed. Reload it before saving.'
   end

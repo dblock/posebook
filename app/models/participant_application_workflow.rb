@@ -82,8 +82,7 @@ class ParticipantApplicationWorkflow
   end
 
   def record_event(action, actor, notes, session)
-    event = ParticipationEvent.create!(program: @program, user_id: @application.user_id, actor: actor,
-                                       source_id: @application.id, action: "application_#{action}", notes: notes)
+    event = @application.record_event!(action, actor: actor, notes: notes)
     ParticipationNotification.new(event).enqueue(session: session)
   end
 end

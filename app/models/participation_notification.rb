@@ -18,7 +18,7 @@ class ParticipationNotification
     application = ParticipantApplication.where(id: @event.source_id, program_id: @event.program_id,
                                                user_id: @event.user_id).first
     recipient = User.active.where(id: recipient_id).first
-    return unless application&.profile_shared_at && recipient
+    return unless application&.profile_shared_at && recipient && latest_event?(application)
 
     if @event.action == 'application_submitted'
       submission_message(application, recipient)
@@ -38,6 +38,10 @@ class ParticipationNotification
   end
 
   private
+
+  def latest_event?(application)
+    application.events.order_by(created_at: :desc, id: :desc).first&.id == @event.id
+  end
 
   def current_participant
     program = @event.program
