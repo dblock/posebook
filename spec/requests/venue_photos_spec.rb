@@ -131,7 +131,8 @@ RSpec.describe 'Venue photos', :aggregate_failures, :database, type: :request do
     expect(response.parsed_body.at_css('.venue-tabs [aria-current="page"]').text).to eq('Settings')
     expect(response.parsed_body.at_css('.venue-secondary-tabs [aria-current="page"]').text).to eq('Details')
     get programs_venue_path(venue)
-    expect(response.parsed_body.at_css('.title-row a.button-link')['href']).to eq(new_venue_program_path(venue))
+    expect(response.parsed_body.at_css('main > p:last-child a.button-link')['href'])
+      .to eq(new_venue_program_path(venue))
     get venue_coordinators_path(venue)
     expect(response.parsed_body.at_css('.title-row a.button-link')['href']).to eq(new_venue_coordinator_path(venue))
     delete session_path

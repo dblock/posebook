@@ -1,7 +1,6 @@
 <main data-application-region>
   <%= render "programs/navigation", program: @program, active: "invitations" %>
   <h1>Invitations</h1>
-  <p><%= link_to "Invite #{@program.participant_article} #{@program.participant_label.titleize}", new_program_participant_invitation_path(@program), class: "button-link" %></p>
   <%= render "shared/table_filter", url: program_participant_invitations_path(@program), name: :status, label: "Status",
              selected: @status, options: [["All", "all"], ["Pending", "pending"], ["Accepted", "accepted"], ["Revoked", "revoked"], ["Expired", "expired"]] %>
   <% if @invitations.empty? %>
@@ -36,4 +35,5 @@
     </div>
   <% end %>
   <%= render "shared/pagination", pagination: @pagination, label: "Invitation pages" %>
+  <p><%= link_to "Invite #{@program.participant_article} #{@program.participant_label.titleize}", new_program_participant_invitation_path(@program), class: "button-link" %></p>
 </main>
