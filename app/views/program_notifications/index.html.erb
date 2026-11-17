@@ -1,0 +1,21 @@
+<main>
+  <%= notification_navigation(@notification_scope) %>
+  <h1>Notifications</h1>
+  <p>Choose an email to edit its settings, content, and preview. Defaults apply unless overridden.</p>
+  <p class="scroll-hint">Scroll horizontally to view notification details and actions.</p>
+  <div class="table-scroll" role="region" aria-label="Notifications" tabindex="0">
+    <table class="notification-settings">
+      <thead><tr><th scope="col">Notification</th><th scope="col" class="notification-purpose">Purpose</th><th scope="col">Status</th><th scope="col">Edit</th></tr></thead>
+      <tbody>
+        <% @settings.each do |setting| %>
+          <tr>
+            <td><%= setting.title %></td>
+            <td class="notification-purpose"><%= setting.description %></td>
+            <td><%= status_label(setting.mandatory? ? "Required" : (setting.enabled ? "Enabled" : "Disabled")) %></td>
+            <td><%= link_to "Edit", notification_edit_path(@notification_scope, setting.kind), aria: { label: "Edit #{setting.title}" } %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</main>

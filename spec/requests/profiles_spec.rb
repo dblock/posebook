@@ -15,7 +15,8 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
   it 'requires authentication for all account pages and password changes' do
     create_user
     [profile_path, bookings_profile_path, history_profile_path, details_profile_path, edit_profile_path,
-     security_profile_path, edit_password_path, new_account_deactivation_path].each do |path|
+     security_profile_path, notifications_profile_path, edit_password_path,
+     new_account_deactivation_path].each do |path|
       get path
       expect(response).to redirect_to(new_session_path)
     end
@@ -32,7 +33,7 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     expect(response.body).to include(user.name, user.email, 'Not provided')
     expect(response.parsed_body.css('main form')).to be_empty
     expect(response.parsed_body.css('.profile-tabs a').pluck('href'))
-      .to eq([profile_path, edit_profile_path, photos_profile_path, security_profile_path])
+      .to eq([profile_path, edit_profile_path, photos_profile_path, notifications_profile_path, security_profile_path])
     expect(response.parsed_body.css('.profile-tabs .page-tab-disabled').map(&:text))
       .to eq(%w[Bookings Programs Applications History])
     expect(response.parsed_body.at_css('.profile-tabs [aria-current="page"]').text).to eq('Profile')
@@ -46,7 +47,7 @@ RSpec.describe 'Account settings', :aggregate_failures, :database, type: :reques
     expect(response.parsed_body.css('.profile-roles')).to be_empty
     groups = response.parsed_body.css('.profile-tabs .page-tab-group')
     expect(groups.map { |group| group.css('a, .page-tab-disabled').map(&:text) })
-      .to eq([%w[Profile Bookings Programs Applications History], %w[Edit Photos Security]])
+      .to eq([%w[Profile Bookings Programs Applications History], %w[Edit Photos Notifications Security]])
     expect(response.parsed_body.at_css('.profile-tabs .tab-separator')['aria-hidden']).to eq('true')
     get profile_path(user_id: other.id)
     expect(response.parsed_body.at_css('.account-details').text).to include(user.email)

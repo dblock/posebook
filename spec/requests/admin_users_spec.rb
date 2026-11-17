@@ -67,6 +67,7 @@ RSpec.describe 'Administrator user editing', :aggregate_failures, :database, typ
     own_path = page == 'profile' ? profile_path : public_send("#{page}_profile_path")
     admin_path = page == 'profile' ? admin_user_path(user) : public_send("#{page}_admin_user_path", user)
     own = tabs_for(own_path)
+    expect(own.first.last.delete('Notifications')).to eq('Notifications')
     expect(tabs_for(admin_path)).to eq(own)
     expect_admin_tab_links(user)
   end
@@ -82,7 +83,7 @@ RSpec.describe 'Administrator user editing', :aggregate_failures, :database, typ
     profile_tabs
   end
 
-  it 'matches the profile tabs for admin user pages' do
+  it 'matches other profile tabs for admin user pages while keeping notifications owner-only' do
     admin = create_user(roles: ['system_admin'])
     user = create_user
     grant_profile_access(admin, user)

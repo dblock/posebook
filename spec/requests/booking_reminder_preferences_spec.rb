@@ -15,5 +15,8 @@ RSpec.describe 'Booking reminder preferences', :aggregate_failures, :database, t
     patch booking_reminder_preference_path(token: token)
     expect(response).to have_http_status(:redirect)
     expect(user.reload.booking_reminders_enabled?).to be(false)
+    sign_in(user)
+    patch profile_path, params: { user: { email: user.email, booking_reminders_enabled: '1' } }
+    expect(user.reload.booking_reminders_enabled?).to be(true)
   end
 end

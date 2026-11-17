@@ -47,6 +47,7 @@ module Admin
              when User then admin_user_path(record)
              when Venue then venue_path(record)
              when Program then program_path(record)
+             when NotificationDefaults then admin_settings_notifications_path
              end
       link_to record.name, path
     end
