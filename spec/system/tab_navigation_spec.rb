@@ -32,7 +32,7 @@ RSpec.describe 'Grouped tab navigation', :aggregate_failures, :database, type: :
     end
   end
 
-  it 'puts venue creation below programs and coordinator invitation beside its heading at every viewport' do
+  it 'puts venue creation and coordinator invitations below their lists at every viewport' do
     each_viewport do |viewport|
       visit venue_path(program.venue)
       within('.venue-tabs') { click_on 'Programs' }
@@ -43,9 +43,27 @@ RSpec.describe 'Grouped tab navigation', :aggregate_failures, :database, type: :
       within('.venue-secondary-tabs') { click_on 'Coordinators' }
       expect(page).to have_css('.venue-tabs [aria-current="page"]', text: 'Settings')
       expect(page).to have_css('.venue-secondary-tabs [aria-current="page"]', text: 'Coordinators')
-      expect(page).to have_css('.title-row a.button-link', text: 'Invite a Coordinator')
+      expect(page).to have_css('main > .coordinator-invitation-action:last-child a', text: 'Invite a Coordinator')
       expect_no_horizontal_overflow
       capture_screenshot("venue-settings-#{viewport}")
+    end
+  end
+
+  it 'leaves spacing above invitation actions after populated program and venue coordinator lists' do
+    coordinator = create_user(name: 'Assigned Coordinator')
+    grant_venue_access(program.venue, coordinator)
+    grant_coordinator_access(program, coordinator)
+    each_viewport do |viewport|
+      [program_coordinators_path(program), venue_coordinators_path(program.venue)].each_with_index do |path, index|
+        visit path
+        expect(page).to have_css('.coordinator-list', text: coordinator.name)
+        action = find('main > .coordinator-invitation-action:last-child')
+        expect(action).to have_link('Invite a Coordinator')
+        expect(action.style('margin-block-start')).to eq('margin-block-start' => '24px')
+        expect(page).to have_no_text('inherit access to every')
+        expect_no_horizontal_overflow
+        capture_screenshot("coordinator-invitation-#{index}-#{viewport}")
+      end
     end
   end
 

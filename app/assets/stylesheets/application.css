@@ -928,6 +928,10 @@ tr:has(.participant-note-toggle[open]) > td {
   margin-block-start: 1rem;
 }
 
+.coordinator-invitation-action {
+  margin-block-start: 1.5rem;
+}
+
 tr:has(.participant-note-toggle[open]) + .participant-note-row {
   display: table-row;
 }

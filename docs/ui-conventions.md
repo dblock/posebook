@@ -16,7 +16,7 @@ Use `shared/photo_series` inside a card's `data-photo-series` container to open 
 
 Plain `button`, `input[type=submit]`, and `.button-link` elements are primary actions with a comfortable touch target. Use `.secondary-action` for less important actions; buttons inside tables are compact automatically. Group related actions in `.participant-actions`. `pending-controls.js` marks submitted forms busy and disables their buttons, so do not add per-page loading code.
 
-Keep New Program at the bottom of the venue Programs page, after the program cards or empty-state message. Keep Invite a Coordinator at the bottom of program coordinator lists; on venue coordinator lists it remains beside the heading in `.title-row`. Do not make creation actions primary tabs.
+Keep New Program at the bottom of the venue Programs page, after the program cards or empty-state message. Keep Invite a Coordinator at the bottom of both program and venue coordinator lists, including empty lists, with a 1.5rem top margin on `.coordinator-invitation-action`. Do not make creation actions primary tabs.
 
 Put personal participant invitation links and Invite All Available after their lists and pagination, including empty states.
 

@@ -146,4 +146,5 @@
 - [#162](https://github.com/dblock/posebook/pull/162): Normalize HTML dates with compact single-line labels, minimum-width date columns, local relative days, current-year omission, consistent clocks, submission dates on application and invitation details, administrator account timestamps, and full dates, times, and time zones on hover - [@dblock](https://github.com/dblock).
 - [#163](https://github.com/dblock/posebook/pull/163): Expand booking history explanations and manager details with consistent disclosure arrows and tighten participant roster columns - [@dblock](https://github.com/dblock).
 - [#164](https://github.com/dblock/posebook/pull/164): Match timestamp typography to surrounding text and narrow the administrator Users name column - [@dblock](https://github.com/dblock).
+- [#165](https://github.com/dblock/posebook/pull/165): Keep coordinator invitation actions below program and venue coordinator lists with consistent spacing - [@dblock](https://github.com/dblock).
 - Your contribution here.
