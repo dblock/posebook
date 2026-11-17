@@ -36,6 +36,8 @@ Application details show Submitted On using the submission timestamp, falling ba
 
 Administrator account details include Account Created and Account Updated timestamps in UTC; ordinary account detail views do not expose this metadata.
 
+Dates and clocks inherit the surrounding font and size, including confirmation explanations; do not shrink clocks independently.
+
 Every rendered date has a semantic `datetime`, complete hover `title`, and matching accessible label. Hover details show the full date, time to the minute, and local time zone abbreviation, without seconds, fractional seconds, or numeric UTC offsets. The machine-readable value retains full precision and its offset. Dates remain ordinary text, without a custom cursor, click expansion, or additional tab stops. Calendar `format: :day` and `format: :month` retain day-number and month labels with full hover details and date/month machine precision.
 
 Keep editable date/time fields, route parameters, provider payloads, and durable email/event descriptions in their existing absolute formats. Copyright years are not date instances.
@@ -47,6 +49,8 @@ Wrap tables in `.table-scroll` with `role="region"`, an `aria-label`, and `tabin
 Standard data tables inherit the same body font size, and identity columns have a 22rem minimum width so contact information stays readable inside the scrolling region. The participant roster uses an 18rem identity minimum, tighter cell padding, and a compact arrow column to leave more room for its separate actions. Keep Invite to Book in its own roster column and separate application Review and View Profile actions. A native disclosure arrow opens roster pause notes and Applications History reviewer notes in a separate row spanning the rightmost three columns, including without JavaScript. Fade the border between the expanded parent and detail rows to a faint divider, retaining the detail row's normal bottom boundary. Omit arrows for events without notes and show history events as plain text, not status badges. Keep ordinary booking timestamps and urgent follow-up copy off the roster while retaining calendar warnings.
 
 Program and account booking histories reuse the native arrow and fading-border treatment. Keep explanations, time changes, attendance changes, and authorized manager details in a left-aligned row spanning the content columns. Omit empty disclosures, preserve existing manager-only visibility and edit eligibility, and keep the controls usable with keyboard and without JavaScript.
+
+The administrator Users table has a narrower 14rem Name column with a 12rem identity minimum and wrapping names, since email has its own column. Keep desktop account tables within their available width while retaining horizontal scrolling on narrow screens.
 
 Use the shared GET table filter with in-place updates and a no-JavaScript submit fallback. Roster status options include program-wide counts; invitation status and application history event filters default to All. Preserve filters through pagination and mutation return paths, reset cursors on filter changes, and keep private draft events out of history filters.
 
