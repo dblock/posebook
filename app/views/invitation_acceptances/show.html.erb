@@ -21,7 +21,7 @@
       <%= hidden_field_tag :token, @token %>
       <p><%= form.label :name %><br><%= form.text_field :name, required: true, maxlength: 100, autocomplete: "name" %></p>
       <p><%= form.label :email %><br><%= form.email_field :email, required: true, readonly: @invitation.email.present?, autocomplete: "email" %></p>
-      <p><%= form.label :phone %><br><%= form.telephone_field :phone, required: true, autocomplete: "tel", placeholder: "+1 (212) 555-1234" %></p>
+      <p><%= form.label :phone %><br><%= form.telephone_field :phone, value: form.object.display_phone, required: true, autocomplete: "tel", placeholder: "+1 (212) 555-1234" %></p>
       <%= render "shared/gender_field", form: form %>
       <%= render "shared/public_profile_fields", form: form %>
       <p><%= form.label :password %><br><%= form.password_field :password, required: true, minlength: 12, autocomplete: "new-password" %></p>

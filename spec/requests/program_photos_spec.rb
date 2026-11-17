@@ -146,10 +146,12 @@ RSpec.describe 'Program photos', :aggregate_failures, :database, type: :request 
     end
   end
 
-  it 'shows the program photo on the public overview only when available, without the venue card' do
-    VenuePhoto.add(program.venue, photo_upload)
+  it 'keeps the venue photo separate from the optional next-session program photo' do
+    venue_photo = VenuePhoto.add(program.venue, photo_upload)
     get program_path(program)
-    expect(response.parsed_body.css('main img, main [data-photo-preview], .venue-card')).to be_empty
+    expect(response.parsed_body.css('.next-session img, .next-session [data-photo-preview]')).to be_empty
+    expect(response.parsed_body.at_css('.next-session + .venue-card img')['src'])
+      .to eq(venue_photo_path(program.venue, venue_photo, thumbnail: 1))
     photo
     second = ProgramPhoto.add(program, photo_upload)
     get program_path(program)
@@ -157,6 +159,8 @@ RSpec.describe 'Program photos', :aggregate_failures, :database, type: :request 
       .to eq(program_photo_path(program, photo, thumbnail: 1))
     expect(response.parsed_body.css('.next-session [data-photo-series] [data-photo-preview]').pluck('href'))
       .to eq([program_photo_path(program, photo), program_photo_path(program, second)])
+    expect(response.parsed_body.at_css('.next-session + .venue-card img')['src'])
+      .to eq(venue_photo_path(program.venue, venue_photo, thumbnail: 1))
   end
 
   it 'requires authentication and program management for writes without granting venue editing' do

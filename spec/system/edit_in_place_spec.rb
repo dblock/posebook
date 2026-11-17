@@ -8,6 +8,7 @@ RSpec.describe 'Edit in place', :aggregate_failures, :database, type: :system do
   it 'saves the profile and shows validation errors without leaving the edit page' do
     sign_in_through_browser(user)
     visit edit_profile_path
+    expect(page).to have_field('Phone', with: '+1 (202) 555-0101')
     mark_page
 
     fill_in 'Name', with: 'Riley Saved'
@@ -46,6 +47,7 @@ RSpec.describe 'Edit in place', :aggregate_failures, :database, type: :system do
   it 'saves another user as an admin without leaving the edit page' do
     sign_in_through_browser(create_user(roles: ['system_admin']))
     visit edit_admin_user_path(user)
+    expect(page).to have_field('Phone', with: '+1 (202) 555-0101')
     mark_page
 
     fill_in 'Name', with: 'Riley Admin Edit'
