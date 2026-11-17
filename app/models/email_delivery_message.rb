@@ -12,7 +12,7 @@ class EmailDeliveryMessage
   private
 
   def application_draft
-    ApplicationDraftMaintenance.new(@delivery.resource_id).reminder_message
+    ApplicationDraftMaintenance.new(@delivery.resource_id).reminder_message(expires_at: @delivery.expires_at)
   end
 
   def participation_admission

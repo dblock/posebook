@@ -31,6 +31,41 @@ RSpec.describe 'Single-page application drafts', :aggregate_failures, :database,
     upload
   end
 
+  it 'lists profile drafts with the same continuation and revision-protected cancellation actions as home' do
+    save_draft
+    get applications_profile_path
+    table = response.parsed_body.at_css('table')
+    expect(table.css('[scope]').map(&:text)).to eq(%w[Program Status Actions])
+    expect(table.text).to include(program.name, 'Draft')
+    expect(table.css('.button-link').pluck('href'))
+      .to contain_exactly(program_participation_application_path(program),
+                          new_program_participation_application_path(program))
+    expect(table.at_css('form')['action']).to eq(program_participation_application_path(program))
+    expect(table.at_css('input[name="lock_version"]')['value']).to eq(draft.draft_revision)
+    expect(table.css('button').map(&:text)).to eq(['Cancel Application'])
+    sign_in(create_user(roles: ['system_admin']))
+    get applications_admin_user_path(applicant)
+    expect(response.parsed_body.at_css('table form')).to be_nil
+    expect(response.parsed_body.at_css('table .button-link')['href'])
+      .to eq(program_application_path(program, draft))
+  end
+
+  it 'keeps submitted status links with withdrawal only for the owner' do
+    save_draft
+    draft.update!(status: 'pending', profile_shared_at: Time.current)
+    get applications_profile_path
+    expect(response.parsed_body.at_css('table .button-link')['href'])
+      .to eq(program_participation_application_path(program))
+    expect(response.parsed_body.at_css('table').text).to include('Pending', 'View')
+    expect(response.parsed_body.at_css('table button').text).to eq('Withdraw')
+    expect(response.parsed_body.at_css('table input[name="lock_version"]')['value']).to eq(draft.lock_version.to_s)
+    sign_in(create_user(roles: ['system_admin']))
+    get applications_admin_user_path(applicant)
+    expect(response.parsed_body.at_css('table .button-link')['href'])
+      .to eq(program_application_path(program, draft))
+    expect(response.parsed_body.at_css('table form')).to be_nil
+  end
+
   it 'shows account details and photos together without creating records on GET' do
     get new_program_participation_application_path(program)
     editor = response.parsed_body.at_css('#application-editor')
@@ -38,21 +73,54 @@ RSpec.describe 'Single-page application drafts', :aggregate_failures, :database,
                                                          'participant_application[profile][phone]',
                                                          'participant_application[photos][]')
     expect(editor.css('a[target="_blank"]')).to be_empty
+    expect(editor.at_css('input[type="tel"]')['value']).to eq('+1 (202) 555-0101')
     expect(ParticipantApplication.where(user_id: applicant.id)).not_to exist
     expect(response.body).to include('Drafts are private and deleted after 30 days.')
   end
 
+  it 'formats a saved draft phone without changing the account number' do
+    save_draft(profile: { phone: '+12125550104' })
+    follow_redirect!
+    expect(response.parsed_body.at_css('input[type="tel"]')['value']).to eq('+1 (212) 555-0104')
+    expect(applicant.reload.phone).to eq('+12025550101')
+  end
+
+  it 'shows the program prompt as escaped placeholder text without replacing draft answers' do
+    prompt = "Any experience?\n\"<script>alert(1)</script>\""
+    program.update!(application_message_placeholder: prompt)
+    get new_program_participation_application_path(program)
+    field = response.parsed_body.at_css('#participant_application_message')
+    expect(field['placeholder']).to eq(prompt)
+    expect(field.text).to be_blank
+    expect(response.parsed_body.at_css('#application-editor script')).to be_nil
+    save_draft(message: 'My experience')
+    follow_redirect!
+    expect(response.parsed_body.at_css('#participant_application_message').text).to include('My experience')
+    program.update!(application_message_placeholder: '')
+    get new_program_participation_application_path(program)
+    field = response.parsed_body.at_css('#participant_application_message')
+    expect(field['placeholder']).to be_nil
+    expect(field.text).to include('My experience')
+  end
+
+  it 'preserves international draft phone numbers in the editor' do
+    save_draft(profile: { phone: '+442079460958' })
+    follow_redirect!
+    expect(response.parsed_body.at_css('input[type="tel"]')['value']).to eq('+442079460958')
+  end
+
   it 'saves incomplete details privately without changing the account, granting access, or notifying reviewers' do
     save_draft(profile: { name: '', phone: '', roles: ['system_admin'], email: 'forged@example.test' })
+    save_draft(lock_version: draft.draft_revision)
     expect(draft).to have_attributes(status: 'draft', profile_shared_at: nil, message: 'Draft message')
     expect(draft.draft_profile).to eq('name' => '', 'phone' => '')
     expect(applicant.reload.name).to eq('Test Participant')
     expect(program.participant?(applicant)).to be(false)
-    expect(draft.events).to be_empty
+    expect(draft.events.pluck(:action)).to eq(['application_draft_created'])
     expect(EmailDelivery.where(resource_id: draft.id)).to be_empty
     follow_redirect!
     expect(response.parsed_body.at_css('[name="participant_application[profile][name]"]')['value']).to be_blank
-    expect(response.body).to include('Abandon Draft', 'Draft saved.')
+    expect(response.body).to include('Cancel Application', 'Draft saved.')
   end
 
   it 'excludes drafts from every manager listing and direct review endpoint' do
@@ -60,6 +128,8 @@ RSpec.describe 'Single-page application drafts', :aggregate_failures, :database,
     sign_in(coordinator)
     get program_applications_path(program, status: 'all')
     expect(response.body).not_to include(applicant.email, 'Draft message')
+    get history_program_applications_path(program)
+    expect(response.body).not_to include('Application Draft Created')
     get program_application_path(program, draft)
     expect(response).to have_http_status(:not_found)
     patch program_application_path(program, draft),
@@ -74,12 +144,14 @@ RSpec.describe 'Single-page application drafts', :aggregate_failures, :database,
     expect(response).to have_http_status(:unprocessable_content)
     expect(draft.reload.status).to eq('draft')
     expect(applicant.reload.name).to eq('Test Participant')
-    save_draft(intent: 'submit', consent: '1', lock_version: draft.draft_revision, profile: { name: 'Ready Applicant' })
-    expect(response).to redirect_to(program_participation_application_path(program))
+    save_draft(intent: 'submit', consent: '1', lock_version: draft.draft_revision,
+               profile: { name: 'Ready Applicant', phone: '+1 (212) 555-0104' })
+    expect(response).to redirect_to(applications_profile_path)
     expect(draft.reload).to have_attributes(status: 'pending', name: 'Ready Applicant', draft_profile: {})
     expect(draft.submitted_at).to be_present
     expect(applicant.reload.name).to eq('Ready Applicant')
-    expect(draft.events.pluck(:action)).to eq(['application_submitted'])
+    expect(applicant.phone).to eq('+12125550104')
+    expect(draft.events.pluck(:action)).to eq(%w[application_draft_created application_submitted])
   end
 
   it 'rejects stale draft writes instead of replacing newer work or overwriting a submitted application' do
@@ -111,7 +183,8 @@ RSpec.describe 'Single-page application drafts', :aggregate_failures, :database,
     save_draft(photos: [photo_upload])
     version = draft.draft_revision
     delete program_participation_application_path(program), params: { lock_version: version }
-    expect(response).to redirect_to(program_path(program))
+    expect(response).to redirect_to(applications_profile_path)
+    expect(draft.events.pluck(:action)).to eq(%w[application_draft_created application_draft_abandoned])
     expect(ParticipantApplication.where(user_id: applicant.id)).not_to exist
     expect(applicant.reload.profile_photos.size).to eq(1)
     save_draft(lock_version: version)
@@ -129,7 +202,7 @@ RSpec.describe 'Single-page application drafts', :aggregate_failures, :database,
     expect(response).to have_http_status(:unprocessable_content)
     expect(draft).to have_attributes(status: 'draft', profile_shared_at: nil)
     expect(applicant.reload.profile_photos).to be_empty
-    expect(draft.events).to be_empty
+    expect(draft.events.pluck(:action)).to eq(['application_draft_created'])
   end
 
   it 'rejects old submission and abandonment forms after a draft is abandoned and replaced' do
@@ -142,7 +215,7 @@ RSpec.describe 'Single-page application drafts', :aggregate_failures, :database,
     save_draft(intent: 'submit', consent: '1', lock_version: version, message: 'Stale form')
     delete program_participation_application_path(program), params: { lock_version: version }
     expect(replacement.reload).to have_attributes(status: 'draft', message: 'Replacement draft', lock_version: 0)
-    expect(replacement.events).to be_empty
+    expect(replacement.events.pluck(:action)).to eq(['application_draft_created'])
     save_draft(lock_version: replacement.draft_revision, message: 'Current form')
     expect(replacement.reload.message).to eq('Current form')
   end

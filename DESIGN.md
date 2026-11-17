@@ -55,15 +55,19 @@ Applicants prepare account details, photos, and an application in one editor. GE
 
 Draft saves, submission, and abandonment require a revision bound to both draft ID and version. Stale forms cannot overwrite newer work or recreate removed/replacement drafts. Drafts are excluded from coordinator lists, review routes, and application-only photo access.
 
-Pending and Not Now applications with consent permit scoped coordinators to read current private applicant profiles/photos, not edit them. Withdrawal immediately removes application-only access and prevents acceptance; retained submission snapshots do not expose later identity changes. Acceptance switches to ordinary participant permissions.
+Pending and rejected applications with consent permit scoped coordinators to read current private applicant profiles/photos, not edit them. Withdrawal immediately removes application-only access and prevents acceptance; retained submission snapshots do not expose later identity changes. Acceptance switches to ordinary participant permissions.
 
-`ParticipantApplication` stores current state, decision revision, and submission identity snapshots. Decisions recheck the submitted revision and manager authority inside a transaction. Acceptance uses the shared schedule lock and initial-membership grant path, preserving existing roles, pauses, and consumed grants. Intake closure retains existing applications. Append-only `ParticipationEvent` records distinguish submissions, decisions, withdrawal, and personal invitation acceptance; reviewer notes remain manager-only.
+`ParticipantApplication` stores current state, decision revision, and submission identity snapshots. Decisions recheck the submitted revision and manager authority inside a transaction. Acceptance uses the shared schedule lock and initial-membership grant path, preserving existing roles, pauses, and consumed grants. Intake closure retains existing applications.
+
+Every lifecycle transition appends a `ParticipationEvent` in the same transaction: initial draft creation, submission, decisions, withdrawal, reopening, cancellation, and expiry. Repeated cycles retain separate entries; failed or stale transitions and ordinary draft edits add none. Minimal transition metadata survives deletion of a never-submitted draft without retaining its form contents. Automatic expiry has no human actor. Coordinator histories allow only shared submission, decision, withdrawal, and invitation-acceptance actions, never private draft transitions; reviewer notes remain manager-only.
 
 Submission requires configured email and an active assigned coordinator. Submission/decision history and ID-only notification jobs commit in the workflow transaction through `EmailDelivery.enqueue_in_transaction`. Enqueue failure rolls back the workflow. Assigned venue/program coordinators receive separate messages, deduplicated across assignments; global admins are not automatically subscribed. Applicants receive decision messages without reviewer notes.
 
 Accepted applications and personal invitations also queue separate coordinator admission alerts in the acceptance transaction. Private invitation acceptance remains available without email or assigned recipients. Workers recheck source, state, account, participation, and recipient assignment; withdrawn or superseded notices are discarded.
 
-Hourly draft maintenance queues one completion reminder from seven days after initial creation and removes only Draft records without consent from 30 days. Edits do not reset either age. Reminder enqueueing is transactional without invalidating the editor revision; cleanup serializes against submission and preserves accounts, photos, and submitted history. See [Background Jobs](docs/background-jobs.md).
+Applicants can reopen only their own withdrawn application as a private draft while intake is open. Reopening checks the current revision, retains submitted history and the previous message, and requires fresh consent before another submission. Application details are read-only and show the program and history. State controls live in the shared homepage and profile table, with Resubmit also on withdrawn details; submission and cancellation return to the profile applications list.
+
+Hourly draft maintenance queues one completion reminder from seven days after initial creation or reopening and expires draft edits from 30 days. Ordinary saves do not reset either age. A reopened draft retains its prior withdrawn submission, which is restored on cancellation or expiry instead of deleting history. Workers reject reminders and notifications from superseded submission cycles. Reminder enqueueing is transactional without invalidating the editor revision; cleanup serializes against submission and preserves accounts, photos, and submitted history. See [Background Jobs](docs/background-jobs.md).
 
 ## Scheduling and Booking
 
@@ -101,7 +105,7 @@ Unconfirmed bookings at the inclusive five-calendar-day rescheduling cutoff dire
 
 ## Public Pages and Interface
 
-Guests see upcoming sessions for active programs/venues over the next two weeks, ordered by start time. Public program overviews show the next real session in the local window. Both expose only the booked participant's effective public identity and consented Instagram, never full rosters, contacts, private instructions/pay, cancellations, or internal schedule reasons.
+Guests see upcoming sessions for active programs/venues over the next two weeks, ordered by start time. Public program overviews show the next real session in the local window, followed by the venue card with its public photos, address, and links. Both expose only the booked participant's effective public identity and consented Instagram, never full rosters, contacts, private instructions/pay, cancellations, or internal schedule reasons.
 
 Signed-in homepages show personal bookings, viewable participant programs, and authorized management programs. Profile Bookings lists eligible booking programs; Profile Programs lists managed programs, including inactive ones. Paused/booked memberships can remain visible without gaining new booking rights. Public calendars show current public identity even for completed bookings; month navigation begins at the current local month.
 

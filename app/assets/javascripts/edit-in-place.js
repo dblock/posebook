@@ -1,5 +1,6 @@
 (() => {
   const selector = "main[data-edit-in-place]";
+  const controls = form => Array.from(form.elements).filter(control => control.matches("button, input[type='submit']"));
 
   function replaceMain(html, focus) {
     const main = document.querySelector(selector);
@@ -9,7 +10,7 @@
     main.replaceWith(replacement);
     document.title = html.title || document.title;
     const forms = Array.from(replacement.querySelectorAll("form"));
-    const control = forms[focus.form]?.querySelectorAll("button, input[type='submit']")[focus.control];
+    const control = forms[focus.form] && controls(forms[focus.form])[focus.control];
     control?.focus({ preventScroll: true });
     document.dispatchEvent(new CustomEvent("posebook:replaced"));
     return true;
@@ -29,12 +30,13 @@
     const form = event.target.closest?.(`${selector} form:not([data-navigate])`);
     const method = (event.submitter?.formMethod || form?.method || "").toLowerCase();
     const target = event.submitter?.formTarget || form?.target;
-    if (!form || event.defaultPrevented || method !== "post" || (target && target !== "_self")) return;
+    if (!form || event.defaultPrevented || event.submitter?.hasAttribute("data-navigate") ||
+        method !== "post" || (target && target !== "_self")) return;
 
     event.preventDefault();
     const main = form.closest(selector);
     const forms = Array.from(main.querySelectorAll("form"));
-    const buttons = Array.from(form.querySelectorAll("button, input[type='submit']"));
+    const buttons = controls(form);
     const focus = { form: forms.indexOf(form), control: Math.max(buttons.indexOf(event.submitter), 0) };
     const body = new FormData(form, event.submitter);
     buttons.forEach(button => {

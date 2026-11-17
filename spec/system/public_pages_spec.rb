@@ -19,6 +19,100 @@ RSpec.describe 'Public pages', :aggregate_failures, :database, type: :system do
     visit root_path
   end
 
+  def expect_application_table(viewport, name)
+    expect(page).to have_css('table', text: program.name)
+    expect(page).to have_button('Cancel Application')
+    expect_no_horizontal_overflow
+    capture_screenshot("#{name}-#{viewport}")
+  end
+
+  def create_submitted_application
+    program.update!(applications_enabled: true)
+    applicant = create_user(email_verified_at: Time.current)
+    grant_coordinator_access(program, create_user)
+    workflow = ParticipantApplicationWorkflow.new(program: program, user: applicant)
+    application = track_record(workflow.submit(message: 'Original experience', consent: '1'))
+    [applicant, application]
+  end
+
+  def create_withdrawn_application
+    applicant, application = create_submitted_application
+    ParticipantApplicationWorkflow.new(program: program, user: applicant)
+                                  .withdraw(application.id, version: application.lock_version)
+    [applicant, application]
+  end
+
+  it 'views a withdrawn application read-only before reopening, editing, and submitting it with new consent' do
+    applicant, application = create_withdrawn_application
+    sign_in_through_browser(applicant)
+    visit root_path
+    within('.homepage-applications') { click_on 'View' }
+    expect(page).to have_text('Original experience')
+    expect(find('.application-resubmit').style('margin-block-start')).to eq('margin-block-start' => '16px')
+    expect(page).to have_no_css('main input:not([type="hidden"]), main select')
+    visit applications_profile_path
+    click_on 'Resubmit'
+    expect(page).to have_field('Message (Optional)', with: 'Original experience')
+    expect(page).to have_button('Submit Application', disabled: true)
+    fill_in 'Message (Optional)', with: 'New experience'
+    check "I agree to share my information with the program's coordinators."
+    click_on 'Submit Application'
+    expect(page).to have_current_path(applications_profile_path)
+    expect(application.reload.message).to eq('New experience')
+  end
+
+  it 'shares the draft table between homepage and profile without JavaScript at every viewport' do
+    program.update!(applications_enabled: true)
+    applicant = create_user(email_verified_at: Time.current)
+    track_record(ApplicationDraft.new(program: program, user: applicant).save(version: nil,
+                                                                              message: 'My saved experience'))
+    sign_in_through_browser(applicant)
+    each_viewport do |viewport|
+      without_javascript do
+        visit root_path
+        expect_application_table(viewport, 'continue-application')
+        click_on 'Continue Application'
+        expect(page).to have_field('Message (Optional)', with: 'My saved experience')
+        visit applications_profile_path
+        expect_application_table(viewport, 'profile-applications')
+      end
+    end
+  end
+
+  it 'cancels a draft from its homepage table without JavaScript' do
+    program.update!(applications_enabled: true)
+    applicant = create_user(email_verified_at: Time.current)
+    application = track_record(ApplicationDraft.new(program: program, user: applicant).save(version: nil))
+    sign_in_through_browser(applicant)
+    without_javascript do
+      visit root_path
+      within('.homepage-applications tbody') { click_on 'Cancel Application' }
+      expect(page).to have_current_path(applications_profile_path)
+      visit root_path
+      expect(page).to have_no_css('.homepage-applications')
+      expect(ParticipantApplication.where(id: application.id)).not_to exist
+    end
+  end
+
+  %i[root_path applications_profile_path].each do |listing|
+    it "withdraws a submitted application from #{listing} without JavaScript" do
+      program.update!(applications_enabled: true)
+      applicant = create_user(email_verified_at: Time.current)
+      application = track_record(ApplicationDraft.new(program: program, user: applicant).save(version: nil))
+      application.update!(status: 'pending', profile_shared_at: Time.current)
+      sign_in_through_browser(applicant)
+      without_javascript do
+        visit public_send(listing)
+        click_on 'Withdraw'
+        expect(page).to have_text('Status: Withdrawn')
+        expect(application.reload.status).to eq('withdrawn')
+        visit public_send(listing)
+        expect(page).to have_css('table', text: 'Withdrawn')
+        expect(page).to have_no_button('Withdraw')
+      end
+    end
+  end
+
   it 'shows upcoming sessions, venue programs, and the embedded calendar at every viewport' do
     program
     pages = { 'public-home' => root_path, 'public-venue' => venue_path(program.venue),

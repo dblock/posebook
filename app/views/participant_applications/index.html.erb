@@ -2,10 +2,6 @@
   <%= render "profiles/navigation", user: @user, active: "applications" %>
   <h1>Applications</h1>
   <% if @applications.empty? && @user == current_user %><p>Browse <%= link_to "Venues", venues_path %> to find programs accepting applications.</p><% end %>
-  <ul>
-    <% @applications.each do |application| %>
-      <li><%= link_to application.program.name, @user == current_user ? program_participation_application_path(application.program) : program_application_path(application.program, application) %> - <%= application.status_label %></li>
-    <% end %>
-  </ul>
+  <%= render "participant_applications/table", applications: @applications, user: @user %>
   <%= render "shared/pagination", pagination: @pagination, label: "Application pages" %>
 </main>

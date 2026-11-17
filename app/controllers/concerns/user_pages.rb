@@ -20,7 +20,7 @@ module UserPages
   end
 
   def load_user_applications(user)
-    records = ParticipantApplication.where(user_id: user.id).includes(:program).order_by(created_at: :desc)
+    records = ParticipantApplication.where(user_id: user.id).includes(program: :venue).order_by(created_at: :desc)
     @pagination = CursorPage.new(records, cursor: params[:cursor])
     @applications = @pagination.records
   end

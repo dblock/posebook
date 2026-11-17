@@ -55,7 +55,7 @@ Required application/decision/admission email outboxes and ID-only jobs join the
 
 Notify active assigned coordinators once per person, not every global admin. Workers recheck source, current state, account, assignment, consent/access, and original expiry before sending. Keep reviewer notes and contacts out of admission alerts. Distinguish queued from delivered and retain at-least-once delivery semantics.
 
-Draft maintenance uses initial creation age: one reminder from seven days, cleanup from 30 days. Do not reset age on edits, invalidate editor revisions for reminders, use blanket TTL deletion, or remove accounts/photos/submitted history. Cleanup must transact against submission. Use the shared recurring scheduler and `maintenance`/`mailers` queues.
+Draft maintenance uses creation or reopening age: one reminder from seven days, cleanup from 30 days. Do not reset age on edits, invalidate editor revisions for reminders, use blanket TTL deletion, or remove accounts/photos/submitted history. Reopened draft cancellation or expiry restores the retained withdrawn submission. Cleanup must transact against submission. Use the shared recurring scheduler and `maintenance`/`mailers` queues.
 
 Automated booking reminders and SMS remain disabled; transactional account/invitation/application messages are separate. New jobs use the shared MongoDB-backed worker, minimal ID arguments, current-state rechecks, and idempotent effects. Preserve the separate transactional Google Calendar outbox.
 

@@ -13,6 +13,51 @@ RSpec.describe 'Homepage', :aggregate_failures, :database, type: :request do
     response.parsed_body.css('.upcoming-sessions tbody tr').map { |row| row.css('td').map { |cell| cell.text.squish } }
   end
 
+  def create_draft(applicant, at: program)
+    track_record(ApplicationDraft.new(program: at, user: applicant).save(version: nil,
+                                                                         message: 'Private draft message'))
+  end
+
+  it 'lists every application status only for the signed-in owner with draft continuation' do
+    program.update!(applications_enabled: true)
+    applicant = create_user(email_verified_at: Time.current)
+    create_draft(applicant)
+    foreign_program = create_program(applications_enabled: true)
+    create_draft(create_user(email_verified_at: Time.current), at: foreign_program)
+    %w[pending accepted declined withdrawn].each do |status|
+      track_record(ParticipantApplication.create!(user: applicant, program: create_program(applications_enabled: true),
+                                                  status: status, profile_shared_at: Time.current))
+    end
+    sign_in(applicant)
+    get root_path
+    table = response.parsed_body.at_css('.homepage-applications table')
+    expect(table.text).to include('Draft', 'Pending', 'Accepted', 'Not Now', 'Withdrawn')
+    expect(table.css('button').map(&:text))
+      .to contain_exactly('Cancel Application', 'Withdraw', 'Withdraw', 'Resubmit')
+    expect(table.at_css('a[href$="/new"]')['href']).to eq(new_program_participation_application_path(program))
+    expect(response.body).not_to include(foreign_program.name, 'Private draft message')
+  end
+
+  it 'keeps closed and inactive program drafts visible with cancellation but without continuation' do
+    program.update!(applications_enabled: true)
+    applicant = create_user(email_verified_at: Time.current)
+    create_draft(applicant)
+    sign_in(applicant)
+    program.update!(applications_enabled: false)
+    get root_path
+    expect(response.parsed_body.at_css('.homepage-applications table').text).to include('Draft', 'Cancel Application')
+    expect(response.body).not_to include('Continue Application')
+    program.update!(applications_enabled: true)
+    program.venue.update!(active: false)
+    get root_path
+    expect(response.parsed_body.at_css('.homepage-applications table').text).to include('Draft', 'Cancel Application')
+    expect(response.body).not_to include('Continue Application')
+    program.venue.update!(active: true)
+    grant_participant_access(program, applicant)
+    get root_path
+    expect(response.parsed_body.at_css('.homepage-applications')).not_to be_nil
+  end
+
   it 'lists upcoming public sessions for guests' do
     participant = create_user(name: 'Private Name', display_name: 'Booked Model')
     grant_participant_access(program, participant)

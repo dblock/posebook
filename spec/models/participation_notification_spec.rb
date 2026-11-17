@@ -29,6 +29,16 @@ RSpec.describe ParticipationNotification, :aggregate_failures, :database do
     invitation
   end
 
+  it 'does not revive an earlier submission email when a withdrawn application is submitted again' do
+    ParticipantApplicationWorkflow.new(program: program, user: applicant).withdraw(application.id, version: 0)
+    draft = ApplicationDraft.new(program: program, user: applicant).reopen(version: application.reload.lock_version)
+    ParticipantApplicationWorkflow.new(program: program, user: applicant)
+                                  .submit(message: 'Revised message', consent: '1', version: draft.draft_revision)
+    deliver_emails
+    expect(ActionMailer::Base.deliveries.size).to eq(1)
+    expect(ActionMailer::Base.deliveries.last.to).to eq([coordinator.email])
+  end
+
   it 'notifies each active assigned program or venue coordinator once without exposing the recipient list' do
     inherited = create_user
     grant_venue_access(program.venue, inherited)
@@ -54,7 +64,7 @@ RSpec.describe ParticipationNotification, :aggregate_failures, :database do
     expect(delivery.encrypted_token).to be_nil
   end
 
-  it 'sends a courteous Not Now decision only to the applicant and omits internal reasons' do
+  it 'sends a courteous rejection only to the applicant and omits internal reasons' do
     decide('declined')
     deliver_emails
     mail = ActionMailer::Base.deliveries.last

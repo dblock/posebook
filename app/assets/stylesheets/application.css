@@ -903,6 +903,10 @@ table:not(.calendar) td:not(:first-child) .participant-actions {
   margin: 0;
 }
 
+.application-resubmit {
+  margin-block-start: 1rem;
+}
+
 .participant-roster summary,
 .participant-pause summary {
   cursor: pointer;

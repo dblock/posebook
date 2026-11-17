@@ -25,6 +25,11 @@ class ParticipantDashboard
     @access.fetch(program_id)
   end
 
+  def applications
+    @applications ||= ParticipantApplication.where(user_id: @user.id).includes(program: :venue)
+                                            .order_by(created_at: :desc, id: :desc).to_a
+  end
+
   def bookable_programs
     @bookable_programs ||= begin
       booked = upcoming_bookings.map(&:program_id)

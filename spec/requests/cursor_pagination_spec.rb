@@ -82,11 +82,9 @@ RSpec.describe 'Application cursor pagination', :aggregate_failures, :database, 
     get applications_profile_path
     next_path = response.parsed_body.at_css('a[rel="next"]')['href']
     get next_path, params: { user_id: coordinator.id }
-    expect(response.parsed_body.css('main li').map(&:text))
-      .to eq(["#{owned.first.program.name} - Pending"])
+    expect(review_rows).to eq([owned.first.program.name])
     expect(response.parsed_body.at_css('a[rel="next"]')).to be_nil
     get response.parsed_body.at_css('a[rel="prev"]')['href']
-    expect(response.parsed_body.css('main li').map(&:text))
-      .to eq(owned.reverse.first(2).map { |item| "#{item.program.name} - Pending" })
+    expect(review_rows).to eq(owned.reverse.first(2).map { |item| item.program.name })
   end
 end

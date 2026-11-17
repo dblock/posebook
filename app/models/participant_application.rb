@@ -15,6 +15,8 @@ class ParticipantApplication
   field :submitted_at, type: Time
   field :draft_profile, type: Hash, default: {}
   field :draft_reminded_at, type: Time
+  field :draft_started_at, type: Time
+  field :draft_origin, type: Hash, default: {}
   field :lock_version, type: Integer, default: 0
 
   index({ program_id: 1, user_id: 1 }, unique: true)
@@ -39,7 +41,32 @@ class ParticipantApplication
     "#{id}:#{lock_version}"
   end
 
+  def draft_created_at
+    draft_started_at || created_at
+  end
+
+  def discard_draft!(expired: false)
+    record_event!(expired ? 'draft_expired' : 'draft_abandoned', actor: expired ? nil : user)
+    return destroy! if draft_origin.empty?
+
+    attributes = draft_origin.symbolize_keys.merge(status: 'withdrawn', draft_origin: {}, draft_profile: {},
+                                                   draft_started_at: nil, draft_reminded_at: nil,
+                                                   lock_version: lock_version + 1)
+    update!(attributes)
+  end
+
+  def applicant_profile_attributes
+    return draft_profile.slice(*ApplicationDraft::PROFILE_FIELDS) if draft?
+
+    attributes.slice('name', 'email', 'gender').compact
+  end
+
   def events
     ParticipationEvent.where(source_id: id).order_by(created_at: :asc, id: :asc)
+  end
+
+  def record_event!(action, actor:, notes: nil)
+    ParticipationEvent.create!(program: program, user_id: user_id, actor: actor, source_id: id,
+                               action: "application_#{action}", notes: notes)
   end
 end
