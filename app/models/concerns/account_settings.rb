@@ -25,7 +25,7 @@ module AccountSettings
   end
 
   def update_profile(attributes)
-    assign_attributes(attributes.slice(:name, :phone, :gender, *PublicProfile::FIELDS))
+    assign_attributes(attributes.slice(:name, :phone, :gender, :booking_reminders_enabled, *PublicProfile::FIELDS))
     new_email = attributes[:email].to_s.strip.downcase
     return save if new_email == email
     return false unless password_matches?(attributes[:current_password])

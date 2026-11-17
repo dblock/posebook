@@ -24,6 +24,7 @@ class ParticipantApplication
   index({ program_id: 1, created_at: -1, _id: -1 })
   index({ user_id: 1, created_at: -1, _id: -1 })
   index({ status: 1, created_at: 1 })
+  index({ status: 1, profile_shared_at: 1, draft_reminded_at: 1 })
   validates :status, inclusion: { in: %w[draft pending accepted declined withdrawn] }
   validates :message, length: { maximum: 5000 }
   validates :profile_shared_at, presence: true, unless: :draft?

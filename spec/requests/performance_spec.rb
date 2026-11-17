@@ -125,8 +125,10 @@ RSpec.describe 'User experience read performance', :aggregate_failures, :databas
     result = commands { get bookings_profile_path }
     expect(response.parsed_body.css('.bookable-programs .program-card').size).to eq(11)
     expect(response.parsed_body.css('.upcoming-booking').size).to eq(1)
-    expect(result[:commands]).to be <= 25
-    expect(result[:collections]['bookings']).to eq(3)
+    expect(result[:commands]).to be <= 28
+    expect(result[:collections]['bookings']).to eq(4)
+    expect(result[:collections]['notification_defaults']).to eq(1)
+    expect(result[:collections]['program_schedule_exceptions']).to eq(1)
     expect(result[:collections]['users']).to eq(1)
     expect(ParticipantDashboard).to have_received(:new).with(participant).once
   end

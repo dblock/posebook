@@ -7,7 +7,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
 
   around { |example| travel_to(Time.utc(2026, 11, 13, 15)) { example.run } }
 
-  let(:program) { create_program(time_zone: 'America/New_York', start_time: '18:30') }
+  let(:program) { create_program(time_zone: 'America/New_York', start_time: '18:30', end_time: '21:00') }
   let(:participant) { create_user }
   let(:booking) do
     grant_participant_access(program, participant)
@@ -16,7 +16,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
 
   before do
     booking
-    travel_to Time.utc(2026, 11, 16, 15)
+    travel_to Time.utc(2026, 11, 17, 2)
     sign_in(participant)
   end
 
@@ -41,7 +41,7 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     track_booking(mutation.change(**attributes, date: '2026-11-30'))
   end
 
-  it 'offers confirmation and the usual rescheduling workflow seven days before participating' do
+  it 'offers confirmation and rescheduling after the previous session ends' do
     get bookings_profile_path
     card = response.parsed_body.at_css('.upcoming-booking')
     expect(card.at_css('.upcoming-booking-countdown').text).to eq('In 7 days')
@@ -58,6 +58,17 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
     expect(day.css('.status-label').map(&:text)).to eq(['Confirmed'])
     expect(response.parsed_body.at_css('form[action$="/confirm"]')).to be_nil
     expect(booking.reload.attendance_confirmed_by_id).to eq(participant.id)
+  end
+
+  it 'rechecks confirmation timing on the next dashboard request after a setting changes' do
+    get bookings_profile_path
+    expect(response.parsed_body.at_css('.booking-actions form[action$="/confirm"]')).to be_present
+    program.update!(notification_settings: {
+                      'confirmation_request' => { 'timing' => 'days_before', 'days_before' => 0 }
+                    })
+    get bookings_profile_path
+    expect(response.parsed_body.at_css('.booking-actions form[action$="/confirm"]')).to be_nil
+    expect(response.body).not_to include('Please confirm that you will be there')
   end
 
   it 'shows confirmed only once in the status cell of both participant and session history' do
@@ -133,10 +144,10 @@ RSpec.describe 'Attendance confirmation', :aggregate_failures, :database, type: 
   end
 
   it 'rejects early confirmation and makes a repeated or forged request to clear confirmation harmless' do
-    travel_to Time.utc(2026, 11, 16, 4, 59, 59)
+    travel_to Time.utc(2026, 11, 17, 1, 59, 59)
     confirm_booking
     expect(booking.reload.attendance_confirmed?).to be(false)
-    travel_to Time.utc(2026, 11, 16, 5)
+    travel_to Time.utc(2026, 11, 17, 2)
     2.times { confirm_booking(attendance: 'unconfirmed') }
     expect(booking.reload.attendance_changes.size).to eq(1)
     expect(booking.attendance_confirmed?).to be(true)

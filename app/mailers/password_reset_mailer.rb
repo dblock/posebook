@@ -2,7 +2,7 @@
 
 class PasswordResetMailer < ApplicationMailer
   def reset(user, token)
-    @reset_url = edit_password_reset_url(token: token)
-    mail(to: user.email, subject: t('password_resets.subject'))
+    notification_mail('password_reset', scope: nil, recipient: user,
+                                        values: { 'reset_url' => edit_password_reset_url(token: token) })
   end
 end

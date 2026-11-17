@@ -2,8 +2,8 @@
 
 class ApplicationRegistrationMailer < ApplicationMailer
   def verify(registration, token)
-    @program = registration.program
-    @verification_url = application_verification_url(token: token)
-    mail(to: registration.email, subject: "Verify Your Email to Apply to #{@program.name}")
+    values = { 'verification_url' => application_verification_url(token: token) }
+    notification_mail('application_registration', scope: nil, program: registration.program,
+                                                  recipient: registration.email, values: values)
   end
 end

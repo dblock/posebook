@@ -8,7 +8,10 @@ class EmailDelivery
   class Failed < StandardError; end
 
   KINDS = %w[password_reset email_change participant_invitation coordinator_invitation booking_invitation
-             application_registration application_draft participation_event participation_admission].freeze
+             application_registration application_draft participation_event participation_admission
+             booking_notification].freeze
+  TOKENLESS = %w[booking_invitation application_draft participation_event participation_admission
+                 booking_notification].freeze
 
   field :kind, type: String
   field :resource_id, type: BSON::ObjectId
@@ -22,9 +25,7 @@ class EmailDelivery
   validates :kind, inclusion: { in: KINDS }
   validates :resource_id, presence: true
   validates :encrypted_token, :expires_at,
-            presence: true, unless: lambda {
-              %w[booking_invitation application_draft participation_event participation_admission].include?(kind)
-            }
+            presence: true, unless: -> { TOKENLESS.include?(kind) }
   validates :grant_invited_at, presence: true, if: -> { kind == 'booking_invitation' }
   validates :recipient_id, presence: true, if: -> { %w[participation_event participation_admission].include?(kind) }
 
@@ -78,10 +79,25 @@ class EmailDelivery
       message.message.raise_delivery_errors = true
       message.deliver_now
     end
+    record_result(message)
     destroy!
+  rescue StandardError
+    booking_notification_result('failed')
+    raise
   end
 
   private
+
+  def record_result(message)
+    booking_notification_result(message ? 'sent' : 'skipped')
+  end
+
+  def booking_notification_result(state)
+    return unless kind == 'booking_notification'
+
+    notice = BookingNotification.where(id: resource_id).first
+    notice&.update!(state: state, sent_at: state == 'sent' ? Time.current : nil)
+  end
 
   def encryptor
     key = Rails.application.key_generator.generate_key('email-delivery-token', 32)

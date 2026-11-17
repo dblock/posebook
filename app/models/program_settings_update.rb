@@ -10,9 +10,9 @@ class ProgramSettingsUpdate
 
   def call(attributes)
     with_schedule_lock do |session|
-      @program.update!(attributes)
-      update_booking_times(session) if @program.saved_change_to_start_time? || @program.saved_change_to_end_time?
-      enqueue_calendar_changes(session) if @program.saved_change_to_calendar_invitation_lead_minutes?
+      authorize!
+      @program.update!(merge_settings(attributes))
+      update_dependents(session)
     end
     @program
   rescue Mongoid::Errors::Validations => e
@@ -23,6 +23,23 @@ class ProgramSettingsUpdate
   end
 
   private
+
+  def authorize!
+    return if @user.reload.active? && @program.managed_by?(@user)
+
+    raise LocationActivation::Forbidden
+  end
+
+  def merge_settings(attributes)
+    return attributes unless attributes.key?(:notification_settings)
+
+    attributes.merge(notification_settings: @program.notification_settings.merge(attributes[:notification_settings]))
+  end
+
+  def update_dependents(session)
+    update_booking_times(session) if @program.saved_change_to_start_time? || @program.saved_change_to_end_time?
+    enqueue_calendar_changes(session) if @program.saved_change_to_calendar_invitation_lead_minutes?
+  end
 
   def enqueue_calendar_changes(session)
     records = Booking.upcoming.where(program_id: @program.id)

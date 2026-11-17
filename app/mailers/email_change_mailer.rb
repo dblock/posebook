@@ -2,7 +2,8 @@
 
 class EmailChangeMailer < ApplicationMailer
   def confirm(user, token)
-    @confirmation_url = email_change_url(token: token)
-    mail(to: user.pending_email, subject: t('email_changes.subject'))
+    notification_mail('email_change', scope: nil, recipient: user, to: user.pending_email,
+                                      values: { 'confirmation_url' => email_change_url(token: token),
+                                                'recipient_email' => user.pending_email })
   end
 end
