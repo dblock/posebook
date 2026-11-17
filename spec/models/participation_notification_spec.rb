@@ -80,7 +80,7 @@ RSpec.describe ParticipationNotification, :aggregate_failures, :database do
     mail = ActionMailer::Base.deliveries.find { |message| message.to == [applicant.email] }
     expect(mail.to).to eq([applicant.email])
     expect(mail.subject).to include('Application Accepted')
-    expect(mail.body.decoded).to include(program_path(program, section: 'calendar'), 'any pause still apply')
+    expect(mail.body.decoded).to include(calendar_program_path(program), 'any pause still apply')
     expect(mail.body.decoded).not_to include('Secret reviewer notes')
     notice = ActionMailer::Base.deliveries.find { |message| message.to == [coordinator.email] }
     expect(notice.subject).to include('Participation Accepted')

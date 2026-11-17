@@ -28,7 +28,7 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
     membership
     track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-11-16'))
     manage_participants
-    [program_participants_path(program), program_path(program, section: 'history')].each do |path|
+    [program_participants_path(program), history_program_path(program)].each do |path|
       get path
       identity = response.parsed_body.at_css('.participant-identity')
       expect(identity.at_css('strong a').text).to eq("#{participant.name} <#{participant.email}> (Other)")
@@ -66,7 +66,7 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
     deliver_emails
     expect(ActionMailer::Base.deliveries.last.to).to eq([participant.email])
     expect(ActionMailer::Base.deliveries.last.text_part.body.decoded).to include('booking_invitation=1',
-                                                                                 program.slug)
+                                                                                 calendar_program_path(program))
     [ActionMailer::Base.deliveries.last.text_part, ActionMailer::Base.deliveries.last.html_part].each do |part|
       expect(part.body.decoded).to include('Monday at 7:15 PM (America/New_York)')
     end
@@ -287,12 +287,12 @@ RSpec.describe 'Program participant access', :aggregate_failures, :database, typ
 
   it 'returns an emailed participant to the scoped session after login without granting access to another program' do
     membership
-    get program_path(program, booking_invitation: '1')
+    get calendar_program_path(program, booking_invitation: '1')
     expect(response).to redirect_to(new_session_path)
     sign_in(participant)
-    expect(response).to redirect_to(program_path(program, section: 'calendar'))
+    expect(response).to redirect_to(calendar_program_path(program))
     delete session_path
-    get program_path(create_program, booking_invitation: '1')
+    get calendar_program_path(create_program, booking_invitation: '1')
     sign_in(participant)
     expect(response).to redirect_to(root_path)
   end

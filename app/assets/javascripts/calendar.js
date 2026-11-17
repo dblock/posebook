@@ -52,7 +52,7 @@
     if (!link || event.defaultPrevented || event.button !== 0 ||
         event.metaKey || event.ctrlKey || event.shiftKey || event.altKey ||
         link.hasAttribute("download") || (link.target && link.target !== "_self")) return;
-    if (link.origin !== location.origin) return;
+    if (link.origin !== location.origin || link.pathname !== location.pathname) return;
 
     event.preventDefault();
     navigate(link.href);

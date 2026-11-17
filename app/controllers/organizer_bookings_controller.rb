@@ -48,7 +48,7 @@ class OrganizerBookingsController < ApplicationController
   end
 
   def finish_booking
-    redirect_to program_path(@program, month: @booking.date.strftime('%Y-%m')),
+    redirect_to calendar_program_path(@program, month: @booking.date.strftime('%Y-%m')),
                 notice: @program.message('bookings.organizer_saved')
   end
 

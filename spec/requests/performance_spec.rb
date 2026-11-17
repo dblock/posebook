@@ -51,7 +51,7 @@ RSpec.describe 'User experience read performance', :aggregate_failures, :databas
     grant_participant_access(program, neighbor)
     track_booking(BookingMutation.new(program: program, user: neighbor).book(date: '2026-11-28'))
     sign_in(participant)
-    result = commands { get program_path(program, section: 'calendar', month: '2026-12') }
+    result = commands { get calendar_program_path(program, month: '2026-12') }
     expect(response.parsed_body.at_css('[data-date="2026-11-29"]')['class']).to eq('blocked')
     expect(response.parsed_body.at_css('[data-date="2026-12-02"]')['class']).to eq('available')
     expect(result[:collections]['bookings']).to be <= 8

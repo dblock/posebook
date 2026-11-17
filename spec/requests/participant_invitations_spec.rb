@@ -101,6 +101,16 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     expect(response.parsed_body.at_css('.invitation-recipient').text).to eq(invitation.email)
   end
 
+  it 'links the invitation sender to their account' do
+    admin = create_user(name: 'Invitation Sender', roles: ['system_admin'])
+    invitation = create_participant_invitation(create_program, admin)
+    sign_in(admin)
+    get program_participant_invitations_path(invitation.program)
+    sender = response.parsed_body.at_css('.invitation-sender a')
+    expect(sender.text).to eq(admin.name)
+    expect(sender['href']).to eq(participant_path(admin))
+  end
+
   it 'limits the invitation table to the requested program and authorized managers' do
     program = create_program
     coordinator = create_user
@@ -291,7 +301,7 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     post invited_registration_path, params: { token: invitation.token, user: attributes }
     user = track_record(User.find_by(email: attributes[:email]))
     membership = track_participant_membership(invitation.program, user)
-    expect(response).to redirect_to(program_path(invitation.program, section: 'calendar'))
+    expect(response).to redirect_to(calendar_program_path(invitation.program))
     expect(user).to have_attributes(roles: [], display_name: 'Public Participant', instagram_tagging_allowed: true,
                                     instagram_handle: 'public.participant')
     expect(membership.roles).to eq(['participant'])
@@ -314,7 +324,7 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     expect(response).to redirect_to(invitation_path(token: invitation.token))
     post invitation_path, params: { token: invitation.token }
     membership = track_participant_membership(invitation.program, user)
-    expect(response).to redirect_to(program_path(invitation.program, section: 'calendar'))
+    expect(response).to redirect_to(calendar_program_path(invitation.program))
     expect(membership.roles).to eq(['participant'])
     post invitation_path, params: { token: invitation.token }
     expect(response).to have_http_status(:gone)
@@ -392,7 +402,7 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     allow(EmailDeliveryJob).to receive(:perform_later).and_call_original
     post invitation_path, params: { token: invitation.token }
     track_participant_membership(program, user)
-    expect(response).to redirect_to(program_path(program, section: 'calendar'))
+    expect(response).to redirect_to(calendar_program_path(program))
   end
 
   it 'rolls back invited registration on notification failure and retains a working registration form' do
@@ -412,7 +422,7 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     post invited_registration_path, params: { token: invitation.token, user: attributes }
     user = track_record(User.find_by(email: attributes[:email]))
     track_participant_membership(program, user)
-    expect(response).to redirect_to(program_path(program, section: 'calendar'))
+    expect(response).to redirect_to(calendar_program_path(program))
   end
 
   it 'revokes pending invitations without deleting their history' do

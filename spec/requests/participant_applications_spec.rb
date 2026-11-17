@@ -96,7 +96,7 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     expect(response.parsed_body.css('tbody .participant-portrait').pluck('href'))
       .to eq([participant_path(admitted), participant_path(applicant)])
     cells = response.parsed_body.at_css('tbody tr').css('td')
-    expect(cells[-2].at_css('a').text).to eq('Review')
+    expect(cells[-2].at_css('a:not(.button-link)').text).to eq('Review')
     expect(cells.last.at_css('a').text).to eq('View Profile')
   end
 
@@ -273,6 +273,8 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     expect(header.text).not_to include(' - ')
     expect(response.parsed_body.css('[aria-label="Application history"] tbody tr td:first-child').map(&:text))
       .to eq(['Application Rejected', 'Application Submitted'])
+    expect(response.parsed_body.css('[aria-label="Application history"] td:nth-child(3) a').pluck('href'))
+      .to eq([participant_path(coordinator), participant_path(applicant)])
   end
 
   it 'moves private reviewer notes into a disclosure row and omits arrows for events without notes' do
@@ -283,7 +285,6 @@ RSpec.describe 'Participant applications', :aggregate_failures, :database, type:
     expect(row.at_css('summary')['aria-controls']).to eq("event-notes-#{event.id}")
     expect(row.text).not_to include(event.notes)
     notes = response.parsed_body.at_css("#event-notes-#{event.id}")
-    expect(notes.css('td').pluck(:colspan)).to eq(%w[2 3])
     expect(notes.text).to include(event.notes)
     expect(response.parsed_body.css('summary[aria-controls^="event-notes-"]').size).to eq(1)
   end

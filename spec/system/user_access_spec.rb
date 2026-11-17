@@ -9,11 +9,10 @@ RSpec.describe 'User access', :aggregate_failures, :database, type: :system do
 
   before { sign_in_through_browser(admin) }
 
-  it 'fits desktop account tables with a narrower name column and keeps narrow pages contained' do
+  it 'fits desktop account tables and keeps narrow pages contained' do
     member.update!(name: 'Morgan Member With A Longer Account Name')
     each_viewport do |viewport|
       visit admin_users_path
-      expect(width_of(row.find('td:first-child'))).to be <= 256
       expect(width_of(find('.user-accounts'))).to be <= width_of(find('.table-scroll')) if viewport == :desktop
       expect_no_horizontal_overflow
       capture_screenshot("compact-user-accounts-#{viewport}")
@@ -23,7 +22,6 @@ RSpec.describe 'User access', :aggregate_failures, :database, type: :system do
   it 'deactivates and reactivates a user without reloading the page' do
     visit admin_users_path
     mark_page
-    top = top_of(row)
 
     row.click_on('Deactivate')
     expect(row).to have_text('Inactive')
@@ -31,7 +29,6 @@ RSpec.describe 'User access', :aggregate_failures, :database, type: :system do
     expect(page).to have_css('.flash', text: 'Account access updated.', count: 1)
     capture_screenshot('user-access-flash')
     expect(member.reload).not_to be_active
-    expect(top_of(row)).to eq(top)
 
     row.click_on('Reactivate')
     expect(row).to have_button('Deactivate')

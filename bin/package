@@ -203,8 +203,9 @@ begin
     raise 'The public venue description did not render'
   end
 
-  response = request(port, '/programs/package-program?section=calendar')
-  unless response.code == '200' && response.body.include?('Workshop Calendar')
+  response = request(port, '/programs/package-program/calendar')
+  unless response.code == '200' && response.body.include?('Workshop Calendar') &&
+         !response.body.match?(/Public program description/)
     raise 'The current program calendar did not render through its generated slug'
   end
 

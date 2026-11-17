@@ -62,7 +62,7 @@ class SessionsController < ApplicationController
   def booking_return_path(id, user)
     return coordinator_return_path(user) || root_path unless id
 
-    program_path(Program.visible_to(user).find(id), section: 'calendar')
+    calendar_program_path(Program.visible_to(user).find(id))
   rescue Mongoid::Errors::DocumentNotFound
     root_path
   end

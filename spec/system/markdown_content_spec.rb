@@ -54,7 +54,7 @@ RSpec.describe 'Markdown content', :aggregate_failures, :database, type: :system
     program.update!(description: content, instructions: 'Private arrival details', pay: 321,
                     applications_enabled: true)
     program.venue.update!(description: content)
-    click_on 'Sign Out'
+    sign_out_through_browser
     each_viewport do |viewport|
       [venue_path(program.venue), program_path(program),
        new_program_application_registration_path(program)].each do |path|
@@ -70,7 +70,7 @@ RSpec.describe 'Markdown content', :aggregate_failures, :database, type: :system
   it 'keeps the description visible above a verified applicant editor without private program details' do
     program.update!(description: "## Draw Together\n\n**All Levels** welcome.",
                     instructions: 'Private arrival details', pay: 321, applications_enabled: true)
-    click_on 'Sign Out'
+    sign_out_through_browser
     sign_in_through_browser(create_user(email_verified_at: Time.current))
     each_viewport do |viewport|
       visit new_program_participation_application_path(program)

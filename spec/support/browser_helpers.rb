@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require 'capybara/rspec'
+# Keep a short navigation grace; waiting matchers synchronize browser results.
+ENV['FERRUM_CLICK_WAIT'] ||= '0.01'
 require 'capybara/cuprite'
 
 Capybara.register_driver(:posebook_chrome) do |app|
@@ -22,6 +24,12 @@ module BrowserHelpers
     fill_in 'Password', with: DatabaseHelpers::TEST_PASSWORD
     click_on 'Sign In'
     expect(page).to have_link(user.name)
+  end
+
+  def sign_out_through_browser
+    click_on 'Sign Out'
+    expect(page).to have_current_path(new_session_path)
+    expect(page).to have_button('Sign In')
   end
 
   def resize_to(viewport)

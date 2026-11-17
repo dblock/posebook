@@ -46,7 +46,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
   it 'groups the date, status, and actions inside the same card on session View and Calendar pages' do
     prepare_participant
     later = book('2026-12-07')
-    [program_path(program), program_path(program, section: 'calendar')].each do |path|
+    [program_path(program), calendar_program_path(program)].each do |path|
       get path
       card = response.parsed_body.at_css('.upcoming-booking')
       expect(card.at_css('.upcoming-booking-date').text).to include('Mon, Dec 7', '6:30 PM')
@@ -111,7 +111,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     delete session_path
     [nil, organizer].each do |viewer|
       sign_in(viewer) if viewer
-      get program_path(program, section: 'calendar')
+      get calendar_program_path(program)
       booked = response.parsed_body.at_css('[data-date="2026-11-16"]')
       expect(booked['class']).to eq('booked')
       expect(booked.css('.status-label').map(&:text)).to eq(['Booked'])
@@ -139,12 +139,12 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
 
   it 'renders an independently navigable calendar without changing booking actions' do
     prepare_participant
-    get program_path(program, month: '2026-12')
+    get calendar_program_path(program, month: '2026-12')
     calendar = response.parsed_body.at_css('[data-calendar]')
     expect(calendar.at_css('[data-calendar-month]').text.strip).to eq('December')
     expect(calendar.css('a[data-calendar-navigation]').pluck('href'))
-      .to eq([program_path(program, month: '2026-11'),
-              program_path(program, month: '2027-01')])
+      .to eq([calendar_program_path(program, month: '2026-11'),
+              calendar_program_path(program, month: '2027-01')])
     expect(calendar.css('form').pluck('action').uniq).to eq([program_bookings_path(program)])
     expect(response.parsed_body.at_css('script[defer]')).to be_present
   end
@@ -214,13 +214,13 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
 
   it 'explains a date taken after the calendar loaded and refreshes the same month without a second booking' do
     prepare_participant
-    get program_path(program, month: '2026-12')
+    get calendar_program_path(program, month: '2026-12')
     expect(response.parsed_body.at_css('[data-date="2026-12-07"]')['class']).to eq('available')
     other = create_user
     grant_participant_access(program, other)
     winner = book('2026-12-07', user: other)
     post program_bookings_path(program), params: confirmed_booking('2026-12-07')
-    expect(response).to redirect_to(program_path(program, month: '2026-12'))
+    expect(response).to redirect_to(calendar_program_path(program, month: '2026-12'))
     follow_redirect!
     expect(response.body).to include('someone else just booked that date', 'Please choose another available date.')
     expect(response.parsed_body.at_css('[data-date="2026-12-07"]')['class']).to eq('booked')
@@ -240,7 +240,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     expect(original.reload).to have_attributes(date: Date.new(2026, 11, 23), status: 'rescheduled',
                                                reason: 'Travel plans changed.', changed_by_id: participant.id)
     expect(replacement.date).to eq(Date.new(2026, 11, 30))
-    get program_path(program, section: 'history')
+    get history_program_path(program)
     expect(response.parsed_body.text).to include('Rescheduled', 'Moved from Nov 23', 'Travel plans changed.', 'Booked')
   end
 
@@ -299,7 +299,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     post program_bookings_path(program), params: confirmed_booking('2026-11-23')
     replacement = track_booking(program.bookings.where(status: 'confirmed').first)
     expect(replacement.id).not_to eq(original.id)
-    get program_path(program, section: 'history')
+    get history_program_path(program)
     expect(response.body).to include('2026-11-16', 'Canceled', 'A family commitment.', '2026-11-23', 'Booked')
     post cancel_program_booking_path(program, original),
          params: { reason: 'Overwrite history', booking_version: original.lock_version }
@@ -314,7 +314,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     other = create_user(name: 'Another Participant')
     grant_participant_access(program, other)
     sign_in(other)
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(response.body).to include(participant.public_name)
     expect(response.body).not_to include(participant.email, 'Reschedule')
     get edit_program_booking_path(program, original)
@@ -331,7 +331,7 @@ RSpec.describe 'Participant bookings', :aggregate_failures, :database, type: :re
     organizer = create_user(name: 'Program Organizer')
     grant_coordinator_access(program, organizer)
     sign_in(organizer)
-    get program_path(program, section: 'history')
+    get history_program_path(program)
     expect(response.body).to include('Program Booking History', participant.name)
     expect(Time.iso8601(response.parsed_body.at_css('section table time')['datetime'])).to eq(original.scheduled_start)
     expect(response.parsed_body.css('.calendar form')).to be_empty

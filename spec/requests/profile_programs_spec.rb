@@ -23,7 +23,7 @@ RSpec.describe 'Profile programs', :aggregate_failures, :database, type: :reques
     expect(response.parsed_body.at_css('.breadcrumbs [aria-current="page"]').text).to eq('Programs')
     expect(program_names('managed')).to eq(%w[Alpha Beta Gamma])
     expect(response.parsed_body.css('.managed-programs .button-link').pluck('href'))
-      .to eq([*inherited, direct].map { |program| program_path(program, section: 'calendar') })
+      .to eq([*inherited, direct].map { |program| calendar_program_path(program) })
     expect(response.body).not_to include(foreign.name, 'Private sibling note')
   end
 
@@ -90,6 +90,6 @@ RSpec.describe 'Profile programs', :aggregate_failures, :database, type: :reques
     expect(program_names('bookable')).to eq([programs.first.name])
     card = response.parsed_body.at_css('.bookable-programs .program-card')
     expect(card.at_css('img')['src']).to include('program-placeholder')
-    expect(card.at_css('.button-link')['href']).to eq(program_path(programs.first, section: 'calendar'))
+    expect(card.at_css('.button-link')['href']).to eq(calendar_program_path(programs.first))
   end
 end

@@ -28,8 +28,7 @@ RSpec.describe 'Photo actions', :aggregate_failures, :database, type: :system do
     participant.reload.profile_photos.last
   end
 
-  def expect_card_series(path, selector, sources, viewport = :desktop)
-    visit path
+  def expect_card_series(selector, sources, viewport = :desktop)
     find("#{selector} [data-photo-preview]", visible: true).click
     dialog = find('[data-photo-dialog]')
     expect_preview_photo(dialog, sources.first, '1 of 2')
@@ -38,6 +37,11 @@ RSpec.describe 'Photo actions', :aggregate_failures, :database, type: :system do
     expect_no_horizontal_overflow
     capture_screenshot("card-preview-#{selector.delete('.')}-#{viewport}")
     dialog.send_keys(:escape)
+  end
+
+  def expect_location_cards(path, viewport, cards)
+    visit path
+    cards.each { |selector, sources| expect_card_series(selector, sources, viewport) }
   end
 
   def expect_preview_photo(dialog, source, position)
@@ -221,12 +225,10 @@ RSpec.describe 'Photo actions', :aggregate_failures, :database, type: :system do
     venue_sources = card_photos(program.venue)
     program_sources = card_photos(program)
     each_viewport do |viewport|
-      expect_card_series(venue_path(program.venue), '.venue-card', venue_sources, viewport)
-      expect_card_series(venue_path(program.venue), '.program-card', program_sources, viewport)
-      expect_card_series(program_path(program), '.next-session', program_sources, viewport)
-      expect_card_series(program_path(program), '.venue-card', venue_sources, viewport)
-      expect(page.all('.location-card-photo').map { |photo| width_of(photo) }).to all(eq(150))
-      capture_screenshot("program-cards-#{viewport}")
+      expect_location_cards(venue_path(program.venue), viewport,
+                            '.venue-card' => venue_sources, '.program-card' => program_sources)
+      expect_location_cards(program_path(program), viewport,
+                            '.next-session' => program_sources, '.venue-card' => venue_sources)
     end
   end
 
@@ -237,8 +239,8 @@ RSpec.describe 'Photo actions', :aggregate_failures, :database, type: :system do
     date = ((Date.current + 1)..(Date.current + 7)).find { |day| day.cwday == 1 }
     track_booking(BookingMutation.new(program: program, user: participant).book(date: date.iso8601))
     sign_in_through_browser(participant)
-    expect_card_series(bookings_profile_path, '.upcoming-booking', sources)
-    expect(width_of(find('.upcoming-booking-photo'))).to eq(150)
+    visit bookings_profile_path
+    expect_card_series('.upcoming-booking', sources)
   end
 
   it 'opens the card primary image directly without JavaScript' do

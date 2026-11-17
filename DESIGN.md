@@ -21,6 +21,8 @@ One `User` identity has independent venue and program memberships. Global roles 
 
 Venues and programs use `mongoid-slug` with retained slug history and ID lookup under `/venues` and `/programs`. Authentication uses `/session`; retired `/sessions` and root shortcuts are not aliases. Startup creates declared indexes only. Required manual conversions belong in [Upgrading](UPGRADING.md).
 
+Program overview, calendar, and retained booking history have distinct paths. Calendar and history routes reuse the existing program-page lifecycle and authorization. Only the route selects the page; filters, calendar months, and cursors remain query state.
+
 ## Accounts and Public Identity
 
 Blank-installation registration creates the first system admin. A fixed bootstrap document ID prevents competing claims without requiring a transaction. Registration then closes; later accounts require personal invitations or email-verified application registration for active, opt-in programs. Public forms never accept roles.

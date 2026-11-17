@@ -37,8 +37,7 @@ RSpec.describe 'Profile bookings', :aggregate_failures, :database, type: :reques
     get bookings_profile_path
     expect(response.parsed_body.at_css('.upcoming-booking').text).to include('Mon, Dec 7', booked.name)
     expect(response.parsed_body.css('.bookable-programs .program-card h2 a').map(&:text)).to eq([available.name])
-    expect(response.parsed_body.at_css(".bookable-programs a[href='#{program_path(available,
-                                                                                  section: 'calendar')}']"))
+    expect(response.parsed_body.at_css(".bookable-programs a[href='#{calendar_program_path(available)}']"))
       .to be_present
     expect(response.body).not_to include(other.email, 'December 14, 2026', 'Manager-only pause reason.')
     expect(response.parsed_body.css('.nav-links a').map(&:text)).to eq(%w[Profile Venues])

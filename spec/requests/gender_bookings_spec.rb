@@ -37,7 +37,7 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
   it 'blocks adjacent choices without displaying gender rules on participant, manager, or public calendars' do
     reserve('2026-11-23')
     sign_in(participant)
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     %w[2026-11-16 2026-11-30].each do |date|
       expect(calendar_day(date)['class']).to eq('blocked')
       expect(calendar_day(date).text).to include('Blocked')
@@ -47,10 +47,10 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
     expect(calendar_day('2026-11-23').text).not_to include('Male')
     expect(response.parsed_body.at_css('[data-calendar]').text).not_to match(/gender|male|female/i)
     sign_in(organizer)
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(response.parsed_body.at_css('[data-calendar]').text).not_to match(/gender|male|female/i)
     delete session_path
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(response.parsed_body.at_css('[data-calendar]').text).not_to match(/gender|male|female/i)
   end
 
@@ -60,7 +60,7 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
     post program_bookings_path(program),
          params: { date: '2026-11-23', confirmed: '1', schedule_revision: program.reload.schedule_revision.to_s,
                    override_gender_rule: '1', reason: 'Override.' }
-    expect(response).to redirect_to(program_path(program, month: '2026-11'))
+    expect(response).to redirect_to(calendar_program_path(program, month: '2026-11'))
     expect(flash[:alert]).to include('consecutive-gender rule')
     expect(Booking.where(user_id: participant.id)).to be_empty
   end
@@ -68,12 +68,12 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
   it 'blocks participants without a gender and enables their calendar after a no-JavaScript profile save' do
     participant.set(gender: nil)
     sign_in(participant)
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(response.parsed_body.at_css('[data-calendar]').text).not_to match(/gender|male|female/i)
     expect(calendar_day('2026-11-16').css('form')).to be_empty
     update_profile(gender: 'female')
     expect(response).to redirect_to(profile_path)
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(calendar_day('2026-11-16')['class']).to eq('available')
     expect(calendar_day('2026-11-16').css('form')).to be_present
     expect(participant.reload.gender).to eq('female')
@@ -97,7 +97,7 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
     post invited_registration_path, params: { token: invitation.token, user: attributes }
     registered = track_record(User.find_by(email: attributes[:email]))
     track_participant_membership(program, registered)
-    expect(response).to redirect_to(program_path(program, section: 'calendar'))
+    expect(response).to redirect_to(calendar_program_path(program))
     expect(registered.gender).to eq('female')
   end
 
@@ -142,10 +142,10 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
     post program_organizer_bookings_path(program), params: { booking: attributes }
     booking = track_booking(Booking.find_by(program_id: program.id, user_id: participant.id))
     expect(booking).to have_attributes(gender_override_reason: 'Agreed by phone.', created_by_id: organizer.id)
-    get program_path(program, section: 'history')
+    get history_program_path(program)
     expect(response.body).to include('Gender-rule override: Agreed by phone.')
     delete session_path
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(response.body).not_to include('Gender-rule', 'Agreed by phone.', 'Gender rules', '(Male)')
   end
 
@@ -185,7 +185,7 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
     expect(response.body).not_to include('Gender not selected', 'Override the')
     post program_organizer_bookings_path(program), params: { booking: organizer_booking }
     booking = track_booking(Booking.find_by(program_id: program.id, user_id: participant.id))
-    expect(response).to redirect_to(program_path(program, month: '2026-11'))
+    expect(response).to redirect_to(calendar_program_path(program, month: '2026-11'))
     expect(booking.gender_override_reason).to be_nil
   end
 
@@ -193,13 +193,13 @@ RSpec.describe 'Gender-aware booking', :aggregate_failures, :database, type: :re
     program.update!(no_consecutive_genders: [])
     participant.set(gender: nil)
     sign_in(participant)
-    get program_path(program, section: 'calendar')
+    get calendar_program_path(program)
     expect(response.body).not_to include('before your next booking')
     expect(calendar_day('2026-11-23').css('form')).to be_present
     post program_bookings_path(program),
          params: { date: '2026-11-23', confirmed: '1', schedule_revision: program.reload.schedule_revision.to_s }
     track_booking(Booking.find_by(program_id: program.id, user_id: participant.id))
-    expect(response).to redirect_to(program_path(program, month: '2026-11'))
+    expect(response).to redirect_to(calendar_program_path(program, month: '2026-11'))
   end
 
   it 'checks organizer replacements without losing the original and records an explicit override' do

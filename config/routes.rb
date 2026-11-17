@@ -25,6 +25,8 @@ Rails.application.routes.draw do
     resources :programs, only: %i[new create]
   end
   resources :programs, only: %i[index show edit update] do
+    get :calendar, on: :member, action: :show, defaults: { section: 'calendar' }
+    get :history, on: :member, action: :show, defaults: { section: 'history' }
     get :photos, on: :member
     get :security, on: :member
     resources :photos, only: %i[show create update destroy], controller: 'program_photos'

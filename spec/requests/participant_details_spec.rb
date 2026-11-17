@@ -122,9 +122,9 @@ RSpec.describe 'Coordinator participant details', :aggregate_failures, :database
     update_details
     book_on_programs([program, other.program], Date.new(2026, 11, 2))
     travel_to(Time.utc(2026, 10, 30, 12)) do
-      get program_path(program, section: 'calendar', month: '2026-11')
+      get calendar_program_path(program, month: '2026-11')
       expect(response.parsed_body.at_css('.booked-participant').text).to include('Updated Public')
-      get program_path(other.program, section: 'calendar', month: '2026-11')
+      get calendar_program_path(other.program, month: '2026-11')
       expect(response.parsed_body.at_css('.booked-participant').text).to include('Original Public')
     end
     expect_other_manager_isolation(other)
