@@ -151,6 +151,19 @@ RSpec.describe 'Administrator user editing', :aggregate_failures, :database, typ
     expect(response).to have_http_status(:forbidden)
   end
 
+  it 'shows account creation and update timestamps in UTC only on administrator account details' do
+    user = create_user(created_at: Time.utc(2025, 12, 16, 15, 25), updated_at: Time.utc(2026, 11, 16, 16, 45))
+    sign_in(create_user(roles: ['system_admin']))
+    get admin_user_path(user)
+    dates = response.parsed_body.css('.account-details time')
+    expect(dates.pluck('title')).to eq(['Tuesday, December 16, 2025 at 3:25 PM UTC',
+                                        'Monday, November 16, 2026 at 4:45 PM UTC'])
+    expect(dates.pluck('datetime')).to eq(%w[2025-12-16T15:25:00.000000000Z 2026-11-16T16:45:00.000000000Z])
+    sign_in(user)
+    get profile_path
+    expect(response.parsed_body.css('.account-details time')).to be_empty
+  end
+
   it 'labels account access states consistently without changing their controls' do
     create_user
     create_user(active: false)

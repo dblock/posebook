@@ -26,7 +26,7 @@ module Admin
       when nil then 'Not set'
       when true then 'Yes'
       when false then 'No'
-      when Time then value.utc.iso8601
+      when Time, Date then render('shared/date', value: value, zone: 'UTC', format: :compact)
       when Array, Hash then value.to_json
       else value.as_json.to_s.presence || 'Empty'
       end
@@ -54,13 +54,17 @@ module Admin
     def audit_subject_link(subject)
       case subject
       when ProgramMembership then audit_membership_link(subject)
-      when ProgramScheduleException
-        return 'Unavailable' unless subject.program
-
-        link_to "#{subject.program.name}: #{subject.date.iso8601}",
-                program_schedule_path(subject.program, date: subject.date.iso8601)
+      when ProgramScheduleException then audit_schedule_exception_link(subject)
       else audit_record_link(subject)
       end
+    end
+
+    def audit_schedule_exception_link(subject)
+      return 'Unavailable' unless subject.program
+
+      date = render('shared/date', value: subject.date, zone: subject.program.time_zone, format: :compact)
+      link_to safe_join([subject.program.name, ': ', date]),
+              program_schedule_path(subject.program, date: subject.date.iso8601)
     end
 
     def audit_membership_link(membership)

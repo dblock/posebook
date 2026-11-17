@@ -2,7 +2,7 @@
   <%= render "programs/navigation", program: @program, active: "calendar", detail: "Change Booking" %>
   <h1>Change Your Booking Date</h1>
   <%= render "programs/regular_schedule", program: @program %>
-  <p>Your current booking is <%= @booking.date.to_fs(:long) %> at <%= booking_time(@booking) %>, <%= @program.name %>. It stays reserved unless your new date is successfully booked.</p>
+  <p>Your current booking is <%= render "shared/date", value: @booking.scheduled_start, zone: @booking.time_zone, show_time: false %> at <%= booking_time(@booking) %>, <%= @program.name %>. It stays reserved unless your new date is successfully booked.</p>
   <% if @booking.rescheduling_locked? %>
     <%= render "bookings/rescheduling_notice", program: @program %>
   <% else %>

@@ -17,7 +17,7 @@
                   <%= render "shared/participant_identity", participant: application, profile: application.user,
                              path: participant_path(application.user_id), show_instagram: false %>
                 </td><td><%= application.status_label %></td>
-                <td><%= l((application.submitted_at || application.created_at).to_date, format: :long) %></td>
+                <td><%= render "shared/date", value: application.submitted_at || application.created_at, zone: @program.time_zone, format: :compact %></td>
                 <td><%= link_to "Review", program_application_path(@program, application), class: "button-link" %></td>
                 <td><% if membership %><%= link_to "View Profile", participant_path(application.user_id), class: "button-link" %><% end %></td>
               </tr>

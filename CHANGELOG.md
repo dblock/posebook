@@ -143,4 +143,5 @@
 - [#158](https://github.com/dblock/posebook/pull/158): Unify management-table identities, font sizes, actions, status and event filters, and expandable notes with faint dividers - [@dblock](https://github.com/dblock).
 - [#159](https://github.com/dblock/posebook/pull/159): Move remaining creation and personal invitation actions below management lists and simplify unavailable Google Calendar feedback - [@dblock](https://github.com/dblock).
 - [#160](https://github.com/dblock/posebook/pull/160): Use Reject and Application Rejected consistently for application decisions without changing stored statuses or reconsideration - [@dblock](https://github.com/dblock).
+- [#162](https://github.com/dblock/posebook/pull/162): Normalize HTML dates with compact single-line labels, minimum-width date columns, local relative days, current-year omission, consistent clocks, submission dates on application and invitation details, administrator account timestamps, and full dates, times, and time zones on hover - [@dblock](https://github.com/dblock).
 - Your contribution here.

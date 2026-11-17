@@ -192,6 +192,7 @@ needsAction
 cancelled
 tooltip
 datetime
+tabindex
 ProgramPhoto
 ParticipantHistory
 getMore

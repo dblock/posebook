@@ -1,7 +1,7 @@
 <main>
   <%= render "programs/navigation", program: @program, active: "calendar", detail: "Confirm Booking" %>
   <h1>Confirm Your Booking</h1>
-  <p>Book <%= @program.name %> on <%= @date.to_fs(:long) %> at <%= calendar_time(@calendar, @date) %> (<%= @program.time_zone %>)?</p>
+  <p>Book <%= @program.name %> on <%= render "shared/date", value: @calendar.starts_at(@date), zone: @program.time_zone, show_time: false %> at <%= calendar_time(@calendar, @date) %> (<%= @program.time_zone %>)?</p>
   <%= button_to "Confirm Booking", program_bookings_path(@program), params: { date: @date.iso8601, confirmed: "1", schedule_revision: @program.schedule_revision } %>
   <p><%= link_to "Cancel", program_path(@program, section: "calendar", month: @date.strftime("%Y-%m")) %></p>
 </main>

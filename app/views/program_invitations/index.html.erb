@@ -20,10 +20,10 @@
                            show_instagram: false %>
               </td>
               <td class="invitation-status"><%= status_label(invitation.status) %></td>
-              <td><%= time_tag invitation.created_at.in_time_zone(@program.time_zone), format: :long %></td>
+              <td><%= render "shared/date", value: invitation.created_at, zone: @program.time_zone, format: :compact %></td>
               <td><%= invitation.invited_by&.name.presence || "Not recorded" %></td>
-              <td><%= time_tag invitation.expires_at.in_time_zone(@program.time_zone), format: :long %></td>
-              <td><% if invitation.used_at %><%= time_tag invitation.used_at.in_time_zone(@program.time_zone), format: :long %><% else %>Not accepted<% end %></td>
+              <td><%= render "shared/date", value: invitation.expires_at, zone: @program.time_zone, format: :compact %></td>
+              <td><% if invitation.used_at %><%= render "shared/date", value: invitation.used_at, zone: @program.time_zone, format: :compact %><% else %>Not accepted<% end %></td>
               <td><% if invitation.status == "Pending" %>
                 <%= button_to "Revoke", program_participant_invitation_path(@program, invitation, cursor: @pagination.cursor, status: params[:status]), method: :delete, class: "secondary-action", aria: { label: "Revoke invitation for #{invitation.name.presence || invitation.email.presence || 'participant'}" } %>
               <% end %></td>

@@ -12,7 +12,7 @@
           <% @entries.each do |entry| %>
             <% changes = @history.changes_for(entry) %>
             <tr data-history="<%= entry.id %>">
-              <td><%= time_tag entry.created_at.utc, format: :long %></td>
+              <td><%= render "shared/date", value: entry.created_at, zone: "UTC", format: :compact %></td>
               <td><%= audit_actor(entry, @history) %></td>
               <td><%= audit_subject(entry, @history) %></td>
               <td><%= audit_action(entry) %></td>

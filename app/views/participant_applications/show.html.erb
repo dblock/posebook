@@ -3,6 +3,7 @@
   <h1>Application</h1>
   <p><strong>Program:</strong> <%= link_to @program.name, program_path(@program) %></p>
   <p><strong>Status:</strong> <%= @application.status_label %></p>
+  <p><strong>Submitted On:</strong> <%= render "shared/date", value: @application.submitted_at || @application.created_at, zone: @program.time_zone %></p>
   <% if @application.status == "declined" %>
     <p>Coordinators may accept this application later; you do not need to apply again.</p>
   <% end %>

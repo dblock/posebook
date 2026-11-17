@@ -53,16 +53,16 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
                                                   mode: 'open', start_time: '20:00', reason: 'Private extra session.'))
     program.update!(first_bookable_date: Date.new(2027, 1, 1))
     get program_path(program)
-    expect(response.parsed_body.at_css('.next-session').text).to include('November 17', '8:00 PM')
+    expect(response.parsed_body.at_css('.next-session').text).to include('Next Tuesday', '8:00 PM')
     get program_path(program, section: 'calendar')
-    expect(response.parsed_body.at_css('[data-calendar-month]').text).to eq('January 2027')
-    expect(response.parsed_body.at_css('.booking-window-notice').text).to include('book now', 'January 1, 2027')
+    expect(response.parsed_body.at_css('[data-calendar-month]').text.strip).to eq('January 2027')
+    expect(response.parsed_body.at_css('.booking-window-notice').text).to include('book now', 'Jan 1, 2027')
     get program_path(program, month: '2026-11')
     expect(day('2026-11-16').text).not_to include('6:30 PM')
     expect(day('2026-11-17').text).to include('8:00 PM')
     expect(response.body).not_to include('Private closure.', 'Private extra session.')
     get program_path(program, month: '2027-07')
-    expect(response.parsed_body.at_css('[data-calendar-month]').text).to eq('July 2027')
+    expect(response.parsed_body.at_css('[data-calendar-month]').text.strip).to eq('July 2027')
     expect(response.parsed_body.css('nav[aria-label="Calendar months"] a').map(&:text)).not_to include('Next Month')
   end
 
@@ -104,7 +104,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     end
     sign_in(organizer_for)
     get program_path(program, section: 'calendar')
-    link = day('2026-11-17').at_css('time a')
+    link = day('2026-11-17').at_css('a[aria-label="Edit 2026-11-17"]')
     expect(link['aria-label']).to eq('Edit 2026-11-17')
     expect(link['href']).to eq(program_schedule_path(program, date: '2026-11-17'))
     expect(day('2026-11-17').css('.status-label, small')).to be_empty
@@ -213,7 +213,7 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
       expect(day('2026-11-30').text).to include('Available', '6:30 PM')
       expect(day('2026-11-29').text.strip).to eq('29')
       %w[2026-12-14 2027-01-01].each do |date|
-        expect(day(date).css('span').text).to eq('Future')
+        expect(day(date).css('.status-label').text).to eq('Future')
         expect(day(date).css('strong, small, form, button, a')).to be_empty
       end
     end
@@ -236,11 +236,11 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     program.update!(booking_horizon_months: 1)
     sign_in(organizer_for)
     get program_path(program, month: '2026-12')
-    expect(day('2026-12-14').css('span').text).to eq('Future')
+    expect(day('2026-12-14').css('.status-label').text).to eq('Future')
     expect(day('2026-12-14').css('a, form, button')).to be_empty
     sign_in(organizer_for(create_program))
     get program_path(program, month: '2026-12', program_coordinator: '1')
-    expect(day('2026-11-30').css('span').text).to eq('Available')
+    expect(day('2026-11-30').css('.status-label').text).to eq('Available')
     expect(day('2026-11-30').css('a, form, button')).to be_empty
   end
 

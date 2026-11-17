@@ -1,7 +1,7 @@
 <main>
   <%= render "programs/navigation", program: @program, active: "calendar", detail: "Edit Booking" %>
   <h1>Edit Booking at <%= @program.name %></h1>
-  <p><%= @booking.user.name %>: <%= @booking.date.to_fs(:long) %> at <%= booking_time(@booking) %></p>
+  <p><%= @booking.user.name %>: <%= render "shared/date", value: @booking.scheduled_start, zone: @booking.time_zone, show_time: false %> at <%= booking_time(@booking) %></p>
   <%= render "programs/booking_status", booking: @booking, private_view: true %>
   <%= render "form" %>
 </main>

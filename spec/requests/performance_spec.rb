@@ -154,15 +154,15 @@ RSpec.describe 'User experience read performance', :aggregate_failures, :databas
                                                   start_time: '23:00', end_time: '01:00', reason: 'Extra session.'))
     result = commands { get root_path }
     rows = response.parsed_body.css('.upcoming-sessions tbody tr')
-    opening = rows.find { |row| row.text.include?(programs.last.name) && row.text.include?('Tue, Nov 17') }
-    expect(rows.find { |row| row.text.include?(programs.first.name) }.text).to include('Mon, Nov 23')
+    opening = rows.find { |row| row.text.include?(programs.last.name) && row.text.include?('Next Tue') }
+    expect(rows.find { |row| row.text.include?(programs.first.name) }.text).to include('Nov 23')
     expect(opening.text).to include('11:00 PM', 'next day')
     expect(result[:collections]['program_schedule_exceptions']).to eq(1)
     closure.update!(mode: 'regular')
     get root_path
     first = response.parsed_body.css('.upcoming-sessions tbody tr')
                     .find { |row| row.text.include?(programs.first.name) }
-    expect(first.text).to include('Mon, Nov 16')
+    expect(first.text).to include('Next Mon')
   end
 
   it 'retains the local calendar window and later exceptions across a server month boundary' do

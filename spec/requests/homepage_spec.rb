@@ -160,8 +160,8 @@ RSpec.describe 'Homepage', :aggregate_failures, :database, type: :request do
     get root_path
     expect(response).to have_http_status(:ok)
     expect(session_rows.map { |row| row.values_at(0, 2, 3) })
-      .to eq([['Mon, Nov 16', 'Public Mondays', program.venue.name],
-              ['Mon, Nov 23', 'Public Mondays', program.venue.name]])
+      .to eq([['Next Mon', 'Public Mondays', program.venue.name],
+              ['Nov 23', 'Public Mondays', program.venue.name]])
     expect(session_rows.map(&:last)).to eq(['Booked Model', 'To be announced'])
     expect(response.body).not_to include('Hidden Program', 'Hidden Venue', 'Private Name')
     expect(response.parsed_body.at_css('.site-nav a.button-link')['href']).to eq(new_session_path)
@@ -226,7 +226,7 @@ RSpec.describe 'Homepage', :aggregate_failures, :database, type: :request do
     create_program(name: 'Paused Mondays', venue: program.venue, active: false)
     get venue_path(program.venue)
     expect(response.parsed_body.css('.program-card h2 a').map(&:text)).to eq(['Public Mondays'])
-    expect(session_rows.map(&:first)).to eq(['Mon, Nov 16', 'Mon, Nov 23'])
+    expect(session_rows.map(&:first)).to eq(['Next Mon', 'Nov 23'])
     expect(session_rows.pluck(2).uniq).to eq(['Public Mondays'])
     expect(response.parsed_body.at_css('.upcoming-sessions').text).not_to include('Venue')
   end

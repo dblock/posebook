@@ -8,7 +8,7 @@
     <h2 id="next-session-heading">Next <%= @program.program_label.titleize %></h2>
     <% if @next_session_date %>
       <p>
-        <time datetime="<%= (@next_session_booking&.scheduled_start || @calendar.starts_at(@next_session_date)).iso8601 %>"><%= @next_session_date.strftime("%A, %B %-d, %Y") %></time><br>
+        <%= render "shared/date", value: @next_session_booking&.scheduled_start || @calendar.starts_at(@next_session_date), zone: @next_session_booking&.time_zone || @program.time_zone, show_time: false %><br>
         <%= @next_session_booking ? calendar_booking_time(@next_session_booking) : scheduled_calendar_time(@calendar, @next_session_date) %> (<%= @next_session_booking&.time_zone || @program.time_zone %>)
       </p>
       <% if @next_session_booking&.user&.active? %>
