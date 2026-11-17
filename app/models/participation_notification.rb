@@ -18,7 +18,7 @@ class ParticipationNotification
     application = ParticipantApplication.where(id: @event.source_id, program_id: @event.program_id,
                                                user_id: @event.user_id).first
     recipient = User.active.where(id: recipient_id).first
-    return unless application&.profile_shared_at && recipient && latest_event?(application)
+    return unless deliverable_application?(application, recipient)
 
     if @event.action == 'application_submitted'
       submission_message(application, recipient)
@@ -33,11 +33,19 @@ class ParticipationNotification
     recipient = User.active.where(id: recipient_id).first
     participant = current_participant
     return unless recipient && participant && coordinator_ids.include?(recipient.id)
+    return unless NotificationSetting.for(@event.program, 'participation_admission').enabled &&
+                  NotificationPreferences.allowed?(recipient, 'participation_admission')
 
     ParticipantAdmissionMailer.accepted(@event, participant, recipient)
   end
 
   private
+
+  def deliverable_application?(application, recipient)
+    application&.profile_shared_at && recipient && latest_event?(application) &&
+      NotificationSetting.for(application.program, @event.action).enabled &&
+      NotificationPreferences.allowed?(recipient, @event.action)
+  end
 
   def latest_event?(application)
     application.events.order_by(created_at: :desc, id: :desc).first&.id == @event.id

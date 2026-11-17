@@ -25,6 +25,7 @@ RSpec.configure do |config|
     ApplicationRegistration.create_indexes
     ParticipationEvent.create_indexes
     Booking.create_indexes
+    BookingNotification.create_indexes
     BookingClaim.create_indexes
     GoogleCalendarConnection.create_indexes
     GoogleCalendarSync.create_indexes

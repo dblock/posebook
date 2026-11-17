@@ -7,7 +7,7 @@ RSpec.describe AttendanceMutation, :aggregate_failures, :database do
 
   around { |example| travel_to(Time.utc(2026, 11, 13, 15)) { example.run } }
 
-  let(:program) { create_program(time_zone: 'America/New_York', start_time: '18:30') }
+  let(:program) { create_program(time_zone: 'America/New_York', start_time: '18:30', end_time: '21:00') }
   let(:participant) { create_user }
   let(:booking) do
     grant_participant_access(program, participant)
@@ -30,9 +30,10 @@ RSpec.describe AttendanceMutation, :aggregate_failures, :database do
     grant_participant_access(program, participant)
     record = track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-11-02'))
     program.update!(time_zone: 'America/Los_Angeles')
-    travel_to Time.utc(2026, 10, 26, 3, 59, 59)
+    record.program = program
+    travel_to Time.utc(2026, 10, 27, 0, 59, 59)
     expect(record.confirmation_open?).to be(false)
-    travel_to Time.utc(2026, 10, 26, 4)
+    travel_to Time.utc(2026, 10, 27, 1)
     expect(record.confirmation_open?).to be(true)
     travel_to Time.utc(2026, 10, 28, 4)
     expect(record.rescheduling_locked?).to be(true)
@@ -48,7 +49,7 @@ RSpec.describe AttendanceMutation, :aggregate_failures, :database do
 
   it 'retains prior confirmation metadata without marking the old date or its replacement confirmed' do
     record = booking
-    travel_to Time.utc(2026, 11, 16, 15)
+    travel_to Time.utc(2026, 11, 17, 2)
     confirm
     replacement = track_booking(BookingMutation.new(program: program, user: participant)
                                                .change(booking: record.reload, date: '2026-11-30', reason: 'Travel.'))
@@ -60,7 +61,7 @@ RSpec.describe AttendanceMutation, :aggregate_failures, :database do
 
   it 'rechecks membership and account activity inside the transaction even for loaded users' do
     record = booking
-    travel_to Time.utc(2026, 11, 16, 15)
+    travel_to Time.utc(2026, 11, 17, 2)
     User.find(participant.id).update!(active: false)
     expect { confirm }.to raise_error(BookingMutation::Invalid, /participant invitation/)
     expect(record.reload.attendance_confirmed?).to be(false)
@@ -68,14 +69,14 @@ RSpec.describe AttendanceMutation, :aggregate_failures, :database do
 
   it 'serializes competing confirmations without duplicating attendance history' do
     record = booking
-    travel_to Time.utc(2026, 11, 16, 15)
+    travel_to Time.utc(2026, 11, 17, 2)
     2.times.map { Thread.new { confirm } }.each(&:value)
     expect(record.reload.attendance_changes.size).to eq(1)
   end
 
   it 'does not replay an old confirmation over an organizer deliberately clearing attendance' do
     record = booking
-    travel_to Time.utc(2026, 11, 16, 15)
+    travel_to Time.utc(2026, 11, 17, 2)
     confirm
     organizer = create_user
     grant_coordinator_access(program, organizer)
@@ -91,7 +92,7 @@ RSpec.describe AttendanceMutation, :aggregate_failures, :database do
 
   it 'serializes confirmation with a reschedule without confirming the replacement accidentally' do
     record = booking
-    travel_to Time.utc(2026, 11, 16, 15)
+    travel_to Time.utc(2026, 11, 17, 2)
     confirming = Thread.new { allow_stale { confirm } }
     replacement = allow_stale do
       BookingMutation.new(program: program, user: participant).change(booking: record, date: '2026-11-30',

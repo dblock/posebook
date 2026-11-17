@@ -13,7 +13,8 @@ module DatabaseCleanup
 
   def track_participation_records
     records = owned(:user_id, User, ParticipantApplication, ParticipationEvent) +
-              owned(:program_id, Program, ApplicationRegistration, ProgramScheduleException)
+              owned(:program_id, Program, ApplicationRegistration, ProgramScheduleException) +
+              owned(:booking_id, Booking, BookingNotification)
     tracked_records.concat(records - tracked_records)
   end
 

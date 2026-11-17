@@ -1,0 +1,10 @@
+<main>
+  <h1>Booking Reminders</h1>
+  <% if @user.booking_reminders_enabled? %>
+    <p>Stop attendance confirmation requests and upcoming session reminders for your account?</p>
+    <p>You will still receive booking changes and cancellations.</p>
+    <%= button_to "Disable Booking Reminders", booking_reminder_preference_path(token: params[:token]), method: :patch %>
+  <% else %>
+    <p>Booking reminders are disabled. You can enable them again in Edit Profile.</p>
+  <% end %>
+</main>

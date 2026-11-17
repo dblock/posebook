@@ -11,6 +11,10 @@ class EmailDeliveryMessage
 
   private
 
+  def booking_notification
+    BookingNotification.where(id: @delivery.resource_id).first&.message
+  end
+
   def application_draft
     ApplicationDraftMaintenance.new(@delivery.resource_id).reminder_message(expires_at: @delivery.expires_at)
   end
@@ -52,13 +56,15 @@ class EmailDeliveryMessage
     inviter = User.active.where(id: invitation.invited_by_id).first
     return unless inviter && invitation.program&.managed_by?(inviter)
 
-    ParticipantInvitationMailer.invite(invitation, token)
+    configured('participant_invitation', invitation.program) { ParticipantInvitationMailer.invite(invitation, token) }
   end
 
   def coordinator_invitation
     invitation = CoordinatorInvitation.available(token)
-    CoordinatorInvitationMailer.invite(invitation, token) if invitation&.id == @delivery.resource_id &&
-                                                             invitation.email.present?
+    return unless invitation&.id == @delivery.resource_id && invitation.email.present?
+
+    kind = invitation.venue_id ? 'venue_coordinator_invitation' : 'program_coordinator_invitation'
+    configured(kind, invitation.target) { CoordinatorInvitationMailer.invite(invitation, token) }
   end
 
   def booking_invitation
@@ -69,6 +75,12 @@ class EmailDeliveryMessage
     return unless inviter && membership.program.managed_by?(inviter)
 
     access = BookingAccess.new(membership)
-    BookingInvitationMailer.invite(membership) if access.allowed? && !access.booking
+    return unless access.allowed? && !access.booking
+
+    configured('booking_invitation', membership.program) { BookingInvitationMailer.invite(membership) }
+  end
+
+  def configured(kind, scope)
+    yield if NotificationSetting.for(scope, kind).enabled
   end
 end

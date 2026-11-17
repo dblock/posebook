@@ -24,9 +24,13 @@ class User
   field :session_version, type: String, default: -> { SecureRandom.hex(16) }
   field :password_reset_digest, type: String
   field :password_reset_expires_at, type: Time
+  field :booking_reminders_enabled, type: Mongoid::Boolean, default: true
+  field :application_reminders_enabled, type: Mongoid::Boolean, default: true
+  field :coordinator_notifications_enabled, type: Mongoid::Boolean, default: true
 
   track_history on: %i[name gender email phone roles active email_verified_at
-                       display_name instagram_handle instagram_tagging_allowed],
+                       display_name instagram_handle instagram_tagging_allowed booking_reminders_enabled
+                       application_reminders_enabled coordinator_notifications_enabled],
                 modifier_field_optional: true, modifier_field_inverse_of: nil, track_blank_changes: true
 
   index({ email: 1 }, unique: true)
@@ -69,6 +73,15 @@ class User
 
   def system_admin?
     roles.include?('system_admin')
+  end
+
+  def booking_reminder_token
+    Rails.application.message_verifier('booking-reminders').generate(id.to_s, purpose: 'preferences')
+  end
+
+  def self.for_booking_reminder_token(token)
+    id = Rails.application.message_verifier('booking-reminders').verified(token.to_s, purpose: 'preferences')
+    active.where(id: id).first if id
   end
 
   def update_by_admin(attributes)

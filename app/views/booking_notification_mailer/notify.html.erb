@@ -1,0 +1,4 @@
+<%= booking_notification_body(@body) %>
+<% if @reminder %>
+  <p><%= link_to "Manage Booking Reminders", @unsubscribe_url %></p>
+<% end %>

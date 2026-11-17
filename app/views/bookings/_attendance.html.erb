@@ -3,7 +3,7 @@
              show_status: local_assigns.fetch(:show_status, true) %>
   <% if booking.attendance_confirmed? %>
     <p>You're confirmed. See you there!</p>
-  <% elsif booking.confirmation_open? && !booking.rescheduling_locked? %>
+  <% elsif confirmation_open && !booking.rescheduling_locked? %>
     <p>Please confirm that you will be there for your <%= program.program_label.downcase %>.</p>
   <% end %>
 </div>

@@ -14,7 +14,7 @@ class OrganizerBookingMutation
       @booking = build_booking(attributes, session: session)
       BookingClaim.create!(program: @program, user: @booking.user, booking: @booking,
                            date: @booking.date, ends_at: @booking.ends_at)
-      update_attendance(attributes, session)
+      update_attendance(attributes, session, notify: false)
     end
   end
 
@@ -22,7 +22,7 @@ class OrganizerBookingMutation
     run do |session|
       original = active_booking(id, version: attributes[:lock_version])
       @booking = replace_if_changed(original, attributes, session)
-      update_attendance(attributes, session)
+      update_attendance(attributes, session, notify: @booking.id == original.id)
     end
   end
 
@@ -112,13 +112,13 @@ class OrganizerBookingMutation
     )
   end
 
-  def update_attendance(attributes, session)
+  def update_attendance(attributes, session, notify: true)
     value = attributes[:attendance]
     unless %w[confirmed unconfirmed].include?(value)
       raise BookingMutation::Invalid, @program.message('bookings.attendance_required')
     end
 
     reason = attributes[:reason].presence || @program.message('bookings.organizer_created')
-    @booking.record_attendance!(value == 'confirmed', @user, explanation(reason), session: session)
+    @booking.record_attendance!(value == 'confirmed', @user, explanation(reason), session: session, notify: notify)
   end
 end

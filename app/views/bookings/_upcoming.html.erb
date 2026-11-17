@@ -1,3 +1,4 @@
+<% confirmation_open = !local_assigns[:read_only] && !booking.attendance_confirmed? && booking.confirmation_open? %>
 <section class="upcoming-booking attendance-panel" aria-labelledby="upcoming-booking-<%= booking.id %>">
   <h2 id="upcoming-booking-<%= booking.id %>"><%= local_assigns[:read_only] ? "Upcoming Booking" : "Your Upcoming Booking" %></h2>
   <div class="upcoming-booking-details">
@@ -30,6 +31,7 @@
                    show_status: !local_assigns.fetch(:show_venue, false) %>
       <% else %>
         <%= render "bookings/attendance", program: program, booking: booking,
+                   confirmation_open: confirmation_open,
                    show_status: !local_assigns.fetch(:show_venue, false) %>
       <% end %>
       <% if booking.rescheduling_locked? && !local_assigns[:read_only] %>
@@ -37,7 +39,7 @@
       <% end %>
       <% unless local_assigns[:read_only] %>
         <div class="booking-actions">
-          <% if booking.confirmation_open? && !booking.attendance_confirmed? %>
+          <% if confirmation_open %>
             <%= button_to "I'll be there!", confirm_program_booking_path(program, booking), params: { booking_version: booking.lock_version } %>
           <% end %>
           <% if can_book && !booking.rescheduling_locked? %>

@@ -15,6 +15,25 @@ RSpec.describe ParticipationNotification, :aggregate_failures, :database do
 
   before { grant_coordinator_access(program, coordinator) }
 
+  it 'rechecks optional coordinator preferences without blocking application submission' do
+    application
+    coordinator.update!(coordinator_notifications_enabled: false)
+    deliver_emails
+    expect(application.reload.status).to eq('pending')
+    expect(ActionMailer::Base.deliveries).to be_empty
+    decide('declined')
+    applicant.update!(application_reminders_enabled: false, coordinator_notifications_enabled: false)
+    deliver_emails
+    expect(ActionMailer::Base.deliveries.last.to).to eq([applicant.email])
+  end
+
+  it 'rechecks a disabled application alert before delivery' do
+    application
+    program.update!(notification_settings: { 'application_submitted' => { 'enabled' => false } })
+    deliver_emails
+    expect(ActionMailer::Base.deliveries).to be_empty
+  end
+
   def decide(status)
     ParticipantApplicationWorkflow.new(program: program, user: coordinator)
                                   .review(application.id, status: status, version: application.reload.lock_version,

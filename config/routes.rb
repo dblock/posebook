@@ -8,6 +8,7 @@ Rails.application.routes.draw do
     resources :photos, only: %i[show create update destroy], controller: 'profile_photos'
   end
   resource :email_change, only: %i[show update]
+  resource :booking_reminder_preference, only: %i[show update]
   namespace :admin do
     get 'history', to: 'history#index', as: :history
     resources :users, only: %i[index show edit update] do

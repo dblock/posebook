@@ -48,7 +48,8 @@ class VenuesController < ApplicationController
   def update
     return update_activation if params.key?(:active)
 
-    if @venue.update(venue_params)
+    @venue = VenueSettingsUpdate.new(venue: @venue, user: current_user).call(venue_params)
+    if @venue.errors.empty?
       redirect_to @venue, notice: t('venues.updated')
     else
       render :edit, status: :unprocessable_content
