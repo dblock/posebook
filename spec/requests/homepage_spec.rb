@@ -37,7 +37,8 @@ RSpec.describe 'Homepage', :aggregate_failures, :database, type: :request do
     expect(section.css('tbody tr').size).to eq(5)
     expect(section.text).to include('Pending', 'Accepted', 'Reject', 'Withdrawn', other.email)
     expect(section.text).not_to include(private_applicant.name, private_applicant.email, 'Cancel Application')
-    expect(section.css('.button-link').pluck('href')).to include(program_application_path(other.program, other))
+    expect(section.css('.participant-actions > a:not(.button-link)').pluck('href'))
+      .to include(program_application_path(other.program, other))
     expect(section.css('tbody form')).to be_empty
   end
 

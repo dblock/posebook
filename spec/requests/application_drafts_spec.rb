@@ -37,7 +37,7 @@ RSpec.describe 'Single-page application drafts', :aggregate_failures, :database,
     table = response.parsed_body.at_css('table')
     expect(table.css('[scope]').map(&:text)).to eq(%w[Program Status Actions])
     expect(table.text).to include(program.name, 'Draft')
-    expect(table.css('.button-link').pluck('href'))
+    expect(table.css('.participant-actions > a').pluck('href'))
       .to contain_exactly(program_participation_application_path(program),
                           new_program_participation_application_path(program))
     expect(table.at_css('form')['action']).to eq(program_participation_application_path(program))
@@ -46,7 +46,7 @@ RSpec.describe 'Single-page application drafts', :aggregate_failures, :database,
     sign_in(create_user(roles: ['system_admin']))
     get applications_admin_user_path(applicant)
     expect(response.parsed_body.at_css('table form')).to be_nil
-    expect(response.parsed_body.at_css('table .button-link')['href'])
+    expect(response.parsed_body.at_css('table .participant-actions > a:not(.button-link)')['href'])
       .to eq(program_application_path(program, draft))
   end
 
@@ -54,14 +54,14 @@ RSpec.describe 'Single-page application drafts', :aggregate_failures, :database,
     save_draft
     draft.update!(status: 'pending', profile_shared_at: Time.current)
     get applications_profile_path
-    expect(response.parsed_body.at_css('table .button-link')['href'])
+    expect(response.parsed_body.at_css('table .participant-actions > a:not(.button-link)')['href'])
       .to eq(program_participation_application_path(program))
     expect(response.parsed_body.at_css('table').text).to include('Pending', 'View')
     expect(response.parsed_body.at_css('table button').text).to eq('Withdraw')
     expect(response.parsed_body.at_css('table input[name="lock_version"]')['value']).to eq(draft.lock_version.to_s)
     sign_in(create_user(roles: ['system_admin']))
     get applications_admin_user_path(applicant)
-    expect(response.parsed_body.at_css('table .button-link')['href'])
+    expect(response.parsed_body.at_css('table .participant-actions > a:not(.button-link)')['href'])
       .to eq(program_application_path(program, draft))
     expect(response.parsed_body.at_css('table form')).to be_nil
   end

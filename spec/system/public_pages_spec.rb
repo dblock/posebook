@@ -88,7 +88,7 @@ RSpec.describe 'Public pages', :aggregate_failures, :database, type: :system do
         expect(page).to have_text('Withdrawn')
         expect_no_horizontal_overflow
         capture_screenshot("admin-submitted-applications-#{viewport}")
-        click_on 'View'
+        find('a:not(.button-link)', text: 'View', exact_text: true).click
       end
       expect(page).to have_current_path(program_application_path(program, application))
       expect(page).to have_css('h1', text: 'Review Application')
