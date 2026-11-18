@@ -56,8 +56,7 @@ RSpec.describe 'Markdown content', :aggregate_failures, :database, type: :system
     program.venue.update!(description: content)
     sign_out_through_browser
     each_viewport do |viewport|
-      [venue_path(program.venue), program_path(program),
-       new_program_application_registration_path(program)].each do |path|
+      [venue_path(program.venue), program_path(program)].each do |path|
         without_javascript do
           visit path
           expect_public_description
@@ -67,17 +66,29 @@ RSpec.describe 'Markdown content', :aggregate_failures, :database, type: :system
     end
   end
 
-  it 'keeps the description visible above a verified applicant editor without private program details' do
-    program.update!(description: "## Draw Together\n\n**All Levels** welcome.",
-                    instructions: 'Private arrival details', pay: 321, applications_enabled: true)
+  def expect_application_instructions
+    expect(page).to have_css('.application-instructions h2', text: 'How to Apply')
+    expect(page).to have_css('.application-instructions strong', text: 'two reference poses')
+    expect(page.text).not_to include('Draw Together', 'Private arrival details', '$321.00')
+    expect_no_horizontal_overflow
+  end
+
+  it 'shows application instructions above preparation and verified applicant editors' do
+    program.update!(description: '## Draw Together', instructions: 'Private arrival details', pay: 321,
+                    application_instructions: "## How to Apply\n\nShare **two reference poses**.\n\n" \
+                                              "- https://example.test/#{'a' * 150}", applications_enabled: true)
     sign_out_through_browser
+    each_viewport do |viewport|
+      without_javascript { visit new_program_application_registration_path(program) }
+      expect_application_instructions
+      capture_screenshot("application-instructions-registration-#{viewport}")
+    end
     sign_in_through_browser(create_user(email_verified_at: Time.current))
     each_viewport do |viewport|
       visit new_program_participation_application_path(program)
-      expect_public_description
+      expect_application_instructions
       expect(page).to have_button('Submit Application', disabled: true)
-      expect(page).to have_field('Phone', with: '+1 (202) 555-0101')
-      capture_screenshot("application-description-#{viewport}")
+      capture_screenshot("application-instructions-#{viewport}")
     end
   end
 end

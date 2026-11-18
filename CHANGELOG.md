@@ -162,4 +162,5 @@
 - [#175](https://github.com/dblock/posebook/pull/175): Add participant invitation shortcuts beside Manage Calendar on managed program cards and before scheduling on program calendars - [@dblock](https://github.com/dblock).
 - [#176](https://github.com/dblock/posebook/pull/176): Format phone inputs when focus leaves the field without saving, preserving incomplete or invalid input - [@dblock](https://github.com/dblock).
 - [#178](https://github.com/dblock/posebook/pull/178): Run CI specs on eight parallel workers with repeatable random file assignments and one combined coverage report - [@dblock](https://github.com/dblock).
+- [#179](https://github.com/dblock/posebook/pull/179): Show optional program application instructions instead of the program description when preparing and submitting applications - [@dblock](https://github.com/dblock).
 - Your contribution here.

@@ -51,15 +51,46 @@ RSpec.describe 'Public descriptions', :aggregate_failures, :database, type: :req
     end
   end
 
-  it 'shows the same public description throughout preparation and verified application editing' do
+  it 'shows application instructions instead of the description throughout preparation and application editing' do
+    program.update!(application_instructions: "## How to Apply\n\nInclude **two poses**.")
     get new_program_application_registration_path(program)
-    expect(response.parsed_body.at_css('.location-description strong').text).to eq('pencils')
+    expect(response.parsed_body.at_css('.application-instructions h2').text).to eq('How to Apply')
+    expect(response.parsed_body.at_css('.application-instructions strong').text).to eq('two poses')
+    expect(response.parsed_body.at_css('.location-description')).to be_nil
     expect(response.body).not_to include(program.instructions, '$321.00', 'Booking Horizon')
     sign_in(create_user(email_verified_at: Time.current))
     get new_program_participation_application_path(program)
-    expect(response.parsed_body.at_css('.location-description strong').text).to eq('pencils')
+    expect(response.parsed_body.at_css('.application-instructions strong').text).to eq('two poses')
+    expect(response.parsed_body.at_css('.location-description')).to be_nil
     expect(response.body).not_to include(program.instructions, '$321.00', 'Booking Horizon')
     expect(response.parsed_body.at_css('#application-editor')).to be_present
+  end
+
+  it 'omits blank application instructions without falling back to the description or private instructions' do
+    get new_program_application_registration_path(program)
+    expect(response.parsed_body.at_css('.application-instructions, .location-description')).to be_nil
+    expect(response.body).not_to include('pencils', program.instructions)
+    sign_in(create_user(email_verified_at: Time.current))
+    get new_program_participation_application_path(program)
+    expect(response.parsed_body.at_css('.application-instructions, .location-description')).to be_nil
+    expect(response.body).not_to include('pencils', program.instructions)
+  end
+
+  it 'saves, audits, and limits application instructions through program settings' do
+    grant_coordinator_access(program, coordinator)
+    sign_in(coordinator)
+    get edit_program_path(program)
+    expect(response.parsed_body.at_css('#program_application_instructions')).to be_present
+    expect(response.body).to include('before email verification')
+    patch program_path(program), params: { program: { application_instructions: 'Send **references**.' } }
+    expect(response).to redirect_to(program_path(program))
+    expect(program.reload.application_instructions).to eq('Send **references**.')
+    change = program.history_tracks.last
+    expect(change.modified).to include('application_instructions' => 'Send **references**.')
+    patch program_path(program), params: { program: { application_instructions: 'x' * 5001 } }
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include('Application instructions is too long')
+    expect(program.reload.application_instructions).to eq('Send **references**.')
   end
 
   it 'keeps pay and instructions member-only and booking horizon exclusively in settings' do

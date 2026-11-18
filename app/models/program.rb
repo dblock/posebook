@@ -32,6 +32,7 @@ class Program # rubocop:disable Metrics/ClassLength -- Keep Mongoid field and au
   field :active, type: Mongoid::Boolean, default: true
   field :applications_enabled, type: Mongoid::Boolean, default: false
   field :application_message_placeholder, type: String
+  field :application_instructions, type: String
 
   slug :name, :custom_slug, history: true, reserve: RESERVED_SLUGS, max_length: 100 do |program|
     (program.custom_slug.presence || program.name).to_url
@@ -41,7 +42,7 @@ class Program # rubocop:disable Metrics/ClassLength -- Keep Mongoid field and au
                        booking_horizon_months first_bookable_date available_weekdays start_time end_time
                        no_consecutive_genders
                        calendar_invitation_lead_minutes primary_photo_id active applications_enabled
-                       application_message_placeholder notification_settings],
+                       application_message_placeholder application_instructions notification_settings],
                 modifier_field_optional: true, modifier_field_inverse_of: nil, track_blank_changes: true
 
   has_many :memberships, class_name: 'ProgramMembership', inverse_of: :program,
@@ -69,7 +70,8 @@ class Program # rubocop:disable Metrics/ClassLength -- Keep Mongoid field and au
   validates :custom_slug, length: { maximum: 100 }
   validates :time_zone, inclusion: { in: TIME_ZONES }
   validates :pay, numericality: { greater_than_or_equal_to: 0 }
-  validates :description, :instructions, :application_message_placeholder, length: { maximum: 5000 }
+  validates :description, :instructions, :application_message_placeholder, :application_instructions,
+            length: { maximum: 5000 }
   validates :booking_horizon_months, numericality: { only_integer: true, greater_than: 0 }
   validate do
     value = attributes_before_type_cast['first_bookable_date']
