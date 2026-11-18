@@ -3,6 +3,11 @@
 require 'rails_helper'
 
 RSpec.describe 'Responsive layout', :aggregate_failures, :database, type: :system do
+  include ActiveSupport::Testing::TimeHelpers
+
+  # Two-digit afternoon clocks produce the widest compact date labels.
+  around { |example| travel_to(Time.utc(2026, 11, 18, 22, 58)) { example.run } }
+
   let(:coordinator) { create_user(name: 'Jordan Coordinator With A Long Display Name') }
   let(:program) { create_program(name: 'Figure Drawing Mondays at the Long-Named Community Studio') }
 

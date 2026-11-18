@@ -33,7 +33,7 @@ module BrowserHelpers
   end
 
   def resize_to(viewport)
-    page.driver.resize(*VIEWPORTS.fetch(viewport))
+    page.current_window.resize_to(*VIEWPORTS.fetch(viewport))
   end
 
   def each_viewport(&)
