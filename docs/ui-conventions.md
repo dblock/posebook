@@ -66,6 +66,8 @@ Venue and program descriptions are public; program descriptions also appear on b
 
 Forms without a table, gallery, or tabs narrow automatically to a readable width. Public application preparation is an exception: its heading and breadcrumbs use full page width while its email form is capped at 28rem and fits smaller screens. Render validation errors with `shared/_errors`, which uses `role="alert"`. Flash messages use `role="alert"` or `role="status"` and float over the top of the page without shifting layout; notices dismiss after three seconds, alerts stay until dismissed. Scripts that update a page in place replace the contents of `[data-flash-messages]`.
 
+Phone fields format valid input when focus leaves the field, using the same North American display and international normalization as saved values. Leave incomplete or invalid input unchanged. Formatting does not submit the form or save the account; server validation and normalization remain authoritative without JavaScript.
+
 ## Copying Links
 
 Use `shared/_copy_button` (with `show_link: true` to display the URL) or the `copy_button` helper. The visible link can be copied by hand without JavaScript, and copy failures tell the user to copy it manually.

@@ -160,4 +160,5 @@
 - [#173](https://github.com/dblock/posebook/pull/173): Display application-table View actions as plain links rather than buttons - [@dblock](https://github.com/dblock).
 - [#174](https://github.com/dblock/posebook/pull/174): Allow existing authorized senders with incomplete legacy profiles to create participant and coordinator invitations without repeating unrelated account validation - [@dblock](https://github.com/dblock).
 - [#175](https://github.com/dblock/posebook/pull/175): Add participant invitation shortcuts beside Manage Calendar on managed program cards and before scheduling on program calendars - [@dblock](https://github.com/dblock).
+- [#176](https://github.com/dblock/posebook/pull/176): Format phone inputs when focus leaves the field without saving, preserving incomplete or invalid input - [@dblock](https://github.com/dblock).
 - Your contribution here.
