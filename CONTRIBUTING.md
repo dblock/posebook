@@ -35,7 +35,7 @@ Add focused behavioral tests for changed permissions, concurrency, time zones, e
 
 CI keeps Test, Lint, and Package separate, uses explicit inline `matrix.entry` combinations, and reports Coveralls coverage. Danger runs only in PR CI; inspect its actual result. Its changelog check is a reminder, not format validation.
 
-CI distributes spec files across eight independent runners, named 1/8 through 8/8. Each runner shuffles the same sorted file list with the GitHub Actions run ID as its seed, so rerunning jobs in the same workflow run preserves shard assignments. The final Test job verifies all shards passed and combines their coverage before uploading to Coveralls. To reproduce a shard locally, set `MONGODB_TEST_URI` as usual and run `bundle exec ruby script/test_shard.rb INDEX 8 RUN_ID`, using a zero-based shard index.
+CI distributes spec files across eight independent runners, named 1/8 through 8/8, using [parallel_tests](https://github.com/grosser/parallel_tests) to group files by size. Groups are deterministic for the same spec files, so reruns preserve shard assignments. The final Test job verifies all shards passed and combines their coverage before uploading to Coveralls. To reproduce a shard locally, set `MONGODB_TEST_URI` as usual and run `bundle exec parallel_rspec -n 8 --only-group GROUP`, using a one-based group number.
 
 ### Browser Tests
 

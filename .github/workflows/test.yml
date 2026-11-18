@@ -55,7 +55,7 @@ jobs:
           SHARD_NUMBER: ${{ matrix.entry.shard }}
           SHARD_COUNT: ${{ strategy.job-total }}
         run: |
-          bundle exec ruby script/test_shard.rb "$((SHARD_NUMBER - 1))" "$SHARD_COUNT" "$GITHUB_RUN_ID"
+          bundle exec parallel_rspec -n "$SHARD_COUNT" --only-group "$SHARD_NUMBER"
           cp coverage/.resultset.json "coverage/shard-${SHARD_NUMBER}.json"
       - name: Upload Shard Coverage
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
