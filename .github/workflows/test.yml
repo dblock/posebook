@@ -15,7 +15,7 @@ concurrency:
 jobs:
   shard:
     name: Test Shards
-    uses: dblock/parallel_tests-ci/.github/workflows/rspec.yml@2a99517ced0824e23902ba9debec0005381c1e42
+    uses: dblock/parallel_tests-ci/.github/workflows/rspec.yml@009f37318ac8f0e45cfee6652fe316ad5e2d7a83
     permissions:
       actions: read
       contents: read

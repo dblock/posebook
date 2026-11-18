@@ -26,7 +26,7 @@ group :development, :test do
   gem 'danger-changelog', '~> 0.10', require: false
   gem 'danger-pr-comment', '~> 0.2', require: false
   gem 'parallel_tests-ci', github: 'dblock/parallel_tests-ci',
-                           ref: '2a99517ced0824e23902ba9debec0005381c1e42', require: false
+                           ref: '009f37318ac8f0e45cfee6652fe316ad5e2d7a83', require: false
   gem 'rspec-rails', '~> 8.1'
   gem 'rubocop', '~> 1.92', require: false
   gem 'rubocop-md', '~> 3.0', require: false
