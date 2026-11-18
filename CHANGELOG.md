@@ -169,4 +169,5 @@
 - [#185](https://github.com/dblock/posebook/pull/185): Adopt the parallel_tests-ci shared workflow for automatic timing history and sharding, preserving MongoDB setup and retry-aware combined coverage - [@dblock](https://github.com/dblock).
 - [#186](https://github.com/dblock/posebook/pull/186): Refresh the matching parallel_tests-ci gem and reusable workflow references to the latest merged commit - [@dblock](https://github.com/dblock).
 - [#187](https://github.com/dblock/posebook/pull/187): Update matching parallel_tests-ci references for test-worker labels showing position and total - [@dblock](https://github.com/dblock).
+- [#188](https://github.com/dblock/posebook/pull/188): Shorten the CI worker prefix for labels such as Test / 1 of 8 - [@dblock](https://github.com/dblock).
 - Your contribution here.
