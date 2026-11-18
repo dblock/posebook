@@ -202,6 +202,22 @@ RSpec.describe 'Participant invitations', :aggregate_failures, :database, type: 
     expect(response.parsed_body.at_css('#invitation_link')).to be_nil
   end
 
+  %i[gender phone].each do |field|
+    it "allows an authorized sender with a legacy missing #{field} to invite without changing their profile" do
+      program = create_program
+      organizer = create_user
+      grant_coordinator_access(program, organizer)
+      organizer.unset(field, :booking_reminders_enabled)
+      sign_in(organizer)
+      post program_participant_invitations_path(program), params: { participant_invitation: { name: 'Invited Model' } }
+      invitation = track_record(program.participant_invitations.first)
+      expect(response).to redirect_to(program_participant_invitation_path(program, invitation))
+      expect(invitation.invited_by_id).to eq(organizer.id)
+      expect(organizer.reload.public_send(field)).to be_nil
+      expect(ActionMailer::Base.deliveries).to be_empty
+    end
+  end
+
   it 'sends invitation email when an address is given using the configured mail host' do
     admin = create_user(roles: ['system_admin'])
     sign_in(admin)

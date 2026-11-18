@@ -118,6 +118,21 @@ RSpec.describe 'Coordinator invitations', :aggregate_failures, :database, type: 
     expect(invitation.invited_by).to eq(manager)
   end
 
+  it 'lets an authorized legacy account invite coordinators without unrelated profile validation' do
+    admin.unset(:gender, :booking_reminders_enabled)
+    sign_in(admin)
+    [venue_coordinators_path(venue), program_coordinators_path(program)].each do |path|
+      post path, params: { name: 'Invited Coordinator' }
+      expect(response).to have_http_status(:redirect)
+      created_link
+      invitation = track_record(CoordinatorInvitation.where(invited_by_id: admin.id).order_by(created_at: :desc).first)
+      expect(invitation.invited_by_id).to eq(admin.id)
+      expect(response.parsed_body.at_css('#invitation_link')).to be_present
+    end
+    expect(admin.reload.gender).to be_nil
+    expect(ActionMailer::Base.deliveries).to be_empty
+  end
+
   it 'creates venue and session links without email or SMTP when no email is entered' do
     sign_in(admin)
     allow(Rails.configuration.x).to receive(:password_reset_delivery_enabled).and_return(false)

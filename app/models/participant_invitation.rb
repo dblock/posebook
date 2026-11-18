@@ -8,10 +8,12 @@ class ParticipantInvitation
   STATUSES = %w[all pending accepted revoked expired].freeze
 
   belongs_to :program, inverse_of: :participant_invitations
-  belongs_to :invited_by, class_name: 'User', inverse_of: nil
+  # Required belongs_to associations also validate unrelated sender profile fields.
+  belongs_to :invited_by, class_name: 'User', inverse_of: nil, optional: true, validate: false
   field :name, type: String
   field :email, type: String
   index({ program_id: 1, created_at: -1, _id: -1 })
+  validates :invited_by, presence: true
   validates :name, length: { maximum: 100 }, allow_nil: true
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, length: { maximum: 254 }, allow_nil: true
   before_validation { self.email = email.to_s.strip.downcase.presence }
