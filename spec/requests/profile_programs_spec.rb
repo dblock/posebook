@@ -23,7 +23,9 @@ RSpec.describe 'Profile programs', :aggregate_failures, :database, type: :reques
     expect(response.parsed_body.at_css('.breadcrumbs [aria-current="page"]').text).to eq('Programs')
     expect(program_names('managed')).to eq(%w[Alpha Beta Gamma])
     expect(response.parsed_body.css('.managed-programs .button-link').pluck('href'))
-      .to eq([*inherited, direct].map { |program| calendar_program_path(program) })
+      .to eq([*inherited, direct].flat_map do |program|
+        [calendar_program_path(program), new_program_participant_invitation_path(program)]
+      end)
     expect(response.body).not_to include(foreign.name, 'Private sibling note')
   end
 
@@ -46,6 +48,8 @@ RSpec.describe 'Profile programs', :aggregate_failures, :database, type: :reques
     get programs_profile_path
     expect(program_names('managed')).to eq(%w[Alpha Beta])
     expect(response.parsed_body.css('.managed-programs .status-label').map(&:text)).to eq(%w[Inactive Inactive])
+    expect(response.parsed_body.css('.managed-programs .participant-actions a').map(&:text))
+      .to eq(['Manage Calendar', 'Invite a Participant'] * 2)
   end
 
   it 'shows separate booking and management actions for an account with both roles' do

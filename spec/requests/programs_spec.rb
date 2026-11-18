@@ -123,6 +123,7 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     expect(response).to have_http_status(:not_found)
     get calendar_program_path(program)
     expect(response.body).to include('Session Calendar')
+    expect(response.parsed_body.at_css("a[href='#{new_program_participant_invitation_path(program)}']")).to be_nil
     breadcrumb = response.parsed_body.at_css('nav[aria-label="Breadcrumb"]').text
     expect(breadcrumb).to include(program.venue.name, program.name)
   end
@@ -137,6 +138,8 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
     expect(response.parsed_body.css('.program-tabs a').map(&:text)).to eq(%w[Program Calendar Photos])
     get program_participants_path(program)
     expect(response).to have_http_status(:not_found)
+    get calendar_program_path(program)
+    expect(response.parsed_body.at_css("a[href='#{new_program_participant_invitation_path(program)}']")).to be_nil
   end
 
   it 'shows managers the roster and reserves coordinator controls for venue coordinators' do
@@ -205,6 +208,8 @@ RSpec.describe 'Program management', :aggregate_failures, :database, type: :requ
       expect(response.parsed_body.css('dt').map(&:text)).to include('Pay')
       get calendar_program_path(program)
       expect(response.body).to include('Lecture Calendar', 'Schedule a Speaker')
+      expect(response.parsed_body.css('main > p a').map(&:text))
+        .to eq(['Invite a Speaker', 'Schedule a Speaker', 'Manage Schedule'])
       get edit_program_path(program)
       expect(response.parsed_body.at_css('input[name="program[participant_label]"]')['value']).to eq('Speaker')
       expect(response.body).to include('Save Lecture', 'Prevent Consecutive Speakers by Gender')
