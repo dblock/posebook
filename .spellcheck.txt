@@ -1,5 +1,10 @@
 ActionMailer
 CLI
+ci
+RSpec
+resultset
+simplecov
+sharding
 filesize
 gh
 pipefail

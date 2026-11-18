@@ -166,4 +166,5 @@
 - [#180](https://github.com/dblock/posebook/pull/180): Resize browser test viewports through Capybara windows, removing Cuprite deprecation warnings from CI output, and keep desktop invitation tables within their container for afternoon timestamps - [@dblock](https://github.com/dblock).
 - [#181](https://github.com/dblock/posebook/pull/181): Shard CI specs with parallel_tests file-size groups instead of a custom shuffling script - [@dblock](https://github.com/dblock).
 - [#183](https://github.com/dblock/posebook/pull/183): Balance CI test shards with shared historical timings from successful master runs, including fork PRs, with file-size fallback - [@dblock](https://github.com/dblock).
+- [#185](https://github.com/dblock/posebook/pull/185): Adopt the parallel_tests-ci shared workflow for automatic timing history and sharding, preserving MongoDB setup and retry-aware combined coverage - [@dblock](https://github.com/dblock).
 - Your contribution here.
