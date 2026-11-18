@@ -35,7 +35,11 @@ Add focused behavioral tests for changed permissions, concurrency, time zones, e
 
 CI keeps Test, Lint, and Package separate, uses explicit inline `matrix.entry` combinations, and reports Coveralls coverage. Danger runs only in PR CI; inspect its actual result. Its changelog check is a reminder, not format validation.
 
-CI distributes spec files across eight independent runners, named 1/8 through 8/8, using [parallel_tests](https://github.com/grosser/parallel_tests) to group files by size. Groups are deterministic for the same spec files, so reruns preserve shard assignments. The final Test job verifies all shards passed and combines their coverage before uploading to Coveralls. To reproduce a shard locally, set `MONGODB_TEST_URI` as usual and run `bundle exec parallel_rspec -n 8 --only-group GROUP`, using a one-based group number.
+CI distributes spec files across eight independent runners, named 1/8 through 8/8, using [parallel_tests](https://github.com/grosser/parallel_tests). A preparation job looks through the latest 20 successful master push runs for a retained `test-runtimes` artifact, validates it, and shares one immutable timing snapshot with every runner. Files are grouped by historical duration when at least half the current spec files have valid timings; new files use the average known duration and deleted files are ignored. Missing, expired, malformed, or insufficient history falls back to file-size grouping for every worker together. Groups are deterministic for the same spec files and timing snapshot.
+
+The final Test job verifies all shards passed and combines their coverage before uploading to Coveralls. Successful master runs also combine all eight timing logs and publish the next `test-runtimes` artifact. PRs, including forks, read master timings with the read-only `GITHUB_TOKEN` and never supply the shared baseline; normal fork workflow approval still applies. No personal token or `pull_request_target` workflow is needed.
+
+To reproduce a shard locally, set `MONGODB_TEST_URI` as usual and run `bundle exec parallel_rspec -n 8 --only-group GROUP --group-by filesize`, using a one-based group number. For timing-based reproduction, download the run's `test-runtime-history` artifact and use `--group-by runtime --runtime-log PATH/TO/runtimes.log` instead. Each timing-log line contains a spec file path, a colon, and its measured duration in seconds.
 
 ### Browser Tests
 

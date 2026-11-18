@@ -1,4 +1,9 @@
 ActionMailer
+CLI
+filesize
+gh
+pipefail
+runtimes
 ApplicationController
 blockquote
 br
