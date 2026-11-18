@@ -222,6 +222,8 @@ RSpec.describe BookingNotification, :aggregate_failures, :database do
     BookingNotificationMaintenance.run
     allow(BookingNotificationMailer).to receive(:notify).and_raise(IOError)
     delivery = EmailDelivery.where(:resource_id.in => notices('booking_created').pluck(:id)).first
+    # Delivering directly destroys the delivery, so cleanup can no longer find its queued job.
+    track_record(QueuedJob.find(delivery.queued_job_id))
     expect { delivery.deliver }.to raise_error(IOError)
     expect(described_class.find(delivery.resource_id).state).to eq('failed')
     expect(EmailDelivery.where(id: delivery.id)).to exist

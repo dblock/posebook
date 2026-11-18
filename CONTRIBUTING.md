@@ -35,6 +35,8 @@ Add focused behavioral tests for changed permissions, concurrency, time zones, e
 
 CI keeps Test, Lint, and Package separate, uses explicit inline `matrix.entry` combinations, and reports Coveralls coverage. Danger runs only in PR CI; inspect its actual result. Its changelog check is a reminder, not format validation.
 
+CI distributes spec files across eight independent runners, named 1/8 through 8/8. Each runner shuffles the same sorted file list with the GitHub Actions run ID as its seed, so rerunning jobs in the same workflow run preserves shard assignments. The final Test job verifies all shards passed and combines their coverage before uploading to Coveralls. To reproduce a shard locally, set `MONGODB_TEST_URI` as usual and run `bundle exec ruby script/test_shard.rb INDEX 8 RUN_ID`, using a zero-based shard index.
+
 ### Browser Tests
 
 `bundle exec rspec spec/system` drives headless Chrome through Capybara/Cuprite against an in-process Puma server and the test database; the full suite includes these specs. Set `BROWSER_PATH` for a nonstandard Chrome/Chromium binary.
