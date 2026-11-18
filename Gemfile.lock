@@ -1,7 +1,7 @@
 GIT
   remote: https://github.com/dblock/parallel_tests-ci.git
-  revision: 2a99517ced0824e23902ba9debec0005381c1e42
-  ref: 2a99517ced0824e23902ba9debec0005381c1e42
+  revision: 009f37318ac8f0e45cfee6652fe316ad5e2d7a83
+  ref: 009f37318ac8f0e45cfee6652fe316ad5e2d7a83
   specs:
     parallel_tests-ci (0.1.0)
       parallel_tests (~> 5.9)
