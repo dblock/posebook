@@ -56,5 +56,9 @@
     <%= form.text_area :application_message_placeholder, maxlength: 5000, rows: 3, placeholder: "Do you have any experience?" %><br>
     <small>Prompt shown inside an empty application message. Leave blank for no placeholder.</small>
   </p>
+  <p><%= form.label :application_instructions, "Application Instructions" %><br>
+    <%= form.text_area :application_instructions, maxlength: 5000, rows: 4 %><br>
+    <small>Public: shown to anyone who opens the application, before email verification. Supports Markdown: headings, lists, **bold**, *italic*, and [links](https://example.com).</small>
+  </p>
   <%= form.submit program.persisted? ? "Save #{@program.program_label.titleize}" : "Create #{@program.program_label.titleize}" %>
 <% end %>

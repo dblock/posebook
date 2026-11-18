@@ -4,7 +4,7 @@
 <main data-edit-in-place>
   <%= render "programs/navigation", program: @program, active: "view", detail: "Apply" %>
   <h1>Apply to <%= @program.name %></h1>
-  <%= render "shared/description", location: @program %>
+  <%= render "programs/application_instructions", program: @program %>
   <%= render "shared/errors", record: @application %>
   <% @user = @profile || current_user.dup %>
   <% @user.assign_attributes(@application.draft_profile.slice(*ApplicationDraft::PROFILE_FIELDS)) unless @profile %>
