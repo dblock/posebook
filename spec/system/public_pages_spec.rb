@@ -317,6 +317,26 @@ RSpec.describe 'Public pages', :aggregate_failures, :database, type: :system do
     end
   end
 
+  it 'opens model invitations from managed cards and the calendar without JavaScript at every viewport' do
+    program.update!(participant_label: 'Model')
+    coordinator = create_user
+    grant_coordinator_access(program, coordinator)
+    sign_in_through_browser(coordinator)
+    without_javascript do
+      each_viewport do |viewport|
+        { 'home' => root_path, 'profile' => programs_profile_path, 'calendar' => calendar_program_path(program) }
+          .each do |name, path|
+          visit path
+          expect_no_horizontal_overflow
+          capture_screenshot("invite-model-#{name}-#{viewport}")
+          click_link 'Invite a Model', exact: true
+          expect(page).to have_current_path(new_program_participant_invitation_path(program))
+          expect(page).to have_css('h1', text: 'Invite a Model')
+        end
+      end
+    end
+  end
+
   it 'shows participants their own upcoming booking and their programs at every viewport' do
     open_participant_home
     expect(page).to have_css('.upcoming-booking', count: 1)

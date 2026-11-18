@@ -18,7 +18,10 @@
     <% if local_assigns.fetch(:bookable, false) %>
       <%= link_to "Choose a Date", calendar_program_path(program), class: "button-link" %>
     <% elsif local_assigns.fetch(:managed, false) %>
-      <%= link_to "Manage Calendar", calendar_program_path(program), class: "button-link" %>
+      <div class="participant-actions">
+        <%= link_to "Manage Calendar", calendar_program_path(program), class: "button-link" %>
+        <%= link_to "Invite #{program.participant_article} #{program.participant_label.titleize}", new_program_participant_invitation_path(program), class: "button-link" %>
+      </div>
     <% end %>
   </div>
 </article>

@@ -22,6 +22,8 @@ Keep New Program at the bottom of the venue Programs page, after the program car
 
 Put personal participant invitation links and Invite All Available after their lists and pagination, including empty states.
 
+Managed program cards group Manage Calendar with an Invite action using the program's participant article and label. Manager calendars show the same invitation shortcut as a plain link before Schedule, retaining Manage Schedule afterward.
+
 ## Status and Identity
 
 Show states with the `status_label` helper, which maps statuses to success, danger, warning, and neutral tones. Show a person with `participant_contact_label`, which renders `Name <email> (Gender)` or only the email when nothing else is known.

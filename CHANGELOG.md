@@ -159,4 +159,5 @@
 - [#172](https://github.com/dblock/posebook/pull/172): Allow every scheduled booking email to use venue-inherited previous-session-end or calendar-day timing, with live previews and program overrides - [@dblock](https://github.com/dblock).
 - [#173](https://github.com/dblock/posebook/pull/173): Display application-table View actions as plain links rather than buttons - [@dblock](https://github.com/dblock).
 - [#174](https://github.com/dblock/posebook/pull/174): Allow existing authorized senders with incomplete legacy profiles to create participant and coordinator invitations without repeating unrelated account validation - [@dblock](https://github.com/dblock).
+- [#175](https://github.com/dblock/posebook/pull/175): Add participant invitation shortcuts beside Manage Calendar on managed program cards and before scheduling on program calendars - [@dblock](https://github.com/dblock).
 - Your contribution here.
