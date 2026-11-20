@@ -171,5 +171,5 @@
 - [#187](https://github.com/dblock/posebook/pull/187): Update matching parallel_tests-ci references for test-worker labels showing position and total - [@dblock](https://github.com/dblock).
 - [#188](https://github.com/dblock/posebook/pull/188): Shorten the CI worker prefix for labels such as Test / 1 of 8 - [@dblock](https://github.com/dblock).
 - [#189](https://github.com/dblock/posebook/pull/189): Update the parallel_tests-ci gem and shared workflow to the matching 0.2.0 release - [@dblock](https://github.com/dblock).
-- [#190](https://github.com/dblock/posebook/pull/190): Suppress empty Danger comments and remove existing reports when their findings clear - [@dblock](https://github.com/dblock).
+- [#190](https://github.com/dblock/posebook/pull/190): Skip new empty Danger comments and remove the automated AI review message - [@dblock](https://github.com/dblock).
 - Your contribution here.
