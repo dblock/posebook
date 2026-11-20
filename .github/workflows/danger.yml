@@ -12,5 +12,5 @@ jobs:
     name: Review Pull Request
     uses: danger/danger-pr-comment/.github/workflows/danger-run.yml@645e89bcc7be89ee7e8362166110b05cbced8e59 # v0.3.0
     with:
-      ruby-version: '4.0.9'
+      ruby-version: '4.0.10'
       bundler-cache: true

@@ -4,7 +4,7 @@ Read [Design](DESIGN.md), [Coding Guidance](AGENTS.md), and, for interface work,
 
 ## Setup and Validation
 
-Install Ruby 4.0.9, Bundler, MongoDB 8.0, Docker, libvips, and Chrome/Chromium for browser tests. Tests target MongoDB 8.0, matching deployment. On macOS, install libvips with `brew install vips`; on Ubuntu 24.04/Debian 13, use `sudo apt-get install libvips42t64`. No production credentials are needed.
+Install Ruby 4.0.10, Bundler, MongoDB 8.0, Docker, libvips, and Chrome/Chromium for browser tests. Tests target MongoDB 8.0, matching deployment. On macOS, install libvips with `brew install vips`; on Ubuntu 24.04/Debian 13, use `sudo apt-get install libvips42t64`. No production credentials are needed.
 
 Use an existing replica set or create a dedicated local container on an unused port:
 

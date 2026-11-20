@@ -4,7 +4,7 @@ Posebook is a self-hosted Rails application for managing recurring programs, par
 
 ## Stack and Local Development
 
-Posebook uses Rails 8.1, Ruby 4.0.9 (within Ruby 4.0), and MongoDB 8.0. MongoDB must run as a replica set for booking, invitation, and account transactions. See [Contributing](../CONTRIBUTING.md) for prerequisites, local replica-set setup, and validation commands.
+Posebook uses Rails 8.1, Ruby 4.0.10 (within Ruby 4.0), and MongoDB 8.0. MongoDB must run as a replica set for booking, invitation, and account transactions. See [Contributing](../CONTRIBUTING.md) for prerequisites, local replica-set setup, and validation commands.
 
 Clone the repository, install its dependencies, and start the development server:
 
