@@ -25,4 +25,14 @@ RSpec.describe NewRelic::Agent, '.config', :aggregate_failures do
     expect(configured.to_s).not_to include('not-a-real-license')
     expect(described_class.config[:agent_enabled]).to be(false)
   end
+
+  it 'reports exception messages, request attributes, and logs in production without request parameters' do
+    production = settings('not-a-real-license').fetch('production')
+    expect(production.dig('strip_exception_messages', 'enabled')).to be(false)
+    expect(production.dig('application_logging', 'enabled')).to be(true)
+    expect(production).not_to have_key('attributes')
+    expect(production['capture_params']).to be(false)
+    expect(production.dig('mongo', 'capture_queries')).to be(false)
+    expect(production.dig('browser_monitoring', 'auto_instrument')).to be(false)
+  end
 end
