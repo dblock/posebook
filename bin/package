@@ -62,11 +62,13 @@ def check_monitoring(container)
   source = <<~RUBY
     config = NewRelic::Agent.config
     raise "Monitoring requires a license" if config[:agent_enabled]
-    %i[attributes.enabled mongo.capture_queries application_logging.enabled
-       browser_monitoring.auto_instrument].each do |setting|
+    %i[capture_params mongo.capture_queries browser_monitoring.auto_instrument].each do |setting|
       raise "Unsafe monitoring setting: \#{setting}" if config[setting]
     end
-    raise "Exception messages are not private" unless config[:'strip_exception_messages.enabled']
+    raise "Exception messages are stripped" if config[:'strip_exception_messages.enabled']
+    %i[attributes.enabled application_logging.enabled application_logging.forwarding.enabled].each do |setting|
+      raise "Missing monitoring setting: \#{setting}" unless config[setting]
+    end
   RUBY
   docker!('exec', container, 'bundle', 'exec', 'rails', 'runner', source)
 end

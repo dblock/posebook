@@ -2,14 +2,13 @@ common: &defaults
   app_name: Posebook
   agent_enabled: false
   log_file_path: STDOUT
-  attributes:
-    enabled: false
+  capture_params: false
   mongo:
     capture_queries: false
   strip_exception_messages:
-    enabled: true
-  application_logging:
     enabled: false
+  application_logging:
+    enabled: true
   browser_monitoring:
     auto_instrument: false
 

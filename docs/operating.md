@@ -45,6 +45,6 @@ At startup, the production entry point creates declared indexes and then starts 
 
 After a blank deployment, register the first account promptly; public registration closes once the first account exists. After each production update, verify the live site and relevant user flows. Coordinate database migrations with application compatibility; rolling back application code does not roll back data changes.
 
-Optional New Relic reporting uses `NEW_RELIC_LICENSE_KEY`; `NEW_RELIC_APP_NAME` can override the default `Posebook`, and `NEW_RELIC_AGENT_ENABLED=false` disables production reporting. Monitoring is disabled in development and tests and excludes request attributes, MongoDB queries, exception messages, application log forwarding, and browser monitoring.
+Optional New Relic reporting uses `NEW_RELIC_LICENSE_KEY`; `NEW_RELIC_APP_NAME` can override the default `Posebook`, and `NEW_RELIC_AGENT_ENABLED=false` disables production reporting. Monitoring is disabled in development and tests. Production reports include exception messages and request attributes such as URL, method, and status, and forward application logs linked to their transactions; request parameters, MongoDB queries, and browser monitoring are excluded. Exception messages can contain details such as an email address rejected by the mail provider, and forwarded logs use the same parameter filtering as local logs.
 
 For project design and invariants, see [Design](../DESIGN.md); for code changes and tests, see [Contributing](../CONTRIBUTING.md).

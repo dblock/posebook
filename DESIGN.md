@@ -183,7 +183,7 @@ Read-side batching and cached values are request-local. Authentication remembers
 
 The production Docker image precompiles assets without live services, creates indexes at startup, and runs Puma as a non-root user. `/up` checks application liveness, not database readiness. Packaging verifies the actual image against isolated MongoDB, including transaction rollback and first-user registration. Development, CI, operations, and deployment settings are documented in [Contributing](CONTRIBUTING.md) and [Operating Posebook](docs/operating.md).
 
-Production requires deployment-provided `MONGODB_URI`, `SECRET_KEY_BASE`, and an external `APP_HOST`. Web and worker share version, encryption secret, and provider settings. Filter contacts and authentication data from logs. Optional New Relic monitoring excludes private attributes, MongoDB queries, exception messages, application log forwarding, and browser injection; handled failures report safe error classes without changing application outcomes.
+Production requires deployment-provided `MONGODB_URI`, `SECRET_KEY_BASE`, and an external `APP_HOST`. Web and worker share version, encryption secret, and provider settings. Filter contacts and authentication data from logs. Optional New Relic monitoring keeps exception messages, request attributes, and filtered application logs for diagnosing errors, but excludes request parameters, MongoDB queries, and browser injection; handled failures are reported without changing application outcomes.
 
 ## Theme and Artwork
 
