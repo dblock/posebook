@@ -24,7 +24,7 @@ group :development, :test do
   gem 'cuprite', '~> 0.20', '>= 0.20.1', require: false
   gem 'danger', '~> 9.6', '>= 9.6.2', require: false
   gem 'danger-changelog', '~> 0.10', require: false
-  gem 'danger-pr-comment', '~> 0.2', require: false
+  gem 'danger-pr-comment', '~> 0.3', require: false
   gem 'parallel_tests-ci', '0.2.0', require: false
   gem 'rspec-rails', '~> 8.1'
   gem 'rubocop', '~> 1.92', require: false

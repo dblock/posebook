@@ -144,7 +144,7 @@ GEM
       danger-plugin-api (~> 1.0)
     danger-plugin-api (1.0.0)
       danger (> 2.0)
-    danger-pr-comment (0.2.0)
+    danger-pr-comment (0.3.0)
       danger (~> 9)
     date (3.6.0)
     declarative (0.0.20)
@@ -579,7 +579,7 @@ DEPENDENCIES
   cuprite (~> 0.20, >= 0.20.1)
   danger (~> 9.6, >= 9.6.2)
   danger-changelog (~> 0.10)
-  danger-pr-comment (~> 0.2)
+  danger-pr-comment (~> 0.3)
   delayed_job_mongoid (~> 3.0)
   google-apis-calendar_v3 (~> 0.58)
   mongoid (~> 9.1, >= 9.1.2)
@@ -647,7 +647,7 @@ CHECKSUMS
   danger (9.6.2) sha256=6c5529f23346ca0c5a24d34c6a9d7705c8bd71ab5cf697f931789792031a6685
   danger-changelog (0.10.1) sha256=e5b00329a6c88f549a1b06959ae8e2654459b1a7ab9cd157cb40dd0112df887a
   danger-plugin-api (1.0.0) sha256=a0f3f4f2c19fbdfb41db6015fe8ed5eeb2588dc71f2f78d580294c2b10f83bd3
-  danger-pr-comment (0.2.0) sha256=1f2da4ac61926ff6733fe885fa4cc94565e146c6c312f00eaa41885e6f3819df
+  danger-pr-comment (0.3.0) sha256=506bda2e1418bd6981655edd087fb5ca64a267ad1152ad6d225d08f91944d079
   date (3.6.0) sha256=18ac945c4e24ebd93534f8eab8c2fd8c5604b3e977105b3798d62a1e8d27b580
   declarative (0.0.20) sha256=8021dd6cb17ab2b61233c56903d3f5a259c5cf43c80ff332d447d395b17d9ff9
   delayed_job (4.2.0) sha256=51dc1f68bb9084398317884c2178debd38c13a7eb48d8aa4ff4775465d7713ef
