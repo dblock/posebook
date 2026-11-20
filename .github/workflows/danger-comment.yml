@@ -13,8 +13,7 @@ permissions:
 jobs:
   comment:
     name: Post Review Comment
-    uses: dblock/danger-pr-comment/.github/workflows/danger-comment.yml@05165a1dec5a5a0de2a1b0717e1ab030302a593e # danger/danger-pr-comment#28
+    uses: danger/danger-pr-comment/.github/workflows/danger-comment.yml@645e89bcc7be89ee7e8362166110b05cbced8e59 # v0.3.0
     with:
       comment-empty: false
-      delete-empty: true
       base-branch: '*'
