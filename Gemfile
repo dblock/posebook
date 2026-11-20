@@ -2,7 +2,7 @@
 
 source 'https://rubygems.org'
 
-ruby '~> 4.0.9'
+ruby '~> 4.0.10'
 
 gem 'bcrypt', '~> 3.1', '>= 3.1.22'
 gem 'commonmarker', '~> 2.10', '>= 2.10.1'
@@ -25,7 +25,7 @@ group :development, :test do
   gem 'danger', '~> 9.6', '>= 9.6.2', require: false
   gem 'danger-changelog', '~> 0.10', require: false
   gem 'danger-pr-comment', '~> 0.3', require: false
-  gem 'parallel_tests-ci', '0.2.0', require: false
+  gem 'parallel_tests-ci', '0.2.1', require: false
   gem 'rspec-rails', '~> 8.1'
   gem 'rubocop', '~> 1.92', require: false
   gem 'rubocop-md', '~> 3.0', require: false

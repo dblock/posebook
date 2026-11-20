@@ -172,4 +172,5 @@
 - [#188](https://github.com/dblock/posebook/pull/188): Shorten the CI worker prefix for labels such as Test / 1 of 8 - [@dblock](https://github.com/dblock).
 - [#189](https://github.com/dblock/posebook/pull/189): Update the parallel_tests-ci gem and shared workflow to the matching 0.2.0 release - [@dblock](https://github.com/dblock).
 - [#190](https://github.com/dblock/posebook/pull/190): Skip new empty Danger comments, remove the automated AI review message, and stabilize browser sessions when system tests freeze time - [@dblock](https://github.com/dblock).
+- [#191](https://github.com/dblock/posebook/pull/191): Upgrade Ruby to 4.0.10 and update dependencies to their latest minor versions - [@dblock](https://github.com/dblock).
 - Your contribution here.
