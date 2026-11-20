@@ -5,6 +5,43 @@ require 'capybara/rspec'
 ENV['FERRUM_CLICK_WAIT'] ||= '0.01'
 require 'capybara/cuprite'
 
+# Align the browser cookie with frozen Rails time without changing the encrypted session expiry.
+class BrowserSessionClock
+  def initialize(app)
+    @app = app
+  end
+
+  def call(env)
+    status, headers, body = @app.call(env)
+    cookies = headers['set-cookie']
+    if cookies
+      values = Array(cookies).flat_map { |value| value.split("\n") }
+      values.map! { |value| adjust_session_expiry(value) }
+      headers['set-cookie'] = cookies.is_a?(Array) ? values : values.join("\n")
+    end
+    [status, headers, body]
+  end
+
+  private
+
+  def adjust_session_expiry(cookie)
+    match = cookie.match(/\A_posebook_session=[^;\n]+;.*?expires=([^;\n]+)/i)
+    return cookie unless match
+
+    expiry = browser_expiry(match[1])
+    expiry ? cookie.sub(match[1], expiry) : cookie
+  end
+
+  def browser_expiry(expiration)
+    app_now = Time.now.to_f
+    offset = Process.clock_gettime(Process::CLOCK_REALTIME) - app_now
+    expires_at = Time.httpdate(expiration)
+    return if offset <= 5 || expires_at.to_f <= app_now
+
+    (expires_at + offset).httpdate
+  end
+end
+
 Capybara.register_driver(:posebook_chrome) do |app|
   # GitHub-hosted Ubuntu runners restrict Chrome's user-namespace sandbox; local runs keep it.
   options = ENV['CI'] ? { 'no-sandbox' => nil } : {}
@@ -118,5 +155,8 @@ end
 
 RSpec.configure do |config|
   config.include BrowserHelpers, type: :system
-  config.before(:each, type: :system) { driven_by(:posebook_chrome) }
+  config.before(:each, type: :system) do
+    Capybara.app = BrowserSessionClock.new(Capybara.app) unless Capybara.app.is_a?(BrowserSessionClock)
+    driven_by(:posebook_chrome)
+  end
 end

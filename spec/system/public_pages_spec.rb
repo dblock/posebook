@@ -60,6 +60,17 @@ RSpec.describe 'Public pages', :aggregate_failures, :database, type: :system do
     expect_unchanged_page
   end
 
+  it 'keeps a frozen-time browser session until its application expiry' do
+    frozen_time = Time.at(Process.clock_gettime(Process::CLOCK_REALTIME)).utc - 30.days
+    travel_to(frozen_time)
+    user = create_user
+    sign_in_through_browser(user)
+    travel_to(frozen_time + 8.days)
+    visit root_path
+    expect(page).to have_no_link(user.name)
+    expect(page).to have_link('Sign In')
+  end
+
   it 'opens application review from a plain table link without JavaScript' do
     applicant, application = create_submitted_application
     sign_in_through_browser(create_user(roles: ['system_admin']))
