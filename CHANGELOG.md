@@ -174,4 +174,5 @@
 - [#190](https://github.com/dblock/posebook/pull/190): Skip new empty Danger comments, remove the automated AI review message, and stabilize browser sessions when system tests freeze time - [@dblock](https://github.com/dblock).
 - [#191](https://github.com/dblock/posebook/pull/191): Upgrade Ruby to 4.0.10 and update dependencies to their latest minor versions - [@dblock](https://github.com/dblock).
 - [#192](https://github.com/dblock/posebook/pull/192): Include exception messages, request attributes, and forwarded application logs in New Relic - [@dblock](https://github.com/dblock).
+- [#193](https://github.com/dblock/posebook/pull/193): Update rack to 3.2.9 - [@dblock](https://github.com/dblock).
 - Your contribution here.
