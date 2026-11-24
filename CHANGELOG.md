@@ -176,4 +176,5 @@
 - [#192](https://github.com/dblock/posebook/pull/192): Include exception messages, request attributes, and forwarded application logs in New Relic - [@dblock](https://github.com/dblock).
 - [#193](https://github.com/dblock/posebook/pull/193): Update rack to 3.2.9 - [@dblock](https://github.com/dblock).
 - [#194](https://github.com/dblock/posebook/pull/194): Send coordinators separate, editable booking created, changed, canceled, and attendance-cleared emails instead of copies addressed to the participant - [@dblock](https://github.com/dblock).
+- [#195](https://github.com/dblock/posebook/pull/195): Include coordinator phone numbers, when available, in booking email organizer contact details - [@dblock](https://github.com/dblock).
 - Your contribution here.
