@@ -1,8 +1,13 @@
 # frozen_string_literal: true
 
 module NotificationCatalog
-  BOOKING_KINDS = %w[booking_created booking_changed booking_canceled attendance_confirmed attendance_cleared
-                     confirmation_request confirmation_reminder session_reminder coordinator_alert].freeze
+  COORDINATOR_COPIES = {
+    'booking_created' => 'coordinator_booking_created', 'booking_changed' => 'coordinator_booking_changed',
+    'booking_canceled' => 'coordinator_booking_canceled', 'attendance_cleared' => 'coordinator_attendance_cleared'
+  }.freeze
+  BOOKING_KINDS = (%w[booking_created booking_changed booking_canceled attendance_confirmed attendance_cleared
+                      confirmation_request confirmation_reminder session_reminder coordinator_alert] +
+                   COORDINATOR_COPIES.values).freeze
   SYSTEM_KINDS = %w[password_reset email_change application_registration].freeze
   PROGRAM_KINDS = (BOOKING_KINDS + %w[participant_invitation program_coordinator_invitation booking_invitation
                                       application_draft application_submitted application_accepted
@@ -10,7 +15,8 @@ module NotificationCatalog
   VENUE_KINDS = (['venue_coordinator_invitation'] + PROGRAM_KINDS).freeze
   KINDS = (SYSTEM_KINDS + VENUE_KINDS).freeze
   SCHEDULED = %w[confirmation_request confirmation_reminder session_reminder coordinator_alert].freeze
-  COORDINATOR_ONLY = %w[attendance_confirmed coordinator_alert application_submitted participation_admission].freeze
+  COORDINATOR_ONLY = (%w[attendance_confirmed coordinator_alert application_submitted participation_admission] +
+                      COORDINATOR_COPIES.values).freeze
   REQUIRED_LINKS = {
     'password_reset' => %w[reset_url], 'email_change' => %w[confirmation_url],
     'application_registration' => %w[verification_url], 'participant_invitation' => %w[invitation_url],
@@ -30,6 +36,10 @@ module NotificationCatalog
     'venue_coordinator_invitation' => %w[venue_name target_name coordinator_label],
     'application_draft' => %w[reminder_days], 'participation_admission' => %w[admission_source]
   }.freeze
+
+  def self.base_kind(kind)
+    COORDINATOR_COPIES.key(kind) || kind
+  end
 
   def self.placeholders(kind)
     return BOOKING_PLACEHOLDERS if BOOKING_KINDS.include?(kind)

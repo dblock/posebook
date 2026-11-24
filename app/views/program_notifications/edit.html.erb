@@ -35,8 +35,8 @@
       <p><%= form.label :days_after, "Elapsed Days After First Save or Reopening" %><br>
         <%= form.number_field :days_after, value: @setting.days_after, min: 0, max: 29, required: true %>
       </p>
-    <% elsif NotificationCatalog::BOOKING_KINDS.include?(@setting.kind) %>
-      <p>Queued immediately after the action. Assigned coordinators receive updates except the person making the change.</p>
+    <% elsif BookingNotificationSetting::COORDINATOR_ONLY.include?(@setting.kind) %>
+      <p>Queued immediately after the action. Assigned coordinators receive it except the participant and the person making the change.</p>
     <% else %>
       <p>Queued immediately after the action.</p>
     <% end %>

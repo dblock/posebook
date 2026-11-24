@@ -68,10 +68,12 @@ class BookingNotificationPreview
   end
 
   def recipient
-    return 'Assigned coordinators' if BookingNotificationSetting::COORDINATOR_ONLY.include?(@setting.kind)
-    return 'alex@example.test' if BookingNotificationSetting::SCHEDULED.include?(@setting.kind)
+    return 'Assigned coordinators' if @setting.kind == 'coordinator_alert'
+    if BookingNotificationSetting::COORDINATOR_ONLY.include?(@setting.kind)
+      return 'Assigned coordinators other than the participant and the person making the change'
+    end
 
-    'alex@example.test and assigned coordinators other than the person making the change'
+    'alex@example.test'
   end
 
   private

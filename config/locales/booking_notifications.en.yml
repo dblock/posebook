@@ -4,7 +4,7 @@ en:
     unsubscribed: Booking reminders disabled.
     booking_created:
       title: Booking Created
-      description: Shares new booking details with participants and coordinators.
+      description: Shares new booking details with participants.
       subject: "You're booked: {program_name} - {session_date}"
       body: |
         Hi {participant_name},
@@ -20,7 +20,7 @@ en:
         Questions? Contact {organizer_contact}.
     booking_changed:
       title: Booking Changed
-      description: Explains booking or venue changes to participants and coordinators.
+      description: Explains booking or venue changes to participants.
       subject: "Your session has changed: {program_name}"
       body: |
         Hi {participant_name},
@@ -41,7 +41,7 @@ en:
         Questions? Contact {organizer_contact}.
     booking_canceled:
       title: Booking Canceled
-      description: Notifies participants and coordinators of a cancellation.
+      description: Notifies participants of a cancellation.
       subject: "Booking canceled: {program_name} - {session_date}"
       body: |
         Hi {participant_name},
@@ -65,7 +65,7 @@ en:
         {booking_url}
     attendance_cleared:
       title: Attendance Confirmation Cleared
-      description: Notifies participants and coordinators that attendance needs reconfirmation.
+      description: Asks participants to reconfirm attendance after it was cleared.
       subject: "Please reconfirm your attendance: {program_name}"
       body: |
         Hi {participant_name},
@@ -135,6 +135,55 @@ en:
         {session_details}
 
         Please follow up directly.
+        View booking:
+        {booking_url}
+    coordinator_booking_created:
+      title: Coordinator New Booking
+      description: Tells coordinators that a participant booked a session.
+      subject: "New booking: {participant_name} - {session_date}"
+      body: |
+        {participant_name} booked a session at {program_name}:
+        {session_details}
+
+        View booking:
+        {booking_url}
+    coordinator_booking_changed:
+      title: Coordinator Booking Changed
+      description: Tells coordinators about booking or venue changes.
+      subject: "Booking changed: {participant_name} - {session_date}"
+      body: |
+        A booking at {program_name} has changed.
+
+        Participant: {participant_name}
+
+        Previously:
+        {previous_session_details}
+
+        Now:
+        {session_details}
+
+        View booking:
+        {booking_url}
+    coordinator_booking_canceled:
+      title: Coordinator Booking Canceled
+      description: Tells coordinators that a booking was canceled.
+      subject: "Booking canceled: {participant_name} - {session_date}"
+      body: |
+        {participant_name}'s booking at {program_name} has been canceled:
+        {session_details}
+
+        View calendar:
+        {booking_url}
+    coordinator_attendance_cleared:
+      title: Coordinator Attendance Confirmation Cleared
+      description: Tells coordinators that a participant must reconfirm attendance.
+      subject: "Attendance confirmation cleared: {participant_name} - {session_date}"
+      body: |
+        {participant_name}'s attendance confirmation was cleared. The booking is still in place:
+
+        {program_name}
+        {session_details}
+
         View booking:
         {booking_url}
     password_reset:
