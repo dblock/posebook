@@ -179,4 +179,5 @@
 - [#195](https://github.com/dblock/posebook/pull/195): Include coordinator phone numbers, when available, in booking email organizer contact details - [@dblock](https://github.com/dblock).
 - [#196](https://github.com/dblock/posebook/pull/196): Open booking email and calendar invitation links on the calendar month containing the booking - [@dblock](https://github.com/dblock).
 - [#197](https://github.com/dblock/posebook/pull/197): Remove gender from Google Calendar invitation details - [@dblock](https://github.com/dblock).
+- [#199](https://github.com/dblock/posebook/pull/199): Open program calendars on the month of your upcoming booking, link participant booking emails to their own booking, and stop labeling your own calendar booking as to be announced - [@dblock](https://github.com/dblock).
 - Your contribution here.

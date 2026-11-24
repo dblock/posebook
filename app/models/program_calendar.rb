@@ -77,8 +77,12 @@ class ProgramCalendar
     @bookings ||= Booking.upcoming.where(program_id: program.id).includes(:user).index_by(&:date)
   end
 
-  def current_booking(user)
+  def self.current_booking(program, user)
     Booking.upcoming.where(program_id: program.id, user_id: user.id).first
+  end
+
+  def current_booking(user)
+    self.class.current_booking(program, user)
   end
 
   def gender_blocked_reason(date, user, excluding: nil)

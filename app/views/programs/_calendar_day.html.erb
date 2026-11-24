@@ -17,12 +17,15 @@
     <% end %>
     <% if reason != "Future" && (clock = calendar_time(calendar, date)) %><strong><%= clock %></strong><br><% end %>
     <% if booking %>
-      <% booking_url = program_path(calendar.program, anchor: "upcoming-booking-#{booking.id}") if !public_view && booking.user_id == current_user&.id && booking.ends_at > Time.current %>
+      <% own_booking = !public_view && booking.user_id == current_user&.id %>
+      <% if own_booking && booking.ends_at > Time.current %>
+        <% booking_url = booking.id == @my_booking&.id && !@changing_booking ? "#upcoming-booking-#{booking.id}" : calendar_program_path(calendar.program, anchor: "upcoming-booking-#{booking.id}") %>
+      <% end %>
       <%= render "programs/booking_status", booking: booking, private_view: !public_view && (@program_coordinator || booking.user_id == current_user&.id), booking_url: booking_url %>
     <% elsif !no_session %>
       <%= status_label(label) %>
     <% end %>
-    <%= render "programs/booked_participant", booking: booking, manager: @program_coordinator if booking %>
+    <%= render "programs/booked_participant", booking: booking, manager: @program_coordinator, hide_unannounced: own_booking if booking %>
     <% if booking && @program_coordinator && booking.ends_at > Time.current %><%= link_to "Edit Booking", edit_program_organizer_booking_path(calendar.program, booking) %><% end %>
     <% if reason && reason != label && !no_session && !(booking && (public_view || @program_coordinator)) %><small><%= reason %></small><% end %>
     <% if reason != "Future" && !public_view && calendar.schedule.exceptions[date]&.mode == "open" %><small><%= calendar.schedule.exceptions[date].reason %></small><% end %>
