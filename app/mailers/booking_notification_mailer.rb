@@ -17,11 +17,8 @@ class BookingNotificationMailer < ApplicationMailer
 
   def rendered_content
     setting = BookingNotificationSetting.for(@notification.booking.program, @notification.kind)
-    content = BookingNotificationContent.new(
-      @notification.booking, previous: @notification.previous_booking,
-                             previous_location: @notification.previous_location,
-                             coordinator: BookingNotificationSetting::COORDINATOR_ONLY.include?(@notification.kind)
-    )
+    content = BookingNotificationContent.new(@notification.booking, previous: @notification.previous_booking,
+                                                                    previous_location: @notification.previous_location)
     setting.render(content.values)
   end
 end

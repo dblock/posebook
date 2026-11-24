@@ -1,12 +1,14 @@
 <main>
-  <h1><%= @user.public_name %></h1>
+  <h1><%= @managed_memberships.any? ? @user.name : @user.public_name %></h1>
   <% if @user.public_instagram_handle %>
     <dl class="participant-details">
       <dt>Instagram</dt><dd><%= link_to "@#{@user.public_instagram_handle}", @user.public_instagram_url,
                                        target: "_blank", rel: "noopener noreferrer" %></dd>
     </dl>
   <% end %>
-  <% if @next_booking %>
+  <% if @managed_memberships.any? %>
+    <%= render "coordinator_details", participant: @user, memberships: @managed_memberships %>
+  <% elsif @next_booking %>
     <h2>Next Booking</h2>
     <p><%= link_to @next_booking.program.name, program_path(@next_booking.program) %>,
       <%= render "shared/date", value: @next_booking.scheduled_start, zone: @next_booking.time_zone, show_time: false %>,
@@ -14,5 +16,6 @@
   <% end %>
   <%= render "shared/photo_gallery", photos: @photos, editable: false, upload_url: nil, scope: :profile_photo,
              photo_url: ->(photo, **options) { participant_photo_path(@user, photo, **options) },
-             description: ->(index) { "Profile photo #{index + 1}" }, empty_text: "No public photos." %>
+             description: ->(index) { "Profile photo #{index + 1}" }, show_status: @managed_memberships.any?,
+             empty_text: @managed_memberships.any? ? "No photos." : "No public photos." %>
 </main>

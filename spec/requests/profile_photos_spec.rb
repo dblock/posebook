@@ -204,8 +204,10 @@ RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request 
     get photo_url
     expect(response).to have_http_status(:ok)
     get participant_path(participant)
-    expect(response.body).to include('Public Participant', 'No public photos.')
-    expect(response.body).not_to include('Account Participant', photo.id.to_s, 'Upload Photo', 'Make Public')
+    expect(response.body).to include('Account Participant')
+    figure = response.parsed_body.at_css(".photo-gallery [data-photo='#{photo.id}']")
+    expect(figure.at_css('figcaption').text).to include('Private')
+    expect(response.body).not_to include('Upload Photo', 'Make Public', 'Delete Photo')
     post participant_photos_path(participant), params: { profile_photo: { file: photo_upload } }
     expect(response).to have_http_status(:forbidden)
     patch photo_url, params: { profile_photo: { public: '1' } }
@@ -333,12 +335,12 @@ RSpec.describe 'Profile photos', :aggregate_failures, :database, type: :request 
     end
   end
 
-  it 'shows organizers and guests the same public profile without public photos' do
+  it 'shows organizers participant details and guests only the public profile without public photos' do
     participant.update!(instagram_handle: 'private.model')
     sign_in(organizer_for(participant))
     get participant_path(participant)
-    expect(response.body).to include('Public Participant')
-    expect(response.body).not_to include(participant.name, participant.email, '@private.model')
+    expect(response.body).to include(participant.name, participant.email)
+    expect(response.body).not_to include('@private.model')
     participant.update!(instagram_tagging_allowed: true)
     get participant_path(participant)
     expect(response.body).to include('@private.model')

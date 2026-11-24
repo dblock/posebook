@@ -49,6 +49,7 @@ Rails.application.routes.draw do
       %i[invite pause resume].each { |action| post action, on: :member }
     end
     resources :participant_invitations, controller: 'program_invitations', only: %i[index new create show destroy]
+    resources :bookings, only: :show, controller: 'booking_details'
     resources :bookings, only: %i[create edit update] do
       get :cancellation, on: :member
       %i[cancel confirm].each { |action| post action, on: :member }

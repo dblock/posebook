@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
 class BookingNotificationContent
-  def initialize(booking, previous: nil, previous_location: nil, coordinator: false)
+  def initialize(booking, previous: nil, previous_location: nil)
     @booking = booking
-    @coordinator = coordinator
     @program = booking.program
     @previous = previous
     @previous_location = previous_location
@@ -41,12 +40,9 @@ class BookingNotificationContent
     @booking.attendance_confirmed? ? 'Your attendance is confirmed.' : 'Attendance is not confirmed.'
   end
 
-  # Participants land on their own booking, whose month the calendar opens by default;
-  # coordinators need the booking's month because it is not their own booking.
   def booking_url
-    target = @coordinator ? { month: @booking.date.strftime('%Y-%m') } : { anchor: "upcoming-booking-#{@booking.id}" }
-    Rails.application.routes.url_helpers.calendar_program_url(
-      @program, **target, **Rails.application.config.action_mailer.default_url_options
+    Rails.application.routes.url_helpers.program_booking_url(
+      @program, @booking.id, **Rails.application.config.action_mailer.default_url_options
     )
   end
 

@@ -1,0 +1,38 @@
+<section class="coordinator-participant-details" aria-labelledby="participant-contact">
+  <h2 id="participant-contact">Contact</h2>
+  <dl class="participant-details">
+    <dt>Name</dt><dd><%= participant.name %></dd>
+    <dt>Email</dt><dd><%= mail_to participant.email %></dd>
+    <% if participant.phone.present? %><dt>Phone</dt><dd><%= link_to participant.display_phone, "tel:#{participant.phone}" %></dd><% end %>
+    <% if participant.gender.present? %><dt>Gender</dt><dd><%= participant.gender.capitalize %></dd><% end %>
+    <% unless participant.active? %><dt>Account</dt><dd><%= status_label("Inactive") %></dd><% end %>
+  </dl>
+</section>
+<% memberships.each do |membership| %>
+  <% program = membership.program %>
+  <% access = BookingAccess.new(membership) %>
+  <% bookings = Booking.where(program_id: program.id, user_id: participant.id).order_by(starts_at: :desc).limit(10).to_a %>
+  <section class="coordinator-participant-program" aria-labelledby="participant-program-<%= program.id %>">
+    <h2 id="participant-program-<%= program.id %>"><%= link_to program.name, program_path(program) %></h2>
+    <dl class="participant-details">
+      <dt>Booking Access</dt><dd><%= status_label(access.status) %></dd>
+      <% if membership.participant_paused && membership.participant_pause_reason.present? %>
+        <dt>Pause Note</dt><dd><%= membership.participant_pause_reason %></dd>
+      <% end %>
+      <% if membership.notes.present? %>
+        <dt>Coordinator Notes</dt><dd class="participant-notes"><%= membership.notes %></dd>
+      <% end %>
+    </dl>
+    <% if bookings.any? %>
+      <h3>Bookings</h3>
+      <ul class="participant-bookings">
+        <% bookings.each do |booking| %>
+          <li><%= link_to program_booking_path(program, booking) do %><%= render "shared/date", value: booking.scheduled_start, zone: booking.time_zone, show_time: false %><% end %> at <%= booking_time(booking) %> <%= status_label(booking.display_status) %></li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p>No bookings yet.</p>
+    <% end %>
+    <p><%= link_to "Edit #{program.participant_label.titleize}", edit_program_participant_path(program, membership), class: "button-link" %></p>
+  </section>
+<% end %>

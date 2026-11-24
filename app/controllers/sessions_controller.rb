@@ -37,7 +37,7 @@ class SessionsController < ApplicationController
     return invitation_path(token: invitation) if invitation
     return application_verification_path(token: registration) if registration
 
-    application_return_path(user) || booking_return_path(session[:booking_program], user)
+    booking_page_path || application_return_path(user) || booking_return_path(session[:booking_program], user)
   end
 
   def coordinator_return_path(user)
@@ -57,6 +57,14 @@ class SessionsController < ApplicationController
 
     token = params[:application_registration_token]
     token ? application_verification_path(token: token) : new_session_path
+  end
+
+  # Returns to a booking linked from an email; the booking page itself enforces access.
+  def booking_page_path
+    program_id, booking_id = session.delete(:booking_page)
+    program_booking_path(program_id, booking_id) if program_id.present? && booking_id.present?
+  rescue ActionController::UrlGenerationError
+    nil
   end
 
   def booking_return_path(id, user)

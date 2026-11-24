@@ -21,7 +21,7 @@
                   </details>
                 <% end %>
               </td>
-              <td><%= render "shared/date", value: booking.scheduled_start, zone: booking.time_zone, format: :compact, show_time: false %><br><%= booking_time(booking) %><% if booking.previous_booking %><br>Moved from <%= render "shared/date", value: booking.previous_booking.scheduled_start, zone: booking.previous_booking.time_zone, format: :compact, show_time: false %><% end %></td>
+              <td><%= link_to program_booking_path(@program, booking) do %><%= render "shared/date", value: booking.scheduled_start, zone: booking.time_zone, format: :compact, show_time: false %><% end %><br><%= booking_time(booking) %><% if booking.previous_booking %><br>Moved from <%= render "shared/date", value: booking.previous_booking.scheduled_start, zone: booking.previous_booking.time_zone, format: :compact, show_time: false %><% end %></td>
               <% if @program_coordinator %><td><%= render "shared/participant_identity", participant: booking.user %></td><% end %>
               <td class="booking-status"><%= render "programs/booking_status", booking: booking, private_view: true, show_warning: false %></td>
               <% if @program_coordinator %>
