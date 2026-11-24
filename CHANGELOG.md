@@ -178,4 +178,5 @@
 - [#194](https://github.com/dblock/posebook/pull/194): Send coordinators separate, editable booking created, changed, canceled, and attendance-cleared emails instead of copies addressed to the participant - [@dblock](https://github.com/dblock).
 - [#195](https://github.com/dblock/posebook/pull/195): Include coordinator phone numbers, when available, in booking email organizer contact details - [@dblock](https://github.com/dblock).
 - [#196](https://github.com/dblock/posebook/pull/196): Open booking email and calendar invitation links on the calendar month containing the booking - [@dblock](https://github.com/dblock).
+- [#197](https://github.com/dblock/posebook/pull/197): Remove gender from Google Calendar invitation details - [@dblock](https://github.com/dblock).
 - Your contribution here.

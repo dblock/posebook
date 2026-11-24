@@ -79,6 +79,7 @@ RSpec.describe GoogleCalendarSync, :aggregate_failures, :database do
       expect(event.description).to include(
         "/programs/#{program.to_param}/calendar?month=#{booking.date.strftime('%Y-%m')}"
       )
+      expect(event.description).not_to match(/^Gender:/i)
     end
   end
 

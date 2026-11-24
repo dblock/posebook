@@ -41,7 +41,7 @@ class GoogleCalendarEvent
       program_start_details,
       *venue_details,
       "Name: #{@user.name}", "Public name: #{public_name}",
-      "Email: #{@user.email}", "Phone: #{@user.display_phone}", "Gender: #{@user.gender}",
+      "Email: #{@user.email}", "Phone: #{@user.display_phone}",
       *instagram_details,
       "Posebook: #{program_link}"
     ].compact.join("\n")
