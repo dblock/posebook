@@ -165,6 +165,15 @@ RSpec.describe BookingNotification, :aggregate_failures, :database do
     expect(body).to match(/No Phone Organizer: #{Regexp.escape(other_organizer.email)}[.;]/)
   end
 
+  it 'links booking emails to the calendar month containing the booking' do
+    grant_participant_access(program, participant)
+    record = track_booking(BookingMutation.new(program: program, user: participant).book(date: '2026-12-07'))
+    run_notifications
+    link = "/programs/#{program.to_param}/calendar?month=2026-12"
+    expect(ActionMailer::Base.deliveries.map { |mail| mail.text_part.body.decoded }).to all(include(link))
+    expect(described_class.where(booking_id: record.id).count).to eq(2)
+  end
+
   it 'controls coordinator booking alerts separately from participant messages' do
     program.update!(notification_settings: { 'booking_created' => { 'enabled' => false } })
     booking
