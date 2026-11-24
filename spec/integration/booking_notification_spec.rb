@@ -138,7 +138,48 @@ RSpec.describe BookingNotification, :aggregate_failures, :database do
     2.times { run_notifications }
     expect(ActionMailer::Base.deliveries.flat_map(&:to)).to contain_exactly(participant.email, organizer.email)
     expect(ActionMailer::Base.deliveries.flat_map(&:to)).not_to include(global_admin.email)
-    expect(notices('booking_created').pluck(:state)).to eq(%w[sent sent])
+    expect(notices('booking_created').pluck(:recipient_id, :state)).to eq([[participant.id, 'sent']])
+    expect(notices('coordinator_booking_created').pluck(:recipient_id, :state)).to eq([[organizer.id, 'sent']])
+  end
+
+  it 'addresses creation mail to the participant and a separate new-booking alert to coordinators' do
+    booking
+    run_notifications
+    participant_mail = ActionMailer::Base.deliveries.find { |mail| mail.to == [participant.email] }
+    organizer_mail = ActionMailer::Base.deliveries.find { |mail| mail.to == [organizer.email] }
+    expect(participant_mail.subject).to include("You're booked")
+    expect(participant_mail.text_part.body.decoded).to include("Hi #{participant.name}", 'Your session is booked')
+    expect(organizer_mail.subject).to eq("New booking: #{participant.name} - Monday, November 23, 2026")
+    expect(organizer_mail.text_part.body.decoded).to include("#{participant.name} booked a session at #{program.name}")
+    expect(organizer_mail.text_part.body.decoded).not_to include('Hi ', 'Your session', 'confirm your attendance')
+  end
+
+  it 'controls coordinator booking alerts separately from participant messages' do
+    program.update!(notification_settings: { 'booking_created' => { 'enabled' => false } })
+    booking
+    run_notifications
+    expect(ActionMailer::Base.deliveries.map(&:to)).to eq([[organizer.email]])
+    ActionMailer::Base.deliveries.clear
+    BookingMutation.new(program: program, user: participant).cancel(booking: booking, reason: 'Private reason')
+    run_notifications
+    expect(ActionMailer::Base.deliveries.find { |mail| mail.to == [organizer.email] }.text_part.body.decoded)
+      .to include("#{participant.name}'s booking at #{program.name} has been canceled")
+  end
+
+  it 'skips coordinator booking alerts when the coordinator disabled coordinator alerts' do
+    organizer.update!(coordinator_notifications_enabled: false)
+    booking
+    run_notifications
+    expect(ActionMailer::Base.deliveries.map(&:to)).to eq([[participant.email]])
+    expect(notices('coordinator_booking_created').pluck(:state)).to eq(['skipped'])
+  end
+
+  it 'does not send a coordinator alert to a coordinator who is the participant' do
+    grant_participant_access(program, organizer)
+    record = track_booking(BookingMutation.new(program: program, user: organizer).book(date: '2026-11-23'))
+    run_notifications
+    expect(ActionMailer::Base.deliveries.map(&:to)).to eq([[organizer.email]])
+    expect(described_class.where(booking_id: record.id).pluck(:kind)).to eq(['booking_created'])
   end
 
   it 'requests confirmation at opening and reminds only the unconfirmed participant five days before at noon' do
@@ -211,10 +252,13 @@ RSpec.describe BookingNotification, :aggregate_failures, :database do
     replacement = track_booking(BookingMutation.new(program: program, user: participant)
                                                 .change(booking: booking, date: '2026-11-30', reason: 'Private notes'))
     run_notifications
-    expect(ActionMailer::Base.deliveries.map(&:subject)).to all(include('Your session has changed'))
-    expect(ActionMailer::Base.deliveries.size).to eq(2)
-    expect(ActionMailer::Base.deliveries.last.text_part.body.decoded).to include('November 23', 'November 30')
-    expect(described_class.where(booking_id: replacement.id).pluck(:kind).uniq).to eq(['booking_changed'])
+    expect(ActionMailer::Base.deliveries.map(&:subject)).to contain_exactly(
+      "Your session has changed: #{program.name}", "Booking changed: #{participant.name} - Monday, November 30, 2026"
+    )
+    expect(ActionMailer::Base.deliveries.map { |mail| mail.text_part.body.decoded })
+      .to all(include('November 23', 'November 30'))
+    expect(described_class.where(booking_id: replacement.id).pluck(:kind))
+      .to contain_exactly('booking_changed', 'coordinator_booking_changed')
   end
 
   it 'retains failed delivery state and retries without losing the outbox' do
@@ -255,7 +299,8 @@ RSpec.describe BookingNotification, :aggregate_failures, :database do
     expect(messages.size).to eq(3)
     expect(messages.find { |mail| mail.to == [participant.email] }.subject).to include('Booking canceled')
     expect(messages.find { |mail| mail.to == [other.email] }.subject).to include("You're booked")
-    expect(messages.find { |mail| mail.to == [second_organizer.email] }.subject).to include('Your session has changed')
+    expect(messages.find { |mail| mail.to == [second_organizer.email] }.subject)
+      .to eq("Booking changed: #{other.name} - Monday, November 23, 2026")
   end
 
   it 'queues location changes with the previous address and skips superseded notices' do
@@ -264,7 +309,8 @@ RSpec.describe BookingNotification, :aggregate_failures, :database do
     VenueSettingsUpdate.new(venue: program.venue, user: create_user(roles: ['system_admin']))
                        .call(address: '123 New Studio Street')
     run_notifications
-    expect(notices('booking_created').pluck(:state)).to eq(%w[skipped skipped])
+    expect(notices('booking_created').pluck(:state)).to eq(%w[skipped])
+    expect(notices('coordinator_booking_created').pluck(:state)).to eq(%w[skipped])
     expect(ActionMailer::Base.deliveries.size).to eq(2)
     expect(ActionMailer::Base.deliveries.last.text_part.body.decoded).to include(old_address, '123 New Studio Street')
   end
@@ -323,8 +369,10 @@ RSpec.describe BookingNotification, :aggregate_failures, :database do
     booking
     travel_to Time.utc(2026, 11, 17, 2)
     run_notifications
-    expect(ActionMailer::Base.deliveries.size).to eq(2)
-    expect(ActionMailer::Base.deliveries.map(&:subject)).to all(include("You're booked"))
+    expect(ActionMailer::Base.deliveries.map(&:subject)).to contain_exactly(
+      "You're booked: #{program.name} - Monday, November 23, 2026",
+      "New booking: #{participant.name} - Monday, November 23, 2026"
+    )
     expect(notices('confirmation_request').pluck(:state)).to eq(['skipped'])
     expect(ActionMailer::Base.deliveries.find { |mail| mail.to == [participant.email] }.text_part.body.decoded)
       .to include('Please confirm your attendance')
@@ -340,8 +388,10 @@ RSpec.describe BookingNotification, :aggregate_failures, :database do
     )
     track_booking(replacement)
     run_notifications
-    expect(ActionMailer::Base.deliveries.size).to eq(2)
-    expect(ActionMailer::Base.deliveries.map(&:subject)).to all(include('Your session has changed'))
-    expect(ActionMailer::Base.deliveries.last.text_part.body.decoded).to include('Your attendance is confirmed.')
+    expect(ActionMailer::Base.deliveries.map(&:subject)).to contain_exactly(
+      "Your session has changed: #{program.name}", "Booking changed: #{participant.name} - Monday, November 30, 2026"
+    )
+    expect(ActionMailer::Base.deliveries.find { |mail| mail.to == [participant.email] }.text_part.body.decoded)
+      .to include('Your attendance is confirmed.')
   end
 end

@@ -6,6 +6,7 @@ class BookingNotificationEligibility
     @booking = Booking.where(id: notification.booking_id).first
     @user = User.active.where(id: notification.recipient_id).first
     @kind = notification.kind
+    @event = NotificationCatalog.base_kind(@kind)
   end
 
   def allowed?
@@ -35,17 +36,17 @@ class BookingNotificationEligibility
   end
 
   def source_current?
-    return @booking.status.in?(%w[canceled rescheduled]) if @kind == 'booking_canceled'
+    return @booking.status.in?(%w[canceled rescheduled]) if @event == 'booking_canceled'
     return false unless same_session?
-    return @booking.attendance_confirmed? if @kind == 'attendance_confirmed'
+    return @booking.attendance_confirmed? if @event == 'attendance_confirmed'
 
-    @kind.in?(%w[booking_created booking_changed session_reminder]) || !@booking.attendance_confirmed?
+    @event.in?(%w[booking_created booking_changed session_reminder]) || !@booking.attendance_confirmed?
   end
 
   def same_session?
     return false unless @booking.status == 'confirmed' && @notice.signature == BookingNotification.signature(@booking)
 
-    !@kind.start_with?('attendance_') || @notice.attendance_revision == @booking.attendance_changes.size
+    !@event.start_with?('attendance_') || @notice.attendance_revision == @booking.attendance_changes.size
   end
 
   def scheduled_current?

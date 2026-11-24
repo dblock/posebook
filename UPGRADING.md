@@ -1,5 +1,9 @@
 # Upgrading
 
+## Coordinator Booking Emails
+
+Coordinators now receive **Coordinator New Booking**, **Coordinator Booking Changed**, **Coordinator Booking Canceled**, and **Coordinator Attendance Confirmation Cleared** emails instead of the participant-addressed **Booking Created**, **Booking Changed**, **Booking Canceled**, and **Attendance Confirmation Cleared** messages. Existing admin, venue, and program template edits or disabled settings for the participant templates no longer apply to coordinators; review the new coordinator templates in **Settings > Notifications** and reapply any edits or disabled states there. These coordinator emails honor each coordinator's **Coordinator Alerts** preference. Notices queued before the upgrade still deliver with their original template. No database migration is required.
+
 ## Application Draft Maintenance
 
 Deploy web and worker at the same version. The default shared worker handles the new `maintenance` queue automatically; installations filtering `JOB_QUEUES` must add it, for example `JOB_QUEUES=calendar,mailers,maintenance`, or deploy a dedicated maintenance worker. Completion reminders require the existing `mailers` worker and SMTP configuration. Startup creates the draft status/creation index; existing submitted applications need no migration and are never cleaned up as drafts. Maintenance runs hourly, so reminders and cleanup depend on worker and queue availability. See [Background Jobs](docs/background-jobs.md).

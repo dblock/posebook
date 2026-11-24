@@ -120,6 +120,20 @@ RSpec.describe 'Notification settings', :aggregate_failures, :database, type: :s
     end
   end
 
+  it 'lists and previews separate coordinator booking templates at every width' do
+    visit program_notifications_path(program)
+    expect(page).to have_text('Coordinator New Booking')
+    check_layouts('program-list')
+    find_link('Edit', href: edit_program_notification_path(program, 'coordinator_booking_created')).click
+    expect(page).to have_text('Assigned coordinators receive it except the participant and the person making')
+    expect(page).to have_css('dd', text: 'Assigned coordinators other than the participant and the person')
+    expect(page).to have_css('[data-preview-subject]', text: /\ANew booking: Alex Example - /)
+    expect(page).to have_css('[data-preview-body]', text: "Alex Example booked a session at #{program.name}")
+    check_layouts('coordinator-editor')
+    visit edit_program_notification_path(program, 'booking_created')
+    expect(page).to have_css('dd', text: /\Aalex@example\.test\z/)
+  end
+
   it 'inserts clickable placeholders at the selection in the last focused field' do
     visit edit_program_notification_path(program, 'booking_created')
     fill_in 'Subject', with: 'Hello NAME'

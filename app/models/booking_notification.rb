@@ -35,29 +35,32 @@ class BookingNotification
   end
 
   def self.record(booking, kind, **options)
-    return unless BookingNotificationSetting.for(booking.program, kind).enabled
+    audiences(booking, kind, options).each do |notice_kind, users|
+      next unless BookingNotificationSetting.for(booking.program, notice_kind).enabled
 
-    recipients(booking, kind, options).each do |recipient|
-      event_key = "#{booking.id}:#{kind}:#{options[:key] || booking.lock_version}"
-      find_or_create_by!(event_key: event_key, recipient_id: recipient.id) do |notice|
-        notice.assign_attributes(record_attributes(booking, kind, options))
+      event_key = "#{booking.id}:#{notice_kind}:#{options[:key] || booking.lock_version}"
+      users.each do |recipient|
+        find_or_create_by!(event_key: event_key, recipient_id: recipient.id) do |notice|
+          notice.assign_attributes(record_attributes(booking, notice_kind, options))
+        end
       end
     end
   end
 
-  def self.recipients(booking, kind, options)
-    return [booking.user] if options[:audience] == :participant
+  # Participants and coordinators receive separate kinds so each audience gets its own template.
+  def self.audiences(booking, kind, options)
+    participant = options[:audience] == :coordinators ? [] : [booking.user]
+    coordinators = options[:audience] == :participant ? [] : coordinator_recipients(booking, kind, options)
+    return { kind => coordinators } if BookingNotificationSetting::COORDINATOR_ONLY.include?(kind)
 
-    users = coordinator_recipients(booking, kind, options)
-    users << booking.user unless BookingNotificationSetting::COORDINATOR_ONLY.include?(kind) ||
-                                 options[:audience] == :coordinators
-    users.uniq(&:id)
+    copy = NotificationCatalog::COORDINATOR_COPIES[kind]
+    copy ? { kind => participant, copy => coordinators } : { kind => participant }
   end
 
   def self.coordinator_recipients(booking, kind, options)
     return [] if BookingNotificationSetting::SCHEDULED.include?(kind) && kind != 'coordinator_alert'
 
-    coordinators(booking.program).reject { |user| user.id == options[:actor_id] }
+    coordinators(booking.program).reject { |user| user.id.in?([options[:actor_id], booking.user_id]) }
   end
 
   def self.record_attributes(booking, kind, options)
@@ -68,7 +71,7 @@ class BookingNotification
   end
 
   def self.expiry(booking, kind)
-    kind == 'booking_canceled' ? 1.day.from_now : booking.scheduled_start
+    NotificationCatalog.base_kind(kind) == 'booking_canceled' ? 1.day.from_now : booking.scheduled_start
   end
 
   def self.created(booking, previous: nil, actor_id: nil)
