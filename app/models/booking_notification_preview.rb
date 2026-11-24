@@ -79,6 +79,7 @@ class BookingNotificationPreview
   private
 
   def booking_url
-    Rails.application.routes.url_helpers.calendar_program_url(@program, **@url_options)
+    Rails.application.routes.url_helpers.calendar_program_url(@program, month: booking.date.strftime('%Y-%m'),
+                                                                        **@url_options)
   end
 end

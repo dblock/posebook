@@ -71,12 +71,14 @@ RSpec.describe GoogleCalendarSync, :aggregate_failures, :database do
   end
 
   it 'includes the venue name, address and address-based Maps link in invitations' do
-    book
+    booking = book
     described_class.process_next
     expect(api).to have_received(:insert_event) do |_, event, **|
       expect(event.description).to include("Venue: #{program.venue.name}", "Address: #{program.venue.address}",
                                            "Google Maps: #{program.venue.google_maps_location_url}")
-      expect(event.description).to include("/programs/#{program.to_param}/calendar")
+      expect(event.description).to include(
+        "/programs/#{program.to_param}/calendar?month=#{booking.date.strftime('%Y-%m')}"
+      )
     end
   end
 

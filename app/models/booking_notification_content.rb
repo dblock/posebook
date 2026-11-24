@@ -42,7 +42,7 @@ class BookingNotificationContent
 
   def booking_url
     Rails.application.routes.url_helpers.calendar_program_url(
-      @program, **Rails.application.config.action_mailer.default_url_options
+      @program, month: @booking.date.strftime('%Y-%m'), **Rails.application.config.action_mailer.default_url_options
     )
   end
 
