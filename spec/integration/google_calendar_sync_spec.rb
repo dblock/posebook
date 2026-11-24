@@ -77,7 +77,7 @@ RSpec.describe GoogleCalendarSync, :aggregate_failures, :database do
       expect(event.description).to include("Venue: #{program.venue.name}", "Address: #{program.venue.address}",
                                            "Google Maps: #{program.venue.google_maps_location_url}")
       expect(event.description).to include(
-        "/programs/#{program.to_param}/calendar?month=#{booking.date.strftime('%Y-%m')}"
+        "/programs/#{program.to_param}/bookings/#{booking.id}"
       )
       expect(event.description).not_to match(/^Gender:/i)
     end

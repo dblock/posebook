@@ -1,0 +1,43 @@
+<% booking = @details.booking %>
+<main>
+  <%= render "programs/navigation", program: @program, active: "calendar", detail: "Booking" %>
+  <h1><%= @details.own? ? "Your Booking" : "#{@program.participant_label.titleize} Booking" %></h1>
+  <% if @details.own? && @details.upcoming? %>
+    <%= render "bookings/upcoming", program: @program, booking: booking, can_book: @details.can_book?, show_venue: true, link_details: false %>
+  <% else %>
+    <section class="attendance-panel booking-details" aria-labelledby="booking-summary">
+      <h2 id="booking-summary"><%= render "shared/date", value: booking.scheduled_start, zone: booking.time_zone, show_time: false %> at <%= booking_time(booking) %></h2>
+      <% if @details.upcoming? %><p class="upcoming-booking-countdown"><%= booking_countdown(booking) %></p><% end %>
+      <p><%= render "programs/booking_status", program: @program, booking: booking, private_view: true %></p>
+      <% if @details.coordinator? %>
+        <%= render "shared/participant_identity", participant: booking.user %>
+      <% end %>
+      <p><%= link_to @program.name, program_path(@program) %></p>
+      <%= render "venues/location", venue: @program.venue %>
+      <% if @details.coordinator? && @details.upcoming? %>
+        <p><%= link_to "Edit Booking", edit_program_organizer_booking_path(@program, booking), class: "button-link" %></p>
+      <% end %>
+    </section>
+  <% end %>
+  <% previous = @details.previous %>
+  <% replacement = @details.replacement %>
+  <% explanation = capture do %>
+    <%= render "bookings/explanation", booking: booking %>
+    <% if @details.coordinator? && booking.gender_override_reason.present? %>
+      <p>Gender-rule override: <%= booking.gender_override_reason %></p>
+    <% end %>
+  <% end %>
+  <% if replacement || previous || explanation.present? %>
+    <section aria-labelledby="booking-changes">
+      <h2 id="booking-changes">Changes</h2>
+      <% if previous %>
+        <p>Moved from <%= link_to program_booking_path(@program, previous) do %><%= render "shared/date", value: previous.scheduled_start, zone: previous.time_zone, show_time: false %><% end %>.</p>
+      <% end %>
+      <% if replacement %>
+        <p>Moved to <%= link_to program_booking_path(@program, replacement) do %><%= render "shared/date", value: replacement.scheduled_start, zone: replacement.time_zone, show_time: false %><% end %>.</p>
+      <% end %>
+      <%= explanation %>
+    </section>
+  <% end %>
+  <p><%= link_to "View in Calendar", calendar_program_path(@program, month: booking.date.strftime("%Y-%m")) %></p>
+</main>

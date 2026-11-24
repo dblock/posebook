@@ -375,13 +375,19 @@ RSpec.describe 'Public pages', :aggregate_failures, :database, type: :system do
     capture_screenshot('participant-attendance-confirmed')
   end
 
-  it 'links a participant calendar booking to its upcoming booking card on the same page' do
+  it 'links a participant calendar booking and booking card to the booking details page' do
     open_participant_home
     visit calendar_program_path(program)
     find('.calendar a', text: 'Booked').click
-    expect(page).to have_current_path(calendar_program_path(program), ignore_query: true)
-    expect(page).to have_css('.upcoming-booking')
-    expect(URI.parse(page.current_url).fragment).to start_with('upcoming-booking-')
+    expect(page).to have_css('h1', text: 'Your Booking')
+    expect(page).to have_current_path(%r{/programs/#{program.to_param}/bookings/\h+\z})
+    each_viewport do |viewport|
+      expect_no_horizontal_overflow
+      capture_screenshot("booking-details-#{viewport}")
+    end
+    visit calendar_program_path(program)
+    find('.upcoming-booking-date a').click
+    expect(page).to have_css('h1', text: 'Your Booking')
   end
 
   it 'opens calendars on the month of the participant booking without a month parameter' do

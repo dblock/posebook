@@ -21,7 +21,8 @@
       <% if local_assigns.fetch(:show_venue, false) %>
         <h3><%= link_to program.name, program_path(program) %></h3>
       <% end %>
-      <p class="upcoming-booking-date"><%= render "shared/date", value: booking.scheduled_start, zone: booking.time_zone, show_time: false %> at <%= booking_time(booking) %></p>
+      <% booking_date = capture do %><%= render "shared/date", value: booking.scheduled_start, zone: booking.time_zone, show_time: false %> at <%= booking_time(booking) %><% end %>
+      <p class="upcoming-booking-date"><%= local_assigns.fetch(:link_details, true) ? link_to(booking_date, program_booking_path(program, booking), aria: { label: "Booking details for #{date_display_title(booking.scheduled_start.in_time_zone(booking.time_zone), format: :default)}" }) : booking_date %></p>
       <p class="upcoming-booking-countdown"><%= booking_countdown(booking) %></p>
       <% if local_assigns.fetch(:show_venue, false) %>
         <%= render "venues/location", venue: program.venue %>

@@ -10,8 +10,10 @@ class ParticipantProfilesController < ApplicationController
     return redirect_to admin_user_path(@user) if current_user&.system_admin?
     return head :not_found unless profile_visible?
 
-    @photos = @user.public_photos
     @next_booking = next_public_booking
+    @managed_memberships = managed_memberships
+    # Coordinators of the participant's programs may already read private photos; show them read-only.
+    @photos = @managed_memberships.any? ? @user.profile_photos.to_a : @user.public_photos
   end
 
   def photos
@@ -28,6 +30,15 @@ class ParticipantProfilesController < ApplicationController
 
   def profile_visible?
     @user.active? || PhotoGallery.new(@user, current_user).private_access?
+  end
+
+  # Participation in programs the viewer coordinates (directly or through the venue); empty for everyone else.
+  def managed_memberships
+    return [] unless current_user
+
+    programs = Program.managed_by(current_user).distinct(:id)
+    ProgramMembership.participants.where(user_id: @user.id, :program_id.in => programs)
+                     .includes(:program).to_a.sort_by { |membership| membership.program.name }
   end
 
   def next_public_booking

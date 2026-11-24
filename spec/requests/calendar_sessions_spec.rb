@@ -224,7 +224,8 @@ RSpec.describe 'Calendar session states', :aggregate_failures, :database, type: 
     sign_in(organizer_for)
     get calendar_program_path(program, month: '2027-01')
     expect(day('2026-12-28').text).to include('Booked', '6:30 PM', booking.user.name)
-    expect(day('2026-12-28').at_css("a[href='#{edit_program_organizer_booking_path(program, booking)}']")).to be_present
+    links = day('2026-12-28').css("a[href='#{program_booking_path(program, booking)}']").map(&:text)
+    expect(links).to include('View/Edit Booking')
     expect(day('2027-02-01').text).to include('Available', '6:30 PM', 'Schedule Participant', 'Edit Day')
     path = day('2027-02-01').at_css('a')['href']
     expect(path).to eq(new_program_organizer_booking_path(program, date: '2027-02-01'))
