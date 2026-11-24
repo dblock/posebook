@@ -316,4 +316,51 @@ RSpec.describe GoogleCalendarSync, :aggregate_failures, :database do
       expect(described_class.find(booking.id).due_at).to be_nil
     end
   end
+
+  def reconcile_after_conflict
+    allow(api).to receive(:insert_event).and_raise(Google::Apis::ClientError.new('Conflict', status_code: 409))
+    described_class.reconcile
+    described_class.process_next
+  end
+
+  it 'invites a model at a changed email address on the next reconcile' do
+    booking = book
+    described_class.process_next
+    old_email = participant.email
+    participant.update!(email: "renamed-#{SecureRandom.hex(4)}@example.test")
+    reconcile_after_conflict
+    expect(api).to have_received(:update_event).with(
+      connection.calendar_id, "posebook#{booking.id}", anything, send_updates: 'all'
+    ) do |_, _, event, **|
+      expect(event.attendees.map(&:email)).to include(participant.email)
+      expect(event.attendees.map(&:email)).not_to include(old_email)
+      expect(event.description).to include("Email: #{participant.email}")
+      expect(event.description).not_to include(old_email)
+    end
+  end
+
+  it 'invites a coordinator at a changed email address on the next reconcile' do
+    venue_coordinator = create_user
+    grant_venue_access(program.venue, venue_coordinator)
+    booking = book
+    described_class.process_next
+    old_emails = [organizer.email, venue_coordinator.email]
+    organizer.update!(email: "organizer-#{SecureRandom.hex(4)}@example.test")
+    venue_coordinator.update!(email: "venue-#{SecureRandom.hex(4)}@example.test")
+    reconcile_after_conflict
+    expect(api).to have_received(:update_event).with(
+      connection.calendar_id, "posebook#{booking.id}", anything, send_updates: 'all'
+    ) do |_, _, event, **|
+      expect(event.attendees.map(&:email))
+        .to contain_exactly(participant.email, organizer.email, venue_coordinator.email)
+      expect(event.attendees.map(&:email)).not_to include(*old_emails)
+    end
+  end
+
+  it 'does not resend an invitation when no address changed' do
+    book
+    described_class.process_next
+    reconcile_after_conflict
+    expect(api).not_to have_received(:update_event)
+  end
 end

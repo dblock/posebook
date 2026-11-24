@@ -181,4 +181,5 @@
 - [#197](https://github.com/dblock/posebook/pull/197): Remove gender from Google Calendar invitation details - [@dblock](https://github.com/dblock).
 - [#199](https://github.com/dblock/posebook/pull/199): Open program calendars on the month of your upcoming booking, link participant booking emails to their own booking, and stop labeling your own calendar booking as to be announced - [@dblock](https://github.com/dblock).
 - [#200](https://github.com/dblock/posebook/pull/200): Add a booking details page visible only to the participant, the program's coordinators, and system admins, link booking emails, calendar invitations, calendars, history, and booking cards to it, and show coordinators participant details on profiles - [@dblock](https://github.com/dblock).
+- [#201](https://github.com/dblock/posebook/pull/201): Test that Google Calendar invitations follow model and coordinator email changes on the next reconcile - [@dblock](https://github.com/dblock).
 - Your contribution here.
