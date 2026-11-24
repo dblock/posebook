@@ -4,5 +4,7 @@
   <% membership = local_assigns.fetch(:membership) { program&.participant_memberships_by_user&.[](participant.id) } %>
   <% name = booking_participant_name(participant, membership, manager: manager) %>
   <% handle = booking_participant_instagram_handle(participant, membership) %>
+  <% unless local_assigns[:hide_unannounced] && !manager && !handle && name == "To be announced" %>
   <div class="booked-participant"><%= manager || name != "To be announced" ? link_to(name, participant_path(participant)) : local_assigns.fetch(:fallback_name, name) %><% if handle %><br><%= link_to "@#{handle}", InstagramProfile.url(handle), target: "_blank", rel: "noopener noreferrer" %><% end %><% if manager && membership %><br><%= link_to "Edit #{program.participant_label.titleize}", edit_program_participant_path(program, membership) %><% end %></div>
+<% end %>
 <% end %>

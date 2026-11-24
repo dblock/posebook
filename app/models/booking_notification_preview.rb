@@ -79,7 +79,8 @@ class BookingNotificationPreview
   private
 
   def booking_url
-    Rails.application.routes.url_helpers.calendar_program_url(@program, month: booking.date.strftime('%Y-%m'),
-                                                                        **@url_options)
+    coordinator = BookingNotificationSetting::COORDINATOR_ONLY.include?(@setting.kind)
+    target = coordinator ? { month: booking.date.strftime('%Y-%m') } : { anchor: "upcoming-booking-#{booking.id}" }
+    Rails.application.routes.url_helpers.calendar_program_url(@program, **target, **@url_options)
   end
 end

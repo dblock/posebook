@@ -28,4 +28,4 @@ By default, confirmation opens when the program's previous scheduled session end
 
 Upcoming booking cards place the booking status under their picture and group **I'll be there!** with **Cancel Booking**. When the organizer-contact notice is shown, the attendance-confirmation request appears inside that notice instead of being repeated above it.
 
-Click your upcoming booking's status label in the calendar to open its booking card on the program page.
+When you have an upcoming booking, the program's Program and Calendar pages open their calendar on that booking's month, and your own date shows **Your booking** rather than **To be announced**. Click its status label to jump to its booking card on the same page. **View your booking** links in booking emails open the Calendar page at your booking card; coordinator emails link to the booking's month instead.

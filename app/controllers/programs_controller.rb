@@ -76,8 +76,14 @@ class ProgramsController < ApplicationController
   def prepare_program_page
     return head :not_found if @section == 'history' && !@program_member
 
-    @calendar = ProgramCalendar.new(@program, month: (params[:month] unless @section == 'view'))
-    load_calendar if @program_member && @section != 'history'
+    load_booking_access if @program_member && @section != 'history'
+    @calendar = ProgramCalendar.new(@program, month: calendar_month)
+  end
+
+  # An explicit month wins; otherwise open on the viewer's own upcoming booking.
+  def calendar_month
+    month = params[:month].presence unless @section == 'view'
+    month || @my_booking&.date&.strftime('%Y-%m')
   end
 
   def find_venue
@@ -99,10 +105,11 @@ class ProgramsController < ApplicationController
     require_authentication
   end
 
-  def load_calendar
+  # The viewer's upcoming booking also selects the default calendar month.
+  def load_booking_access
     @booking_access = BookingAccess.new(@program.memberships.participants.where(user_id: current_user.id).first)
     @can_book = @booking_access.allowed?
-    @my_booking = @calendar.current_booking(current_user)
+    @my_booking = ProgramCalendar.current_booking(@program, current_user)
   end
 
   def find_program
