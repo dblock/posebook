@@ -22,8 +22,8 @@ class BookingNotificationContent
   def identity_values
     { 'participant_name' => @booking.user.name, 'program_name' => @program.name,
       'organizer_contact' => BookingNotification.coordinators(@program).map do |user|
-        "#{user.name}: #{user.email}"
-      end.join(', ') }
+        [user.email, user.display_phone.presence].compact.join(' or ').then { |contact| "#{user.name}: #{contact}" }
+      end.join('; ') }
   end
 
   def session_values

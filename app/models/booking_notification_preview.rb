@@ -53,7 +53,7 @@ class BookingNotificationPreview
 
   def content
     values = BookingNotificationContent.new(booking).values.merge(
-      'organizer_contact' => 'Sam Organizer: organizer@example.test',
+      'organizer_contact' => 'Sam Organizer: organizer@example.test or +1 (202) 555-0100',
       'previous_session_details' => "#{(booking.date - 7).strftime('%A, %B %-d, %Y')} at 6:00 PM",
       'booking_url' => booking_url, 'confirmation_url' => booking_url
     )

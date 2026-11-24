@@ -154,6 +154,17 @@ RSpec.describe BookingNotification, :aggregate_failures, :database do
     expect(organizer_mail.text_part.body.decoded).not_to include('Hi ', 'Your session', 'confirm your attendance')
   end
 
+  it 'includes coordinator phone numbers in participant contact details when available' do
+    other_organizer = create_user(name: 'No Phone Organizer')
+    grant_coordinator_access(program, other_organizer)
+    other_organizer.set(phone: nil)
+    booking
+    run_notifications
+    body = ActionMailer::Base.deliveries.find { |mail| mail.to == [participant.email] }.text_part.body.decoded
+    expect(body).to include("#{organizer.name}: #{organizer.email} or #{organizer.display_phone}")
+    expect(body).to match(/No Phone Organizer: #{Regexp.escape(other_organizer.email)}[.;]/)
+  end
+
   it 'controls coordinator booking alerts separately from participant messages' do
     program.update!(notification_settings: { 'booking_created' => { 'enabled' => false } })
     booking
