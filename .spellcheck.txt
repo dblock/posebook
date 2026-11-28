@@ -1,8 +1,11 @@
 ActionMailer
 CLI
 ci
+ElevenLabs
+NumPy
 RSpec
 resultset
+screencast
 simplecov
 sharding
 filesize

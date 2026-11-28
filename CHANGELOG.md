@@ -183,4 +183,5 @@
 - [#200](https://github.com/dblock/posebook/pull/200): Add a booking details page visible only to the participant, the program's coordinators, and system admins, link booking emails, calendar invitations, calendars, history, and booking cards to it, and show coordinators participant details on profiles - [@dblock](https://github.com/dblock).
 - [#201](https://github.com/dblock/posebook/pull/201): Test that Google Calendar invitations follow model and coordinator email changes on the next reconcile - [@dblock](https://github.com/dblock).
 - [#202](https://github.com/dblock/posebook/pull/202): Update the matching parallel_tests-ci gem and reusable workflow to 0.3.0, which skips timing collection on pull requests - [@dblock](https://github.com/dblock).
+- [#203](https://github.com/dblock/posebook/pull/203): Add a one-minute promo video to the README, with its sources, captured inputs, and rebuild steps in `artwork/promo` - [@dblock](https://github.com/dblock).
 - Your contribution here.

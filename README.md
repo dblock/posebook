@@ -10,6 +10,10 @@ The [hosted instance](https://posebook.dblock.org/) serves [Enoch's figure-drawi
 
 Read the story behind Posebook: [The Sunk Cost Fallacy of a Vibe-Coded Custom SaaS](https://code.dblock.org/2026/11/15/the-sunk-cost-fallacy-of-a-vibe-coded-custom-saas.html).
 
+https://github.com/user-attachments/assets/93b60c8a-1236-49c8-8b71-197e38b5760b
+
+The one-minute promo above, its captions, and its sources are in [artwork/promo](artwork/promo/README.md).
+
 ## Key Features
 
 - Separate venue locations and recurring programs.

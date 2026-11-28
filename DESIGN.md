@@ -197,3 +197,5 @@ magick app/assets/images/posebook-logo.png -resize 64x64 -gravity center -backgr
 ```
 
 Inspect the portrait, rendered header, and favicon at 16/32 pixels after artwork changes.
+
+The one-minute promo video, its sources, provenance, and rebuild steps are in [artwork/promo](artwork/promo/README.md). Its app screens use only the synthetic data in `artwork/promo/seed.rb`.
