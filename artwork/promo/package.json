@@ -1,0 +1,12 @@
+{
+  "name": "posebook-promo",
+  "private": true,
+  "type": "module",
+  "description": "Sources for the one-minute Posebook promo video.",
+  "dependencies": {
+    "jsqr": "^1.4.0",
+    "playwright-core": "^1.65.1",
+    "pngjs": "^7.0.0",
+    "qrcode": "^1.5.4"
+  }
+}

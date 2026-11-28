@@ -1,0 +1,32 @@
+{
+  "title": "Posebook: How I Run Monday Night Figure Drawing",
+  "description": "A one-minute story: running a weekly figure drawing session at Enoch's in New York, and how Posebook lets models manage their own schedule while it does the reminding.",
+  "meta": "dblock/posebook · master @ 907458c · app screens from a local run with fictional data",
+  "voice": { "provider": "elevenlabs", "name": "Brian" },
+  "lexicon": { "Posebook": "Pose book" },
+  "lead": 0.15, "sceneLead": 0.35, "pad": 0.2, "scenePad": 0.4,
+  "scenes": [
+    { "id": "enochs", "title": "Enoch's", "steps": [
+      "For over a year, I've run a Monday night figure drawing session at Enoch's, a coffee shop in New York."] },
+    { "id": "manual", "title": "By Hand", "steps": [
+      "Every Monday after the session, I'd text next week's model to re-confirm.",
+      "And all week, models wrote in to swap dates. All of it by hand."] },
+    { "id": "turn", "title": "Posebook", "steps": [
+      "So I built Posebook: models manage their own schedule, and it does the reminding."] },
+    { "id": "session", "title": "Set It Up Once", "steps": [
+      "I set the session up once:",
+      "Mondays at six-thirty."] },
+    { "id": "book", "title": "Models Book Themselves", "steps": [
+      "Models I've invited pick an open Monday and book it themselves.",
+      "They swap or cancel on their own, and confirm with one tap: I'll be there!"] },
+    { "id": "calendar", "title": "My Calendar", "steps": [
+      "My calendar shows who's posing each week, and who has confirmed."] },
+    { "id": "reminders", "title": "Reminders and Google Calendar", "steps": [
+      "Posebook asks next week's model to confirm, and reminds them before the session.",
+      "And my Google Calendar is managed automatically."] },
+    { "id": "oss", "title": "Run It Yourself", "steps": [
+      "Posebook is open source. Run it for your drawing group."] },
+    { "id": "invite", "title": "Come Draw With Us", "steps": [
+      "And if you're in New York, come draw with us: Mondays at six-thirty, at Enoch's."] }
+  ]
+}
